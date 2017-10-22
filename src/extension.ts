@@ -10,7 +10,11 @@ import * as path from "path";
 export function activate(context: vscode.ExtensionContext) {
 
 	let previewUri = vscode.Uri.parse('css-preview://authority/css-preview');
-	let insertJs = fs.readFileSync(path.join(__dirname, "svgeditor.js"), "UTF-8");
+	let insertJs = [
+		fs.readFileSync(path.join(__dirname, "utils.js"), "UTF-8"),
+		fs.readFileSync(path.join(__dirname, "svgutils.js"), "UTF-8"),
+		fs.readFileSync(path.join(__dirname, "svgeditor.js"), "UTF-8")
+	].join("\n");
 	let insertCss = fs.readFileSync(path.join(__dirname, "..", "src", "svgeditor.css"), "UTF-8");
 
 	class TextDocumentContentProvider implements vscode.TextDocumentContentProvider {

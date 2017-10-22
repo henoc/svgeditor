@@ -2,36 +2,41 @@
 // previewHtmlにsvgの後に挿入されるjsの元になるts
 //
 
-class Point {
-  private _x: number
-  private _y: number
-  constructor(x: number, y: number) {
-    this._x = x;
-    this._y = y;
-  }
+/// <reference path="svgutils.ts" />
+/// <reference path="utils.ts" />
 
-  get x(): number {
-    return this._x;
-  }
-  get y(): number {
-    return this._y;
+let editorRoot = document.getElementById("svgeditor-root");
+let svgroot = editorRoot.firstElementChild;
+
+/**
+ * 編集ノードの移動用
+ */
+let dragTarget: SVGElement | undefined = undefined;
+
+document.onmouseup = (ev) => {
+  dragTarget = undefined;
+}
+
+document.onmousemove = (ev) => {
+  if (dragTarget !== undefined) {
+    let x = ev.clientX - editorRoot.offsetLeft;
+    let y = ev.clientY - editorRoot.offsetTop;
+    deform(dragTarget).set({x, y});
   }
 }
 
-let svgroot = document.getElementById("svgeditor-root").firstElementChild;
-
-const points: Point[] = [];
+const moveElems: Element[] = [];
 
 traverse(svgroot, node => {
-  if (node.tagName == "circle") {
-    let x = +node.attributes.getNamedItem("cx").value;
-    let y = +node.attributes.getNamedItem("cy").value;
-    points.push(new Point(x, y));
+  if (node instanceof SVGElement) {
+    moveElems.push(node);
   }
 });
 
-points.forEach(point => {
-  svgroot.insertAdjacentHTML("beforeend", `<circle class="svgeditor-node" cx="${point.x}" cy="${point.y}" r="5" />`);
+moveElems.forEach((moveElem, i) => {
+  moveElem.addEventListener("mousedown", (ev: MouseEvent) => {
+    dragTarget = <SVGElement>ev.target;
+  });
 });
 
 function traverse(node: Element, fn: (node: Element) => void): void {
