@@ -19,6 +19,24 @@ class SvgDeformer {
         throw `not defined SVGElement: ${this.elem.tagName}`;
     }
   }
+
+  getPosition(): Point {
+    switch (this.elem.tagName) {
+      case "circle":
+      case "ellipse":
+        return Point.of(
+          +this.elem.getAttribute("cx"),
+          +this.elem.getAttribute("cy")
+        );
+      case "rect":
+        return Point.of(
+          +this.elem.getAttribute("x"),
+          +this.elem.getAttribute("y")
+        );
+      default:
+        throw `not defined SVGElement: ${this.elem.tagName}`;
+    }
+  }
 }
 
 function deform(elem: SVGElement): SvgDeformer {

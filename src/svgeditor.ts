@@ -11,7 +11,7 @@ let svgroot = editorRoot.firstElementChild;
 /**
  * 編集ノードの移動用
  */
-let dragTarget: SVGElement | undefined = undefined;
+let dragTarget: { target: SVGElement; targetFromCursor: Point } | undefined = undefined;
 
 document.onmouseup = (ev) => {
   dragTarget = undefined;
@@ -19,13 +19,13 @@ document.onmouseup = (ev) => {
 
 document.onmousemove = (ev) => {
   if (dragTarget !== undefined) {
-    let x = ev.clientX - editorRoot.offsetLeft;
-    let y = ev.clientY - editorRoot.offsetTop;
-    deform(dragTarget).set({x, y});
+    let x = ev.clientX;
+    let y = ev.clientY;
+    deform(dragTarget.target).set(Point.of(x, y).add(dragTarget.targetFromCursor));
   }
 }
 
-const moveElems: Element[] = [];
+const moveElems: SVGElement[] = [];
 
 traverse(svgroot, node => {
   if (node instanceof SVGElement) {
@@ -35,7 +35,10 @@ traverse(svgroot, node => {
 
 moveElems.forEach((moveElem, i) => {
   moveElem.addEventListener("mousedown", (ev: MouseEvent) => {
-    dragTarget = <SVGElement>ev.target;
+    dragTarget = {
+      target: <SVGElement>ev.target,
+      targetFromCursor: deform(moveElem).getPosition().sub(Point.of(ev.clientX, ev.clientY))
+    };
   });
 });
 
