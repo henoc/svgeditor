@@ -18,6 +18,7 @@ export function activate(context: vscode.ExtensionContext) {
 	let insertCss = fs.readFileSync(path.join(__dirname, "..", "src", "svgeditor.css"), "UTF-8");
 
 	class TextDocumentContentProvider implements vscode.TextDocumentContentProvider {
+		public editor: vscode.TextEditor | undefined;
 		private _onDidChange = new vscode.EventEmitter<vscode.Uri>();
 
 		public provideTextDocumentContent(uri: vscode.Uri): string {
@@ -32,21 +33,9 @@ export function activate(context: vscode.ExtensionContext) {
 			this._onDidChange.fire(uri);
 		}
 
-		private createCssSnippet() {
-			let editor = vscode.window.activeTextEditor;
-			return this.extractSnippet();
-		}
-
-		private extractSnippet(): string {
-			let editor = vscode.window.activeTextEditor;
-			return this.snippet(editor.document);
-		}
-
-		private errorSnippet(error: string): string {
-			return `
-				<body>
-					${error}
-				</body>`;
+		private createCssSnippet(): string {
+			this.editor = vscode.window.activeTextEditor;
+			return this.snippet(this.editor.document);
 		}
 
 		private snippet(document: vscode.TextDocument): string {
@@ -77,11 +66,11 @@ export function activate(context: vscode.ExtensionContext) {
 		}
 	});
 
-	vscode.window.onDidChangeTextEditorSelection((e: vscode.TextEditorSelectionChangeEvent) => {
-		if (e.textEditor === vscode.window.activeTextEditor) {
-			provider.update(previewUri);
-		}
-	})
+	// vscode.window.onDidChangeTextEditorSelection((e: vscode.TextEditorSelectionChangeEvent) => {
+	// 	if (e.textEditor === vscode.window.activeTextEditor) {
+	// 		provider.update(previewUri);
+	// 	}
+	// })
 
 	let disposable = vscode.commands.registerCommand('extension.showCssPropertyPreview', () => {
 		return vscode.commands.executeCommand('vscode.previewHtml', previewUri, vscode.ViewColumn.Two, 'CSS Property Preview').then((success) => {
@@ -90,20 +79,39 @@ export function activate(context: vscode.ExtensionContext) {
 		});
 	});
 
-	let highlight = vscode.window.createTextEditorDecorationType({ backgroundColor: 'rgba(200,200,200,.35)' });
-
-	vscode.commands.registerCommand('extension.revealCssRule', (uri: vscode.Uri, propStart: number, propEnd: number) => {
-
-		for (let editor of vscode.window.visibleTextEditors) {
-			if (editor.document.uri.toString() === uri.toString()) {
-				let start = editor.document.positionAt(propStart);
-				let end = editor.document.positionAt(propEnd + 1);
-
-				editor.setDecorations(highlight, [new vscode.Range(start, end)]);
-				setTimeout(() => editor.setDecorations(highlight, []), 1500);
-			}
-		}
+	/**
+	 * Call only by previewer
+	 */
+	vscode.commands.registerCommand("extension.reflectToEditor", (text: string) => {
+		provider.editor.edit(editbuilder => {
+			editbuilder.replace(allRange(provider.editor), text);
+		});
 	});
 
+	// let highlight = vscode.window.createTextEditorDecorationType({ backgroundColor: 'rgba(200,200,200,.35)' });
+
+	// vscode.commands.registerCommand('extension.revealCssRule', (uri: vscode.Uri, propStart: number, propEnd: number) => {
+
+	// 	for (let editor of vscode.window.visibleTextEditors) {
+	// 		if (editor.document.uri.toString() === uri.toString()) {
+	// 			let start = editor.document.positionAt(propStart);
+	// 			let end = editor.document.positionAt(propEnd + 1);
+
+	// 			editor.setDecorations(highlight, [new vscode.Range(start, end)]);
+	// 			setTimeout(() => editor.setDecorations(highlight, []), 1500);
+	// 		}
+	// 	}
+	// });
+
 	context.subscriptions.push(disposable, registration);
+}
+
+function allRange(textEditor: vscode.TextEditor): vscode.Range {
+	let firstLine = textEditor.document.lineAt(0);
+	let lastLine = textEditor.document.lineAt(textEditor.document.lineCount - 1);
+	let textRange = new vscode.Range(0, 
+																	 firstLine.range.start.character, 
+																	 textEditor.document.lineCount - 1, 
+																	 lastLine.range.end.character);
+	return textRange;
 }

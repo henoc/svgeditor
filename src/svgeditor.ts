@@ -14,6 +14,14 @@ let svgroot = editorRoot.firstElementChild;
 let dragTarget: { target: SVGElement; targetFromCursor: Point } | undefined = undefined;
 
 document.onmouseup = (ev) => {
+  // 変更されたHTML（のSVG部分）をエディタに反映させる
+  if (dragTarget !== undefined) {
+    let args = [svgroot.outerHTML];
+    window.parent.postMessage({
+      command: 'did-click-link',
+      data: `command:extension.reflectToEditor?${encodeURIComponent(JSON.stringify(args))}`
+    }, 'file://');
+  }
   dragTarget = undefined;
 }
 
