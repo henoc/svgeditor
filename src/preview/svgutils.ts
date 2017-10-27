@@ -73,7 +73,7 @@ function deform(elem: SVGElement): SvgDeformer {
  * parse "x1,y1 x2,y2 ... xn,yn" to `Point[]`
  */
 function parsePoints(pointsProperty: string): Point[] {
-  const pair = /(-?[0-9.]+),(-?[0-9.]+)/g;
+  const pair = /(-?[0-9.]+)\s*,\s*(-?[0-9.]+)/g;
   const points = [];
   let matched: RegExpExecArray | null = null;
   while ((matched = pair.exec(pointsProperty)) !== null) {
