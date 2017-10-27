@@ -1,3 +1,5 @@
-.svgeditor-node {
-  fill: white
+.svgeditor-vertex {
+  fill: white;
+  stroke: black;
+  stroke-width: 1px;
 }

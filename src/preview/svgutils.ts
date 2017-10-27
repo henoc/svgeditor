@@ -1,10 +1,13 @@
 /// <reference path="utils.ts" />
 
+type Direction = "left" | "up" | "right" | "down";
+
+// TODO: 単位への対応　svgのmoduleを使うべきかも
 class SvgDeformer {
   constructor(public elem: SVGElement) {
   }
 
-  set(point: Point): void {
+  setPosition(point: Point): void {
     switch (this.elem.tagName) {
       case "circle":
       case "ellipse":
@@ -62,6 +65,46 @@ class SvgDeformer {
       default:
         throw `not defined SVGElement: ${this.elem.tagName}`;
     }
+  }
+
+  setExpandVertexes(): string[] {
+    let ids: string[] = [];
+    switch (this.elem.tagName) {
+      case "rect":
+        let leftUp = this.getPosition();
+        let width = +this.elem.getAttribute("width");
+        let height = +this.elem.getAttribute("height");
+        for (let i = 0; i < 3; i++) {
+          for (let j = 0; j < 3; j++) {
+            if (i === 1 && j === 1) continue;
+            let x = leftUp.x + width * j / 2;
+            let y = leftUp.y + height * i / 2;
+            let dirs: Direction[] = [];
+            if (i === 0) dirs.push("up");
+            if (i === 2) dirs.push("down");
+            if (j === 0) dirs.push("left");
+            if (j === 2) dirs.push("right");
+
+            ids.push(this.setExpandVertex(Point.of(x, y), dirs));
+          }
+        }
+        return ids;
+      default:
+        throw `not defined SVGElement: ${this.elem.tagName}`;
+    }
+  }
+
+  private setExpandVertex(verticalPoint: Point, directions: Direction[]): string {
+    let id = uuid();
+    let html = 
+      `<circle cx="${verticalPoint.x}" cy="${verticalPoint.y}" r="5"` +
+      `class="svgeditor-vertex" id="${id}" direction="${directions.join(" ")}"/>`;
+    this.elem.insertAdjacentHTML("afterend", html);
+    return id;
+  }
+
+  expand(direction: Direction, delta: number): void {
+
   }
 }
 
