@@ -38,7 +38,8 @@ document.onmousemove = (ev) => {
 const moveElems: SVGElement[] = [];
 
 traverse(svgroot, node => {
-  if (node instanceof SVGElement) {
+  // svgrootは除く
+  if (node instanceof SVGElement && node.tagName !== "svg") {
     moveElems.push(node);
   }
 });
@@ -46,10 +47,10 @@ traverse(svgroot, node => {
 moveElems.forEach((moveElem, i) => {
   moveElem.addEventListener("mousedown", (ev: MouseEvent) => {
     // 既存の拡大用頂点を消す
-    // let vertexes = document.getElementsByClassName("svgeditor-vertex");
-    // while (vertexes.length !== 0) {
-    //   vertexes.item(0).remove();
-    // }
+    let vertexes = document.getElementsByClassName("svgeditor-vertex");
+    while (vertexes.length !== 0) {
+      vertexes.item(0).remove();
+    }
 
     let mainTarget = moveElem;
     // 拡大用頂点を出す
