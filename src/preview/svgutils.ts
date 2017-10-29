@@ -1,7 +1,5 @@
 /// <reference path="utils.ts" />
 
-type Direction = "left" | "up" | "right" | "down";
-
 // TODO: 単位への対応　svgのmoduleを使うべきかも
 class SvgDeformer {
   constructor(public elem: SVGElement) {
@@ -104,7 +102,35 @@ class SvgDeformer {
   }
 
   expand(direction: Direction, delta: number): void {
+    switch (this.elem.tagName) {
+      case "rect":
+        dirSwitch(direction,
+          () => {
+            this.add("x", delta);
+            this.add("width", -delta);
+          },
+          () => {
+            this.add("width", delta);
+          },
+          () => {
+            this.add("y", delta);
+            this.add("height", -delta);
+          },
+          () => {
+            this.add("height", delta);
+          }
+        );
+        break;
+      default:
+        throw `not defined SVGElement: ${this.elem.tagName}`;
+    }
+  }
 
+  /**
+   * Add `delta` at the attribute `attr` of this element.
+   */
+  add(attr: string, delta: number): void {
+    this.elem.setAttribute(attr, String(+this.elem.getAttribute(attr) + delta));
   }
 }
 
@@ -126,3 +152,4 @@ function parsePoints(pointsProperty: string): Point[] {
   }
   return points;
 }
+

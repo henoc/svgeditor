@@ -35,3 +35,18 @@ function uuid(): string {
   }
   return (S4() + S4() + "-" + S4() + "-" + S4() + "-" + S4() + "-" + S4() + S4() + S4());
 }
+
+type Direction = "left" | "up" | "right" | "down";
+
+function dirSwitch(dir: Direction, left: () => void, right: () => void, up: () => void, down: () => void): void {
+  switch (dir) {
+    case "left":
+      return left();
+    case "right":
+      return right();
+    case "up":
+      return up();
+    case "down":
+      return down();
+  }
+}
