@@ -7,6 +7,9 @@
 
 let editorRoot = document.getElementById("svgeditor-root");
 let svgroot = editorRoot.firstElementChild;
+let expandVertexesGroupId = uuid();
+svgroot.insertAdjacentHTML("beforeend", `<g class="svgeditor-others" id="${expandVertexesGroupId}"></g>`);
+let expandVertexesGroup = document.getElementById(expandVertexesGroupId);
 
 type DragMode = "free" | "vertical" | "horizontal";
 
@@ -58,7 +61,7 @@ document.onmousemove = (ev) => {
           deform(dragTarget.expandVertexes.target).expand(dir, delta[dir]);
         });
         // 拡大用頂点すべてを移動
-        deform(dragTarget.expandVertexes.target).setExpandVertexes(dragTarget.expandVertexes.vertexes);
+        deform(dragTarget.expandVertexes.target).setExpandVertexes(expandVertexesGroup, dragTarget.expandVertexes.vertexes);
       }
 
       deform(dragTarget.target).setPosition(newPosition);
@@ -76,7 +79,7 @@ traverse(svgroot, node => {
 });
 
 moveElems.forEach((moveElem, i) => {
-  moveElem.addEventListener("mousedown", (ev: MouseEvent) => {
+  moveElem.onmousedown = (ev: MouseEvent) => {
     // イベント伝搬の終了
     ev.stopPropagation();
     // 既存の拡大用頂点を消す
@@ -87,13 +90,16 @@ moveElems.forEach((moveElem, i) => {
 
     let mainTarget = moveElem;
     // 拡大用頂点を出す
-    let ids = deform(mainTarget).setExpandVertexes();
+    let ids = deform(mainTarget).setExpandVertexes(expandVertexesGroup);
     let targets: SVGElement[] = [mainTarget];
     let expandVertexes = ids.map(id => <SVGElement><any>document.getElementById(id));
     for (let vertex of expandVertexes) {
       targets.push(vertex);
       // 拡大用頂点のクリック時のdragTargets登録
-      vertex.addEventListener("mousedown", (ev: MouseEvent) => {
+      vertex.onmousedown = (ev: MouseEvent) => {
+        // イベント伝搬の終了
+        ev.stopPropagation();
+
         let dirs = vertex.getAttribute("direction").split(" ");
         let mode: DragMode = "free";
         if (dirs.length === 1) {
@@ -113,7 +119,7 @@ moveElems.forEach((moveElem, i) => {
             vertexes: expandVertexes
           }
         }];
-      });
+      };
     }
     dragTargets = targets.map(target => {
       return {
@@ -123,7 +129,7 @@ moveElems.forEach((moveElem, i) => {
         dragMode: <DragMode>"free"
       };
     });
-  });
+  };
 });
 
 function traverse(node: Element, fn: (node: Element) => void): void {

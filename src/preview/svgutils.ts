@@ -66,9 +66,10 @@ class SvgDeformer {
   }
 
   /**
+   * @param parentElement parent of vertexes in terms of xml (not expansion target)
    * @param vertexes Recycled vertex nodes
    */
-  setExpandVertexes(vertexes?: SVGElement[]): string[] {
+  setExpandVertexes(parentElement: HTMLElement, vertexes?: SVGElement[]): string[] {
     let ids: string[] = [];
     switch (this.elem.tagName) {
       case "rect":
@@ -93,7 +94,7 @@ class SvgDeformer {
               if (j === 0) dirs.push("left");
               if (j === 2) dirs.push("right");
 
-              ids.push(this.setExpandVertex(Point.of(x, y), dirs));
+              ids.push(this.setExpandVertex(Point.of(x, y), dirs, parentElement));
             }
           }
         }
@@ -103,12 +104,12 @@ class SvgDeformer {
     }
   }
 
-  private setExpandVertex(verticalPoint: Point, directions: Direction[]): string {
+  private setExpandVertex(verticalPoint: Point, directions: Direction[], parentElement: HTMLElement): string {
     let id = uuid();
     let html = 
       `<circle cx="${verticalPoint.x}" cy="${verticalPoint.y}" r="5"` +
       `class="svgeditor-vertex" id="${id}" direction="${directions.join(" ")}"/>`;
-    this.elem.insertAdjacentHTML("afterend", html);
+    parentElement.insertAdjacentHTML("afterbegin", html);
     return id;
   }
 

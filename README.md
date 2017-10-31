@@ -1,2 +1,2 @@
 # 問題
-なし
+- [] svgeditor-* classの出力からの消去ができない（dragTargetがundefinedにならなくなる？）
