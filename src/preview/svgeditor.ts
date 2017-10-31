@@ -18,7 +18,10 @@ let dragTargets: {
   targetFromCursor: Point;
   targetInit: Point;
   dragMode: DragMode;
-  expandedTarget?: SVGElement;
+  expandVertexes?: {
+    target: SVGElement;
+    vertexes: SVGElement[];
+  }
 }[] | undefined = undefined;
 
 document.onmouseup = (ev) => {
@@ -46,14 +49,16 @@ document.onmousemove = (ev) => {
       }
 
       // 拡大用頂点がdragTargetなら拡大適用先があるので、それの属性をいじる
-      if (dragTarget.expandedTarget) {
+      if (dragTarget.expandVertexes) {
         let deltaX = newPosition.x - deform(dragTarget.target).getPosition().x;
         let deltaY = newPosition.y - deform(dragTarget.target).getPosition().y;
         let delta = {left: deltaX, right: deltaX, up: deltaY, down: deltaY};
         let dirs = <Direction[]>dragTarget.target.getAttribute("direction").split(" ");
         dirs.forEach(dir => {
-          deform(dragTarget.expandedTarget).expand(dir, delta[dir]);
+          deform(dragTarget.expandVertexes.target).expand(dir, delta[dir]);
         });
+        // 拡大用頂点すべてを移動
+        deform(dragTarget.expandVertexes.target).setExpandVertexes(dragTarget.expandVertexes.vertexes);
       }
 
       deform(dragTarget.target).setPosition(newPosition);
@@ -84,12 +89,12 @@ moveElems.forEach((moveElem, i) => {
     // 拡大用頂点を出す
     let ids = deform(mainTarget).setExpandVertexes();
     let targets: SVGElement[] = [mainTarget];
-    for (let id of ids) {
-      let expandVertical = <SVGElement><any>document.getElementById(id);
-      targets.push(expandVertical);
+    let expandVertexes = ids.map(id => <SVGElement><any>document.getElementById(id));
+    for (let vertex of expandVertexes) {
+      targets.push(vertex);
       // 拡大用頂点のクリック時のdragTargets登録
-      expandVertical.addEventListener("mousedown", (ev: MouseEvent) => {
-        let dirs = expandVertical.getAttribute("direction").split(" ");
+      vertex.addEventListener("mousedown", (ev: MouseEvent) => {
+        let dirs = vertex.getAttribute("direction").split(" ");
         let mode: DragMode = "free";
         if (dirs.length === 1) {
           if (dirs.indexOf(<Direction>"left") !== -1 || dirs.indexOf(<Direction>"right") !== -1) {
@@ -99,11 +104,14 @@ moveElems.forEach((moveElem, i) => {
           }
         }
         dragTargets = [{
-          target: expandVertical,
-          targetFromCursor: deform(expandVertical).getPosition().sub(Point.of(ev.clientX, ev.clientY)),
-          targetInit: deform(expandVertical).getPosition(),
+          target: vertex,
+          targetFromCursor: deform(vertex).getPosition().sub(Point.of(ev.clientX, ev.clientY)),
+          targetInit: deform(vertex).getPosition(),
           dragMode: mode,
-          expandedTarget: mainTarget
+          expandVertexes: {
+            target: mainTarget,
+            vertexes: expandVertexes
+          }
         }];
       });
     }

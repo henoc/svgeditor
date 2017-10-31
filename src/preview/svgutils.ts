@@ -65,25 +65,36 @@ class SvgDeformer {
     }
   }
 
-  setExpandVertexes(): string[] {
+  /**
+   * @param vertexes Recycled vertex nodes
+   */
+  setExpandVertexes(vertexes?: SVGElement[]): string[] {
     let ids: string[] = [];
     switch (this.elem.tagName) {
       case "rect":
         let leftUp = this.getPosition();
         let width = +this.elem.getAttribute("width");
         let height = +this.elem.getAttribute("height");
+        let c = 0;
         for (let i = 0; i < 3; i++) {
           for (let j = 0; j < 3; j++) {
             if (i === 1 && j === 1) continue;
             let x = leftUp.x + width * j / 2;
             let y = leftUp.y + height * i / 2;
-            let dirs: Direction[] = [];
-            if (i === 0) dirs.push("up");
-            if (i === 2) dirs.push("down");
-            if (j === 0) dirs.push("left");
-            if (j === 2) dirs.push("right");
 
-            ids.push(this.setExpandVertex(Point.of(x, y), dirs));
+            if (vertexes) {
+              deform(vertexes[c]).setPosition(Point.of(x, y));
+              ids.push(vertexes[c].id);
+              c++;
+            } else {
+              let dirs: Direction[] = [];
+              if (i === 0) dirs.push("up");
+              if (i === 2) dirs.push("down");
+              if (j === 0) dirs.push("left");
+              if (j === 2) dirs.push("right");
+
+              ids.push(this.setExpandVertex(Point.of(x, y), dirs));
+            }
           }
         }
         return ids;
