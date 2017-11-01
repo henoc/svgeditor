@@ -82,6 +82,7 @@ class SvgDeformer {
     let frameFn: (n: number, m: number) => Point;
     let center: Point;
     let leftUp: Point;
+    let rightDown: Point;
     let width: number;
     let height: number;
     switch (this.elem.tagName) {
@@ -107,6 +108,14 @@ class SvgDeformer {
         width = Math.abs(+this.geta("x1") - +this.geta("x2"));
         height = Math.abs(+this.geta("y1") - +this.geta("y2"));
         frameFn = (n, m) => Point.of(leftUp.x + width * n / 2, leftUp.y + height * m / 2);
+        break;
+      case "polyline":
+      case "polygon":
+        let points = parsePoints(this.geta("points"));
+        leftUp = Point.of(Math.min(...points.map(p => p.x)), Math.min(...points.map(p => p.y)));
+        rightDown = Point.of(Math.max(...points.map(p => p.x)), Math.max(...points.map(p => p.y)));
+        frameFn = (n, m) => Point.of(leftUp.x + (rightDown.x - leftUp.x) * n / 2,
+          leftUp.y + (rightDown.y - leftUp.y) * m / 2);
         break;
       default:
         throw `not defined SVGElement: ${this.elem.tagName}`;
@@ -205,6 +214,32 @@ class SvgDeformer {
           () => {
             let down = +this.geta("y1") > +this.geta("y2") ? "y1" : "y2";
             this.add(down, delta);
+          }
+        );
+        break;
+      case "polyline":
+      case "polygon":
+        let points = parsePoints(this.elem.getAttribute("points"));
+        let left = Math.min(...points.map(p => p.x));
+        let right = Math.max(...points.map(p => p.x));
+        let up = Math.min(...points.map(p => p.y));
+        let down = Math.max(...points.map(p => p.y));
+        dirSwitch(direction,
+          () => {
+            let newPoints = points.map(p => `${p.x + delta * (right - p.x)/(right - left)},${p.y}`).join(" ");
+            this.seta("points", newPoints);
+          },
+          () => {
+            let newPoints = points.map(p => `${p.x + delta * (1 - (right - p.x)/(right - left))},${p.y}`).join(" ");
+            this.seta("points", newPoints);
+          },
+          () => {
+            let newPoints = points.map(p => `${p.x},${p.y + delta * (down - p.y)/(down - up)}`).join(" ");
+            this.seta("points", newPoints);
+          },
+          () => {
+            let newPoints = points.map(p => `${p.x},${p.y + delta * (1 - (down - p.y)/(down - up))}`).join(" ");
+            this.seta("points", newPoints);
           }
         );
         break;

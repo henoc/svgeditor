@@ -9,6 +9,9 @@ class Point {
   toArray(): number[] {
     return [this.x, this.y];
   }
+  toStr(sep: string): string {
+    return `${this.x}${sep}${this.y}`;
+  }
   add(that: Point): Point {
     return Point.of(
       this.x + that.x,
