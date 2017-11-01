@@ -56,6 +56,9 @@ document.onmousemove = (ev) => {
         let deltaX = newPosition.x - deform(dragTarget.target).getPosition().x;
         let deltaY = newPosition.y - deform(dragTarget.target).getPosition().y;
         let delta = {left: deltaX, right: deltaX, up: deltaY, down: deltaY};
+        // let deltaSumX = newPosition.x - dragTarget.targetInit.x;
+        // let deltaSumY = newPosition.y - dragTarget.targetInit.y;
+        // let deltaSum = {left: deltaSumX, right: deltaSumX, up: deltaSumY, down: deltaSumY};
         let dirs = <Direction[]>dragTarget.target.getAttribute("direction").split(" ");
         dirs.forEach(dir => {
           deform(dragTarget.expandVertexes.target).expand(dir, delta[dir]);
@@ -70,6 +73,21 @@ document.onmousemove = (ev) => {
 }
 
 const moveElems: SVGElement[] = [];
+
+// 前処理として circle をすべて ellipse にする
+let circles = document.getElementsByTagName("circle");
+for (let i = 0; i < circles.length; i++) {
+  circles.item(i).outerHTML = circles.item(i).outerHTML.replace("circle", "ellipse");
+}
+let ellipses = document.getElementsByTagName("ellipse");
+for (let i = 0; i < ellipses.length; i++) {
+  let ellipse = ellipses.item(i);
+  if (ellipse.hasAttribute("r")) {
+    ellipse.setAttribute("rx", ellipse.getAttribute("r"));
+    ellipse.setAttribute("ry", ellipse.getAttribute("r"));
+    ellipse.removeAttribute("r");
+  }
+}
 
 traverse(svgroot, node => {
   // svgrootは除く

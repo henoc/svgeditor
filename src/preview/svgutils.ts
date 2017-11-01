@@ -66,42 +66,58 @@ class SvgDeformer {
   }
 
   /**
+   * Set vertexes for expansion. 8 vertexes are arranged around all kinds of target element.
    * @param parentElement parent of vertexes in terms of xml (not expansion target)
    * @param vertexes Recycled vertex nodes
    */
   setExpandVertexes(parentElement: HTMLElement, vertexes?: SVGElement[]): string[] {
-    let ids: string[] = [];
+    // n : [0, 3], m : [0, 3]. undefinedなら飛ばす
+    let frameFn: (n: number, m: number) => Point;
+    let center: Point;
     switch (this.elem.tagName) {
+      case "circle":
+        center = this.getPosition();
+        let r = +this.elem.getAttribute("r");
+        frameFn = (n, m) => Point.of(center.x + r * (n - 1), center.y + r * (m - 1));
+        break;
+      case "ellipse":
+        center = this.getPosition();
+        let rx = +this.elem.getAttribute("rx");
+        let ry = +this.elem.getAttribute("ry");
+        frameFn = (n, m) => Point.of(center.x + rx * (n - 1), center.y + ry * (m - 1));
+        break;
       case "rect":
         let leftUp = this.getPosition();
         let width = +this.elem.getAttribute("width");
         let height = +this.elem.getAttribute("height");
-        let c = 0;
-        for (let i = 0; i < 3; i++) {
-          for (let j = 0; j < 3; j++) {
-            if (i === 1 && j === 1) continue;
-            let x = leftUp.x + width * j / 2;
-            let y = leftUp.y + height * i / 2;
-
-            if (vertexes) {
-              deform(vertexes[c]).setPosition(Point.of(x, y));
-              ids.push(vertexes[c].id);
-              c++;
-            } else {
-              let dirs: Direction[] = [];
-              if (i === 0) dirs.push("up");
-              if (i === 2) dirs.push("down");
-              if (j === 0) dirs.push("left");
-              if (j === 2) dirs.push("right");
-
-              ids.push(this.setExpandVertex(Point.of(x, y), dirs, parentElement));
-            }
-          }
-        }
-        return ids;
+        frameFn = (n, m) => Point.of(leftUp.x + width * n / 2, leftUp.y + height * m / 2);
+        break;
       default:
         throw `not defined SVGElement: ${this.elem.tagName}`;
     }
+    let ids: string[] = [];
+    let c = 0;
+    for (let i = 0; i < 3; i++) {
+      for (let j = 0; j < 3; j++) {
+        if (i === 1 && j === 1) continue;
+        let point = frameFn(j, i);
+
+        if (vertexes) {
+          deform(vertexes[c]).setPosition(point);
+          ids.push(vertexes[c].id);
+          c++;
+        } else {
+          let dirs: Direction[] = [];
+          if (i === 0) dirs.push("up");
+          if (i === 2) dirs.push("down");
+          if (j === 0) dirs.push("left");
+          if (j === 2) dirs.push("right");
+
+          ids.push(this.setExpandVertex(point, dirs, parentElement));
+        }
+      }
+    }
+    return ids;
   }
 
   private setExpandVertex(verticalPoint: Point, directions: Direction[], parentElement: HTMLElement): string {
@@ -115,6 +131,29 @@ class SvgDeformer {
 
   expand(direction: Direction, delta: number): void {
     switch (this.elem.tagName) {
+      case "circle":
+        // ellipse のみ存在する
+        break;
+      case "ellipse":
+        dirSwitch(direction, 
+          () => {
+            this.add("cx", delta / 2);
+            this.add("rx", -delta / 2);
+          },
+          () => {
+            this.add("cx", delta / 2);
+            this.add("rx", delta / 2);
+          },
+          () => {
+            this.add("cy", delta / 2);
+            this.add("ry", -delta / 2);
+          },
+          () => {
+            this.add("cy", delta / 2);
+            this.add("ry", delta / 2);
+          }
+        );
+        break;
       case "rect":
         dirSwitch(direction,
           () => {
@@ -144,6 +183,46 @@ class SvgDeformer {
   add(attr: string, delta: number): void {
     this.elem.setAttribute(attr, String(+this.elem.getAttribute(attr) + delta));
   }
+
+  /**
+   * Add one transform function in transform attribute.
+   */
+  addTransform(tfn: TransformFn): void {
+    if (this.elem.hasAttribute("transform")) {
+      let attr = this.elem.getAttribute("transform");
+      this.elem.setAttribute("transform", `${attr} ${tfn.kind}(${tfn.args.join(" ")})`);
+    } else {
+      this.elem.setAttribute("transform", `${tfn.kind}(${tfn.args.join(" ")})`);
+    }
+  }
+
+  /**
+   * Add one transform function in transform attribute.
+   * If the kind of last transform function is same with that of `tfn`, the last function is replaced.
+   */
+  addTransform2(tfn: TransformFn): void {
+    if (this.elem.hasAttribute("transform")) {
+      let attr = this.elem.getAttribute("transform");
+      let transforms = this.getTransformAttrs();
+      if (transforms[transforms.length - 1].kind === tfn.kind) {
+        transforms[transforms.length - 1] = tfn;
+        this.elem.setAttribute("transform", transforms.map(tfn => `${tfn.kind}(${tfn.args.join(" ")})`).join(" "));
+      } else {
+        this.elem.setAttribute("transform", `${attr} ${tfn.kind}(${tfn.args.join(" ")})`);
+      }
+    } else {
+      this.elem.setAttribute("transform", `${tfn.kind}(${tfn.args.join(" ")})`);
+    }
+  }
+
+  getTransformAttrs(): TransformFn[] {
+    if (this.elem.hasAttribute("transform")) {
+      let attr = this.elem.getAttribute("transform");
+      return parseTransform(attr);
+    } else {
+      return undefined;
+    }
+  }
 }
 
 function deform(elem: SVGElement): SvgDeformer {
@@ -165,3 +244,33 @@ function parsePoints(pointsProperty: string): Point[] {
   return points;
 }
 
+type TransformKinds = "matrix" | "translate" | "scale" | "rotate" | "skewX" | "skewY";
+interface TransformFn {
+  kind: TransformKinds;
+  args: number[];
+}
+function parseTransform(transformProperty: string): TransformFn[] {
+  let tfns: TransformFn[] = [];
+  let tfn: {kind?: string; args: number[]} = {
+    kind: undefined,
+    args: []
+  };
+  let str = undefined;
+  let identify = /[^\s(),]+/g;
+  while(str = identify.exec(transformProperty)) {
+    let matched = str[0];
+    if (matched.match(/[a-zA-Z]+/)) {
+      if (tfn.kind) {
+        tfns.push(<any>tfn);
+        tfn = {kind: undefined, args: []};
+        tfn.kind = matched;
+      } else {
+        tfn.kind = matched;
+      }
+    } else {
+      tfn.args.push(+matched);
+    }
+  }
+  tfns.push(<any>tfn);
+  return tfns;
+}

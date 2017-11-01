@@ -3,6 +3,12 @@ class Point {
   static of(x: number, y :number): Point {
     return new Point(x, y);
   }
+  static fromArray(array: number[]): Point {
+    return new Point(array[0], array[1]);
+  }
+  toArray(): number[] {
+    return [this.x, this.y];
+  }
   add(that: Point): Point {
     return Point.of(
       this.x + that.x,
