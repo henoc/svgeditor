@@ -1,3 +1,4 @@
+/// <reference path="affine.ts" />
 /// <reference path="utils.ts" />
 
 // TODO: 単位への対応　svgのmoduleを使うべきかも
@@ -154,94 +155,81 @@ class SvgDeformer {
     return id;
   }
 
-  expand(direction: Direction, delta: number): void {
+  expand(center: Point, scale: Point): void {
+    let affine = Affine.scale(scale, center);
+    let leftUp: Point, affinedLeftUp: Point, rightUp: Point, affinedRightUp: Point, leftDown: Point, affinedLeftDown: Point;
     switch (this.elem.tagName) {
       case "circle":
         // ellipse のみ存在する
         break;
       case "ellipse":
-        dirSwitch(direction, 
-          () => {
-            this.add("cx", delta / 2);
-            this.add("rx", -delta / 2);
-          },
-          () => {
-            this.add("cx", delta / 2);
-            this.add("rx", delta / 2);
-          },
-          () => {
-            this.add("cy", delta / 2);
-            this.add("ry", -delta / 2);
-          },
-          () => {
-            this.add("cy", delta / 2);
-            this.add("ry", delta / 2);
-          }
-        );
+        let c = this.getPosition();
+        let affindedC = affine.transform(c);
+        this.seta("rx", String(Math.abs(affindedC.x) - Math.abs(+this.geta("cx")) + +this.geta("rx")));
+        this.seta("ry", String(Math.abs(affindedC.y) - Math.abs(+this.geta("cy")) + +this.geta("ry")));
+        this.seta("cx", String(affindedC.x));
+        this.seta("cy", String(affindedC.y));
         break;
       case "rect":
-        dirSwitch(direction,
-          () => {
-            this.add("x", delta);
-            this.add("width", -delta);
-          },
-          () => {
-            this.add("width", delta);
-          },
-          () => {
-            this.add("y", delta);
-            this.add("height", -delta);
-          },
-          () => {
-            this.add("height", delta);
-          }
-        );
+        leftUp = this.getPosition();
+        affinedLeftUp = affine.transform(leftUp);
+        rightUp = Point.of(+this.geta("x") + +this.geta("width"), +this.geta("y"));
+        affinedRightUp = affine.transform(rightUp);
+        leftDown = Point.of(+this.geta("x"), +this.geta("y") + +this.geta("height"));
+        affinedLeftDown = affine.transform(leftDown);
+        svgroot.insertAdjacentText("afterend", `leftup: ${leftUp.toStr(",")} rightUp: ${rightUp.toStr(",")} leftDown: ${leftDown.toStr(",")}`);
+        svgroot.insertAdjacentText("afterend", `aleftup: ${affinedLeftUp.toStr(",")} arightUp: ${affinedRightUp.toStr(",")} leftDown: ${affinedLeftDown.toStr(",")}`);
+        
+        this.seta("x", String(affinedLeftUp.x));
+        this.seta("y", String(affinedLeftUp.y));
+        this.seta("width", String(Math.abs(affinedRightUp.x - affinedLeftUp.x)));
+        this.seta("height", String(Math.abs(affinedLeftDown.y - affinedLeftUp.y)));
         break;
       case "line":
-        dirSwitch(direction,
-          () => {
-            let left = +this.geta("x1") < +this.geta("x2") ? "x1" : "x2";
-            this.add(left, delta);
-          },
-          () => {
-            let right = +this.geta("x1") > +this.geta("x2") ? "x1" : "x2";
-            this.add(right, delta);
-          },
-          () => {
-            let up = +this.geta("y1") < +this.geta("y2") ? "y1" : "y2";
-            this.add(up, delta);
-          },
-          () => {
-            let down = +this.geta("y1") > +this.geta("y2") ? "y1" : "y2";
-            this.add(down, delta);
-          }
-        );
+        // dirSwitch(direction,
+        //   () => {
+        //     let left = +this.geta("x1") < +this.geta("x2") ? "x1" : "x2";
+        //     this.add(left, delta);
+        //   },
+        //   () => {
+        //     let right = +this.geta("x1") > +this.geta("x2") ? "x1" : "x2";
+        //     this.add(right, delta);
+        //   },
+        //   () => {
+        //     let up = +this.geta("y1") < +this.geta("y2") ? "y1" : "y2";
+        //     this.add(up, delta);
+        //   },
+        //   () => {
+        //     let down = +this.geta("y1") > +this.geta("y2") ? "y1" : "y2";
+        //     this.add(down, delta);
+        //   }
+        // );
         break;
       case "polyline":
       case "polygon":
-        let points = parsePoints(this.elem.getAttribute("points"));
-        let left = Math.min(...points.map(p => p.x));
-        let right = Math.max(...points.map(p => p.x));
-        let up = Math.min(...points.map(p => p.y));
-        let down = Math.max(...points.map(p => p.y));
-        dirSwitch(direction,
-          () => {
-            let newPoints = points.map(p => `${p.x + delta * (right - p.x)/(right - left)},${p.y}`).join(" ");
-            this.seta("points", newPoints);
-          },
-          () => {
-            let newPoints = points.map(p => `${p.x + delta * (1 - (right - p.x)/(right - left))},${p.y}`).join(" ");
-            this.seta("points", newPoints);
-          },
-          () => {
-            let newPoints = points.map(p => `${p.x},${p.y + delta * (down - p.y)/(down - up)}`).join(" ");
-            this.seta("points", newPoints);
-          },
-          () => {
-            let newPoints = points.map(p => `${p.x},${p.y + delta * (1 - (down - p.y)/(down - up))}`).join(" ");
-            this.seta("points", newPoints);
-          }
-        );
+        // let points = parsePoints(this.elem.getAttribute("points"));
+        // let left = Math.min(...points.map(p => p.x));
+        // let right = Math.max(...points.map(p => p.x));
+        // let up = Math.min(...points.map(p => p.y));
+        // let down = Math.max(...points.map(p => p.y));
+        // dirSwitch(direction,
+        //   () => {
+        //     let newPoints = points.map(p => `${p.x + delta * (right - p.x)/(right - left)},${p.y}`).join(" ");
+        //     this.seta("points", newPoints);
+        //   },
+        //   () => {
+        //     let newPoints = points.map(p => `${p.x + delta * (1 - (right - p.x)/(right - left))},${p.y}`).join(" ");
+        //     this.seta("points", newPoints);
+        //   },
+        //   () => {
+        //     let newPoints = points.map(p => `${p.x},${p.y + delta * (down - p.y)/(down - up)}`).join(" ");
+        //     this.seta("points", newPoints);
+        //   },
+        //   () => {
+        //     let newPoints = points.map(p => `${p.x},${p.y + delta * (1 - (down - p.y)/(down - up))}`).join(" ");
+        //     this.seta("points", newPoints);
+        //   }
+        // );
         break;
       default:
         throw `not defined SVGElement: ${this.elem.tagName}`;

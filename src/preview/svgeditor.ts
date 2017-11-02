@@ -53,16 +53,16 @@ document.onmousemove = (ev) => {
 
       // 拡大用頂点がdragTargetなら拡大適用先があるので、それの属性をいじる
       if (dragTarget.expandVertexes) {
-        let deltaX = newPosition.x - deform(dragTarget.target).getPosition().x;
-        let deltaY = newPosition.y - deform(dragTarget.target).getPosition().y;
-        let delta = {left: deltaX, right: deltaX, up: deltaY, down: deltaY};
-        // let deltaSumX = newPosition.x - dragTarget.targetInit.x;
-        // let deltaSumY = newPosition.y - dragTarget.targetInit.y;
-        // let deltaSum = {left: deltaSumX, right: deltaSumX, up: deltaSumY, down: deltaSumY};
+        let oldPosition = deform(dragTarget.target).getPosition();
         let dirs = <Direction[]>dragTarget.target.getAttribute("direction").split(" ");
-        dirs.forEach(dir => {
-          deform(dragTarget.expandVertexes.target).expand(dir, delta[dir]);
-        });
+        // 拡大の中心
+        let center = deform(
+          dragTarget.expandVertexes.vertexes.find(vertex => equals(deform(vertex).geta("direction").split(" "), dirs.map(reverse)))
+        ).getPosition();
+        // 拡大率ベクトル
+        let scale = newPosition.sub(center).div(oldPosition.sub(center));
+        deform(dragTarget.expandVertexes.target).expand(center, scale);
+
         // 拡大用頂点すべてを移動
         deform(dragTarget.expandVertexes.target).setExpandVertexes(expandVertexesGroup, dragTarget.expandVertexes.vertexes);
       }

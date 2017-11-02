@@ -12,6 +12,7 @@ export function activate(context: vscode.ExtensionContext) {
 	let previewUri = vscode.Uri.parse('css-preview://authority/css-preview');
 	let insertJs = [
 		fs.readFileSync(path.join(__dirname, "preview", "utils.js"), "UTF-8"),
+		fs.readFileSync(path.join(__dirname, "preview", "affine.js"), "UTF-8"),
 		fs.readFileSync(path.join(__dirname, "preview", "svgutils.js"), "UTF-8"),
 		fs.readFileSync(path.join(__dirname, "preview", "svgeditor.js"), "UTF-8")
 	].join("\n");

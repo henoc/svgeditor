@@ -12,6 +12,12 @@ class Point {
   toStr(sep: string): string {
     return `${this.x}${sep}${this.y}`;
   }
+  abs(): number {
+    return Math.sqrt(this.x * this.x + this.y * this.y);
+  }
+  abs2(): Point {
+    return Point.of(Math.abs(this.x), Math.abs(this.y));
+  }
   add(that: Point): Point {
     return Point.of(
       this.x + that.x,
@@ -36,6 +42,13 @@ class Point {
       this.y - y
     );
   }
+  div(that: Point): Point {
+    let rx = 0;
+    let ry = 0;
+    if (that.x !== 0) rx = this.x / that.x;
+    if (that.y !== 0) ry = this.y / that.y;
+    return Point.of(rx, ry);
+  }
 }
 
 function uuid(): string {
@@ -58,4 +71,27 @@ function dirSwitch(dir: Direction, left: () => void, right: () => void, up: () =
     case "down":
       return down();
   }
+}
+
+function reverse(dir: Direction) {
+  switch (dir) {
+    case "left":
+      return "right";
+    case "right":
+      return "left";
+    case "up":
+      return "down";
+    case "down":
+      return "up";
+  }
+}
+
+function equals(strs1: string[], strs2: string[]): boolean {
+  if (strs1.length !== strs2.length) return false;
+  let sorted1 = strs1.sort();
+  let sorted2 = strs2.sort();
+  for (let i = 0; i < strs1.length; i++) {
+    if (sorted1[i] !== sorted2[i]) return false;
+  }
+  return true;
 }
