@@ -1,6 +1,11 @@
 /// <reference path="affine.ts" />
 /// <reference path="utils.ts" />
 
+interface ElementScheme {
+  tagName: string;
+  attributes: {[name: string]: string};
+}
+
 // TODO: 単位への対応　svgのmoduleを使うべきかも
 class SvgDeformer {
   constructor(public elem: SVGElement) {
@@ -165,11 +170,15 @@ class SvgDeformer {
         break;
       case "ellipse":
         let c = this.getPosition();
-        let affindedC = affine.transform(c);
-        this.seta("rx", String(Math.abs(affindedC.x) - Math.abs(+this.geta("cx")) + +this.geta("rx")));
-        this.seta("ry", String(Math.abs(affindedC.y) - Math.abs(+this.geta("cy")) + +this.geta("ry")));
-        this.seta("cx", String(affindedC.x));
-        this.seta("cy", String(affindedC.y));
+        let affinedC = affine.transform(c);
+        let right = this.getPosition().addxy(+this.geta("rx"), 0);
+        let affinedRight = affine.transform(right);
+        let down = this.getPosition().addxy(0, +this.geta("ry"));
+        let affinedDown = affine.transform(down);
+        this.seta("rx", String(affinedRight.x - affinedC.x));
+        this.seta("ry", String(affinedDown.y - affinedC.y));
+        this.seta("cx", String(affinedC.x));
+        this.seta("cy", String(affinedC.y));
         break;
       case "rect":
         leftUp = this.getPosition();
@@ -210,6 +219,23 @@ class SvgDeformer {
    */
   add(attr: string, delta: number): void {
     this.seta(attr, String(+this.geta(attr) + delta));
+  }
+
+  extractScheme(): ElementScheme {
+    let attrs: {[name: string]: string} = {};
+    for (let i = 0; i < this.elem.attributes.length; i++) {
+      attrs[this.elem.attributes.item(i).name] = this.elem.attributes.item(i).value;
+    }
+    return {
+      tagName: this.elem.tagName,
+      attributes: attrs
+    };
+  }
+
+  insertScheme(scheme: ElementScheme): void {
+    Object.keys(scheme.attributes).forEach(name => {
+      this.seta(name, scheme.attributes[name]);
+    });
   }
 
   /**

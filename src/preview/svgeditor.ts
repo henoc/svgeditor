@@ -24,6 +24,7 @@ let dragTargets: {
   expandVertexes?: {
     target: SVGElement;
     vertexes: SVGElement[];
+    targetInitScheme: ElementScheme;
   }
 }[] | undefined = undefined;
 
@@ -53,16 +54,17 @@ document.onmousemove = (ev) => {
 
       // 拡大用頂点がdragTargetなら拡大適用先があるので、それの属性をいじる
       if (dragTarget.expandVertexes) {
-        let oldPosition = deform(dragTarget.target).getPosition();
         let dirs = <Direction[]>dragTarget.target.getAttribute("direction").split(" ");
         // 拡大の中心
         let center = deform(
           dragTarget.expandVertexes.vertexes.find(vertex => equals(deform(vertex).geta("direction").split(" "), dirs.map(reverse)))
         ).getPosition();
         // 拡大率ベクトル
-        let scale = newPosition.sub(center).div(oldPosition.sub(center));
+        let scale = newPosition.sub(center).div(dragTarget.targetInit.sub(center));
         if (Number.isNaN(scale.x)) scale.x = 1;
         if (Number.isNaN(scale.y)) scale.y = 1;
+        // 初期値に戻してから拡大を実行
+        deform(dragTarget.expandVertexes.target).insertScheme(dragTarget.expandVertexes.targetInitScheme);
         deform(dragTarget.expandVertexes.target).expand(center, scale);
 
         // 拡大用頂点すべてを移動
@@ -136,7 +138,8 @@ moveElems.forEach((moveElem, i) => {
           dragMode: mode,
           expandVertexes: {
             target: mainTarget,
-            vertexes: expandVertexes
+            vertexes: expandVertexes,
+            targetInitScheme: deform(mainTarget).extractScheme()
           }
         }];
       };
