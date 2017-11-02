@@ -158,6 +158,7 @@ class SvgDeformer {
   expand(center: Point, scale: Point): void {
     let affine = Affine.scale(scale, center);
     let leftUp: Point, affinedLeftUp: Point, rightUp: Point, affinedRightUp: Point, leftDown: Point, affinedLeftDown: Point;
+    let p: Point[], affinedP: Point[];
     switch (this.elem.tagName) {
       case "circle":
         // ellipse のみ存在する
@@ -183,50 +184,21 @@ class SvgDeformer {
         this.seta("height", String(Math.abs(affinedLeftDown.y - affinedLeftUp.y)));
         break;
       case "line":
-        // dirSwitch(direction,
-        //   () => {
-        //     let left = +this.geta("x1") < +this.geta("x2") ? "x1" : "x2";
-        //     this.add(left, delta);
-        //   },
-        //   () => {
-        //     let right = +this.geta("x1") > +this.geta("x2") ? "x1" : "x2";
-        //     this.add(right, delta);
-        //   },
-        //   () => {
-        //     let up = +this.geta("y1") < +this.geta("y2") ? "y1" : "y2";
-        //     this.add(up, delta);
-        //   },
-        //   () => {
-        //     let down = +this.geta("y1") > +this.geta("y2") ? "y1" : "y2";
-        //     this.add(down, delta);
-        //   }
-        // );
+        p = [
+          Point.of(+this.geta("x1"), +this.geta("y1")),
+          Point.of(+this.geta("x2"), +this.geta("y2"))
+        ];
+        affinedP = p.map(q => affine.transform(q));
+        this.seta("x1", String(affinedP[0].x));
+        this.seta("y1", String(affinedP[0].y));
+        this.seta("x2", String(affinedP[1].x));
+        this.seta("y2", String(affinedP[1].y));
         break;
       case "polyline":
       case "polygon":
-        // let points = parsePoints(this.elem.getAttribute("points"));
-        // let left = Math.min(...points.map(p => p.x));
-        // let right = Math.max(...points.map(p => p.x));
-        // let up = Math.min(...points.map(p => p.y));
-        // let down = Math.max(...points.map(p => p.y));
-        // dirSwitch(direction,
-        //   () => {
-        //     let newPoints = points.map(p => `${p.x + delta * (right - p.x)/(right - left)},${p.y}`).join(" ");
-        //     this.seta("points", newPoints);
-        //   },
-        //   () => {
-        //     let newPoints = points.map(p => `${p.x + delta * (1 - (right - p.x)/(right - left))},${p.y}`).join(" ");
-        //     this.seta("points", newPoints);
-        //   },
-        //   () => {
-        //     let newPoints = points.map(p => `${p.x},${p.y + delta * (down - p.y)/(down - up)}`).join(" ");
-        //     this.seta("points", newPoints);
-        //   },
-        //   () => {
-        //     let newPoints = points.map(p => `${p.x},${p.y + delta * (1 - (down - p.y)/(down - up))}`).join(" ");
-        //     this.seta("points", newPoints);
-        //   }
-        // );
+        p = parsePoints(this.geta("points"));
+        affinedP = p.map(q => affine.transform(q));
+        this.seta("points", affinedP.map(aq => aq.toStr(",")).join(" "));
         break;
       default:
         throw `not defined SVGElement: ${this.elem.tagName}`;
