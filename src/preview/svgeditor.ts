@@ -61,6 +61,8 @@ document.onmousemove = (ev) => {
         ).getPosition();
         // 拡大率ベクトル
         let scale = newPosition.sub(center).div(oldPosition.sub(center));
+        if (Number.isNaN(scale.x)) scale.x = 1;
+        if (Number.isNaN(scale.y)) scale.y = 1;
         deform(dragTarget.expandVertexes.target).expand(center, scale);
 
         // 拡大用頂点すべてを移動

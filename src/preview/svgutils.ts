@@ -177,9 +177,6 @@ class SvgDeformer {
         affinedRightUp = affine.transform(rightUp);
         leftDown = Point.of(+this.geta("x"), +this.geta("y") + +this.geta("height"));
         affinedLeftDown = affine.transform(leftDown);
-        svgroot.insertAdjacentText("afterend", `leftup: ${leftUp.toStr(",")} rightUp: ${rightUp.toStr(",")} leftDown: ${leftDown.toStr(",")}`);
-        svgroot.insertAdjacentText("afterend", `aleftup: ${affinedLeftUp.toStr(",")} arightUp: ${affinedRightUp.toStr(",")} leftDown: ${affinedLeftDown.toStr(",")}`);
-        
         this.seta("x", String(affinedLeftUp.x));
         this.seta("y", String(affinedLeftUp.y));
         this.seta("width", String(Math.abs(affinedRightUp.x - affinedLeftUp.x)));

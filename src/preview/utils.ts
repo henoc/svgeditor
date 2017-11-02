@@ -43,11 +43,7 @@ class Point {
     );
   }
   div(that: Point): Point {
-    let rx = 0;
-    let ry = 0;
-    if (that.x !== 0) rx = this.x / that.x;
-    if (that.y !== 0) ry = this.y / that.y;
-    return Point.of(rx, ry);
+    return Point.of(this.x / that.x, this.y / that.y);
   }
 }
 
