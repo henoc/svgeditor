@@ -3,6 +3,7 @@
 import * as vscode from 'vscode';
 import * as fs from "fs";
 import * as path from "path";
+import {render} from "ejs";
 
 export function activate(context: vscode.ExtensionContext) {
 
@@ -18,7 +19,7 @@ export function activate(context: vscode.ExtensionContext) {
 	};
 		
 	let insertCss = fs.readFileSync(path.join(__dirname, "..", "src", "preview", "svgeditor.css"), "UTF-8");
-	let viewer = fs.readFileSync(path.join(__dirname, "..", "src", "preview", "viewer.html"), "UTF-8");
+	let viewer = fs.readFileSync(path.join(__dirname, "..", "src", "preview", "viewer.ejs"), "UTF-8");
 
 	let editMode: "hand" | "rectangle" = "hand";
 
@@ -43,8 +44,12 @@ export function activate(context: vscode.ExtensionContext) {
 			const svg = this.editor.document.getText();
 			const js = insertJs[editMode];
 			const css = insertCss;
-			const insertItems = {svg: svg, js: js, css: css};
-			return viewer.replace(/(<!--|\/\*)\s*\$\{([a-zA-Z]+)\}\s*(-->|\*\/)/g, (all, p1, p2, p3) => insertItems[p2]);
+			const html = render(viewer, {
+				svg: svg,
+				js: js,
+				css: css
+			});
+			return html;
 		}
 	}
 
