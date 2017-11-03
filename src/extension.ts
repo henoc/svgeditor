@@ -12,10 +12,12 @@ export function activate(context: vscode.ExtensionContext) {
 	let previewUri = vscode.Uri.parse('css-preview://authority/css-preview');
 	let insertJs = [
 		fs.readFileSync(path.join(__dirname, "preview", "utils.js"), "UTF-8"),
+		fs.readFileSync(path.join(__dirname, "preview", "affine.js"), "UTF-8"),
 		fs.readFileSync(path.join(__dirname, "preview", "svgutils.js"), "UTF-8"),
 		fs.readFileSync(path.join(__dirname, "preview", "svgeditor.js"), "UTF-8")
 	].join("\n");
 	let insertCss = fs.readFileSync(path.join(__dirname, "..", "src", "preview", "svgeditor.css"), "UTF-8");
+	let viewer = fs.readFileSync(path.join(__dirname, "..", "src", "preview", "viewer.html"), "UTF-8");
 
 	class TextDocumentContentProvider implements vscode.TextDocumentContentProvider {
 		public editor: vscode.TextEditor | undefined;
@@ -42,18 +44,8 @@ export function activate(context: vscode.ExtensionContext) {
 			const svg = document.getText();
 			const js = insertJs;
 			const css = insertCss;
-			return `
-				<style type="text/css">
-					${css}
-				</style>
-				<body>
-					<div id="svgeditor-root">
-						${svg}
-					</div>
-					<script type="text/javascript">
-						${js}
-					</script>
-				</body>`;
+			const insertItems = {svg: svg, js: js, css: css};
+			return viewer.replace(/(<!--|\/\*)\s*\$\{([a-zA-Z]+)\}\s*(-->|\*\/)/g, (all, p1, p2, p3) => insertItems[p2]);
 		}
 	}
 
