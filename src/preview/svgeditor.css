@@ -1,3 +1,33 @@
+.svgeditor-button {
+  position: relative;
+  display: inline-block;
+  padding: 0.25em 0.5em;
+  text-decoration: none;
+  color: #FFF;
+  background: #fd9535;
+  border-bottom: solid 2px #d27d00;
+  border-radius: 4px;
+  box-shadow: inset 0 2px 0 rgba(255,255,255,0.2), 0 2px 2px rgba(0, 0, 0, 0.19);
+  font-weight: bold;
+  width: 16px;
+}
+
+.svgeditor-button:active {
+    border-bottom: solid 2px #fd9535;
+    box-shadow: 0 0 2px rgba(0, 0, 0, 0.30);
+}
+
+#svgeditor-root{
+  text-align: center;
+  float: left;
+  width: 70%;
+}
+
+#svgeditor-buttons {
+  float: left;
+  width: 30%
+}
+
 .svgeditor-vertex {
   fill: white;
   stroke: black;
