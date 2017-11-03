@@ -1,6 +1,6 @@
-/// <reference path="svgutils.ts" />
-/// <reference path="utils.ts" />
-/// <reference path="common.ts" />
+import { svgroot, reflection } from "./common";
+import { ElementScheme, deform } from "./svgutils";
+import { Point, uuid, Direction, equals, reverse } from "./utils";
 
 // This file is readed only in hand mode
 

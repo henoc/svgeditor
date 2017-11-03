@@ -8,18 +8,15 @@ import {render} from "ejs";
 export function activate(context: vscode.ExtensionContext) {
 
 	let previewUri = vscode.Uri.parse('svgeditor://authority/svgeditor');
-	let readFilesInPreview = 
-		(filename: string) => fs.readFileSync(path.join(__dirname, "preview", filename), "UTF-8");
+	let readResource = 
+		(filename: string) => fs.readFileSync(path.join(__dirname, "..", "resources", filename), "UTF-8");
 	let insertJs = {
-		hand: ["utils.js", "affine.js", "svgutils.js", "common.js", "handMode.js"]
-		.map(x => readFilesInPreview(x))
-		.join("\n"),
-		rectangle: ["utils.js", "affine.js", "svgutils.js", "common.js", "rectangleMode.js"].map(x => readFilesInPreview(x))
-		.join("\n")
+		hand: readResource("handMode_bundle.js"),
+		rectangle: readResource("rectangleMode_bundle.js")
 	};
 		
-	let insertCss = fs.readFileSync(path.join(__dirname, "..", "src", "preview", "svgeditor.css"), "UTF-8");
-	let viewer = fs.readFileSync(path.join(__dirname, "..", "src", "preview", "viewer.ejs"), "UTF-8");
+	let insertCss = readResource("svgeditor.css");
+	let viewer = readResource("viewer.ejs");
 
 	let editMode: "hand" | "rectangle" = "hand";
 

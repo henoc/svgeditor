@@ -1,8 +1,6 @@
-/// <reference path="../src/preview/affine.ts" />
-
-let test = require("ava").test;
-let fs = require("fs");
-let path = require("path");
+import { Point } from "./../preview/utils";
+import { Affine, Vec3 } from "./../preview/affine";
+import { test } from "ava";
 
 let affine = new Affine(
   [2, 0, 0],

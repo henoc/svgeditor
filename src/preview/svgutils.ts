@@ -1,7 +1,7 @@
-/// <reference path="affine.ts" />
-/// <reference path="utils.ts" />
+import { Affine } from "./affine";
+import {Point, Direction, uuid} from "./utils";
 
-interface ElementScheme {
+export interface ElementScheme {
   tagName: string;
   attributes: {[name: string]: string};
 }
@@ -279,14 +279,14 @@ class SvgDeformer {
   }
 }
 
-function deform(elem: SVGElement): SvgDeformer {
+export function deform(elem: SVGElement): SvgDeformer {
   return new SvgDeformer(elem);
 }
 
 /**
  * parse "x1,y1 x2,y2 ... xn,yn" to `Point[]`
  */
-function parsePoints(pointsProperty: string): Point[] {
+export function parsePoints(pointsProperty: string): Point[] {
   const pair = /(-?[0-9.]+)\s*,\s*(-?[0-9.]+)/g;
   const points = [];
   let matched: RegExpExecArray | null = null;

@@ -45,15 +45,17 @@
   },
   "scripts": {
     "vscode:prepublish": "tsc -p ./",
-    "compile": "tsc -watch -p ./",
+    "compile": "tsc -p ./ && npm run handMode && npm run rectangleMode",
+    "handMode": "browserify -e out/preview/common.js -e out/preview/handMode.js -o resources/handMode_bundle.js",
+    "rectangleMode": "browserify -e out/preview/common.js -e out/preview/rectangleMode.js -o resources/rectangleMode_bundle.js",
     "postinstall": "node ./node_modules/vscode/bin/install",
     "tslint": "tslint -c tslint.json src/extension.ts",
-    "pretest": "tsc test/*.ts -m amd --outFile out/test.js",
-    "test": "ava out/test.js --verbose"
+    "test": "npm run compile && ava out/test --verbose"
   },
   "devDependencies": {
     "@types/node": "*",
     "ava": "^0.23.0",
+    "browserify": "^14.5.0",
     "typescript": "^2.1.4",
     "vscode": "^1.0.0"
   },
