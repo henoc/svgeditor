@@ -1,6 +1,6 @@
-/// <reference path="utils.ts" />
+import {Point} from "./utils";
 
-type Vec3 = [number, number, number];
+export type Vec3 = [number, number, number];
 
 function innerProd(v1: Vec3, v2: Vec3): number {
   return v1[0] * v2[0] + v1[1] * v2[1] + v1[2] * v2[2];
@@ -50,7 +50,7 @@ class Matrix3 {
   }
 }
 
-class Affine extends Matrix3 {
+export class Affine extends Matrix3 {
   constructor(r1: Vec3, r2: Vec3) {
     super(r1, r2, [0, 0, 1]);
   }

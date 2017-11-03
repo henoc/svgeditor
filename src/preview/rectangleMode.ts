@@ -1,6 +1,6 @@
-/// <reference path="utils.ts" />
-/// <reference path="svgutils.ts" />
-/// <reference path="common.ts" />
+import { svgroot, reflection } from "./common";
+import { Point, uuid } from "./utils";
+import { deform } from "./svgutils";
 
 interface Rectangle {
   id: string;

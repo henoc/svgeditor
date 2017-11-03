@@ -1,4 +1,4 @@
-class Point {
+export class Point {
   constructor(public x: number, public y: number) {}
   static of(x: number, y :number): Point {
     return new Point(x, y);
@@ -47,16 +47,16 @@ class Point {
   }
 }
 
-function uuid(): string {
+export function uuid(): string {
   const S4 = () => {
     return (((1 + Math.random()) * 0x10000) | 0).toString(16).substring(1);
   }
   return (S4() + S4() + "-" + S4() + "-" + S4() + "-" + S4() + "-" + S4() + S4() + S4());
 }
 
-type Direction = "left" | "up" | "right" | "down";
+export type Direction = "left" | "up" | "right" | "down";
 
-function dirSwitch(dir: Direction, left: () => void, right: () => void, up: () => void, down: () => void): void {
+export function dirSwitch(dir: Direction, left: () => void, right: () => void, up: () => void, down: () => void): void {
   switch (dir) {
     case "left":
       return left();
@@ -69,7 +69,7 @@ function dirSwitch(dir: Direction, left: () => void, right: () => void, up: () =
   }
 }
 
-function reverse(dir: Direction) {
+export function reverse(dir: Direction) {
   switch (dir) {
     case "left":
       return "right";
@@ -82,7 +82,7 @@ function reverse(dir: Direction) {
   }
 }
 
-function equals(strs1: string[], strs2: string[]): boolean {
+export function equals(strs1: string[], strs2: string[]): boolean {
   if (strs1.length !== strs2.length) return false;
   let sorted1 = strs1.sort();
   let sorted2 = strs2.sort();
