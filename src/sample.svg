@@ -1,0 +1,11 @@
+<?xml version="1.0"?>
+<svg>
+  <style type="text/css"><![CDATA[
+    rect {
+      fill: white;
+      stroke: red;
+      stroke-width: 2px;
+    }
+  ]]></style>
+  <circle cx="100" cy="100" r="50"></circle>
+</svg>

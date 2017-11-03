@@ -1,12 +1,9 @@
-//
-// previewHtmlにsvgの後に挿入されるjsの元になるts
-//
-
 /// <reference path="svgutils.ts" />
 /// <reference path="utils.ts" />
+/// <reference path="common.ts" />
 
-let editorRoot = document.getElementById("svgeditor-root");
-let svgroot = editorRoot.firstElementChild;
+// This file is readed only in hand mode
+
 let expandVertexesGroupId = uuid();
 svgroot.insertAdjacentHTML("beforeend", `<g class="svgeditor-others" id="${expandVertexesGroupId}"></g>`);
 let expandVertexesGroup = document.getElementById(expandVertexesGroupId);
@@ -30,13 +27,7 @@ let dragTargets: {
 
 document.onmouseup = (ev) => {
   // 変更されたHTML（のSVG部分）をエディタに反映させる
-  if (dragTargets !== undefined) {
-    let args = [svgroot.outerHTML];
-    window.parent.postMessage({
-      command: 'did-click-link',
-      data: `command:extension.reflectToEditor?${encodeURIComponent(JSON.stringify(args))}`
-    }, 'file://');
-  }
+  if (dragTargets) reflection();
   dragTargets = undefined;
 }
 
@@ -77,21 +68,6 @@ document.onmousemove = (ev) => {
 }
 
 const moveElems: SVGElement[] = [];
-
-// 前処理として circle をすべて ellipse にする
-let circles = document.getElementsByTagName("circle");
-for (let i = 0; i < circles.length; i++) {
-  circles.item(i).outerHTML = circles.item(i).outerHTML.replace("circle", "ellipse");
-}
-let ellipses = document.getElementsByTagName("ellipse");
-for (let i = 0; i < ellipses.length; i++) {
-  let ellipse = ellipses.item(i);
-  if (ellipse.hasAttribute("r")) {
-    ellipse.setAttribute("rx", ellipse.getAttribute("r"));
-    ellipse.setAttribute("ry", ellipse.getAttribute("r"));
-    ellipse.removeAttribute("r");
-  }
-}
 
 traverse(svgroot, node => {
   // svgrootは除く

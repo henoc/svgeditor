@@ -24,21 +24,21 @@
     "vscode": "^0.10.7"
   },
   "activationEvents": [
-    "onCommand:extension.showCssPropertyPreview"
+    "onCommand:extension.openSvgEditor"
   ],
   "main": "./out/extension",
   "contributes": {
     "commands": [
       {
-        "command": "extension.showCssPropertyPreview",
-        "title": "Show CSS Properties Preview"
+        "command": "extension.openSvgEditor",
+        "title": "Open SVG Editor"
       }
     ],
     "menus": {
       "editor/title": [
         {
-          "command": "extension.showCssPropertyPreview",
-          "when": "resourceLangId == css"
+          "command": "extension.openSvgEditor",
+          "when": "resourceLangId == svg"
         }
       ]
     }
