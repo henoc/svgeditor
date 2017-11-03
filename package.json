@@ -58,6 +58,7 @@
     "vscode": "^1.0.0"
   },
   "dependencies": {
-    "eslint": "^4.10.0"
+    "@types/ejs": "^2.3.33",
+    "ejs": "^2.5.7"
   }
 }
