@@ -46,6 +46,7 @@ export function activate(context: vscode.ExtensionContext) {
 				js: js,
 				css: css
 			});
+			fs.writeFileSync(path.join(__dirname, "..", "log", "log.html"), html);
 			return html;
 		}
 	}

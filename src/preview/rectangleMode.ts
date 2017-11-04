@@ -1,9 +1,10 @@
-import { svgroot, reflection } from "./common";
+import { svgroot, editorRoot, reflection } from "./common";
 import { Point, uuid } from "./utils";
 import { deform } from "./svgutils";
+import * as SVG from "svgjs";
 
 interface Rectangle {
-  id: string;
+  elem: SVG.Rect;
   start: Point;
   end: Point;
 }
@@ -13,29 +14,24 @@ let rectangle: undefined | Rectangle = undefined;
 document.onmousedown = (ev: MouseEvent) => {
   ev.stopPropagation();
 
-  let x = ev.clientX - svgroot.clientLeft;
-  let y = ev.clientY - svgroot.clientTop;
+  let x = ev.clientX - svgroot.node.clientLeft;
+  let y = ev.clientY - svgroot.node.clientTop;
   rectangle = {
-    id: uuid(),
+    elem: editorRoot.rect(0, 0).center(x, y),
     start: Point.of(x, y),
     end: Point.of(x, y)
   };
-  let rectSvgText = `<rect x="${x}" y="${y}" width="0" height="0" id="${rectangle.id}"/>\n`;
-  svgroot.insertAdjacentHTML("beforeend",rectSvgText);
 }
 
 document.onmousemove = (ev: MouseEvent) => {
   ev.stopPropagation();
 
   if (rectangle) {
-    rectangle.end = Point.of(ev.clientX - svgroot.clientLeft, ev.clientY - svgroot.clientTop);
-    let rectElem = <SVGElement><any>document.getElementById(rectangle.id);
+    rectangle.end = Point.of(ev.clientX - svgroot.node.clientLeft, ev.clientY - svgroot.node.clientTop);
     let leftUp = Point.of(Math.min(rectangle.start.x, rectangle.end.x), Math.min(rectangle.start.y, rectangle.end.y));
     let rightDown = Point.of(Math.max(rectangle.start.x, rectangle.end.x), Math.max(rectangle.start.y, rectangle.end.y));
-    deform(rectElem).seta("x", String(leftUp.x));
-    deform(rectElem).seta("y", String(leftUp.y));
-    deform(rectElem).seta("width", String(rightDown.x - leftUp.x));
-    deform(rectElem).seta("height", String(rightDown.y - leftUp.y));
+    rectangle.elem.move(leftUp.x, leftUp.y);
+    rectangle.elem.size(rightDown.x - leftUp.x, rightDown.y - leftUp.y);
   }
 }
 
@@ -43,7 +39,7 @@ document.onmouseup = (ev: MouseEvent) => {
   ev.stopPropagation();
 
   if (rectangle) {
-    document.getElementById(rectangle.id).removeAttribute("id");
+    rectangle.elem.attr("id", undefined);
     reflection();
   }
   rectangle = undefined;

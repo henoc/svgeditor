@@ -1,12 +1,12 @@
-import { svgroot, reflection } from "./common";
+import { editorRoot, svgroot, reflection } from "./common";
 import { ElementScheme, deform } from "./svgutils";
-import { Point, uuid, Direction, equals, reverse } from "./utils";
+import { Point, Direction, equals, reverse } from "./utils";
+
+import * as SVG from "svgjs";
 
 // This file is readed only in hand mode
 
-let expandVertexesGroupId = uuid();
-svgroot.insertAdjacentHTML("beforeend", `<g class="svgeditor-others" id="${expandVertexesGroupId}"></g>`);
-let expandVertexesGroup = document.getElementById(expandVertexesGroupId);
+let expandVertexesGroup = editorRoot.group().addClass("svgeditor-expandVertexes");
 
 type DragMode = "free" | "vertical" | "horizontal";
 
@@ -14,13 +14,13 @@ type DragMode = "free" | "vertical" | "horizontal";
  * 編集ノードの移動用
  */
 let dragTargets: {
-  target: SVGElement;
+  target: SVG.Element;
   targetFromCursor: Point;
   targetInit: Point;
   dragMode: DragMode;
   expandVertexes?: {
-    target: SVGElement;
-    vertexes: SVGElement[];
+    target: SVG.Element;
+    vertexes: SVG.Element[];
     targetInitScheme: ElementScheme;
   }
 }[] | undefined = undefined;
@@ -45,60 +45,59 @@ document.onmousemove = (ev) => {
 
       // 拡大用頂点がdragTargetなら拡大適用先があるので、それの属性をいじる
       if (dragTarget.expandVertexes) {
-        let dirs = <Direction[]>dragTarget.target.getAttribute("direction").split(" ");
+        let dirs = <Direction[]>dragTarget.target.attr("direction").split(" ");
         // 拡大の中心
-        let center = deform(
-          dragTarget.expandVertexes.vertexes.find(vertex => equals(deform(vertex).geta("direction").split(" "), dirs.map(reverse)))
-        ).getPosition();
+        let center = (() => {
+          let vertex = dragTarget.expandVertexes.vertexes.find(vertex => equals(vertex.attr("direction").split(" "), dirs.map(reverse)));
+          return Point.of(vertex.cx(), vertex.cy());
+        })();
         // 拡大率ベクトル
         let scale = newPosition.sub(center).div(dragTarget.targetInit.sub(center));
         if (Number.isNaN(scale.x)) scale.x = 1;
         if (Number.isNaN(scale.y)) scale.y = 1;
         // 初期値に戻してから拡大を実行
-        deform(dragTarget.expandVertexes.target).insertScheme(dragTarget.expandVertexes.targetInitScheme);
+        dragTarget.expandVertexes.target.attr(dragTarget.expandVertexes.targetInitScheme.attributes);
         deform(dragTarget.expandVertexes.target).expand(center, scale);
 
         // 拡大用頂点すべてを移動
         deform(dragTarget.expandVertexes.target).setExpandVertexes(expandVertexesGroup, dragTarget.expandVertexes.vertexes);
       }
 
-      deform(dragTarget.target).setPosition(newPosition);
+      dragTarget.target.move(newPosition.x, newPosition.y);
     });
   }
 }
 
-const moveElems: SVGElement[] = [];
+const moveElems: SVG.Element[] = [];
 
-traverse(svgroot, node => {
-  // svgrootは除く
-  if (node instanceof SVGElement && node.tagName !== "svg") {
-    moveElems.push(node);
-  }
+editorRoot.each((i, elems) => {
+  let elem = elems[i];
+  moveElems.push(elem);
 });
 
 moveElems.forEach((moveElem, i) => {
-  moveElem.onmousedown = (ev: MouseEvent) => {
+  moveElem.node.onmousedown = (ev: MouseEvent) => {
     // イベント伝搬の終了
     ev.stopPropagation();
     // 既存の拡大用頂点を消す
-    let vertexes = document.getElementsByClassName("svgeditor-vertex");
-    while (vertexes.length !== 0) {
-      vertexes.item(0).remove();
-    }
+    let vertexes = editorRoot.select(".svgeditor-vertex");
+    vertexes.each((i, elems) => {
+      elems[i].remove();
+    });
 
     let mainTarget = moveElem;
     // 拡大用頂点を出す
     let ids = deform(mainTarget).setExpandVertexes(expandVertexesGroup);
-    let targets: SVGElement[] = [mainTarget];
-    let expandVertexes = ids.map(id => <SVGElement><any>document.getElementById(id));
+    let targets: SVG.Set = editorRoot.set([mainTarget]);
+    let expandVertexes = ids.map(id => editorRoot.select(`#${id}`).get(0));
     for (let vertex of expandVertexes) {
-      targets.push(vertex);
+      targets.add(vertex);
       // 拡大用頂点のクリック時のdragTargets登録
-      vertex.onmousedown = (ev: MouseEvent) => {
+      vertex.node.onmousedown = (ev: MouseEvent) => {
         // イベント伝搬の終了
         ev.stopPropagation();
 
-        let dirs = vertex.getAttribute("direction").split(" ");
+        let dirs = vertex.attr("direction").split(" ");
         let mode: DragMode = "free";
         if (dirs.length === 1) {
           if (dirs.indexOf(<Direction>"left") !== -1 || dirs.indexOf(<Direction>"right") !== -1) {
@@ -109,8 +108,8 @@ moveElems.forEach((moveElem, i) => {
         }
         dragTargets = [{
           target: vertex,
-          targetFromCursor: deform(vertex).getPosition().sub(Point.of(ev.clientX, ev.clientY)),
-          targetInit: deform(vertex).getPosition(),
+          targetFromCursor: deform(vertex).getLeftUp().sub(Point.of(ev.clientX, ev.clientY)),
+          targetInit: deform(vertex).getLeftUp(),
           dragMode: mode,
           expandVertexes: {
             target: mainTarget,
@@ -120,20 +119,16 @@ moveElems.forEach((moveElem, i) => {
         }];
       };
     }
-    dragTargets = targets.map(target => {
-      return {
+    dragTargets = [];
+    targets.each((i, elems) => {
+      let target = elems[i];
+      dragTargets.push({
         target: target,
-        targetFromCursor: deform(target).getPosition().sub(Point.of(ev.clientX, ev.clientY)),
-        targetInit: deform(target).getPosition(),
+        targetFromCursor: Point.of(target.x(), target.y()).sub(Point.of(ev.clientX, ev.clientY)),
+        targetInit: Point.of(target.x(), target.y()),
         dragMode: <DragMode>"free"
-      };
+      });
     });
   };
 });
 
-function traverse(node: Element, fn: (node: Element) => void): void {
-  fn(node);
-  for(let i = 0; i < node.children.length; i++) {
-    fn(node.children.item(i));
-  }
-}
