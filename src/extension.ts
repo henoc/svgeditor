@@ -4,6 +4,7 @@ import * as vscode from 'vscode';
 import * as fs from "fs";
 import * as path from "path";
 import {render} from "ejs";
+let htmlPretty = require("html");
 
 export function activate(context: vscode.ExtensionContext) {
 
@@ -12,13 +13,14 @@ export function activate(context: vscode.ExtensionContext) {
 		(filename: string) => fs.readFileSync(path.join(__dirname, "..", "resources", filename), "UTF-8");
 	let insertJs = {
 		hand: readResource("handMode_bundle.js"),
-		rectangle: readResource("rectangleMode_bundle.js")
+		rectangle: readResource("rectangleMode_bundle.js"),
+		ellipse: readResource("ellipseMode_bundle.js")
 	};
 		
 	let insertCss = readResource("svgeditor.css");
 	let viewer = readResource("viewer.ejs");
 
-	let editMode: "hand" | "rectangle" = "hand";
+	let editMode: "hand" | "rectangle" | "ellipse" = "hand";
 
 	class TextDocumentContentProvider implements vscode.TextDocumentContentProvider {
 		public editor: vscode.TextEditor | undefined;
@@ -77,6 +79,10 @@ export function activate(context: vscode.ExtensionContext) {
 		editMode = "rectangle";
 		provider.update(previewUri);
 	});
+	vscode.commands.registerCommand("extension.ellipseMode", () => {
+		editMode = "ellipse";
+		provider.update(previewUri);
+	})
 	
 	context.subscriptions.push(...disposables);
 
@@ -85,7 +91,7 @@ export function activate(context: vscode.ExtensionContext) {
 	 */
 	vscode.commands.registerCommand("extension.reflectToEditor", (text: string) => {
 		provider.editor.edit(editbuilder => {
-			editbuilder.replace(allRange(provider.editor), text);
+			editbuilder.replace(allRange(provider.editor), htmlPretty.prettyPrint(text, {indent_size: 2}));
 		});
 	});
 

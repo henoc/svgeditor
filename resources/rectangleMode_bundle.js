@@ -5618,7 +5618,6 @@ document.onmousemove = function (ev) {
 document.onmouseup = function (ev) {
     ev.stopPropagation();
     if (rectangle) {
-        rectangle.elem.attr("id", undefined);
         common_1.reflection();
     }
     rectangle = undefined;

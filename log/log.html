@@ -37,9 +37,39 @@
 </style>
 <body>
   <div id="svgeditor-root">
-    <svg height="180" width="500">
-  <polyline points="0,40 40,40 40,80 80,80 80,120 120,120 120,160"
-  style="fill:white;stroke:red;stroke-width:4" />
+    <svg id="SvgjsSvg1001" width="100%" height="100%" xmlns="http://www.w3.org/2000/svg"
+version="1.1" xmlns:xlink="http://www.w3.org/1999/xlink" xmlns:svgjs="http://svgjs.com/svgjs">
+  <defs id="SvgjsDefs1002"></defs>
+  <defs id="SvgjsDefs1002"></defs>
+  <style type="text/css">
+    rect {
+      fill: white;
+      stroke: red;
+      stroke-width: 2px;
+    }
+  </style>
+  <ellipse cx="100" cy="100" r="50" rx="50" ry="50"></ellipse>
+  <polyline points="142,13 182,13 182,53 222,53 222,93 262,93 262,133"
+  style="fill:white;stroke:red;stroke-width:4"></polyline>
+  <g id="SvgjsG1010" class="svgeditor-expandVertexes">
+    <ellipse id="SvgjsCircle1012" r="5" cx="142" cy="13" direction="up left"
+    class="svgeditor-vertex" rx="5" ry="5"></ellipse>
+    <ellipse id="SvgjsCircle1013" r="5" cx="202" cy="13" direction="up"
+    class="svgeditor-vertex" rx="5" ry="5"></ellipse>
+    <ellipse id="SvgjsCircle1014" r="5" cx="262" cy="13" direction="up right"
+    class="svgeditor-vertex" rx="5" ry="5"></ellipse>
+    <ellipse id="SvgjsCircle1015" r="5" cx="142" cy="73" direction="left"
+    class="svgeditor-vertex" rx="5" ry="5"></ellipse>
+    <ellipse id="SvgjsCircle1016" r="5" cx="262" cy="73" direction="right"
+    class="svgeditor-vertex" rx="5" ry="5"></ellipse>
+    <ellipse id="SvgjsCircle1017" r="5" cx="142" cy="133" direction="down left"
+    class="svgeditor-vertex" rx="5" ry="5"></ellipse>
+    <ellipse id="SvgjsCircle1018" r="5" cx="202" cy="133" direction="down"
+    class="svgeditor-vertex" rx="5" ry="5"></ellipse>
+    <ellipse id="SvgjsCircle1019" r="5" cx="262" cy="133" direction="down right"
+    class="svgeditor-vertex" rx="5" ry="5"></ellipse>
+  </g>
+  <ellipse id="SvgjsEllipse1025" rx="110.5" ry="56" cx="198" cy="87.5"></ellipse>
 </svg>
   </div>
   <div id="svgeditor-buttons">
@@ -47,8 +77,8 @@
       <br>
       <a href="command:extension.handMode" class="svgeditor-button">👈</a><br>
       <a href="command:extension.rectangleMode" class="svgeditor-button">❏</a><br>
-      <a class="svgeditor-button" onclick='changeMode("ellipse")'>⭕</a><br>
-      <a class="svgeditor-button" onclick='changeMode("polygon")'>☆</a>
+      <a href="command:extension.ellipseMode" class="svgeditor-button">⭕</a><br>
+      <a href="command:extension.polygonMode" class="svgeditor-button" onclick='changeMode("polygon")'>☆</a>
     </p>
   </div>
   <script type="text/javascript">

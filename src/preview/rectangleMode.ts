@@ -39,7 +39,6 @@ document.onmouseup = (ev: MouseEvent) => {
   ev.stopPropagation();
 
   if (rectangle) {
-    rectangle.elem.attr("id", undefined);
     reflection();
   }
   rectangle = undefined;
