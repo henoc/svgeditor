@@ -19,13 +19,23 @@
 
 #svgeditor-root{
   text-align: center;
-  float: left;
-  width: 70%;
+  width: 100%;
 }
 
 #svgeditor-buttons {
-  float: left;
-  width: 30%
+  width: 100%;
+}
+
+.svgeditor-property {
+  width: 20%;
+  padding: 0.5em 1em;
+  margin: 2em 0;
+  background: #f0f7ff;
+  border: dashed 2px #5b8bd0;
+}
+
+.svgeditor-disable {
+  display: none;
 }
 
 .svgeditor-vertex {

@@ -27,7 +27,11 @@ let dragTargets: {
 
 document.onmouseup = (ev) => {
   // 変更されたHTML（のSVG部分）をエディタに反映させる
-  if (dragTargets) reflection();
+  if (dragTargets) reflection(() => {
+    expandVertexesGroup.remove();
+  }, () => {
+    svgroot.add(expandVertexesGroup);
+  });
   dragTargets = undefined;
 }
 

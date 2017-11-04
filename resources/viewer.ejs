@@ -2,17 +2,21 @@
   <%- css %>
 </style>
 <body>
+  <div id="svgeditor-buttons">
+    <p>
+      <a href="command:extension.handMode" class="svgeditor-button">👈</a>
+      <a href="command:extension.rectangleMode" class="svgeditor-button">❏</a>
+      <a href="command:extension.ellipseMode" class="svgeditor-button">⭕</a>
+      <a href="command:extension.polygonMode" class="svgeditor-button" onclick='changeMode("polygon")'>☆</a>
+    </p>
+  </div>
   <div id="svgeditor-root">
     <%- svg %>
   </div>
-  <div id="svgeditor-buttons">
-    <p>
-      <br>
-      <a href="command:extension.handMode" class="svgeditor-button">👈</a><br>
-      <a href="command:extension.rectangleMode" class="svgeditor-button">❏</a><br>
-      <a href="command:extension.ellipseMode" class="svgeditor-button">⭕</a><br>
-      <a href="command:extension.polygonMode" class="svgeditor-button" onclick='changeMode("polygon")'>☆</a>
-    </p>
+  <div id="svgeditor-properties">
+    <div class="svgeditor-property">
+      rgba
+    </div>
   </div>
   <script type="text/javascript">
     <%- js %>

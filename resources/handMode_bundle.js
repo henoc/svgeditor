@@ -5660,8 +5660,12 @@ function command(name, args) {
     }, 'file://');
 }
 exports.command = command;
-function reflection() {
+function reflection(preprocess, postprocess) {
+    if (preprocess)
+        preprocess();
     command("extension.reflectToEditor", [exports.svgroot.node.outerHTML]);
+    if (postprocess)
+        postprocess();
 }
 exports.reflection = reflection;
 
@@ -5680,7 +5684,11 @@ var dragTargets = undefined;
 document.onmouseup = function (ev) {
     // 変更されたHTML（のSVG部分）をエディタに反映させる
     if (dragTargets)
-        common_1.reflection();
+        common_1.reflection(function () {
+            expandVertexesGroup.remove();
+        }, function () {
+            common_1.svgroot.add(expandVertexesGroup);
+        });
     dragTargets = undefined;
 };
 document.onmousemove = function (ev) {

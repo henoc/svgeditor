@@ -5584,8 +5584,12 @@ function command(name, args) {
     }, 'file://');
 }
 exports.command = command;
-function reflection() {
+function reflection(preprocess, postprocess) {
+    if (preprocess)
+        preprocess();
     command("extension.reflectToEditor", [exports.svgroot.node.outerHTML]);
+    if (postprocess)
+        postprocess();
 }
 exports.reflection = reflection;
 

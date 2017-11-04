@@ -20,13 +20,23 @@
 
 #svgeditor-root{
   text-align: center;
-  float: left;
-  width: 70%;
+  width: 100%;
 }
 
 #svgeditor-buttons {
-  float: left;
-  width: 30%
+  width: 100%;
+}
+
+.svgeditor-property {
+  width: 20%;
+  padding: 0.5em 1em;
+  margin: 2em 0;
+  background: #f0f7ff;
+  border: dashed 2px #5b8bd0;
+}
+
+.svgeditor-disable {
+  display: none;
 }
 
 .svgeditor-vertex {
@@ -36,50 +46,34 @@
 }
 </style>
 <body>
+  <div id="svgeditor-buttons">
+    <p>
+      <a href="command:extension.handMode" class="svgeditor-button">👈</a>
+      <a href="command:extension.rectangleMode" class="svgeditor-button">❏</a>
+      <a href="command:extension.ellipseMode" class="svgeditor-button">⭕</a>
+      <a href="command:extension.polygonMode" class="svgeditor-button" onclick='changeMode("polygon")'>☆</a>
+    </p>
+  </div>
   <div id="svgeditor-root">
-    <svg id="SvgjsSvg1001" width="100%" height="100%" xmlns="http://www.w3.org/2000/svg"
-version="1.1" xmlns:xlink="http://www.w3.org/1999/xlink" xmlns:svgjs="http://svgjs.com/svgjs">
-  <defs id="SvgjsDefs1002"></defs>
-  <defs id="SvgjsDefs1002"></defs>
-  <style type="text/css">
+    <?xml version="1.0"?>
+<svg>
+  <style type="text/css"><![CDATA[
     rect {
       fill: white;
       stroke: red;
       stroke-width: 2px;
     }
-  </style>
-  <ellipse cx="100" cy="100" r="50" rx="50" ry="50"></ellipse>
-  <polyline points="142,13 182,13 182,53 222,53 222,93 262,93 262,133"
-  style="fill:white;stroke:red;stroke-width:4"></polyline>
-  <g id="SvgjsG1010" class="svgeditor-expandVertexes">
-    <ellipse id="SvgjsCircle1012" r="5" cx="142" cy="13" direction="up left"
-    class="svgeditor-vertex" rx="5" ry="5"></ellipse>
-    <ellipse id="SvgjsCircle1013" r="5" cx="202" cy="13" direction="up"
-    class="svgeditor-vertex" rx="5" ry="5"></ellipse>
-    <ellipse id="SvgjsCircle1014" r="5" cx="262" cy="13" direction="up right"
-    class="svgeditor-vertex" rx="5" ry="5"></ellipse>
-    <ellipse id="SvgjsCircle1015" r="5" cx="142" cy="73" direction="left"
-    class="svgeditor-vertex" rx="5" ry="5"></ellipse>
-    <ellipse id="SvgjsCircle1016" r="5" cx="262" cy="73" direction="right"
-    class="svgeditor-vertex" rx="5" ry="5"></ellipse>
-    <ellipse id="SvgjsCircle1017" r="5" cx="142" cy="133" direction="down left"
-    class="svgeditor-vertex" rx="5" ry="5"></ellipse>
-    <ellipse id="SvgjsCircle1018" r="5" cx="202" cy="133" direction="down"
-    class="svgeditor-vertex" rx="5" ry="5"></ellipse>
-    <ellipse id="SvgjsCircle1019" r="5" cx="262" cy="133" direction="down right"
-    class="svgeditor-vertex" rx="5" ry="5"></ellipse>
-  </g>
-  <ellipse id="SvgjsEllipse1025" rx="110.5" ry="56" cx="198" cy="87.5"></ellipse>
+  ]]></style>
+  <circle cx="100" cy="100" r="50"></circle>
+  <polyline points="0,40 40,40 40,80 80,80 80,120 120,120 120,160"
+  style="fill:white;stroke:red;stroke-width:4" />
 </svg>
+
   </div>
-  <div id="svgeditor-buttons">
-    <p>
-      <br>
-      <a href="command:extension.handMode" class="svgeditor-button">👈</a><br>
-      <a href="command:extension.rectangleMode" class="svgeditor-button">❏</a><br>
-      <a href="command:extension.ellipseMode" class="svgeditor-button">⭕</a><br>
-      <a href="command:extension.polygonMode" class="svgeditor-button" onclick='changeMode("polygon")'>☆</a>
-    </p>
+  <div id="svgeditor-properties">
+    <div class="svgeditor-property">
+      rgba
+    </div>
   </div>
   <script type="text/javascript">
     (function e(t,n,r){function s(o,u){if(!n[o]){if(!t[o]){var a=typeof require=="function"&&require;if(!u&&a)return a(o,!0);if(i)return i(o,!0);var f=new Error("Cannot find module '"+o+"'");throw f.code="MODULE_NOT_FOUND",f}var l=n[o]={exports:{}};t[o][0].call(l.exports,function(e){var n=t[o][1][e];return s(n?n:e)},l,l.exports,e,t,n,r)}return n[o].exports}var i=typeof require=="function"&&require;for(var o=0;o<r.length;o++)s(r[o]);return s})({1:[function(require,module,exports){
@@ -5744,8 +5738,12 @@ function command(name, args) {
     }, 'file://');
 }
 exports.command = command;
-function reflection() {
+function reflection(preprocess, postprocess) {
+    if (preprocess)
+        preprocess();
     command("extension.reflectToEditor", [exports.svgroot.node.outerHTML]);
+    if (postprocess)
+        postprocess();
 }
 exports.reflection = reflection;
 
@@ -5764,7 +5762,11 @@ var dragTargets = undefined;
 document.onmouseup = function (ev) {
     // 変更されたHTML（のSVG部分）をエディタに反映させる
     if (dragTargets)
-        common_1.reflection();
+        common_1.reflection(function () {
+            expandVertexesGroup.remove();
+        }, function () {
+            common_1.svgroot.add(expandVertexesGroup);
+        });
     dragTargets = undefined;
 };
 document.onmousemove = function (ev) {

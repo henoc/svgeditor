@@ -14,13 +14,14 @@ export function activate(context: vscode.ExtensionContext) {
 	let insertJs = {
 		hand: readResource("handMode_bundle.js"),
 		rectangle: readResource("rectangleMode_bundle.js"),
-		ellipse: readResource("ellipseMode_bundle.js")
+		ellipse: readResource("ellipseMode_bundle.js"),
+		polygon: readResource("polygonMode_bundle.js")
 	};
 		
 	let insertCss = readResource("svgeditor.css");
 	let viewer = readResource("viewer.ejs");
 
-	let editMode: "hand" | "rectangle" | "ellipse" = "hand";
+	let editMode: "hand" | "rectangle" | "ellipse" | "polygon" = "hand";
 
 	class TextDocumentContentProvider implements vscode.TextDocumentContentProvider {
 		public editor: vscode.TextEditor | undefined;
@@ -82,7 +83,11 @@ export function activate(context: vscode.ExtensionContext) {
 	vscode.commands.registerCommand("extension.ellipseMode", () => {
 		editMode = "ellipse";
 		provider.update(previewUri);
-	})
+	});
+	vscode.commands.registerCommand("extension.polygonMode", () => {
+		editMode = "polygon";
+		provider.update(previewUri);
+	});
 	
 	context.subscriptions.push(...disposables);
 
@@ -95,6 +100,7 @@ export function activate(context: vscode.ExtensionContext) {
 		});
 	});
 
+	
 }
 
 function allRange(textEditor: vscode.TextEditor): vscode.Range {

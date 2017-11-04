@@ -36,6 +36,8 @@ export function command(name: string, args?: string[]): void {
   }, 'file://');
 }
 
-export function reflection(): void {
+export function reflection(preprocess?: () => void, postprocess?: () => void): void {
+  if (preprocess) preprocess();
   command("extension.reflectToEditor", [svgroot.node.outerHTML]);
+  if (postprocess) postprocess();
 }
