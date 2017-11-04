@@ -5887,48 +5887,6 @@ function deform(elem) {
     return new SvgDeformer(elem);
 }
 exports.deform = deform;
-/**
- * parse "x1,y1 x2,y2 ... xn,yn" to `Point[]`
- */
-function parsePoints(pointsProperty) {
-    var pair = /(-?[0-9.]+)\s*,\s*(-?[0-9.]+)/g;
-    var points = [];
-    var matched = null;
-    while ((matched = pair.exec(pointsProperty)) !== null) {
-        var x = parseFloat(matched[1]);
-        var y = parseFloat(matched[2]);
-        points.push(utils_1.Point.of(x, y));
-    }
-    return points;
-}
-exports.parsePoints = parsePoints;
-function parseTransform(transformProperty) {
-    var tfns = [];
-    var tfn = {
-        kind: undefined,
-        args: []
-    };
-    var str = undefined;
-    var identify = /[^\s(),]+/g;
-    while (str = identify.exec(transformProperty)) {
-        var matched = str[0];
-        if (matched.match(/[a-zA-Z]+/)) {
-            if (tfn.kind) {
-                tfns.push(tfn);
-                tfn = { kind: undefined, args: [] };
-                tfn.kind = matched;
-            }
-            else {
-                tfn.kind = matched;
-            }
-        }
-        else {
-            tfn.args.push(+matched);
-        }
-    }
-    tfns.push(tfn);
-    return tfns;
-}
 
 },{"./affine":2,"./utils":6}],6:[function(require,module,exports){
 "use strict";
