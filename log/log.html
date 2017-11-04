@@ -1,4 +1,58 @@
-(function e(t,n,r){function s(o,u){if(!n[o]){if(!t[o]){var a=typeof require=="function"&&require;if(!u&&a)return a(o,!0);if(i)return i(o,!0);var f=new Error("Cannot find module '"+o+"'");throw f.code="MODULE_NOT_FOUND",f}var l=n[o]={exports:{}};t[o][0].call(l.exports,function(e){var n=t[o][1][e];return s(n?n:e)},l,l.exports,e,t,n,r)}return n[o].exports}var i=typeof require=="function"&&require;for(var o=0;o<r.length;o++)s(r[o]);return s})({1:[function(require,module,exports){
+<style type="text/css">
+  .svgeditor-button {
+  position: relative;
+  display: inline-block;
+  padding: 0.25em 0.5em;
+  text-decoration: none;
+  color: #FFF;
+  background: #fd9535;
+  border-bottom: solid 2px #d27d00;
+  border-radius: 4px;
+  box-shadow: inset 0 2px 0 rgba(255,255,255,0.2), 0 2px 2px rgba(0, 0, 0, 0.19);
+  font-weight: bold;
+  width: 16px;
+}
+
+.svgeditor-button:active {
+    border-bottom: solid 2px #fd9535;
+    box-shadow: 0 0 2px rgba(0, 0, 0, 0.30);
+}
+
+#svgeditor-root{
+  text-align: center;
+  float: left;
+  width: 70%;
+}
+
+#svgeditor-buttons {
+  float: left;
+  width: 30%
+}
+
+.svgeditor-vertex {
+  fill: white;
+  stroke: black;
+  stroke-width: 2px;
+}
+</style>
+<body>
+  <div id="svgeditor-root">
+    <svg height="180" width="500">
+  <polyline points="0,40 40,40 40,80 80,80 80,120 120,120 120,160"
+  style="fill:white;stroke:red;stroke-width:4" />
+</svg>
+  </div>
+  <div id="svgeditor-buttons">
+    <p>
+      <br>
+      <a href="command:extension.handMode" class="svgeditor-button">👈</a><br>
+      <a href="command:extension.rectangleMode" class="svgeditor-button">❏</a><br>
+      <a class="svgeditor-button" onclick='changeMode("ellipse")'>⭕</a><br>
+      <a class="svgeditor-button" onclick='changeMode("polygon")'>☆</a>
+    </p>
+  </div>
+  <script type="text/javascript">
+    (function e(t,n,r){function s(o,u){if(!n[o]){if(!t[o]){var a=typeof require=="function"&&require;if(!u&&a)return a(o,!0);if(i)return i(o,!0);var f=new Error("Cannot find module '"+o+"'");throw f.code="MODULE_NOT_FOUND",f}var l=n[o]={exports:{}};t[o][0].call(l.exports,function(e){var n=t[o][1][e];return s(n?n:e)},l,l.exports,e,t,n,r)}return n[o].exports}var i=typeof require=="function"&&require;for(var o=0;o<r.length;o++)s(r[o]);return s})({1:[function(require,module,exports){
 /*!
 * svg.js - A lightweight library for manipulating and animating SVG.
 * @version 2.6.2
@@ -5979,3 +6033,6 @@ function equals(strs1, strs2) {
 exports.equals = equals;
 
 },{}]},{},[3,4]);
+
+  </script>
+</body>

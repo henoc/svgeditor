@@ -1,22 +1,30 @@
 // Common process through any modes.
 
-export let editorRoot = document.getElementById("svgeditor-root");
-export let svgroot = editorRoot.firstElementChild;
+import * as SVG from "svgjs";
+
+let erootNative = document.getElementById("svgeditor-root");
+let svgContentText = erootNative.firstElementChild.innerHTML;
+erootNative.firstElementChild.remove();
+export let editorRoot = SVG("svgeditor-root");
+export let svgroot = editorRoot.svg(svgContentText);
 
 // 前処理として circle をすべて ellipse にする
-let circles = document.getElementsByTagName("circle");
-for (let i = 0; i < circles.length; i++) {
-  circles.item(i).outerHTML = circles.item(i).outerHTML.replace("circle", "ellipse");
-}
-let ellipses = document.getElementsByTagName("ellipse");
-for (let i = 0; i < ellipses.length; i++) {
-  let ellipse = ellipses.item(i);
-  if (ellipse.hasAttribute("r")) {
-    ellipse.setAttribute("rx", ellipse.getAttribute("r"));
-    ellipse.setAttribute("ry", ellipse.getAttribute("r"));
-    ellipse.removeAttribute("r");
+
+let circles = editorRoot.select("circle");
+circles.each((i, elems) => {
+  elems[i].node.outerHTML = elems[i].node.outerHTML.replace("circle", "ellipse");
+});
+let ellipses = editorRoot.select("ellipse");
+ellipses.each((i, elems) => {
+  let ellipse = elems[i];
+  if (ellipse.attr("r")) {
+    ellipse.attr({
+      rx: ellipse.attr("r"),
+      ry: ellipse.attr("r"),
+      r: undefined
+    })
   }
-}
+});
 
 /**
  * Execute registered extension command.
@@ -29,5 +37,5 @@ export function command(name: string, args?: string[]): void {
 }
 
 export function reflection(): void {
-  command("extension.reflectToEditor", [svgroot.outerHTML]);
+  command("extension.reflectToEditor", [svgroot.node.outerHTML]);
 }

@@ -8,4 +8,6 @@
     }
   ]]></style>
   <circle cx="100" cy="100" r="50"></circle>
+  <polyline points="0,40 40,40 40,80 80,80 80,120 120,120 120,160"
+  style="fill:white;stroke:red;stroke-width:4" />
 </svg>
