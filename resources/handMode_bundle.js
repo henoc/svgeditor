@@ -5713,7 +5713,7 @@ document.onmousemove = function (ev) {
                 dragTarget.expandVertexes.target.attr(dragTarget.expandVertexes.targetInitScheme.attributes);
                 svgutils_1.deform(dragTarget.expandVertexes.target).expand(center, scale);
                 // 拡大用頂点すべてを移動
-                svgutils_1.deform(dragTarget.expandVertexes.target).setExpandVertexes(expandVertexesGroup, dragTarget.expandVertexes.vertexes);
+                svgutils_1.deform(dragTarget.expandVertexes.target).setExpandVertexes(expandVertexesGroup);
             }
             dragTarget.target.move(newPosition.x, newPosition.y);
         });
@@ -5802,6 +5802,9 @@ var SvgDeformer = /** @class */ (function () {
     SvgDeformer.prototype.setLeftUp = function (point) {
         this.elem.move(point.x, point.y);
     };
+    SvgDeformer.prototype.setCenter = function (point) {
+        this.elem.center(point.x, point.y);
+    };
     SvgDeformer.prototype.getLeftUp = function () {
         return utils_1.Point.of(this.elem.x(), this.elem.y());
     };
@@ -5810,10 +5813,10 @@ var SvgDeformer = /** @class */ (function () {
     };
     /**
      * Set vertexes for expansion. 8 vertexes are arranged around all kinds of target element.
-     * @param group parent of vertexes in terms of xml (not expansion target)
-     * @param vertexes Recycled vertex nodes
+     * @param group the group expand vertexes have joined or will join
      */
-    SvgDeformer.prototype.setExpandVertexes = function (group, vertexes) {
+    SvgDeformer.prototype.setExpandVertexes = function (group) {
+        var recycle = group.children().length !== 0;
         var elems = [];
         var c = 0;
         for (var i = 0; i < 3; i++) {
@@ -5821,9 +5824,9 @@ var SvgDeformer = /** @class */ (function () {
                 if (i === 1 && j === 1)
                     continue;
                 var point = this.getLeftUp().addxy(this.elem.width() / 2 * j, this.elem.height() / 2 * i);
-                if (vertexes) {
-                    deform(vertexes[c]).setLeftUp(point);
-                    elems.push(vertexes[c]);
+                if (recycle) {
+                    group.children()[c].center(point.x, point.y);
+                    elems.push(group.children()[c]);
                     c++;
                 }
                 else {
@@ -5848,56 +5851,13 @@ var SvgDeformer = /** @class */ (function () {
     };
     SvgDeformer.prototype.expand = function (center, scale) {
         var affine = affine_1.Affine.scale(scale, center);
-        var leftUp, affinedLeftUp, rightUp, affinedRightUp, leftDown, affinedLeftDown;
-        var p, affinedP;
-        switch (this.elem.node.tagName) {
-            case "circle":
-                // ellipse のみ存在する
-                break;
-            case "ellipse":
-                var c = this.getCenter();
-                var affinedC = affine.transform(c);
-                var right = this.getCenter().addxy(+this.geta("rx"), 0);
-                var affinedRight = affine.transform(right);
-                var down = this.getCenter().addxy(0, +this.geta("ry"));
-                var affinedDown = affine.transform(down);
-                this.seta("rx", String(affinedRight.x - affinedC.x));
-                this.seta("ry", String(affinedDown.y - affinedC.y));
-                this.seta("cx", String(affinedC.x));
-                this.seta("cy", String(affinedC.y));
-                break;
-            case "rect":
-                leftUp = this.getLeftUp();
-                affinedLeftUp = affine.transform(leftUp);
-                rightUp = utils_1.Point.of(+this.geta("x") + +this.geta("width"), +this.geta("y"));
-                affinedRightUp = affine.transform(rightUp);
-                leftDown = utils_1.Point.of(+this.geta("x"), +this.geta("y") + +this.geta("height"));
-                affinedLeftDown = affine.transform(leftDown);
-                this.seta("x", String(affinedLeftUp.x));
-                this.seta("y", String(affinedLeftUp.y));
-                this.seta("width", String(Math.abs(affinedRightUp.x - affinedLeftUp.x)));
-                this.seta("height", String(Math.abs(affinedLeftDown.y - affinedLeftUp.y)));
-                break;
-            case "line":
-                p = [
-                    utils_1.Point.of(+this.geta("x1"), +this.geta("y1")),
-                    utils_1.Point.of(+this.geta("x2"), +this.geta("y2"))
-                ];
-                affinedP = p.map(function (q) { return affine.transform(q); });
-                this.seta("x1", String(affinedP[0].x));
-                this.seta("y1", String(affinedP[0].y));
-                this.seta("x2", String(affinedP[1].x));
-                this.seta("y2", String(affinedP[1].y));
-                break;
-            case "polyline":
-            case "polygon":
-                p = parsePoints(this.geta("points"));
-                affinedP = p.map(function (q) { return affine.transform(q); });
-                this.seta("points", affinedP.map(function (aq) { return aq.toStr(","); }).join(" "));
-                break;
-            default:
-                throw "not defined SVGElement: " + this.elem.node.tagName;
-        }
+        var leftUp = this.getLeftUp();
+        var affinedLeftUp = affine.transform(leftUp);
+        var rightDown = this.getLeftUp().addxy(this.elem.width(), this.elem.height());
+        var affinedRightDown = affine.transform(rightDown);
+        this.setLeftUp(affinedLeftUp);
+        this.elem.width(affinedRightDown.x - affinedLeftUp.x);
+        this.elem.height(affinedRightDown.y - affinedLeftUp.y);
     };
     /**
      * Add `delta` at the attribute `attr` of this element.
@@ -5920,47 +5880,6 @@ var SvgDeformer = /** @class */ (function () {
         Object.keys(scheme.attributes).forEach(function (name) {
             _this.seta(name, scheme.attributes[name]);
         });
-    };
-    /**
-     * Add one transform function in transform attribute.
-     */
-    SvgDeformer.prototype.addTransform = function (tfn) {
-        if (this.elem.node.hasAttribute("transform")) {
-            var attr = this.geta("transform");
-            this.seta("transform", attr + " " + tfn.kind + "(" + tfn.args.join(" ") + ")");
-        }
-        else {
-            this.seta("transform", tfn.kind + "(" + tfn.args.join(" ") + ")");
-        }
-    };
-    /**
-     * Add one transform function in transform attribute.
-     * If the kind of last transform function is same with that of `tfn`, the last function is replaced.
-     */
-    SvgDeformer.prototype.addTransform2 = function (tfn) {
-        if (this.elem.node.hasAttribute("transform")) {
-            var attr = this.geta("transform");
-            var transforms = this.getTransformAttrs();
-            if (transforms[transforms.length - 1].kind === tfn.kind) {
-                transforms[transforms.length - 1] = tfn;
-                this.seta("transform", transforms.map(function (tfn) { return tfn.kind + "(" + tfn.args.join(" ") + ")"; }).join(" "));
-            }
-            else {
-                this.seta("transform", attr + " " + tfn.kind + "(" + tfn.args.join(" ") + ")");
-            }
-        }
-        else {
-            this.seta("transform", tfn.kind + "(" + tfn.args.join(" ") + ")");
-        }
-    };
-    SvgDeformer.prototype.getTransformAttrs = function () {
-        if (this.elem.node.hasAttribute("transform")) {
-            var attr = this.geta("transform");
-            return parseTransform(attr);
-        }
-        else {
-            return undefined;
-        }
     };
     return SvgDeformer;
 }());

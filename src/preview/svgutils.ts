@@ -23,6 +23,10 @@ class SvgDeformer {
     this.elem.move(point.x, point.y);
   }
 
+  setCenter(point: Point): void {
+    this.elem.center(point.x, point.y);
+  }
+
   getLeftUp(): Point {
     return Point.of(this.elem.x(), this.elem.y());
   }
@@ -33,10 +37,10 @@ class SvgDeformer {
 
   /**
    * Set vertexes for expansion. 8 vertexes are arranged around all kinds of target element.
-   * @param group parent of vertexes in terms of xml (not expansion target)
-   * @param vertexes Recycled vertex nodes
+   * @param group the group expand vertexes have joined or will join
    */
-  setExpandVertexes(group: SVG.G, vertexes?: SVG.Element[]): SVG.Element[] {
+  setExpandVertexes(group: SVG.G): SVG.Element[] {
+    let recycle = group.children().length !== 0;
     let elems: SVG.Element[] = [];
     let c = 0;
     for (let i = 0; i < 3; i++) {
@@ -44,9 +48,9 @@ class SvgDeformer {
         if (i === 1 && j === 1) continue;
         let point = this.getLeftUp().addxy(this.elem.width() / 2 * j, this.elem.height() / 2 * i);
 
-        if (vertexes) {
-          deform(vertexes[c]).setLeftUp(point);
-          elems.push(vertexes[c]);
+        if (recycle) {
+          group.children()[c].center(point.x, point.y);
+          elems.push(group.children()[c]);
           c++;
         } else {
           let dirs: Direction[] = [];
@@ -69,56 +73,13 @@ class SvgDeformer {
 
   expand(center: Point, scale: Point): void {
     let affine = Affine.scale(scale, center);
-    let leftUp: Point, affinedLeftUp: Point, rightUp: Point, affinedRightUp: Point, leftDown: Point, affinedLeftDown: Point;
-    let p: Point[], affinedP: Point[];
-    switch (this.elem.node.tagName) {
-      case "circle":
-        // ellipse のみ存在する
-        break;
-      case "ellipse":
-        let c = this.getCenter();
-        let affinedC = affine.transform(c);
-        let right = this.getCenter().addxy(+this.geta("rx"), 0);
-        let affinedRight = affine.transform(right);
-        let down = this.getCenter().addxy(0, +this.geta("ry"));
-        let affinedDown = affine.transform(down);
-        this.seta("rx", String(affinedRight.x - affinedC.x));
-        this.seta("ry", String(affinedDown.y - affinedC.y));
-        this.seta("cx", String(affinedC.x));
-        this.seta("cy", String(affinedC.y));
-        break;
-      case "rect":
-        leftUp = this.getLeftUp();
-        affinedLeftUp = affine.transform(leftUp);
-        rightUp = Point.of(+this.geta("x") + +this.geta("width"), +this.geta("y"));
-        affinedRightUp = affine.transform(rightUp);
-        leftDown = Point.of(+this.geta("x"), +this.geta("y") + +this.geta("height"));
-        affinedLeftDown = affine.transform(leftDown);
-        this.seta("x", String(affinedLeftUp.x));
-        this.seta("y", String(affinedLeftUp.y));
-        this.seta("width", String(Math.abs(affinedRightUp.x - affinedLeftUp.x)));
-        this.seta("height", String(Math.abs(affinedLeftDown.y - affinedLeftUp.y)));
-        break;
-      case "line":
-        p = [
-          Point.of(+this.geta("x1"), +this.geta("y1")),
-          Point.of(+this.geta("x2"), +this.geta("y2"))
-        ];
-        affinedP = p.map(q => affine.transform(q));
-        this.seta("x1", String(affinedP[0].x));
-        this.seta("y1", String(affinedP[0].y));
-        this.seta("x2", String(affinedP[1].x));
-        this.seta("y2", String(affinedP[1].y));
-        break;
-      case "polyline":
-      case "polygon":
-        p = parsePoints(this.geta("points"));
-        affinedP = p.map(q => affine.transform(q));
-        this.seta("points", affinedP.map(aq => aq.toStr(",")).join(" "));
-        break;
-      default:
-        throw `not defined SVGElement: ${this.elem.node.tagName}`;
-    }
+    let leftUp = this.getLeftUp();
+    let affinedLeftUp = affine.transform(leftUp);
+    let rightDown = this.getLeftUp().addxy(this.elem.width(), this.elem.height());
+    let affinedRightDown = affine.transform(rightDown);
+    this.setLeftUp(affinedLeftUp);
+    this.elem.width(affinedRightDown.x - affinedLeftUp.x);
+    this.elem.height(affinedRightDown.y - affinedLeftUp.y);
   }
 
   /**
@@ -143,46 +104,6 @@ class SvgDeformer {
     Object.keys(scheme.attributes).forEach(name => {
       this.seta(name, scheme.attributes[name]);
     });
-  }
-
-  /**
-   * Add one transform function in transform attribute.
-   */
-  addTransform(tfn: TransformFn): void {
-    if (this.elem.node.hasAttribute("transform")) {
-      let attr = this.geta("transform");
-      this.seta("transform", `${attr} ${tfn.kind}(${tfn.args.join(" ")})`);
-    } else {
-      this.seta("transform", `${tfn.kind}(${tfn.args.join(" ")})`);
-    }
-  }
-
-  /**
-   * Add one transform function in transform attribute.
-   * If the kind of last transform function is same with that of `tfn`, the last function is replaced.
-   */
-  addTransform2(tfn: TransformFn): void {
-    if (this.elem.node.hasAttribute("transform")) {
-      let attr = this.geta("transform");
-      let transforms = this.getTransformAttrs();
-      if (transforms[transforms.length - 1].kind === tfn.kind) {
-        transforms[transforms.length - 1] = tfn;
-        this.seta("transform", transforms.map(tfn => `${tfn.kind}(${tfn.args.join(" ")})`).join(" "));
-      } else {
-        this.seta("transform", `${attr} ${tfn.kind}(${tfn.args.join(" ")})`);
-      }
-    } else {
-      this.seta("transform", `${tfn.kind}(${tfn.args.join(" ")})`);
-    }
-  }
-
-  getTransformAttrs(): TransformFn[] {
-    if (this.elem.node.hasAttribute("transform")) {
-      let attr = this.geta("transform");
-      return parseTransform(attr);
-    } else {
-      return undefined;
-    }
   }
 }
 

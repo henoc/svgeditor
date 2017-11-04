@@ -60,7 +60,7 @@ document.onmousemove = (ev) => {
         deform(dragTarget.expandVertexes.target).expand(center, scale);
 
         // 拡大用頂点すべてを移動
-        deform(dragTarget.expandVertexes.target).setExpandVertexes(expandVertexesGroup, dragTarget.expandVertexes.vertexes);
+        deform(dragTarget.expandVertexes.target).setExpandVertexes(expandVertexesGroup);
       }
 
       dragTarget.target.move(newPosition.x, newPosition.y);
