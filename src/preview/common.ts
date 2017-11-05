@@ -9,6 +9,8 @@ let erootNative = document.getElementById("svgeditor-root");
 let svgContentText = erootNative.firstElementChild.innerHTML;
 erootNative.firstElementChild.remove();
 export let editorRoot = SVG("svgeditor-root").size(400,400);
+// 自動生成されるdefsを削除
+editorRoot.select("defs").each((i, elems) => elems[i].remove());
 export let svgroot = editorRoot.svg(svgContentText);
 
 // 前処理として circle をすべて ellipse にする

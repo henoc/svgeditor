@@ -17,18 +17,10 @@
     box-shadow: 0 0 2px rgba(0, 0, 0, 0.30);
 }
 
-#svgeditor-root{
-  width: 100%;
-}
-
-#svgeditor-buttons {
-  width: 100%;
-}
-
-.svgeditor-property {
+.svgeditor-property, #svgeditor-root {
   padding: 0.5em 1em;
   margin: 2em 0;
-  border: dashed 2px #5b8bd0;
+  border: dashed 2px #4f98ff;
 }
 
 .svgeditor-displaynone {

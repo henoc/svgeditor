@@ -18,18 +18,10 @@
     box-shadow: 0 0 2px rgba(0, 0, 0, 0.30);
 }
 
-#svgeditor-root{
-  width: 100%;
-}
-
-#svgeditor-buttons {
-  width: 100%;
-}
-
-.svgeditor-property {
+.svgeditor-property, #svgeditor-root {
   padding: 0.5em 1em;
   margin: 2em 0;
-  border: dashed 2px #5b8bd0;
+  border: dashed 2px #4f98ff;
 }
 
 .svgeditor-displaynone {
@@ -52,18 +44,13 @@
     </p>
   </div>
   <div id="svgeditor-root">
-    <svg id="SvgjsSvg1001" width="400" height="400" xmlns="http://www.w3.org/2000/svg"
-version="1.1" xmlns:xlink="http://www.w3.org/1999/xlink" xmlns:svgjs="http://svgjs.com/svgjs">
-  <defs id="SvgjsDefs1002">
-    <rect id="SvgjsRect1042" width="0" height="0" fill="#666666" stroke="#999999"
-    stroke-width="10"></rect>
-  </defs>
-  <ellipse cx="100" cy="100" r="50" rx="50" ry="50"></ellipse>
+    <?xml version="1.0"?>
+<svg>
+  <circle cx="100" cy="100" r="50"></circle>
   <polyline points="0,40 40,40 40,80 80,80 80,120 120,120 120,160"
-  style="fill:white;stroke:red;stroke-width:4"></polyline>
-  <rect id="SvgjsRect1043" width="190" height="78" x="44" y="33"
-  fill="#666666" stroke="#999999" stroke-width="10"></rect>
+  style="fill:white;stroke:red;stroke-width:4" />
 </svg>
+
   </div>
   <div id="svgeditor-properties">
     <div id="svgeditor-colorpicker" class="svgeditor-property svgeditor-displaynone">
@@ -6904,6 +6891,8 @@ var erootNative = document.getElementById("svgeditor-root");
 var svgContentText = erootNative.firstElementChild.innerHTML;
 erootNative.firstElementChild.remove();
 exports.editorRoot = SVG("svgeditor-root").size(400, 400);
+// 自動生成されるdefsを削除
+exports.editorRoot.select("defs").each(function (i, elems) { return elems[i].remove(); });
 exports.svgroot = exports.editorRoot.svg(svgContentText);
 // 前処理として circle をすべて ellipse にする
 var circles = exports.editorRoot.select("circle");
@@ -7032,45 +7021,141 @@ exports.refleshColorPicker = refleshColorPicker;
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 var common_1 = require("./common");
-var utils_1 = require("./utils");
 var svgutils_1 = require("./svgutils");
-var polyline = undefined;
-// about color-picker
-var colorSample = common_1.editorRoot.defs().rect().fill("none").stroke({ width: 10, color: "#999999" });
-document.getElementById("svgeditor-colorpicker").setAttribute("class", "svgeditor-property");
-common_1.refleshColorPicker(colorSample);
-document.onmousedown = function (ev) {
-    ev.stopPropagation();
-    var x = ev.clientX - common_1.svgroot.node.clientLeft;
-    var y = ev.clientY - common_1.svgroot.node.clientTop;
-    if (polyline === undefined) {
-        polyline = {
-            elem: common_1.svgroot.polyline([])
-                .attr("fill", svgutils_1.deform(colorSample).getColor("fill"))
-                .attr("stroke", svgutils_1.deform(colorSample).getColor("stroke"))
-                .attr("stroke-width", colorSample.attr("stroke-width")),
-            points: []
-        };
-    }
-    polyline.points.push(utils_1.Point.of(x, y));
-    polyline.elem.plot(polyline.points.map(function (p) { return [p.x, p.y]; }));
+var utils_1 = require("./utils");
+// This file is readed only in hand mode
+var expandVertexesGroup = common_1.editorRoot.group().addClass("svgeditor-expandVertexes");
+/**
+ * 編集ノードの移動用
+ */
+var dragTargets = undefined;
+var handTarget = undefined;
+document.onmouseup = function (ev) {
+    // 変更されたHTML（のSVG部分）をエディタに反映させる
+    if (dragTargets)
+        common_1.reflection(function () {
+            expandVertexesGroup.remove();
+        }, function () {
+            common_1.svgroot.add(expandVertexesGroup);
+        });
+    dragTargets = undefined;
 };
 document.onmousemove = function (ev) {
-    ev.stopPropagation();
-    if (polyline) {
-        var x = ev.clientX - common_1.svgroot.node.clientLeft;
-        var y = ev.clientY - common_1.svgroot.node.clientTop;
-        var points = polyline.points.map(function (p) { return [p.x, p.y]; }).concat();
-        points.push([x, y]);
-        polyline.elem.plot(points);
+    if (dragTargets !== undefined) {
+        var x_1 = ev.clientX;
+        var y_1 = ev.clientY;
+        dragTargets.forEach(function (dragTarget) {
+            var newPosition = utils_1.Point.of(x_1, y_1).add(dragTarget.targetFromCursor);
+            if (dragTarget.dragMode === "vertical") {
+                newPosition.x = dragTarget.targetInit.x;
+            }
+            else if (dragTarget.dragMode === "horizontal") {
+                newPosition.y = dragTarget.targetInit.y;
+            }
+            // 拡大用頂点がdragTargetなら拡大適用先があるので、それの属性をいじる
+            if (dragTarget.expandVertexes) {
+                var dirs_1 = dragTarget.target.attr("direction").split(" ");
+                // 拡大の中心
+                var center = (function () {
+                    var vertex = dragTarget.expandVertexes.vertexes.find(function (vertex) { return utils_1.equals(vertex.attr("direction").split(" "), dirs_1.map(utils_1.reverse)); });
+                    return utils_1.Point.of(vertex.cx(), vertex.cy());
+                })();
+                // 拡大率ベクトル
+                var scale = newPosition.sub(center).div(dragTarget.targetInit.sub(center));
+                if (Number.isNaN(scale.x))
+                    scale.x = 1;
+                if (Number.isNaN(scale.y))
+                    scale.y = 1;
+                // 初期値に戻してから拡大を実行
+                dragTarget.expandVertexes.target.attr(dragTarget.expandVertexes.targetInitScheme.attributes);
+                svgutils_1.deform(dragTarget.expandVertexes.target).expand(center, scale);
+                // 拡大用頂点すべてを移動
+                svgutils_1.deform(dragTarget.expandVertexes.target).setExpandVertexes(expandVertexesGroup);
+            }
+            dragTarget.target.move(newPosition.x, newPosition.y);
+        });
     }
 };
-document.oncontextmenu = function (ev) {
-    ev.stopPropagation();
-    if (polyline) {
-        common_1.reflection();
+var moveElems = [];
+common_1.editorRoot.each(function (i, elems) {
+    var elem = elems[i];
+    moveElems.push(elem);
+});
+moveElems.forEach(function (moveElem, i) {
+    moveElem.node.onmousedown = function (ev) {
+        // イベント伝搬の終了
+        ev.stopPropagation();
+        // 既存の拡大用頂点を消す
+        var vertexes = common_1.editorRoot.select(".svgeditor-vertex");
+        vertexes.each(function (i, elems) {
+            elems[i].remove();
+        });
+        var mainTarget = moveElem;
+        handTarget = moveElem;
+        // 拡大用頂点を出す
+        var ids = svgutils_1.deform(mainTarget).setExpandVertexes(expandVertexesGroup);
+        var targets = common_1.editorRoot.set([mainTarget]);
+        var expandVertexes = ids.map(function (id) { return common_1.editorRoot.select("#" + id).get(0); });
+        var _loop_1 = function (vertex) {
+            targets.add(vertex);
+            // 拡大用頂点のクリック時のdragTargets登録
+            vertex.node.onmousedown = function (ev) {
+                // イベント伝搬の終了
+                ev.stopPropagation();
+                var dirs = vertex.attr("direction").split(" ");
+                var mode = "free";
+                if (dirs.length === 1) {
+                    if (dirs.indexOf("left") !== -1 || dirs.indexOf("right") !== -1) {
+                        mode = "horizontal";
+                    }
+                    else {
+                        mode = "vertical";
+                    }
+                }
+                dragTargets = [{
+                        target: vertex,
+                        targetFromCursor: svgutils_1.deform(vertex).getLeftUp().sub(utils_1.Point.of(ev.clientX, ev.clientY)),
+                        targetInit: svgutils_1.deform(vertex).getLeftUp(),
+                        dragMode: mode,
+                        expandVertexes: {
+                            target: mainTarget,
+                            vertexes: expandVertexes,
+                            targetInitScheme: svgutils_1.deform(mainTarget).extractScheme()
+                        }
+                    }];
+            };
+        };
+        for (var _i = 0, expandVertexes_1 = expandVertexes; _i < expandVertexes_1.length; _i++) {
+            var vertex = expandVertexes_1[_i];
+            _loop_1(vertex);
+        }
+        dragTargets = [];
+        targets.each(function (i, elems) {
+            var target = elems[i];
+            dragTargets.push({
+                target: target,
+                targetFromCursor: utils_1.Point.of(target.x(), target.y()).sub(utils_1.Point.of(ev.clientX, ev.clientY)),
+                targetInit: utils_1.Point.of(target.x(), target.y()),
+                dragMode: "free"
+            });
+        });
+        // colorpicker
+        // show
+        document.getElementById("svgeditor-colorpicker").setAttribute("class", "svgeditor-property");
+        common_1.refleshColorPicker(mainTarget);
+    };
+});
+common_1.colorpicker.samples["fill"].node.onmousedown = function (ev) {
+    common_1.colorpicker.activeSample = "fill";
+    if (handTarget) {
+        common_1.refleshColorPicker(handTarget);
     }
-    polyline = undefined;
+};
+common_1.colorpicker.samples["stroke"].node.onmousedown = function (ev) {
+    common_1.colorpicker.activeSample = "stroke";
+    if (handTarget) {
+        common_1.refleshColorPicker(handTarget);
+    }
 };
 
 },{"./common":7,"./svgutils":9,"./utils":10}],9:[function(require,module,exports){

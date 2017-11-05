@@ -6832,6 +6832,8 @@ var erootNative = document.getElementById("svgeditor-root");
 var svgContentText = erootNative.firstElementChild.innerHTML;
 erootNative.firstElementChild.remove();
 exports.editorRoot = SVG("svgeditor-root").size(400, 400);
+// 自動生成されるdefsを削除
+exports.editorRoot.select("defs").each(function (i, elems) { return elems[i].remove(); });
 exports.svgroot = exports.editorRoot.svg(svgContentText);
 // 前処理として circle をすべて ellipse にする
 var circles = exports.editorRoot.select("circle");
