@@ -4,6 +4,8 @@ import {deform} from "./svgutils";
 
 import * as SVG from "svgjs";
 import * as convert from "color-convert";
+import * as jQuery from "jquery";
+require("spectrum-colorpicker");
 
 let erootNative = document.getElementById("svgeditor-root");
 let svgContentText = erootNative.firstElementChild.innerHTML;
@@ -148,3 +150,10 @@ export function refleshColorPicker(target: SVG.Element): void {
     colorpicker.alphapoint.hide();
   }
 }
+
+jQuery($ => {
+  (<any>$("#picker")).spectrum({
+    showAlpha: true,
+    allowEmpty: true
+  });
+});
