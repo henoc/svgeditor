@@ -1,4 +1,4 @@
-import { svgroot, editorRoot, reflection } from "./common";
+import { svgroot, editorRoot, reflection, refleshColorPicker } from "./common";
 import { Point, uuid } from "./utils";
 import { deform } from "./svgutils";
 import * as SVG from "svgjs";
@@ -11,13 +11,21 @@ interface Rectangle {
 
 let rectangle: undefined | Rectangle = undefined;
 
+// about color-picker
+let colorSample = editorRoot.defs().rect().fill("#666666").stroke({ width: 10, color: "#999999" });
+document.getElementById("svgeditor-colorpicker").setAttribute("class", "svgeditor-property");
+refleshColorPicker(colorSample);
+
 document.onmousedown = (ev: MouseEvent) => {
   ev.stopPropagation();
 
   let x = ev.clientX - svgroot.node.clientLeft;
   let y = ev.clientY - svgroot.node.clientTop;
   rectangle = {
-    elem: editorRoot.rect(0, 0).center(x, y),
+    elem: editorRoot.rect(0, 0).center(x, y)
+      .attr("fill", deform(colorSample).getColor("fill"))
+      .attr("stroke", deform(colorSample).getColor("stroke"))
+      .attr("stroke-width", colorSample.attr("stroke-width")),
     start: Point.of(x, y),
     end: Point.of(x, y)
   };

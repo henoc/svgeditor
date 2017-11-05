@@ -111,13 +111,18 @@ class SvgDeformer {
    * To rgb `#ABCDEF` style.
    */
   colorNormalize(fillOrStroke: "fill" | "stroke"): string | undefined {
-    let fillColor = <string><any>this.elem.style(fillOrStroke);
-    if (fillColor === "") return undefined;
-    if (!fillColor.startsWith("#")) {
-      let rgb = convert.keyword.rgb(<any>fillColor);
-      fillColor = "#" + convert.rgb.hex(rgb);
+    let color = this.getColor(fillOrStroke);
+    if (color === "none") return undefined;
+    if (!color.startsWith("#")) {
+      let rgb = convert.keyword.rgb(<any>color);
+      color = "#" + convert.rgb.hex(rgb);
     }
-    return fillColor;
+    return color;
+  }
+
+  getColor(fillOrStroke: "fill" | "stroke"): string {
+    if (<string><any>this.elem.style(fillOrStroke) !== "") return <any>this.elem.style(fillOrStroke);
+    else return this.elem.attr(fillOrStroke);
   }
 
   strokeOpacity(): number {

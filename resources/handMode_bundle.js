@@ -6825,7 +6825,9 @@ exports.Affine = Affine;
 "use strict";
 // Common process through any modes.
 Object.defineProperty(exports, "__esModule", { value: true });
+var svgutils_1 = require("./svgutils");
 var SVG = require("svgjs");
+var convert = require("color-convert");
 var erootNative = document.getElementById("svgeditor-root");
 var svgContentText = erootNative.firstElementChild.innerHTML;
 erootNative.firstElementChild.remove();
@@ -6865,56 +6867,103 @@ function reflection(preprocess, postprocess) {
         postprocess();
 }
 exports.reflection = reflection;
+exports.colorpicker = {
+    samples: {},
+    noneTexts: {}
+};
+exports.colorpicker.doc = SVG("svgeditor-colorpicker");
+var unitsize = 30;
+exports.colorpicker.doc.text("fill");
+exports.colorpicker.doc.text("stroke").move(0, unitsize);
+exports.colorpicker.samples["fill"] = exports.colorpicker.doc.circle(unitsize).move(unitsize, 0);
+exports.colorpicker.samples["stroke"] = exports.colorpicker.doc.circle(unitsize).move(unitsize, unitsize);
+exports.colorpicker.noneTexts["fill"] = exports.colorpicker.doc.text("none").move(unitsize, 0).hide();
+exports.colorpicker.noneTexts["stroke"] = exports.colorpicker.doc.text("none").move(unitsize, unitsize).hide();
+exports.colorpicker.activeSample = "fill";
+var redGradient = exports.colorpicker.doc.gradient("linear", function (stop) {
+    stop.at(0, "#000000");
+    stop.at(1, "#FF0000");
+});
+var blueGradient = exports.colorpicker.doc.gradient("linear", function (stop) {
+    stop.at(0, "#000000");
+    stop.at(1, "#00BB00");
+});
+var greenGradient = exports.colorpicker.doc.gradient("linear", function (stop) {
+    stop.at(0, "#000000");
+    stop.at(1, "#0000FF");
+});
+var alphaGradient = exports.colorpicker.doc.gradient("linear", function (stop) {
+    stop.at(0, "#CCCCCC", 0);
+    stop.at(1, "#CCCCCC", 1);
+});
+exports.colorpicker.redmeter = exports.colorpicker.doc.rect(256, unitsize / 2).move(unitsize * 3, 0).fill(redGradient);
+exports.colorpicker.greenmeter = exports.colorpicker.doc.rect(256, unitsize / 2).move(unitsize * 3, unitsize / 2).fill(greenGradient);
+exports.colorpicker.bluemeter = exports.colorpicker.doc.rect(256, unitsize / 2).move(unitsize * 3, unitsize).fill(blueGradient);
+exports.colorpicker.alphameter = exports.colorpicker.doc.rect(256, unitsize / 2).move(unitsize * 3, unitsize / 2 * 3).fill(alphaGradient);
+exports.colorpicker.redpoint = exports.colorpicker.doc.line(unitsize * 3, 0, unitsize * 3, unitsize / 2).stroke({ width: 3, color: "#CCCCCC", opacity: 0.8 });
+exports.colorpicker.greenpoint = exports.colorpicker.doc.line(unitsize * 3, unitsize / 2, unitsize * 3, unitsize).stroke({ width: 3, color: "#CCCCCC", opacity: 0.8 });
+exports.colorpicker.bluepoint = exports.colorpicker.doc.line(unitsize * 3, unitsize, unitsize * 3, unitsize / 2 * 3).stroke({ width: 3, color: "#CCCCCC", opacity: 0.8 });
+exports.colorpicker.alphapoint = exports.colorpicker.doc.line(unitsize * 3, unitsize / 2 * 3, unitsize * 3, unitsize * 2).stroke({ width: 3, color: "#CCCCCC", opacity: 0.8 });
+exports.colorpicker.meterMinX = unitsize * 3;
+exports.colorpicker.meterMaxX = unitsize * 3 + 256;
+/**
+ * insert color data into the color-picker
+ */
+function refleshColorPicker(target) {
+    // show selected object color
+    var colors = {};
+    colors.fill = svgutils_1.deform(target).colorNormalize("fill");
+    colors.stroke = svgutils_1.deform(target).colorNormalize("stroke");
+    Object.keys(colors).forEach(function (key) {
+        if (colors[key]) {
+            exports.colorpicker.samples[key].fill(colors[key]);
+            exports.colorpicker.noneTexts[key].hide();
+        }
+        else {
+            exports.colorpicker.samples[key].fill("#FFFFFF");
+            exports.colorpicker.noneTexts[key].show();
+        }
+        exports.colorpicker.samples[key].attr("stroke", null);
+        if (exports.colorpicker.activeSample === key) {
+            exports.colorpicker.samples[key].stroke({
+                color: "#FFFFFF",
+                width: 3
+            });
+        }
+    });
+    if (colors[exports.colorpicker.activeSample]) {
+        exports.colorpicker.redpoint.show();
+        exports.colorpicker.greenpoint.show();
+        exports.colorpicker.bluepoint.show();
+        exports.colorpicker.alphapoint.show();
+        var rgbValues = convert.hex.rgb(colors[exports.colorpicker.activeSample]);
+        exports.colorpicker.redpoint.cx(exports.colorpicker.meterMinX + rgbValues[0]);
+        exports.colorpicker.greenpoint.cx(exports.colorpicker.meterMinX + rgbValues[1]);
+        exports.colorpicker.bluepoint.cx(exports.colorpicker.meterMinX + rgbValues[2]);
+        if (exports.colorpicker.activeSample === "fill") {
+            exports.colorpicker.alphapoint.cx(exports.colorpicker.meterMinX + target.opacity() * 255);
+        }
+        else {
+            exports.colorpicker.alphapoint.cx(exports.colorpicker.meterMinX + svgutils_1.deform(target).strokeOpacity() * 255);
+        }
+    }
+    else {
+        exports.colorpicker.redpoint.hide();
+        exports.colorpicker.greenpoint.hide();
+        exports.colorpicker.bluepoint.hide();
+        exports.colorpicker.alphapoint.hide();
+    }
+}
+exports.refleshColorPicker = refleshColorPicker;
 
-},{"svgjs":5}],8:[function(require,module,exports){
+},{"./svgutils":9,"color-convert":2,"svgjs":5}],8:[function(require,module,exports){
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 var common_1 = require("./common");
 var svgutils_1 = require("./svgutils");
 var utils_1 = require("./utils");
-var SVG = require("svgjs");
-var convert = require("color-convert");
 // This file is readed only in hand mode
 var expandVertexesGroup = common_1.editorRoot.group().addClass("svgeditor-expandVertexes");
-var colorpicker = {
-    samples: {},
-    noneTexts: {}
-};
-colorpicker.doc = SVG("svgeditor-colorpicker");
-var unitsize = 30;
-colorpicker.doc.text("fill");
-colorpicker.doc.text("stroke").move(0, unitsize);
-colorpicker.samples["fill"] = colorpicker.doc.circle(unitsize).move(unitsize, 0);
-colorpicker.samples["stroke"] = colorpicker.doc.circle(unitsize).move(unitsize, unitsize);
-colorpicker.noneTexts["fill"] = colorpicker.doc.text("none").move(unitsize, 0).hide();
-colorpicker.noneTexts["stroke"] = colorpicker.doc.text("none").move(unitsize, unitsize).hide();
-colorpicker.activeSample = "fill";
-var redGradient = colorpicker.doc.gradient("linear", function (stop) {
-    stop.at(0, "#000000");
-    stop.at(1, "#FF0000");
-});
-var blueGradient = colorpicker.doc.gradient("linear", function (stop) {
-    stop.at(0, "#000000");
-    stop.at(1, "#00BB00");
-});
-var greenGradient = colorpicker.doc.gradient("linear", function (stop) {
-    stop.at(0, "#000000");
-    stop.at(1, "#0000FF");
-});
-var alphaGradient = colorpicker.doc.gradient("linear", function (stop) {
-    stop.at(0, "#CCCCCC", 0);
-    stop.at(1, "#CCCCCC", 1);
-});
-colorpicker.redmeter = colorpicker.doc.rect(256, unitsize / 2).move(unitsize * 3, 0).fill(redGradient);
-colorpicker.greenmeter = colorpicker.doc.rect(256, unitsize / 2).move(unitsize * 3, unitsize / 2).fill(greenGradient);
-colorpicker.bluemeter = colorpicker.doc.rect(256, unitsize / 2).move(unitsize * 3, unitsize).fill(blueGradient);
-colorpicker.alphameter = colorpicker.doc.rect(256, unitsize / 2).move(unitsize * 3, unitsize / 2 * 3).fill(alphaGradient);
-colorpicker.redpoint = colorpicker.doc.line(unitsize * 3, 0, unitsize * 3, unitsize / 2).stroke({ width: 3, color: "#CCCCCC", opacity: 0.8 });
-colorpicker.greenpoint = colorpicker.doc.line(unitsize * 3, unitsize / 2, unitsize * 3, unitsize).stroke({ width: 3, color: "#CCCCCC", opacity: 0.8 });
-colorpicker.bluepoint = colorpicker.doc.line(unitsize * 3, unitsize, unitsize * 3, unitsize / 2 * 3).stroke({ width: 3, color: "#CCCCCC", opacity: 0.8 });
-colorpicker.alphapoint = colorpicker.doc.line(unitsize * 3, unitsize / 2 * 3, unitsize * 3, unitsize * 2).stroke({ width: 3, color: "#CCCCCC", opacity: 0.8 });
-colorpicker.meterMinX = unitsize * 3;
-colorpicker.meterMaxX = unitsize * 3 + 256;
 /**
  * 編集ノードの移動用
  */
@@ -7032,56 +7081,23 @@ moveElems.forEach(function (moveElem, i) {
         // colorpicker
         // show
         document.getElementById("svgeditor-colorpicker").setAttribute("class", "svgeditor-property");
-        refleshColorPicker(mainTarget);
+        common_1.refleshColorPicker(mainTarget);
     };
 });
-colorpicker.samples["fill"].node.onmousedown = function (ev) {
-    colorpicker.activeSample = "fill";
+common_1.colorpicker.samples["fill"].node.onmousedown = function (ev) {
+    common_1.colorpicker.activeSample = "fill";
     if (handTarget) {
-        refleshColorPicker(handTarget);
+        common_1.refleshColorPicker(handTarget);
     }
 };
-colorpicker.samples["stroke"].node.onmousedown = function (ev) {
-    colorpicker.activeSample = "stroke";
+common_1.colorpicker.samples["stroke"].node.onmousedown = function (ev) {
+    common_1.colorpicker.activeSample = "stroke";
     if (handTarget) {
-        refleshColorPicker(handTarget);
+        common_1.refleshColorPicker(handTarget);
     }
 };
-function refleshColorPicker(target) {
-    // show selected object color
-    var colors = {};
-    colors.fill = svgutils_1.deform(target).colorNormalize("fill");
-    colors.stroke = svgutils_1.deform(target).colorNormalize("stroke");
-    Object.keys(colors).forEach(function (key) {
-        if (colors[key]) {
-            colorpicker.samples[key].fill(colors[key]);
-            colorpicker.noneTexts[key].hide();
-        }
-        else {
-            colorpicker.samples[key].fill("#FFFFFF");
-            colorpicker.noneTexts[key].show();
-        }
-        colorpicker.samples[key].attr("stroke", null);
-        if (colorpicker.activeSample === key) {
-            colorpicker.samples[key].stroke({
-                color: "#FFFFFF",
-                width: 3
-            });
-        }
-    });
-    var rgbValues = convert.hex.rgb(colors[colorpicker.activeSample]);
-    colorpicker.redpoint.cx(colorpicker.meterMinX + rgbValues[0]);
-    colorpicker.greenpoint.cx(colorpicker.meterMinX + rgbValues[1]);
-    colorpicker.bluepoint.cx(colorpicker.meterMinX + rgbValues[2]);
-    if (colorpicker.activeSample === "fill") {
-        colorpicker.alphapoint.cx(colorpicker.meterMinX + target.opacity() * 255);
-    }
-    else {
-        colorpicker.alphapoint.cx(colorpicker.meterMinX + svgutils_1.deform(target).strokeOpacity() * 255);
-    }
-}
 
-},{"./common":7,"./svgutils":9,"./utils":10,"color-convert":2,"svgjs":5}],9:[function(require,module,exports){
+},{"./common":7,"./svgutils":9,"./utils":10}],9:[function(require,module,exports){
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 var affine_1 = require("./affine");
@@ -7183,14 +7199,20 @@ var SvgDeformer = /** @class */ (function () {
      * To rgb `#ABCDEF` style.
      */
     SvgDeformer.prototype.colorNormalize = function (fillOrStroke) {
-        var fillColor = this.elem.style(fillOrStroke);
-        if (fillColor === "")
+        var color = this.getColor(fillOrStroke);
+        if (color === "none")
             return undefined;
-        if (!fillColor.startsWith("#")) {
-            var rgb = convert.keyword.rgb(fillColor);
-            fillColor = "#" + convert.rgb.hex(rgb);
+        if (!color.startsWith("#")) {
+            var rgb = convert.keyword.rgb(color);
+            color = "#" + convert.rgb.hex(rgb);
         }
-        return fillColor;
+        return color;
+    };
+    SvgDeformer.prototype.getColor = function (fillOrStroke) {
+        if (this.elem.style(fillOrStroke) !== "")
+            return this.elem.style(fillOrStroke);
+        else
+            return this.elem.attr(fillOrStroke);
     };
     SvgDeformer.prototype.strokeOpacity = function () {
         var so = this.elem.style("stroke-opacity");
