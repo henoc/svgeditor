@@ -19407,7 +19407,6 @@ exports.Affine = Affine;
 Object.defineProperty(exports, "__esModule", { value: true });
 var svgutils_1 = require("./svgutils");
 var SVG = require("svgjs");
-var convert = require("color-convert");
 var jQuery = require("jquery");
 require("spectrum-colorpicker");
 var erootNative = document.getElementById("svgeditor-root");
@@ -19451,102 +19450,36 @@ function reflection(preprocess, postprocess) {
         postprocess();
 }
 exports.reflection = reflection;
-exports.colorpicker = {
-    samples: {},
-    noneTexts: {}
+/**
+ * DOM of color pickers
+ */
+var colorpickers = {
+    fill: "#svgeditor-colorpicker-fill",
+    stroke: "#svgeditor-colorpicker-stroke"
 };
-exports.colorpicker.doc = SVG("svgeditor-colorpicker");
-var unitsize = 30;
-exports.colorpicker.doc.text("fill");
-exports.colorpicker.doc.text("stroke").move(0, unitsize);
-exports.colorpicker.samples["fill"] = exports.colorpicker.doc.circle(unitsize).move(unitsize, 0);
-exports.colorpicker.samples["stroke"] = exports.colorpicker.doc.circle(unitsize).move(unitsize, unitsize);
-exports.colorpicker.noneTexts["fill"] = exports.colorpicker.doc.text("none").move(unitsize, 0).hide();
-exports.colorpicker.noneTexts["stroke"] = exports.colorpicker.doc.text("none").move(unitsize, unitsize).hide();
-exports.colorpicker.activeSample = "fill";
-var redGradient = exports.colorpicker.doc.gradient("linear", function (stop) {
-    stop.at(0, "#000000");
-    stop.at(1, "#FF0000");
-});
-var blueGradient = exports.colorpicker.doc.gradient("linear", function (stop) {
-    stop.at(0, "#000000");
-    stop.at(1, "#00BB00");
-});
-var greenGradient = exports.colorpicker.doc.gradient("linear", function (stop) {
-    stop.at(0, "#000000");
-    stop.at(1, "#0000FF");
-});
-var alphaGradient = exports.colorpicker.doc.gradient("linear", function (stop) {
-    stop.at(0, "#CCCCCC", 0);
-    stop.at(1, "#CCCCCC", 1);
-});
-exports.colorpicker.redmeter = exports.colorpicker.doc.rect(256, unitsize / 2).move(unitsize * 3, 0).fill(redGradient);
-exports.colorpicker.greenmeter = exports.colorpicker.doc.rect(256, unitsize / 2).move(unitsize * 3, unitsize / 2).fill(greenGradient);
-exports.colorpicker.bluemeter = exports.colorpicker.doc.rect(256, unitsize / 2).move(unitsize * 3, unitsize).fill(blueGradient);
-exports.colorpicker.alphameter = exports.colorpicker.doc.rect(256, unitsize / 2).move(unitsize * 3, unitsize / 2 * 3).fill(alphaGradient);
-exports.colorpicker.redpoint = exports.colorpicker.doc.line(unitsize * 3, 0, unitsize * 3, unitsize / 2).stroke({ width: 3, color: "#CCCCCC", opacity: 0.8 });
-exports.colorpicker.greenpoint = exports.colorpicker.doc.line(unitsize * 3, unitsize / 2, unitsize * 3, unitsize).stroke({ width: 3, color: "#CCCCCC", opacity: 0.8 });
-exports.colorpicker.bluepoint = exports.colorpicker.doc.line(unitsize * 3, unitsize, unitsize * 3, unitsize / 2 * 3).stroke({ width: 3, color: "#CCCCCC", opacity: 0.8 });
-exports.colorpicker.alphapoint = exports.colorpicker.doc.line(unitsize * 3, unitsize / 2 * 3, unitsize * 3, unitsize * 2).stroke({ width: 3, color: "#CCCCCC", opacity: 0.8 });
-exports.colorpicker.meterMinX = unitsize * 3;
-exports.colorpicker.meterMaxX = unitsize * 3 + 256;
 /**
  * insert color data into the color-picker
  */
 function refleshColorPicker(target) {
     // show selected object color
-    var colors = {};
-    colors.fill = svgutils_1.deform(target).colorNormalize("fill");
-    colors.stroke = svgutils_1.deform(target).colorNormalize("stroke");
-    Object.keys(colors).forEach(function (key) {
-        if (colors[key]) {
-            exports.colorpicker.samples[key].fill(colors[key]);
-            exports.colorpicker.noneTexts[key].hide();
-        }
-        else {
-            exports.colorpicker.samples[key].fill("#FFFFFF");
-            exports.colorpicker.noneTexts[key].show();
-        }
-        exports.colorpicker.samples[key].attr("stroke", null);
-        if (exports.colorpicker.activeSample === key) {
-            exports.colorpicker.samples[key].stroke({
-                color: "#FFFFFF",
-                width: 3
-            });
-        }
+    jQuery(function ($) {
+        $(colorpickers.fill).spectrum("set", svgutils_1.deform(target).colorNormalize("fill"));
+        $(colorpickers.stroke).spectrum("set", svgutils_1.deform(target).colorNormalize("stroke"));
     });
-    if (colors[exports.colorpicker.activeSample]) {
-        exports.colorpicker.redpoint.show();
-        exports.colorpicker.greenpoint.show();
-        exports.colorpicker.bluepoint.show();
-        exports.colorpicker.alphapoint.show();
-        var rgbValues = convert.hex.rgb(colors[exports.colorpicker.activeSample]);
-        exports.colorpicker.redpoint.cx(exports.colorpicker.meterMinX + rgbValues[0]);
-        exports.colorpicker.greenpoint.cx(exports.colorpicker.meterMinX + rgbValues[1]);
-        exports.colorpicker.bluepoint.cx(exports.colorpicker.meterMinX + rgbValues[2]);
-        if (exports.colorpicker.activeSample === "fill") {
-            exports.colorpicker.alphapoint.cx(exports.colorpicker.meterMinX + target.opacity() * 255);
-        }
-        else {
-            exports.colorpicker.alphapoint.cx(exports.colorpicker.meterMinX + svgutils_1.deform(target).strokeOpacity() * 255);
-        }
-    }
-    else {
-        exports.colorpicker.redpoint.hide();
-        exports.colorpicker.greenpoint.hide();
-        exports.colorpicker.bluepoint.hide();
-        exports.colorpicker.alphapoint.hide();
-    }
 }
 exports.refleshColorPicker = refleshColorPicker;
 jQuery(function ($) {
-    $("#picker").spectrum({
+    $("#svgeditor-colorpicker-fill").spectrum({
+        showAlpha: true,
+        allowEmpty: true
+    });
+    $("#svgeditor-colorpicker-stroke").spectrum({
         showAlpha: true,
         allowEmpty: true
     });
 });
 
-},{"./svgutils":11,"color-convert":2,"jquery":5,"spectrum-colorpicker":6,"svgjs":7}],10:[function(require,module,exports){
+},{"./svgutils":11,"jquery":5,"spectrum-colorpicker":6,"svgjs":7}],10:[function(require,module,exports){
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 var common_1 = require("./common");
@@ -19669,23 +19602,9 @@ moveElems.forEach(function (moveElem, i) {
             });
         });
         // colorpicker
-        // show
-        document.getElementById("svgeditor-colorpicker").setAttribute("class", "svgeditor-property");
         common_1.refleshColorPicker(mainTarget);
     };
 });
-common_1.colorpicker.samples["fill"].node.onmousedown = function (ev) {
-    common_1.colorpicker.activeSample = "fill";
-    if (handTarget) {
-        common_1.refleshColorPicker(handTarget);
-    }
-};
-common_1.colorpicker.samples["stroke"].node.onmousedown = function (ev) {
-    common_1.colorpicker.activeSample = "stroke";
-    if (handTarget) {
-        common_1.refleshColorPicker(handTarget);
-    }
-};
 
 },{"./common":9,"./svgutils":11,"./utils":12}],11:[function(require,module,exports){
 "use strict";

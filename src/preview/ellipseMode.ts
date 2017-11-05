@@ -2,6 +2,7 @@ import { svgroot, editorRoot, reflection, refleshColorPicker } from "./common";
 import { Point, uuid } from "./utils";
 import { deform } from "./svgutils";
 import * as SVG from "svgjs";
+import * as jQuery from "jquery";
 
 interface Ellipse {
   elem: SVG.Ellipse;
@@ -13,7 +14,6 @@ let ellipse: undefined | Ellipse = undefined;
 
 // about color-picker
 let colorSample = editorRoot.defs().rect().fill("#666666").stroke({ width: 10, color: "#999999" });
-document.getElementById("svgeditor-colorpicker").setAttribute("class", "svgeditor-property");
 refleshColorPicker(colorSample);
 
 document.onmousedown = (ev: MouseEvent) => {

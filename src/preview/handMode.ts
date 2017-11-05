@@ -1,9 +1,10 @@
-import { editorRoot, svgroot, reflection, colorpicker, refleshColorPicker } from "./common";
+import { editorRoot, svgroot, reflection, refleshColorPicker } from "./common";
 import { ElementScheme, deform } from "./svgutils";
 import { Point, Direction, equals, reverse } from "./utils";
 
 import * as SVG from "svgjs";
 import * as convert from "color-convert";
+import * as jQuery from "jquery";
 
 // This file is readed only in hand mode
 
@@ -139,23 +140,6 @@ moveElems.forEach((moveElem, i) => {
     });
 
     // colorpicker
-    // show
-    document.getElementById("svgeditor-colorpicker").setAttribute("class", "svgeditor-property");
     refleshColorPicker(mainTarget);
   };
 });
-
-colorpicker.samples["fill"].node.onmousedown = (ev: MouseEvent) => {
-  colorpicker.activeSample = "fill";
-  if (handTarget) {
-    refleshColorPicker(handTarget);
-  }
-};
-
-colorpicker.samples["stroke"].node.onmousedown = (ev: MouseEvent) => {
-  colorpicker.activeSample = "stroke";
-  if (handTarget) {
-    refleshColorPicker(handTarget);
-  }
-};
-
