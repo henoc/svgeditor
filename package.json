@@ -62,7 +62,9 @@
     "vscode": "^1.0.0"
   },
   "dependencies": {
+    "@types/color-convert": "^1.9.0",
     "@types/ejs": "^2.3.33",
+    "color-convert": "^1.9.0",
     "ejs": "^2.5.7",
     "html": "^1.0.0",
     "svgjs": "^2.6.2"

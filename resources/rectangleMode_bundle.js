@@ -5556,7 +5556,7 @@ var SVG = require("svgjs");
 var erootNative = document.getElementById("svgeditor-root");
 var svgContentText = erootNative.firstElementChild.innerHTML;
 erootNative.firstElementChild.remove();
-exports.editorRoot = SVG("svgeditor-root");
+exports.editorRoot = SVG("svgeditor-root").size(400, 400);
 exports.svgroot = exports.editorRoot.svg(svgContentText);
 // 前処理として circle をすべて ellipse にする
 var circles = exports.editorRoot.select("circle");

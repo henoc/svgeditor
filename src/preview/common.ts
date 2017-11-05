@@ -5,7 +5,7 @@ import * as SVG from "svgjs";
 let erootNative = document.getElementById("svgeditor-root");
 let svgContentText = erootNative.firstElementChild.innerHTML;
 erootNative.firstElementChild.remove();
-export let editorRoot = SVG("svgeditor-root");
+export let editorRoot = SVG("svgeditor-root").size(400,400);
 export let svgroot = editorRoot.svg(svgContentText);
 
 // 前処理として circle をすべて ellipse にする

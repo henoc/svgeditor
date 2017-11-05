@@ -1,6 +1,7 @@
 import { Affine } from "./affine";
 import {Point, Direction} from "./utils";
 import * as SVG from "svgjs";
+import * as convert from "color-convert";
 
 export interface ElementScheme {
   tagName: string;
@@ -104,6 +105,25 @@ class SvgDeformer {
     Object.keys(scheme.attributes).forEach(name => {
       this.seta(name, scheme.attributes[name]);
     });
+  }
+
+  /**
+   * To rgb `#ABCDEF` style.
+   */
+  colorNormalize(fillOrStroke: "fill" | "stroke"): string | undefined {
+    let fillColor = <string><any>this.elem.style(fillOrStroke);
+    if (fillColor === "") return undefined;
+    if (!fillColor.startsWith("#")) {
+      let rgb = convert.keyword.rgb(<any>fillColor);
+      fillColor = "#" + convert.rgb.hex(rgb);
+    }
+    return fillColor;
+  }
+
+  strokeOpacity(): number {
+    let so = <string><any>this.elem.style("stroke-opacity");
+    if (so === "") return 1;
+    return parseFloat(so);
   }
 }
 
