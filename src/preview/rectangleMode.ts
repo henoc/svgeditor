@@ -13,7 +13,6 @@ let rectangle: undefined | Rectangle = undefined;
 
 // about color-picker
 let colorSample = editorRoot.defs().rect().fill("#666666").stroke({ width: 10, color: "#999999" });
-document.getElementById("svgeditor-colorpicker").setAttribute("class", "svgeditor-property");
 refleshColorPicker(colorSample);
 
 document.onmousedown = (ev: MouseEvent) => {

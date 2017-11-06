@@ -18,7 +18,7 @@ export function activate(context: vscode.ExtensionContext) {
 		polygon: readResource("polygonMode_bundle.js")
 	};
 		
-	let insertCss = readResource("svgeditor.css");
+	let insertCss = readResource("bundle.css");
 	let viewer = readResource("viewer.ejs");
 
 	let editMode: "hand" | "rectangle" | "ellipse" | "polygon" = "hand";

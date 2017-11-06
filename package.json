@@ -46,10 +46,10 @@
   "scripts": {
     "vscode:prepublish": "tsc -p ./",
     "compile": "tsc -p ./ && npm run handMode && npm run rectangleMode && npm run ellipseMode && npm run polygonMode",
-    "handMode": "browserify -e out/preview/common.js -e out/preview/handMode.js -o resources/handMode_bundle.js",
-    "rectangleMode": "browserify -e out/preview/common.js -e out/preview/rectangleMode.js -o resources/rectangleMode_bundle.js",
-    "ellipseMode": "browserify -e out/preview/common.js -e out/preview/ellipseMode.js -o resources/ellipseMode_bundle.js",
-    "polygonMode": "browserify -e out/preview/common.js -e out/preview/polygonMode.js -o resources/polygonMode_bundle.js",
+    "handMode": "browserify -e out/preview/common.js -e out/preview/handMode.js -o resources/handMode_bundle.js -p [ parcelify -o resources/bundle.css ]",
+    "rectangleMode": "browserify -e out/preview/common.js -e out/preview/rectangleMode.js -o resources/rectangleMode_bundle.js -p [ parcelify -o resources/bundle.css ]",
+    "ellipseMode": "browserify -e out/preview/common.js -e out/preview/ellipseMode.js -o resources/ellipseMode_bundle.js -p [ parcelify -o resources/bundle.css ]",
+    "polygonMode": "browserify -e out/preview/common.js -e out/preview/polygonMode.js -o resources/polygonMode_bundle.js -p [ parcelify -o resources/bundle.css ]",
     "postinstall": "node ./node_modules/vscode/bin/install",
     "tslint": "tslint -c tslint.json src/extension.ts",
     "test": "npm run compile && ava out/test --verbose"
@@ -58,15 +58,23 @@
     "@types/node": "*",
     "ava": "^0.23.0",
     "browserify": "^14.5.0",
+    "parcelify": "^2.2.0",
     "typescript": "^2.1.4",
     "vscode": "^1.0.0"
   },
   "dependencies": {
     "@types/color-convert": "^1.9.0",
     "@types/ejs": "^2.3.33",
+    "@types/jquery": "^3.2.16",
     "color-convert": "^1.9.0",
     "ejs": "^2.5.7",
     "html": "^1.0.0",
+    "jquery": "^3.2.1",
+    "spectrum-colorpicker": "^1.8.0",
     "svgjs": "^2.6.2"
-  }
+  },
+  "style": [
+    "./node_modules/spectrum-colorpicker/spectrum.css",
+    "./src/preview/svgeditor.css"
+  ]
 }
