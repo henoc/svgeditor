@@ -68,19 +68,22 @@ let colorpickers = {
  * insert color data into the color-picker
  */
 export function refleshColorPicker(target: SVG.Element): void {
-  // show selected object color
   jQuery($ => {
-    (<any>$(colorpickers.fill)).spectrum("set", deform(target).colorNormalize("fill"));
-    (<any>$(colorpickers.stroke)).spectrum("set", deform(target).colorNormalize("stroke"));
+    // @ts-ignore: no property error
+    $(colorpickers.fill).spectrum("set", deform(target).colorNormalize("fill"));
+    // @ts-ignore
+    $(colorpickers.stroke).spectrum("set", deform(target).colorNormalize("stroke"));
   });
 }
 
 jQuery($ => {
-  (<any>$("#svgeditor-colorpicker-fill")).spectrum({
+  // @ts-ignore
+  $("#svgeditor-colorpicker-fill").spectrum({
     showAlpha: true,
     allowEmpty: true
   });
-  (<any>$("#svgeditor-colorpicker-stroke")).spectrum({
+  // @ts-ignore
+  $("#svgeditor-colorpicker-stroke").spectrum({
     showAlpha: true,
     allowEmpty: true
   });

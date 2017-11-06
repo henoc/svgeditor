@@ -19470,8 +19470,10 @@ var colorpickers = {
 function refleshColorPicker(target) {
     // show selected object color
     jQuery(function ($) {
-        $(colorpickers.fill).spectrum("set", svgutils_1.deform(target).colorNormalize("fill"));
-        $(colorpickers.stroke).spectrum("set", svgutils_1.deform(target).colorNormalize("stroke"));
+        // @ts-ignore
+        ($(colorpickers.fill)).spectrum("set", svgutils_1.deform(target).colorNormalize("fill"));
+        // @ts-ignore
+        ($(colorpickers.stroke)).spectrum("set", svgutils_1.deform(target).colorNormalize("stroke"));
     });
 }
 exports.refleshColorPicker = refleshColorPicker;
