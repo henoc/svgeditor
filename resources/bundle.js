@@ -19414,8 +19414,11 @@ var SVG = require("svgjs");
 var jQuery = require("jquery");
 require("spectrum-colorpicker");
 var erootNative = document.getElementById("svgeditor-root");
-var svgContentText = erootNative.firstElementChild.innerHTML;
-erootNative.firstElementChild.remove();
+var svgContentText = "";
+if (erootNative.firstElementChild) {
+    svgContentText = erootNative.firstElementChild.innerHTML;
+    erootNative.firstElementChild.remove();
+}
 exports.editorRoot = SVG("svgeditor-root").size(400, 400);
 // 自動生成されるdefsを削除
 exports.editorRoot.select("defs").each(function (i, elems) { return elems[i].remove(); });
@@ -19676,9 +19679,9 @@ function handModeDestruct() {
         elems[i].remove();
     });
     common_1.editorRoot.each(function (i, elems) {
-        elems[i].node.onmousedown = undefined;
-        elems[i].node.onmousemove = undefined;
-        elems[i].node.onmouseup = undefined;
+        elems[i].node.onmousedown = function () { return undefined; };
+        elems[i].node.onmousemove = function () { return undefined; };
+        elems[i].node.onmouseup = function () { return undefined; };
     });
 }
 exports.handModeDestruct = handModeDestruct;

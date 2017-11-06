@@ -56,7 +56,7 @@ export function handMode() {
           let dirs = <Direction[]>dragTarget.target.attr("direction").split(" ");
           // 拡大の中心
           let center = (() => {
-            let vertex = dragTarget.expandVertexes.vertexes.find(vertex => equals(vertex.attr("direction").split(" "), dirs.map(reverse)));
+            let vertex = dragTarget.expandVertexes.vertexes.find(vertex => equals(vertex.attr("direction").split(" "), dirs.map(reverse)))!;
             return Point.of(vertex.cx(), vertex.cy());
           })();
           // 拡大率ベクトル
@@ -131,7 +131,7 @@ export function handMode() {
       dragTargets = [];
       targets.each((i, elems) => {
         let target = elems[i];
-        dragTargets.push({
+        dragTargets!.push({
           target: target,
           targetFromCursor: Point.of(target.x(), target.y()).sub(Point.of(ev.clientX, ev.clientY)),
           targetInit: Point.of(target.x(), target.y()),
@@ -151,8 +151,8 @@ export function handModeDestruct() {
     elems[i].remove();
   });
   editorRoot.each((i, elems) => {
-    elems[i].node.onmousedown = undefined;
-    elems[i].node.onmousemove = undefined;
-    elems[i].node.onmouseup = undefined;
+    elems[i].node.onmousedown = () => undefined;
+    elems[i].node.onmousemove = () => undefined;
+    elems[i].node.onmouseup = () => undefined;
   });
 }
