@@ -146,12 +146,14 @@ export function handMode() {
 
   // colorpicker event
   jQuery($ => {
+    $(colorpickers.fill).off("change.spectrum");
     $(colorpickers.fill).on("change.spectrum", (e, color) => {
       if (handTarget) {
         deform(handTarget).setColor("fill", color, "indivisual");
         handModeReflection();
       }
     });
+    $(colorpickers.stroke).off("change.spectrum");
     $(colorpickers.stroke).on("change.spectrum", (e, color) => {
       if (handTarget) {
         deform(handTarget).setColor("stroke", color, "indivisual");

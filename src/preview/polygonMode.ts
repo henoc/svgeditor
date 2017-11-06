@@ -1,7 +1,8 @@
-import { svgroot, reflection, editorRoot, refleshColorPicker } from "./common";
+import { svgroot, reflection, editorRoot, refleshColorPicker, colorpickers } from "./common";
 import { Point } from "./utils";
 import { deform } from "./svgutils";
 import * as SVG from "svgjs";
+import * as jQuery from "jquery";
 
 export function polygonMode() {
 
@@ -22,8 +23,8 @@ export function polygonMode() {
     if (polyline === undefined) {
       polyline = {
         elem: svgroot.polyline([])
-          .attr("fill", deform(colorSample).getColor("fill"))
-          .attr("stroke", deform(colorSample).getColor("stroke"))
+          .attr("fill", deform(colorSample).getColor("fill").toHexString())
+          .attr("stroke", deform(colorSample).getColor("stroke").toHexString())
           .attr("stroke-width", colorSample.attr("stroke-width")),
         points: []
       };
@@ -53,5 +54,17 @@ export function polygonMode() {
     }
     polyline = undefined;
   };
+
+  // colorpicker event
+  jQuery($ => {
+    $(colorpickers.fill).off("change.spectrum");
+    $(colorpickers.fill).on("change.spectrum", (e, color) => {
+      deform(colorSample).setColor("fill", color, "indivisual");
+    });
+    $(colorpickers.stroke).off("change.spectrum");
+    $(colorpickers.stroke).on("change.spectrum", (e, color) => {
+      deform(colorSample).setColor("stroke", color, "indivisual");
+    });
+  });
 
 }

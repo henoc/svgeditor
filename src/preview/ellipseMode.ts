@@ -1,7 +1,8 @@
-import { svgroot, editorRoot, reflection, refleshColorPicker } from "./common";
+import { svgroot, editorRoot, reflection, refleshColorPicker, colorpickers } from "./common";
 import { Point } from "./utils";
 import { deform } from "./svgutils";
 import * as SVG from "svgjs";
+import * as jQuery from "jquery";
 
 export function ellipseMode() {
 
@@ -24,8 +25,8 @@ export function ellipseMode() {
     let y = ev.clientY - svgroot.node.clientTop;
     ellipse = {
       elem: editorRoot.ellipse(0, 0).center(x, y)
-        .attr("fill", deform(colorSample).getColor("fill"))
-        .attr("stroke", deform(colorSample).getColor("stroke"))
+        .attr("fill", deform(colorSample).getColor("fill").toHexString())
+        .attr("stroke", deform(colorSample).getColor("stroke").toHexString())
         .attr("stroke-width", colorSample.attr("stroke-width")),
       start: Point.of(x, y),
       end: Point.of(x, y)
@@ -48,9 +49,24 @@ export function ellipseMode() {
     ev.stopPropagation();
 
     if (ellipse) {
-      reflection();
+      if (ellipse.elem.width() === 0 && ellipse.elem.height() === 0) {
+        ellipse.elem.remove();
+      } else {
+        reflection();
+      }
     }
     ellipse = undefined;
   }
 
+  // colorpicker event
+  jQuery($ => {
+    $(colorpickers.fill).off("change.spectrum");
+    $(colorpickers.fill).on("change.spectrum", (e, color) => {
+      deform(colorSample).setColor("fill", color, "indivisual");
+    });
+    $(colorpickers.stroke).off("change.spectrum");
+    $(colorpickers.stroke).on("change.spectrum", (e, color) => {
+      deform(colorSample).setColor("stroke", color, "indivisual");
+    });
+  });
 }

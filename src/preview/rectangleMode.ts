@@ -1,7 +1,8 @@
-import { svgroot, editorRoot, reflection, refleshColorPicker } from "./common";
+import { svgroot, editorRoot, reflection, refleshColorPicker, colorpickers } from "./common";
 import { Point } from "./utils";
 import { deform } from "./svgutils";
 import * as SVG from "svgjs";
+import * as jQuery from "jquery";
 
 export function rectangleMode() {
 
@@ -24,8 +25,8 @@ export function rectangleMode() {
     let y = ev.clientY - svgroot.node.clientTop;
     rectangle = {
       elem: editorRoot.rect(0, 0).center(x, y)
-        .attr("fill", deform(colorSample).getColor("fill"))
-        .attr("stroke", deform(colorSample).getColor("stroke"))
+        .attr("fill", deform(colorSample).getColor("fill").toHexString())
+        .attr("stroke", deform(colorSample).getColor("stroke").toHexString())
         .attr("stroke-width", colorSample.attr("stroke-width")),
       start: Point.of(x, y),
       end: Point.of(x, y)
@@ -48,9 +49,25 @@ export function rectangleMode() {
     ev.stopPropagation();
 
     if (rectangle) {
-      reflection();
+      if (rectangle.elem.width() === 0 && rectangle.elem.height() === 0) {
+        rectangle.elem.remove();
+      } else {
+        reflection();
+      }
     }
     rectangle = undefined;
   };
+
+  // colorpicker event
+  jQuery($ => {
+    $(colorpickers.fill).off("change.spectrum");
+    $(colorpickers.fill).on("change.spectrum", (e, color) => {
+      deform(colorSample).setColor("fill", color, "indivisual");
+    });
+    $(colorpickers.stroke).off("change.spectrum");
+    $(colorpickers.stroke).on("change.spectrum", (e, color) => {
+      deform(colorSample).setColor("stroke", color, "indivisual");
+    });
+  });
 
 }

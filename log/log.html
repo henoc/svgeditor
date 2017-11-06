@@ -20074,6 +20074,7 @@ Object.defineProperty(exports, "__esModule", { value: true });
 var common_1 = require("./common");
 var utils_1 = require("./utils");
 var svgutils_1 = require("./svgutils");
+var jQuery = require("jquery");
 function ellipseMode() {
     var ellipse = undefined;
     // about color-picker
@@ -20085,8 +20086,8 @@ function ellipseMode() {
         var y = ev.clientY - common_1.svgroot.node.clientTop;
         ellipse = {
             elem: common_1.editorRoot.ellipse(0, 0).center(x, y)
-                .attr("fill", svgutils_1.deform(colorSample).getColor("fill"))
-                .attr("stroke", svgutils_1.deform(colorSample).getColor("stroke"))
+                .attr("fill", svgutils_1.deform(colorSample).getColor("fill").toHexString())
+                .attr("stroke", svgutils_1.deform(colorSample).getColor("stroke").toHexString())
                 .attr("stroke-width", colorSample.attr("stroke-width")),
             start: utils_1.Point.of(x, y),
             end: utils_1.Point.of(x, y)
@@ -20105,14 +20106,30 @@ function ellipseMode() {
     common_1.svgroot.node.onmouseup = function (ev) {
         ev.stopPropagation();
         if (ellipse) {
-            common_1.reflection();
+            if (ellipse.elem.width() === 0 && ellipse.elem.height() === 0) {
+                ellipse.elem.remove();
+            }
+            else {
+                common_1.reflection();
+            }
         }
         ellipse = undefined;
     };
+    // colorpicker event
+    jQuery(function ($) {
+        $(common_1.colorpickers.fill).off("change.spectrum");
+        $(common_1.colorpickers.fill).on("change.spectrum", function (e, color) {
+            svgutils_1.deform(colorSample).setColor("fill", color, "indivisual");
+        });
+        $(common_1.colorpickers.stroke).off("change.spectrum");
+        $(common_1.colorpickers.stroke).on("change.spectrum", function (e, color) {
+            svgutils_1.deform(colorSample).setColor("stroke", color, "indivisual");
+        });
+    });
 }
 exports.ellipseMode = ellipseMode;
 
-},{"./common":6,"./svgutils":11,"./utils":12}],8:[function(require,module,exports){
+},{"./common":6,"./svgutils":11,"./utils":12,"jquery":1}],8:[function(require,module,exports){
 Object.defineProperty(exports, "__esModule", { value: true });
 var common_1 = require("./common");
 var svgutils_1 = require("./svgutils");
@@ -20239,12 +20256,14 @@ function handMode() {
     });
     // colorpicker event
     jQuery(function ($) {
+        $(common_1.colorpickers.fill).off("change.spectrum");
         $(common_1.colorpickers.fill).on("change.spectrum", function (e, color) {
             if (handTarget) {
                 svgutils_1.deform(handTarget).setColor("fill", color, "indivisual");
                 handModeReflection();
             }
         });
+        $(common_1.colorpickers.stroke).off("change.spectrum");
         $(common_1.colorpickers.stroke).on("change.spectrum", function (e, color) {
             if (handTarget) {
                 svgutils_1.deform(handTarget).setColor("stroke", color, "indivisual");
@@ -20271,6 +20290,7 @@ Object.defineProperty(exports, "__esModule", { value: true });
 var common_1 = require("./common");
 var utils_1 = require("./utils");
 var svgutils_1 = require("./svgutils");
+var jQuery = require("jquery");
 function polygonMode() {
     var polyline = undefined;
     // about color-picker
@@ -20283,8 +20303,8 @@ function polygonMode() {
         if (polyline === undefined) {
             polyline = {
                 elem: common_1.svgroot.polyline([])
-                    .attr("fill", svgutils_1.deform(colorSample).getColor("fill"))
-                    .attr("stroke", svgutils_1.deform(colorSample).getColor("stroke"))
+                    .attr("fill", svgutils_1.deform(colorSample).getColor("fill").toHexString())
+                    .attr("stroke", svgutils_1.deform(colorSample).getColor("stroke").toHexString())
                     .attr("stroke-width", colorSample.attr("stroke-width")),
                 points: []
             };
@@ -20309,14 +20329,26 @@ function polygonMode() {
         }
         polyline = undefined;
     };
+    // colorpicker event
+    jQuery(function ($) {
+        $(common_1.colorpickers.fill).off("change.spectrum");
+        $(common_1.colorpickers.fill).on("change.spectrum", function (e, color) {
+            svgutils_1.deform(colorSample).setColor("fill", color, "indivisual");
+        });
+        $(common_1.colorpickers.stroke).off("change.spectrum");
+        $(common_1.colorpickers.stroke).on("change.spectrum", function (e, color) {
+            svgutils_1.deform(colorSample).setColor("stroke", color, "indivisual");
+        });
+    });
 }
 exports.polygonMode = polygonMode;
 
-},{"./common":6,"./svgutils":11,"./utils":12}],10:[function(require,module,exports){
+},{"./common":6,"./svgutils":11,"./utils":12,"jquery":1}],10:[function(require,module,exports){
 Object.defineProperty(exports, "__esModule", { value: true });
 var common_1 = require("./common");
 var utils_1 = require("./utils");
 var svgutils_1 = require("./svgutils");
+var jQuery = require("jquery");
 function rectangleMode() {
     var rectangle = undefined;
     // about color-picker
@@ -20328,8 +20360,8 @@ function rectangleMode() {
         var y = ev.clientY - common_1.svgroot.node.clientTop;
         rectangle = {
             elem: common_1.editorRoot.rect(0, 0).center(x, y)
-                .attr("fill", svgutils_1.deform(colorSample).getColor("fill"))
-                .attr("stroke", svgutils_1.deform(colorSample).getColor("stroke"))
+                .attr("fill", svgutils_1.deform(colorSample).getColor("fill").toHexString())
+                .attr("stroke", svgutils_1.deform(colorSample).getColor("stroke").toHexString())
                 .attr("stroke-width", colorSample.attr("stroke-width")),
             start: utils_1.Point.of(x, y),
             end: utils_1.Point.of(x, y)
@@ -20348,14 +20380,30 @@ function rectangleMode() {
     common_1.svgroot.node.onmouseup = function (ev) {
         ev.stopPropagation();
         if (rectangle) {
-            common_1.reflection();
+            if (rectangle.elem.width() === 0 && rectangle.elem.height() === 0) {
+                rectangle.elem.remove();
+            }
+            else {
+                common_1.reflection();
+            }
         }
         rectangle = undefined;
     };
+    // colorpicker event
+    jQuery(function ($) {
+        $(common_1.colorpickers.fill).off("change.spectrum");
+        $(common_1.colorpickers.fill).on("change.spectrum", function (e, color) {
+            svgutils_1.deform(colorSample).setColor("fill", color, "indivisual");
+        });
+        $(common_1.colorpickers.stroke).off("change.spectrum");
+        $(common_1.colorpickers.stroke).on("change.spectrum", function (e, color) {
+            svgutils_1.deform(colorSample).setColor("stroke", color, "indivisual");
+        });
+    });
 }
 exports.rectangleMode = rectangleMode;
 
-},{"./common":6,"./svgutils":11,"./utils":12}],11:[function(require,module,exports){
+},{"./common":6,"./svgutils":11,"./utils":12,"jquery":1}],11:[function(require,module,exports){
 Object.defineProperty(exports, "__esModule", { value: true });
 var affine_1 = require("./affine");
 var utils_1 = require("./utils");
