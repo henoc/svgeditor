@@ -63,12 +63,14 @@
     "@types/color-convert": "^1.9.0",
     "@types/ejs": "^2.3.33",
     "@types/jquery": "^3.2.16",
+    "@types/tinycolor2": "^1.4.0",
     "color-convert": "^1.9.0",
     "ejs": "^2.5.7",
     "html": "^1.0.0",
     "jquery": "^3.2.1",
     "spectrum-colorpicker": "^1.8.0",
-    "svgjs": "^2.6.2"
+    "svgjs": "^2.6.2",
+    "tinycolor2": "^1.4.1"
   },
   "style": [
     "./node_modules/spectrum-colorpicker/spectrum.css",

@@ -1,8 +1,9 @@
-import { editorRoot, svgroot, reflection, refleshColorPicker } from "./common";
+import { editorRoot, svgroot, reflection, refleshColorPicker, colorpickers } from "./common";
 import { ElementScheme, deform } from "./svgutils";
 import { Point, Direction, equals, reverse } from "./utils";
 
 import * as SVG from "svgjs";
+import * as jQuery from "jquery";
 
 export function handMode() {
 
@@ -18,18 +19,24 @@ export function handMode() {
     targetFromCursor: Point;
     targetInit: Point;
     dragMode: DragMode;
-    expandVertexes?: {
+    expandVertexes?: {  // 拡大用頂点を選択しているなら存在する
       target: SVG.Element;
       vertexes: SVG.Element[];
       targetInitScheme: ElementScheme;
     }
   }[] | undefined = undefined;
 
+  let handTarget: undefined | SVG.Element = undefined;
+
   svgroot.node.onmouseup = (ev) => {
     // 変更されたHTML（のSVG部分）をエディタに反映させる
-    if (dragTargets) reflection(() => {expandVertexesGroup.remove(); }, () => {svgroot.add(expandVertexesGroup); });
+    if (dragTargets) handModeReflection();
     dragTargets = undefined;
   };
+
+  function handModeReflection() {
+    reflection(() => {expandVertexesGroup.remove(); }, () => {svgroot.add(expandVertexesGroup); })
+  }
 
   svgroot.node.onmousemove = (ev) => {
     if (dragTargets !== undefined) {
@@ -130,9 +137,27 @@ export function handMode() {
         });
       });
 
+      handTarget = mainTarget;
+
       // colorpicker
       refleshColorPicker(mainTarget);
     };
+  });
+
+  // colorpicker event
+  jQuery($ => {
+    $(colorpickers.fill).on("change.spectrum", (e, color) => {
+      if (handTarget) {
+        deform(handTarget).setColor("fill", color, "indivisual");
+        handModeReflection();
+      }
+    });
+    $(colorpickers.stroke).on("change.spectrum", (e, color) => {
+      if (handTarget) {
+        deform(handTarget).setColor("stroke", color, "indivisual");
+        handModeReflection();
+      }
+    });
   });
 
 }

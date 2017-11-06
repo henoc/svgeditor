@@ -61,7 +61,7 @@ export function reflection(preprocess?: () => void, postprocess?: () => void): v
 /**
  * DOM of color pickers
  */
-let colorpickers = {
+export let colorpickers = {
   fill: "#svgeditor-colorpicker-fill",
   stroke: "#svgeditor-colorpicker-stroke"
 };
@@ -72,9 +72,9 @@ let colorpickers = {
 export function refleshColorPicker(target: SVG.Element): void {
   jQuery($ => {
     // @ts-ignore: no property error
-    $(colorpickers.fill).spectrum("set", deform(target).colorNormalize("fill"));
+    $(colorpickers.fill).spectrum("set", deform(target).getColor("fill").toHexString());
     // @ts-ignore
-    $(colorpickers.stroke).spectrum("set", deform(target).colorNormalize("stroke"));
+    $(colorpickers.stroke).spectrum("set", deform(target).getColor("stroke").toHexString());
   });
 }
 

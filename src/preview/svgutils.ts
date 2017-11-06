@@ -1,7 +1,7 @@
 import { Affine } from "./affine";
 import {Point, Direction} from "./utils";
 import * as SVG from "svgjs";
-import * as convert from "color-convert";
+let tinycolor: tinycolor = require("tinycolor2");
 
 export interface ElementScheme {
   tagName: string;
@@ -13,11 +13,13 @@ class SvgDeformer {
   constructor(public elem: SVG.Element) {
   }
 
-  geta(name: string): string {
-    return this.elem.attr(name);
+  geta(name: string): string | undefined {
+    let attr = this.elem.node.getAttribute(name);
+    if (attr === null) return undefined;
+    else return attr;
   }
   seta(name: string, value: string): void {
-    this.elem.attr(name, value);
+    this.elem.node.setAttribute(name, value);
   }
 
   setLeftUp(point: Point): void {
@@ -83,13 +85,6 @@ class SvgDeformer {
     this.elem.height(affinedRightDown.y - affinedLeftUp.y);
   }
 
-  /**
-   * Add `delta` at the attribute `attr` of this element.
-   */
-  add(attr: string, delta: number): void {
-    this.seta(attr, String(+this.geta(attr) + delta));
-  }
-
   extractScheme(): ElementScheme {
     let attrs: {[name: string]: string} = {};
     for (let i = 0; i < this.elem.node.attributes.length; i++) {
@@ -107,28 +102,42 @@ class SvgDeformer {
     });
   }
 
-  /**
-   * To rgb `#ABCDEF` style.
-   */
-  colorNormalize(fillOrStroke: "fill" | "stroke"): string | undefined {
-    let color = this.getColor(fillOrStroke);
-    if (color === "none") return undefined;
-    if (!color.startsWith("#")) {
-      let rgb = convert.keyword.rgb(<any>color);
-      color = "#" + convert.rgb.hex(rgb);
-    }
-    return color;
-  }
-
-  getColor(fillOrStroke: "fill" | "stroke"): string {
-    if (<string><any>this.elem.style(fillOrStroke) !== "") return <any>this.elem.style(fillOrStroke);
-    else return this.elem.attr(fillOrStroke);
+  getColor(fillOrStroke: "fill" | "stroke"): tinycolorInstance {
+    // @ts-ignore
+    if (this.elem.style(fillOrStroke) !== "") return tinycolor(this.elem.style(fillOrStroke));
+    else return tinycolor(this.elem.attr(fillOrStroke));
   }
 
   strokeOpacity(): number {
     let so = <string><any>this.elem.style("stroke-opacity");
     if (so === "") return 1;
     return parseFloat(so);
+  }
+
+  /**
+   * 
+   */
+  setColor(fillOrStroke: "fill" | "stroke", color: tinycolorInstance , prior: "indivisual" | "style"): void {
+    // @ts-ignore
+    let styleColor : string | undefined = this.elem.style(fillOrStroke) === "" ? undefined : this.elem.style(fillOrStroke);
+    let indivisualColor = this.geta(fillOrStroke); //　attrだと未定義時は黒が定義されていることになるので注意
+    if (styleColor !== undefined && indivisualColor !== undefined) {
+      if (prior === "indivisual") {
+        this.elem.attr(fillOrStroke, color.toHexString());
+      } else {
+        this.elem.style(fillOrStroke, color.toHexString());
+      }
+    } else if (styleColor !== undefined) {
+      this.elem.style(fillOrStroke, color.toHexString());
+    } else if (indivisualColor !== undefined) {
+      this.elem.attr(fillOrStroke, color.toHexString());
+    } else {
+      if (prior === "indivisual") {
+        this.elem.attr(fillOrStroke, color.toHexString());
+      } else {
+        this.elem.style(fillOrStroke, color.toHexString());
+      }
+    }
   }
 }
 
