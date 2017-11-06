@@ -3,8 +3,6 @@ import { ElementScheme, deform } from "./svgutils";
 import { Point, Direction, equals, reverse } from "./utils";
 
 import * as SVG from "svgjs";
-import * as convert from "color-convert";
-import * as jQuery from "jquery";
 
 export function handMode() {
 
@@ -26,8 +24,6 @@ export function handMode() {
       targetInitScheme: ElementScheme;
     }
   }[] | undefined = undefined;
-
-  let handTarget: SVG.Element | undefined = undefined;
 
   svgroot.node.onmouseup = (ev) => {
     // 変更されたHTML（のSVG部分）をエディタに反映させる
@@ -90,7 +86,6 @@ export function handMode() {
       });
 
       let mainTarget = moveElem;
-      handTarget = moveElem;
       // 拡大用頂点を出す
       let ids = deform(mainTarget).setExpandVertexes(expandVertexesGroup);
       let targets: SVG.Set = editorRoot.set([mainTarget]);

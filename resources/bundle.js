@@ -19326,7 +19326,6 @@ return SVG
 
 }));
 },{}],8:[function(require,module,exports){
-"use strict";
 var __extends = (this && this.__extends) || (function () {
     var extendStatics = Object.setPrototypeOf ||
         ({ __proto__: [] } instanceof Array && function (d, b) { d.__proto__ = b; }) ||
@@ -19402,7 +19401,6 @@ var Affine = /** @class */ (function (_super) {
 exports.Affine = Affine;
 
 },{"./utils":15}],9:[function(require,module,exports){
-"use strict";
 // Common process through any modes.
 Object.defineProperty(exports, "__esModule", { value: true });
 var svgutils_1 = require("./svgutils");
@@ -19506,7 +19504,6 @@ document.getElementById("svgeditor-mode-polygon").onclick = function (ev) {
 };
 
 },{"./ellipseMode":10,"./handMode":11,"./polygonMode":12,"./rectangleMode":13,"./svgutils":14,"jquery":5,"spectrum-colorpicker":6,"svgjs":7}],10:[function(require,module,exports){
-"use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 var common_1 = require("./common");
 var utils_1 = require("./utils");
@@ -19550,7 +19547,6 @@ function ellipseMode() {
 exports.ellipseMode = ellipseMode;
 
 },{"./common":9,"./svgutils":14,"./utils":15}],11:[function(require,module,exports){
-"use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 var common_1 = require("./common");
 var svgutils_1 = require("./svgutils");
@@ -19561,7 +19557,6 @@ function handMode() {
      * 編集ノードの移動用
      */
     var dragTargets = undefined;
-    var handTarget = undefined;
     common_1.svgroot.node.onmouseup = function (ev) {
         // 変更されたHTML（のSVG部分）をエディタに反映させる
         if (dragTargets)
@@ -19619,7 +19614,6 @@ function handMode() {
                 elems[i].remove();
             });
             var mainTarget = moveElem;
-            handTarget = moveElem;
             // 拡大用頂点を出す
             var ids = svgutils_1.deform(mainTarget).setExpandVertexes(expandVertexesGroup);
             var targets = common_1.editorRoot.set([mainTarget]);
@@ -19686,7 +19680,6 @@ function handModeDestruct() {
 exports.handModeDestruct = handModeDestruct;
 
 },{"./common":9,"./svgutils":14,"./utils":15}],12:[function(require,module,exports){
-"use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 var common_1 = require("./common");
 var utils_1 = require("./utils");
@@ -19733,7 +19726,6 @@ function polygonMode() {
 exports.polygonMode = polygonMode;
 
 },{"./common":9,"./svgutils":14,"./utils":15}],13:[function(require,module,exports){
-"use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 var common_1 = require("./common");
 var utils_1 = require("./utils");
@@ -19777,7 +19769,6 @@ function rectangleMode() {
 exports.rectangleMode = rectangleMode;
 
 },{"./common":9,"./svgutils":14,"./utils":15}],14:[function(require,module,exports){
-"use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 var affine_1 = require("./affine");
 var utils_1 = require("./utils");
@@ -19907,7 +19898,6 @@ function deform(elem) {
 exports.deform = deform;
 
 },{"./affine":8,"./utils":15,"color-convert":2}],15:[function(require,module,exports){
-"use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 var Point = /** @class */ (function () {
     function Point(x, y) {

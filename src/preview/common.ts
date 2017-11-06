@@ -7,7 +7,6 @@ import {ellipseMode} from "./ellipseMode";
 import {polygonMode} from "./polygonMode";
 
 import * as SVG from "svgjs";
-import * as convert from "color-convert";
 import * as jQuery from "jquery";
 require("spectrum-colorpicker");
 

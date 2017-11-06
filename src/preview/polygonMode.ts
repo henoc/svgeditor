@@ -2,7 +2,6 @@ import { svgroot, reflection, editorRoot, refleshColorPicker } from "./common";
 import { Point } from "./utils";
 import { deform } from "./svgutils";
 import * as SVG from "svgjs";
-import * as jQuery from "jquery";
 
 export function polygonMode() {
 

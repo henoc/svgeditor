@@ -1,8 +1,7 @@
 import { svgroot, editorRoot, reflection, refleshColorPicker } from "./common";
-import { Point, uuid } from "./utils";
+import { Point } from "./utils";
 import { deform } from "./svgutils";
 import * as SVG from "svgjs";
-import * as jQuery from "jquery";
 
 export function ellipseMode() {
 
