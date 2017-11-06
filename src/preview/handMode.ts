@@ -31,13 +31,9 @@ export function handMode() {
 
   svgroot.node.onmouseup = (ev) => {
     // 変更されたHTML（のSVG部分）をエディタに反映させる
-    if (dragTargets) reflection(() => {
-      expandVertexesGroup.remove();
-    }, () => {
-      svgroot.add(expandVertexesGroup);
-    });
+    if (dragTargets) reflection(() => {expandVertexesGroup.remove(); }, () => {svgroot.add(expandVertexesGroup); });
     dragTargets = undefined;
-  }
+  };
 
   svgroot.node.onmousemove = (ev) => {
     if (dragTargets !== undefined) {
@@ -74,7 +70,7 @@ export function handMode() {
         dragTarget.target.move(newPosition.x, newPosition.y);
       });
     }
-  }
+  };
 
   const moveElems: SVG.Element[] = [];
 

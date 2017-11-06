@@ -20010,9 +20010,9 @@ ellipses.each(function (i, elems) {
  */
 function command(name, args) {
     window.parent.postMessage({
-        command: 'did-click-link',
+        command: "did-click-link",
         data: args ? "command:" + name + "?" + encodeURIComponent(JSON.stringify(args)) : "command:" + name
-    }, 'file://');
+    }, "file://");
 }
 exports.command = command;
 function reflection(preprocess, postprocess) {
@@ -20034,18 +20034,21 @@ var colorpickers = {
  * insert color data into the color-picker
  */
 function refleshColorPicker(target) {
-    // show selected object color
     jQuery(function ($) {
+        // @ts-ignore: no property error
         $(colorpickers.fill).spectrum("set", svgutils_1.deform(target).colorNormalize("fill"));
+        // @ts-ignore
         $(colorpickers.stroke).spectrum("set", svgutils_1.deform(target).colorNormalize("stroke"));
     });
 }
 exports.refleshColorPicker = refleshColorPicker;
 jQuery(function ($) {
+    // @ts-ignore
     $("#svgeditor-colorpicker-fill").spectrum({
         showAlpha: true,
         allowEmpty: true
     });
+    // @ts-ignore
     $("#svgeditor-colorpicker-stroke").spectrum({
         showAlpha: true,
         allowEmpty: true
@@ -20128,11 +20131,7 @@ function handMode() {
     common_1.svgroot.node.onmouseup = function (ev) {
         // 変更されたHTML（のSVG部分）をエディタに反映させる
         if (dragTargets)
-            common_1.reflection(function () {
-                expandVertexesGroup.remove();
-            }, function () {
-                common_1.svgroot.add(expandVertexesGroup);
-            });
+            common_1.reflection(function () { expandVertexesGroup.remove(); }, function () { common_1.svgroot.add(expandVertexesGroup); });
         dragTargets = undefined;
     };
     common_1.svgroot.node.onmousemove = function (ev) {
@@ -20519,6 +20518,7 @@ var Point = /** @class */ (function () {
 exports.Point = Point;
 function uuid() {
     var S4 = function () {
+        // tslint:disable-next-line
         return (((1 + Math.random()) * 0x10000) | 0).toString(16).substring(1);
     };
     return (S4() + S4() + "-" + S4() + "-" + S4() + "-" + S4() + "-" + S4() + S4() + S4());

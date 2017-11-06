@@ -17,7 +17,7 @@ if (erootNative.firstElementChild) {
   svgContentText = erootNative.firstElementChild.innerHTML;
   erootNative.firstElementChild.remove();
 }
-export let editorRoot = SVG("svgeditor-root").size(400,400);
+export let editorRoot = SVG("svgeditor-root").size(400, 400);
 // 自動生成されるdefsを削除
 editorRoot.select("defs").each((i, elems) => elems[i].remove());
 export let svgroot = editorRoot.svg(svgContentText);
@@ -36,7 +36,7 @@ ellipses.each((i, elems) => {
       rx: ellipse.attr("r"),
       ry: ellipse.attr("r"),
       r: undefined
-    })
+    });
   }
 });
 
@@ -44,10 +44,13 @@ ellipses.each((i, elems) => {
  * Execute registered extension command.
  */
 export function command(name: string, args?: string[]): void {
-  window.parent.postMessage({
-    command: 'did-click-link',
-    data: args ? `command:${name}?${encodeURIComponent(JSON.stringify(args))}` : `command:${name}`
-  }, 'file://');
+  window.parent.postMessage(
+    {
+      command: "did-click-link",
+      data: args ? `command:${name}?${encodeURIComponent(JSON.stringify(args))}` : `command:${name}`
+    },
+    "file://"
+  );
 }
 
 export function reflection(preprocess?: () => void, postprocess?: () => void): void {
@@ -93,19 +96,19 @@ handMode();
 
 document.getElementById("svgeditor-mode-hand")!.onclick = (ev: MouseEvent) => {
   handMode();
-}
+};
 
 document.getElementById("svgeditor-mode-rectangle")!.onclick = (ev: MouseEvent) => {
   handModeDestruct();
   rectangleMode();
-}
+};
 
 document.getElementById("svgeditor-mode-ellipse")!.onclick = (ev: MouseEvent) => {
   handModeDestruct();
   ellipseMode();
-}
+};
 
 document.getElementById("svgeditor-mode-polygon")!.onclick = (ev: MouseEvent) => {
   handModeDestruct();
   polygonMode();
-}
+};

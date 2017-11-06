@@ -39,7 +39,7 @@ class Matrix3 {
       this.m[0][n],
       this.m[1][n],
       this.m[2][n]
-    ]
+    ];
   }
 
   mul(that: Matrix3): Matrix3 {
@@ -66,7 +66,7 @@ export class Affine extends Matrix3 {
     return new Affine(
       [1, 0, p.x],
       [0, 1, p.y]
-    )
+    );
   }
 
   static scale(p: Point, center: Point): Affine {

@@ -48,7 +48,6 @@
     "compile": "tsc -p ./ && npm run bundle",
     "bundle": "browserify out/preview/common.js -o resources/bundle.js -p [ parcelify -o resources/bundle.css ]",
     "postinstall": "node ./node_modules/vscode/bin/install",
-    "tslint": "tslint -c tslint.json src/extension.ts",
     "test": "npm run compile && ava out/test --verbose"
   },
   "devDependencies": {
@@ -56,6 +55,7 @@
     "ava": "^0.23.0",
     "browserify": "^14.5.0",
     "parcelify": "^2.2.0",
+    "tslint": "^5.8.0",
     "typescript": "^2.6.1",
     "vscode": "^1.0.0"
   },

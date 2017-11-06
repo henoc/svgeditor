@@ -30,7 +30,7 @@ export function rectangleMode() {
       start: Point.of(x, y),
       end: Point.of(x, y)
     };
-  }
+  };
 
   svgroot.node.onmousemove = (ev: MouseEvent) => {
     ev.stopPropagation();
@@ -42,7 +42,7 @@ export function rectangleMode() {
       rectangle.elem.move(leftUp.x, leftUp.y);
       rectangle.elem.size(rightDown.x - leftUp.x, rightDown.y - leftUp.y);
     }
-  }
+  };
 
   svgroot.node.onmouseup = (ev: MouseEvent) => {
     ev.stopPropagation();
@@ -51,6 +51,6 @@ export function rectangleMode() {
       reflection();
     }
     rectangle = undefined;
-  }
+  };
 
 }

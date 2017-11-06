@@ -1,6 +1,6 @@
 export class Point {
   constructor(public x: number, public y: number) {}
-  static of(x: number, y :number): Point {
+  static of(x: number, y: number): Point {
     return new Point(x, y);
   }
   static fromArray(array: number[]): Point {
@@ -49,8 +49,9 @@ export class Point {
 
 export function uuid(): string {
   const S4 = () => {
+    // tslint:disable-next-line
     return (((1 + Math.random()) * 0x10000) | 0).toString(16).substring(1);
-  }
+  };
   return (S4() + S4() + "-" + S4() + "-" + S4() + "-" + S4() + "-" + S4() + S4() + S4());
 }
 

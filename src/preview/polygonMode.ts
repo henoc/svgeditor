@@ -17,7 +17,7 @@ export function polygonMode() {
 
   svgroot.node.onmousedown = (ev: MouseEvent) => {
     ev.stopPropagation();
-    
+
     let x = ev.clientX - svgroot.node.clientLeft;
     let y = ev.clientY - svgroot.node.clientTop;
     if (polyline === undefined) {
@@ -31,7 +31,7 @@ export function polygonMode() {
     }
     polyline.points.push(Point.of(x, y));
     polyline.elem.plot(<any>polyline.points.map(p => [p.x, p.y]));
-  }
+  };
 
   svgroot.node.onmousemove = (ev: MouseEvent) => {
     ev.stopPropagation();
@@ -41,10 +41,10 @@ export function polygonMode() {
       let y = ev.clientY - svgroot.node.clientTop;
 
       let points = polyline.points.map(p => [p.x, p.y]).concat();
-      points.push([x, y])
+      points.push([x, y]);
       polyline.elem.plot(<any>points);
     }
-  }
+  };
 
   svgroot.node.oncontextmenu = (ev: MouseEvent) => {
     ev.stopPropagation();
@@ -53,6 +53,6 @@ export function polygonMode() {
       reflection();
     }
     polyline = undefined;
-  }
+  };
 
 }
