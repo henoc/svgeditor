@@ -1,6 +1,10 @@
 // Common process through any modes.
 
 import {deform} from "./svgutils";
+import {handMode, handModeDestruct} from "./handMode";
+import {rectangleMode} from "./rectangleMode";
+import {ellipseMode} from "./ellipseMode";
+import {polygonMode} from "./polygonMode";
 
 import * as SVG from "svgjs";
 import * as convert from "color-convert";
@@ -78,3 +82,24 @@ jQuery($ => {
     allowEmpty: true
   });
 });
+
+handMode();
+
+document.getElementById("svgeditor-mode-hand").onclick = (ev: MouseEvent) => {
+  handMode();
+}
+
+document.getElementById("svgeditor-mode-rectangle").onclick = (ev: MouseEvent) => {
+  handModeDestruct();
+  rectangleMode();
+}
+
+document.getElementById("svgeditor-mode-ellipse").onclick = (ev: MouseEvent) => {
+  handModeDestruct();
+  ellipseMode();
+}
+
+document.getElementById("svgeditor-mode-polygon").onclick = (ev: MouseEvent) => {
+  handModeDestruct();
+  polygonMode();
+}

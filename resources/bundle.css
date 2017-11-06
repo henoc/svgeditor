@@ -516,7 +516,6 @@ See http://bgrins.github.io/spectrum/themes/ for instructions.
   border-radius: 4px;
   box-shadow: inset 0 2px 0 rgba(255,255,255,0.2), 0 2px 2px rgba(0, 0, 0, 0.19);
   font-weight: bold;
-  width: 16px;
 }
 
 .svgeditor-button:active {

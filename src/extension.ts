@@ -11,17 +11,9 @@ export function activate(context: vscode.ExtensionContext) {
 	let previewUri = vscode.Uri.parse('svgeditor://authority/svgeditor');
 	let readResource = 
 		(filename: string) => fs.readFileSync(path.join(__dirname, "..", "resources", filename), "UTF-8");
-	let insertJs = {
-		hand: readResource("handMode_bundle.js"),
-		rectangle: readResource("rectangleMode_bundle.js"),
-		ellipse: readResource("ellipseMode_bundle.js"),
-		polygon: readResource("polygonMode_bundle.js")
-	};
-		
+	let insertJs = readResource("bundle.js");
 	let insertCss = readResource("bundle.css");
 	let viewer = readResource("viewer.ejs");
-
-	let editMode: "hand" | "rectangle" | "ellipse" | "polygon" = "hand";
 
 	class TextDocumentContentProvider implements vscode.TextDocumentContentProvider {
 		public editor: vscode.TextEditor | undefined;
@@ -42,7 +34,7 @@ export function activate(context: vscode.ExtensionContext) {
 		private createCssSnippet(): string {
 			if(this.editor === undefined) this.editor = vscode.window.activeTextEditor;
 			const svg = this.editor.document.getText();
-			const js = insertJs[editMode];
+			const js = insertJs;
 			const css = insertCss;
 			const html = render(viewer, {
 				svg: svg,
@@ -72,22 +64,6 @@ export function activate(context: vscode.ExtensionContext) {
 			vscode.window.showErrorMessage(reason);
 		});
 	}));
-	vscode.commands.registerCommand("extension.handMode", () => {
-		editMode = "hand";
-		provider.update(previewUri);
-	});
-	vscode.commands.registerCommand("extension.rectangleMode", () => {
-		editMode = "rectangle";
-		provider.update(previewUri);
-	});
-	vscode.commands.registerCommand("extension.ellipseMode", () => {
-		editMode = "ellipse";
-		provider.update(previewUri);
-	});
-	vscode.commands.registerCommand("extension.polygonMode", () => {
-		editMode = "polygon";
-		provider.update(previewUri);
-	});
 	
 	context.subscriptions.push(...disposables);
 

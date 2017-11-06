@@ -4,51 +4,55 @@ import { deform } from "./svgutils";
 import * as SVG from "svgjs";
 import * as jQuery from "jquery";
 
-let polyline: undefined | {
-  elem: SVG.PolyLine
-  points: Point[];
-} = undefined;
+export function polygonMode() {
 
-// about color-picker
-let colorSample = editorRoot.defs().rect().fill("none").stroke({ width: 10, color: "#999999" });
-refleshColorPicker(colorSample);
+  let polyline: undefined | {
+    elem: SVG.PolyLine
+    points: Point[];
+  } = undefined;
 
-document.onmousedown = (ev: MouseEvent) => {
-  ev.stopPropagation();
-  
-  let x = ev.clientX - svgroot.node.clientLeft;
-  let y = ev.clientY - svgroot.node.clientTop;
-  if (polyline === undefined) {
-    polyline = {
-      elem: svgroot.polyline([])
-        .attr("fill", deform(colorSample).getColor("fill"))
-        .attr("stroke", deform(colorSample).getColor("stroke"))
-        .attr("stroke-width", colorSample.attr("stroke-width")),
-      points: []
-    };
-  }
-  polyline.points.push(Point.of(x, y));
-  polyline.elem.plot(<any>polyline.points.map(p => [p.x, p.y]));
-}
+  // about color-picker
+  let colorSample = editorRoot.defs().rect().fill("none").stroke({ width: 10, color: "#999999" });
+  refleshColorPicker(colorSample);
 
-document.onmousemove = (ev: MouseEvent) => {
-  ev.stopPropagation();
-
-  if (polyline) {
+  svgroot.node.onmousedown = (ev: MouseEvent) => {
+    ev.stopPropagation();
+    
     let x = ev.clientX - svgroot.node.clientLeft;
     let y = ev.clientY - svgroot.node.clientTop;
-
-    let points = polyline.points.map(p => [p.x, p.y]).concat();
-    points.push([x, y])
-    polyline.elem.plot(<any>points);
+    if (polyline === undefined) {
+      polyline = {
+        elem: svgroot.polyline([])
+          .attr("fill", deform(colorSample).getColor("fill"))
+          .attr("stroke", deform(colorSample).getColor("stroke"))
+          .attr("stroke-width", colorSample.attr("stroke-width")),
+        points: []
+      };
+    }
+    polyline.points.push(Point.of(x, y));
+    polyline.elem.plot(<any>polyline.points.map(p => [p.x, p.y]));
   }
-}
 
-document.oncontextmenu = (ev: MouseEvent) => {
-  ev.stopPropagation();
+  svgroot.node.onmousemove = (ev: MouseEvent) => {
+    ev.stopPropagation();
 
-  if (polyline) {
-    reflection();
+    if (polyline) {
+      let x = ev.clientX - svgroot.node.clientLeft;
+      let y = ev.clientY - svgroot.node.clientTop;
+
+      let points = polyline.points.map(p => [p.x, p.y]).concat();
+      points.push([x, y])
+      polyline.elem.plot(<any>points);
+    }
   }
-  polyline = undefined;
+
+  svgroot.node.oncontextmenu = (ev: MouseEvent) => {
+    ev.stopPropagation();
+
+    if (polyline) {
+      reflection();
+    }
+    polyline = undefined;
+  }
+
 }

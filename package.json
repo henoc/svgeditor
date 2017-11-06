@@ -45,11 +45,8 @@
   },
   "scripts": {
     "vscode:prepublish": "tsc -p ./",
-    "compile": "tsc -p ./ && npm run handMode && npm run rectangleMode && npm run ellipseMode && npm run polygonMode",
-    "handMode": "browserify -e out/preview/common.js -e out/preview/handMode.js -o resources/handMode_bundle.js -p [ parcelify -o resources/bundle.css ]",
-    "rectangleMode": "browserify -e out/preview/common.js -e out/preview/rectangleMode.js -o resources/rectangleMode_bundle.js -p [ parcelify -o resources/bundle.css ]",
-    "ellipseMode": "browserify -e out/preview/common.js -e out/preview/ellipseMode.js -o resources/ellipseMode_bundle.js -p [ parcelify -o resources/bundle.css ]",
-    "polygonMode": "browserify -e out/preview/common.js -e out/preview/polygonMode.js -o resources/polygonMode_bundle.js -p [ parcelify -o resources/bundle.css ]",
+    "compile": "tsc -p ./ && npm run bundle",
+    "bundle": "browserify out/preview/common.js -o resources/bundle.js -p [ parcelify -o resources/bundle.css ]",
     "postinstall": "node ./node_modules/vscode/bin/install",
     "tslint": "tslint -c tslint.json src/extension.ts",
     "test": "npm run compile && ava out/test --verbose"
