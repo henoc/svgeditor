@@ -75,7 +75,7 @@ export function polygonMode() {
   // style attributes event
   svgStyleAttrs.strokewidth.oninput = e => {
     deform(colorSample).setStyleAttr("stroke-width", svgStyleAttrs.strokewidth.value, "indivisual");
-  }
+  };
 
   displayOn(document.getElementById("svgeditor-typicalproperties-enclosure-div")!);
 }

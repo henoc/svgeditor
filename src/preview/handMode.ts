@@ -35,7 +35,7 @@ export function handMode() {
   };
 
   function handModeReflection() {
-    reflection(() => {expandVertexesGroup.remove(); }, () => {svgroot.add(expandVertexesGroup); })
+    reflection(() => {expandVertexesGroup.remove(); }, () => {svgroot.add(expandVertexesGroup); });
   }
 
   svgroot.node.onmousemove = (ev) => {
@@ -166,7 +166,7 @@ export function handMode() {
     let v = withDefault<string>(svgStyleAttrs.strokewidth.value, "0");
     if (handTarget) deform(handTarget).setStyleAttr("stroke-width", String(v), "indivisual");
     handModeReflection();
-  }
+  };
 }
 
 export function handModeDestruct() {
