@@ -19483,22 +19483,18 @@ exports.svgStyleAttrs = {
  */
 function refleshStyleAttribues(target) {
     jQuery(function ($) {
-        // @ts-ignore: no property error
-        $(exports.colorpickers.fill).spectrum("set", svgutils_1.deform(target).getColor("fill").toHexString());
-        // @ts-ignore
-        $(exports.colorpickers.stroke).spectrum("set", svgutils_1.deform(target).getColor("stroke").toHexString());
+        $(exports.colorpickers.fill).spectrum("set", svgutils_1.deform(target).getColorWithOpacity("fill").toRgbString());
+        $(exports.colorpickers.stroke).spectrum("set", svgutils_1.deform(target).getColorWithOpacity("stroke").toRgbString());
     });
     exports.svgStyleAttrs.strokewidth.value = svgutils_1.deform(target).getStyleAttr("stroke-width");
 }
 exports.refleshStyleAttribues = refleshStyleAttribues;
 // create color-pickers (not event)
 jQuery(function ($) {
-    // @ts-ignore
     $(exports.colorpickers.fill).spectrum({
         showAlpha: true,
         allowEmpty: true
     });
-    // @ts-ignore
     $(exports.colorpickers.stroke).spectrum({
         showAlpha: true,
         allowEmpty: true
@@ -19554,6 +19550,8 @@ function ellipseMode() {
             elem: common_1.editorRoot.ellipse(0, 0).center(x, y)
                 .attr("fill", svgutils_1.deform(colorSample).getColor("fill").toHexString())
                 .attr("stroke", svgutils_1.deform(colorSample).getColor("stroke").toHexString())
+                .attr("fill-opacity", svgutils_1.deform(colorSample).getColorWithOpacity("fill").getAlpha())
+                .attr("stroke-opacity", svgutils_1.deform(colorSample).getColorWithOpacity("stroke").getAlpha())
                 .attr("stroke-width", svgutils_1.deform(colorSample).getStyleAttr("stroke-width")),
             start: utils_1.Point.of(x, y),
             end: utils_1.Point.of(x, y)
@@ -19585,11 +19583,11 @@ function ellipseMode() {
     jQuery(function ($) {
         $(common_1.colorpickers.fill).off("change.spectrum");
         $(common_1.colorpickers.fill).on("change.spectrum", function (e, color) {
-            svgutils_1.deform(colorSample).setColor("fill", color, "indivisual");
+            svgutils_1.deform(colorSample).setColorWithOpacity("fill", color, "indivisual");
         });
         $(common_1.colorpickers.stroke).off("change.spectrum");
         $(common_1.colorpickers.stroke).on("change.spectrum", function (e, color) {
-            svgutils_1.deform(colorSample).setColor("stroke", color, "indivisual");
+            svgutils_1.deform(colorSample).setColorWithOpacity("stroke", color, "indivisual");
         });
     });
     // style attributes event
@@ -19729,14 +19727,14 @@ function handMode() {
         $(common_1.colorpickers.fill).off("change.spectrum");
         $(common_1.colorpickers.fill).on("change.spectrum", function (e, color) {
             if (handTarget) {
-                svgutils_1.deform(handTarget).setColor("fill", color, "indivisual");
+                svgutils_1.deform(handTarget).setColorWithOpacity("fill", color, "indivisual");
                 handModeReflection();
             }
         });
         $(common_1.colorpickers.stroke).off("change.spectrum");
         $(common_1.colorpickers.stroke).on("change.spectrum", function (e, color) {
             if (handTarget) {
-                svgutils_1.deform(handTarget).setColor("stroke", color, "indivisual");
+                svgutils_1.deform(handTarget).setColorWithOpacity("stroke", color, "indivisual");
                 handModeReflection();
             }
         });
@@ -19783,6 +19781,8 @@ function polygonMode() {
                 elem: seed
                     .attr("fill", svgutils_1.deform(colorSample).getColor("fill").toHexString())
                     .attr("stroke", svgutils_1.deform(colorSample).getColor("stroke").toHexString())
+                    .attr("fill-opacity", svgutils_1.deform(colorSample).getColorWithOpacity("fill").getAlpha())
+                    .attr("stroke-opacity", svgutils_1.deform(colorSample).getColorWithOpacity("stroke").getAlpha())
                     .attr("stroke-width", svgutils_1.deform(colorSample).getStyleAttr("stroke-width")),
                 points: []
             };
@@ -19811,11 +19811,11 @@ function polygonMode() {
     jQuery(function ($) {
         $(common_1.colorpickers.fill).off("change.spectrum");
         $(common_1.colorpickers.fill).on("change.spectrum", function (e, color) {
-            svgutils_1.deform(colorSample).setColor("fill", color, "indivisual");
+            svgutils_1.deform(colorSample).setColorWithOpacity("fill", color, "indivisual");
         });
         $(common_1.colorpickers.stroke).off("change.spectrum");
         $(common_1.colorpickers.stroke).on("change.spectrum", function (e, color) {
-            svgutils_1.deform(colorSample).setColor("stroke", color, "indivisual");
+            svgutils_1.deform(colorSample).setColorWithOpacity("stroke", color, "indivisual");
         });
     });
     // style attributes event
@@ -19849,6 +19849,8 @@ function rectangleMode() {
             elem: common_1.editorRoot.rect(0, 0).center(x, y)
                 .attr("fill", svgutils_1.deform(colorSample).getColor("fill").toHexString())
                 .attr("stroke", svgutils_1.deform(colorSample).getColor("stroke").toHexString())
+                .attr("fill-opacity", svgutils_1.deform(colorSample).getColorWithOpacity("fill").getAlpha())
+                .attr("stroke-opacity", svgutils_1.deform(colorSample).getColorWithOpacity("stroke").getAlpha())
                 .attr("stroke-width", svgutils_1.deform(colorSample).getStyleAttr("stroke-width")),
             start: utils_1.Point.of(x, y),
             end: utils_1.Point.of(x, y)
@@ -19880,11 +19882,11 @@ function rectangleMode() {
     jQuery(function ($) {
         $(common_1.colorpickers.fill).off("change.spectrum");
         $(common_1.colorpickers.fill).on("change.spectrum", function (e, color) {
-            svgutils_1.deform(colorSample).setColor("fill", color, "indivisual");
+            svgutils_1.deform(colorSample).setColorWithOpacity("fill", color, "indivisual");
         });
         $(common_1.colorpickers.stroke).off("change.spectrum");
         $(common_1.colorpickers.stroke).on("change.spectrum", function (e, color) {
-            svgutils_1.deform(colorSample).setColor("stroke", color, "indivisual");
+            svgutils_1.deform(colorSample).setColorWithOpacity("stroke", color, "indivisual");
         });
     });
     // style attributes event
@@ -19996,30 +19998,31 @@ var SvgDeformer = /** @class */ (function () {
     SvgDeformer.prototype.getColor = function (fillOrStroke) {
         return tinycolor(this.getStyleAttr(fillOrStroke));
     };
+    SvgDeformer.prototype.getColorWithOpacity = function (fillOrStroke) {
+        var rgb = tinycolor(this.getStyleAttr(fillOrStroke));
+        var alpha = +this.getStyleAttr(fillOrStroke === "fill" ? "fill-opacity" : "stroke-opacity");
+        return rgb.setAlpha(alpha);
+    };
     /**
      * Get attributes kinds of style in order to validation
      */
     SvgDeformer.prototype.getStyleAttr = function (name) {
-        // @ts-ignore
         if (this.elem.style(name) !== "")
             return this.elem.style(name);
         else
             return this.elem.attr(name);
     };
-    SvgDeformer.prototype.strokeOpacity = function () {
-        var so = this.elem.style("stroke-opacity");
-        if (so === "")
-            return 1;
-        return parseFloat(so);
-    };
     SvgDeformer.prototype.setColor = function (fillOrStroke, color, prior) {
         return this.setStyleAttr(fillOrStroke, color.toHexString(), prior);
+    };
+    SvgDeformer.prototype.setColorWithOpacity = function (fillOrStroke, color, prior) {
+        this.setStyleAttr(fillOrStroke, color.toHexString(), prior);
+        this.setStyleAttr(fillOrStroke === "fill" ? "fill-opacity" : "stroke-opacity", String(color.getAlpha()), prior);
     };
     /**
      * Set attributes kinds of style with priority. If already defined and required to update the value, follow the way of writing.
      */
     SvgDeformer.prototype.setStyleAttr = function (name, value, prior) {
-        // @ts-ignore
         var style = this.elem.style(name) === "" ? undefined : this.elem.style(name);
         var indivisual = this.geta(name); //　attrだと未定義時はデフォルトの数が定義されていることになるので注意
         if (style !== undefined && indivisual !== undefined) {

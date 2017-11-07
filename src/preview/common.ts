@@ -89,23 +89,19 @@ export let svgStyleAttrs = {
  */
 export function refleshStyleAttribues(target: SVG.Element): void {
   jQuery($ => {
-    // @ts-ignore: no property error
-    $(colorpickers.fill).spectrum("set", deform(target).getColor("fill").toHexString());
-    // @ts-ignore
-    $(colorpickers.stroke).spectrum("set", deform(target).getColor("stroke").toHexString());
+    (<any>$(colorpickers.fill)).spectrum("set", deform(target).getColorWithOpacity("fill").toRgbString());
+    (<any>$(colorpickers.stroke)).spectrum("set", deform(target).getColorWithOpacity("stroke").toRgbString());
   });
   svgStyleAttrs.strokewidth.value = deform(target).getStyleAttr("stroke-width");
 }
 
 // create color-pickers (not event)
 jQuery($ => {
-  // @ts-ignore
-  $(colorpickers.fill).spectrum({
+  (<any>$(colorpickers.fill)).spectrum({
     showAlpha: true,
     allowEmpty: true
   });
-  // @ts-ignore
-  $(colorpickers.stroke).spectrum({
+  (<any>$(colorpickers.stroke)).spectrum({
     showAlpha: true,
     allowEmpty: true
   });

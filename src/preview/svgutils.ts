@@ -109,31 +109,34 @@ class SvgDeformer {
     return tinycolor(this.getStyleAttr(fillOrStroke));
   }
 
+  getColorWithOpacity(fillOrStroke: "fill" | "stroke"): tinycolorInstance {
+    let rgb = tinycolor(this.getStyleAttr(fillOrStroke));
+    let alpha = +this.getStyleAttr(fillOrStroke === "fill" ? "fill-opacity" : "stroke-opacity");
+    return rgb.setAlpha(alpha);
+  }
+
   /**
    * Get attributes kinds of style in order to validation
    */
   getStyleAttr(name: string): string {
-    // @ts-ignore
-    if (this.elem.style(name) !== "") return this.elem.style(name);
+    if (<any>this.elem.style(name) !== "") return <any>this.elem.style(name);
     else return this.elem.attr(name);
-  }
-
-  strokeOpacity(): number {
-    let so = <string><any>this.elem.style("stroke-opacity");
-    if (so === "") return 1;
-    return parseFloat(so);
   }
 
   setColor(fillOrStroke: "fill" | "stroke", color: tinycolorInstance , prior: "indivisual" | "style"): void {
     return this.setStyleAttr(fillOrStroke, color.toHexString(), prior);
   }
 
+  setColorWithOpacity(fillOrStroke: "fill" | "stroke", color: tinycolorInstance, prior: "indivisual" | "style"): void {
+    this.setStyleAttr(fillOrStroke, color.toHexString(), prior);
+    this.setStyleAttr(fillOrStroke === "fill" ? "fill-opacity" : "stroke-opacity", String(color.getAlpha()), prior);
+  }
+
   /**
    * Set attributes kinds of style with priority. If already defined and required to update the value, follow the way of writing.
    */
   setStyleAttr(name: string, value: string, prior: "indivisual" | "style"): void {
-     // @ts-ignore
-     let style : string | undefined = this.elem.style(name) === "" ? undefined : this.elem.style(name);
+     let style : string | undefined = <any>this.elem.style(name) === "" ? undefined : <any>this.elem.style(name);
      let indivisual = this.geta(name); //　attrだと未定義時はデフォルトの数が定義されていることになるので注意
      if (style !== undefined && indivisual !== undefined) {
        if (prior === "indivisual") {
