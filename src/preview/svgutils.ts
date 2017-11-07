@@ -52,7 +52,7 @@ class SvgDeformer {
     for (let i = 0; i < 3; i++) {
       for (let j = 0; j < 3; j++) {
         if (i === 1 && j === 1) continue;
-        let point = this.getLeftUp().addxy(this.elem.width() / 2 * j, this.elem.height() / 2 * i);
+        let point = this.getLeftUp().addxy(this.getWidth() / 2 * j, this.getHeight() / 2 * i);
 
         if (recycle) {
           group.children()[c].center(point.x, point.y);
@@ -81,7 +81,7 @@ class SvgDeformer {
     let affine = Affine.scale(scale, center);
     let leftUp = this.getLeftUp();
     let affinedLeftUp = affine.transform(leftUp);
-    let rightDown = this.getLeftUp().addxy(this.elem.width(), this.elem.height());
+    let rightDown = this.getLeftUp().addxy(this.getWidth(), this.getHeight());
     let affinedRightDown = affine.transform(rightDown);
     this.setLeftUp(affinedLeftUp);
     this.elem.width(affinedRightDown.x - affinedLeftUp.x);
@@ -136,8 +136,8 @@ class SvgDeformer {
    * Set attributes kinds of style with priority. If already defined and required to update the value, follow the way of writing.
    */
   setStyleAttr(name: string, value: string, prior: "indivisual" | "style"): void {
-     let style : string | undefined = <any>this.elem.style(name) === "" ? undefined : <any>this.elem.style(name);
-     let indivisual = this.geta(name); //　attrだと未定義時はデフォルトの数が定義されていることになるので注意
+     let style: string | undefined = <any>this.elem.style(name) === "" ? undefined : <any>this.elem.style(name);
+     let indivisual = this.geta(name); // attrだと未定義時はデフォルトの数が定義されていることになるので注意
      if (style !== undefined && indivisual !== undefined) {
        if (prior === "indivisual") {
          this.elem.attr(name, value);
@@ -155,6 +155,17 @@ class SvgDeformer {
          this.elem.style(name, value);
        }
      }
+  }
+
+  // なぜかtext要素の幅と高さがSVG.jsで取れないため再定義
+  getWidth(): number {
+    let seed = <SVGGraphicsElement><any>this.elem.node;
+    return seed.getBBox().width;
+  }
+
+  getHeight(): number {
+    let seed = <SVGGraphicsElement><any>this.elem.node;
+    return seed.getBBox().height;
   }
 }
 

@@ -19951,7 +19951,7 @@ var SvgDeformer = /** @class */ (function () {
             for (var j = 0; j < 3; j++) {
                 if (i === 1 && j === 1)
                     continue;
-                var point = this.getLeftUp().addxy(this.elem.width() / 2 * j, this.elem.height() / 2 * i);
+                var point = this.getLeftUp().addxy(this.getWidth() / 2 * j, this.getHeight() / 2 * i);
                 if (recycle) {
                     group.children()[c].center(point.x, point.y);
                     elems.push(group.children()[c]);
@@ -19981,7 +19981,7 @@ var SvgDeformer = /** @class */ (function () {
         var affine = affine_1.Affine.scale(scale, center);
         var leftUp = this.getLeftUp();
         var affinedLeftUp = affine.transform(leftUp);
-        var rightDown = this.getLeftUp().addxy(this.elem.width(), this.elem.height());
+        var rightDown = this.getLeftUp().addxy(this.getWidth(), this.getHeight());
         var affinedRightDown = affine.transform(rightDown);
         this.setLeftUp(affinedLeftUp);
         this.elem.width(affinedRightDown.x - affinedLeftUp.x);
@@ -20032,7 +20032,7 @@ var SvgDeformer = /** @class */ (function () {
      */
     SvgDeformer.prototype.setStyleAttr = function (name, value, prior) {
         var style = this.elem.style(name) === "" ? undefined : this.elem.style(name);
-        var indivisual = this.geta(name); //　attrだと未定義時はデフォルトの数が定義されていることになるので注意
+        var indivisual = this.geta(name); // attrだと未定義時はデフォルトの数が定義されていることになるので注意
         if (style !== undefined && indivisual !== undefined) {
             if (prior === "indivisual") {
                 this.elem.attr(name, value);
@@ -20055,6 +20055,15 @@ var SvgDeformer = /** @class */ (function () {
                 this.elem.style(name, value);
             }
         }
+    };
+    // なぜかtext要素の幅と高さがSVG.jsで取れないため再定義
+    SvgDeformer.prototype.getWidth = function () {
+        var seed = this.elem.node;
+        return seed.getBBox().width;
+    };
+    SvgDeformer.prototype.getHeight = function () {
+        var seed = this.elem.node;
+        return seed.getBBox().height;
     };
     return SvgDeformer;
 }());
@@ -20080,7 +20089,7 @@ function textMode() {
         ev.stopPropagation();
         var x = ev.clientX - common_1.svgroot.node.clientLeft;
         var y = ev.clientY - common_1.svgroot.node.clientTop;
-        common_1.editorRoot.text(attributeElems.text.value).move(x, y)
+        common_1.editorRoot.plain(attributeElems.text.value).move(x, y)
             .attr("fill", svgutils_1.deform(colorSample).getColor("fill").toHexString())
             .attr("stroke", svgutils_1.deform(colorSample).getColor("stroke").toHexString())
             .attr("fill-opacity", svgutils_1.deform(colorSample).getColorWithOpacity("fill").getAlpha())

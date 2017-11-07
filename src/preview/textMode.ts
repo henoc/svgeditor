@@ -19,7 +19,7 @@ export function textMode() {
     let x = ev.clientX - svgroot.node.clientLeft;
     let y = ev.clientY - svgroot.node.clientTop;
 
-    editorRoot.text(attributeElems.text.value).move(x, y)
+    editorRoot.plain(attributeElems.text.value).move(x, y)
       .attr("fill", deform(colorSample).getColor("fill").toHexString())
       .attr("stroke", deform(colorSample).getColor("stroke").toHexString())
       .attr("fill-opacity", deform(colorSample).getColorWithOpacity("fill").getAlpha())
@@ -49,4 +49,5 @@ export function textMode() {
 
 export function textModeDestruct() {
   displayOff(document.getElementById("svgeditor-typicalproperties-textmode")!);
+  document.onmousedown = () => undefined;
 }
