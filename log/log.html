@@ -563,8 +563,13 @@ See http://bgrins.github.io/spectrum/themes/ for instructions.
 
   </div>
   <div id="svgeditor-properties">
-    <div id="svgeditor-colorpicker" class="svgeditor-property">
+    <div id="svgeditor-styleattributes" class="svgeditor-property">
       fill: <input type="text" id="svgeditor-colorpicker-fill"> stroke: <input type="text" id="svgeditor-colorpicker-stroke"> stroke-width: <input type="number" id="svgeditor-attributes-strokewidth">
+    </div>
+    <div id="svgeditor-typicalproperties" class="svgeditor-property">
+      <div id="svgeditor-typicalproperties-enclosure-div" class="svgeditor-displaynone"> <!-- change display on/off -->
+        <input type="checkbox" id="svgeditor-typicalproperties-enclosure"><label for="svgeditor-typicalproperties-enclosure">polygon</label>
+      </div>
     </div>
   </div>
   <script type="text/javascript">
@@ -20025,6 +20030,18 @@ function reflection(preprocess, postprocess) {
         postprocess();
 }
 exports.reflection = reflection;
+function displayOn(target) {
+    var classes = target.getAttribute("class").split(" ");
+    target.setAttribute("class", classes.filter(function (clazz) { return clazz != "svgeditor-displaynone"; }).join(" "));
+}
+exports.displayOn = displayOn;
+function displayOff(target) {
+    var classes = target.getAttribute("class").split(" ");
+    if (classes.indexOf("svgeditor-displaynone") === -1)
+        classes.push("svgeditor-displaynone");
+    target.setAttribute("class", classes.join(" "));
+}
+exports.displayOff = displayOff;
 /**
  * css selector of color pickers
  */
@@ -20063,14 +20080,17 @@ jQuery(function ($) {
 });
 handMode_1.handMode();
 document.getElementById("svgeditor-mode-hand").onclick = function (ev) {
+    polygonMode_1.polygonModeDestruct();
     handMode_1.handMode();
 };
 document.getElementById("svgeditor-mode-rectangle").onclick = function (ev) {
     handMode_1.handModeDestruct();
+    polygonMode_1.polygonModeDestruct();
     rectangleMode_1.rectangleMode();
 };
 document.getElementById("svgeditor-mode-ellipse").onclick = function (ev) {
     handMode_1.handModeDestruct();
+    polygonMode_1.polygonModeDestruct();
     ellipseMode_1.ellipseMode();
 };
 document.getElementById("svgeditor-mode-polygon").onclick = function (ev) {
@@ -20097,7 +20117,7 @@ function ellipseMode() {
             elem: common_1.editorRoot.ellipse(0, 0).center(x, y)
                 .attr("fill", svgutils_1.deform(colorSample).getColor("fill").toHexString())
                 .attr("stroke", svgutils_1.deform(colorSample).getColor("stroke").toHexString())
-                .attr("stroke-width", colorSample.attr("stroke-width")),
+                .attr("stroke-width", svgutils_1.deform(colorSample).getStyleAttr("stroke-width")),
             start: utils_1.Point.of(x, y),
             end: utils_1.Point.of(x, y)
         };
@@ -20135,6 +20155,10 @@ function ellipseMode() {
             svgutils_1.deform(colorSample).setColor("stroke", color, "indivisual");
         });
     });
+    // style attributes event
+    common_1.svgStyleAttrs.strokewidth.oninput = function (e) {
+        svgutils_1.deform(colorSample).setStyleAttr("stroke-width", common_1.svgStyleAttrs.strokewidth.value, "indivisual");
+    };
 }
 exports.ellipseMode = ellipseMode;
 
@@ -20311,16 +20335,18 @@ function polygonMode() {
     // about color-picker
     var colorSample = common_1.editorRoot.defs().rect().fill("none").stroke({ width: 10, color: "#999999" });
     common_1.refleshStyleAttribues(colorSample);
+    var polygonCheckbox = document.getElementById("svgeditor-typicalproperties-enclosure");
     common_1.svgroot.node.onmousedown = function (ev) {
         ev.stopPropagation();
         var x = ev.clientX - common_1.svgroot.node.clientLeft;
         var y = ev.clientY - common_1.svgroot.node.clientTop;
         if (polyline === undefined) {
+            var seed = polygonCheckbox.checked ? common_1.svgroot.polygon([]) : common_1.svgroot.polyline([]);
             polyline = {
-                elem: common_1.svgroot.polyline([])
+                elem: seed
                     .attr("fill", svgutils_1.deform(colorSample).getColor("fill").toHexString())
                     .attr("stroke", svgutils_1.deform(colorSample).getColor("stroke").toHexString())
-                    .attr("stroke-width", colorSample.attr("stroke-width")),
+                    .attr("stroke-width", svgutils_1.deform(colorSample).getStyleAttr("stroke-width")),
                 points: []
             };
         }
@@ -20355,8 +20381,17 @@ function polygonMode() {
             svgutils_1.deform(colorSample).setColor("stroke", color, "indivisual");
         });
     });
+    // style attributes event
+    common_1.svgStyleAttrs.strokewidth.oninput = function (e) {
+        svgutils_1.deform(colorSample).setStyleAttr("stroke-width", common_1.svgStyleAttrs.strokewidth.value, "indivisual");
+    };
+    common_1.displayOn(document.getElementById("svgeditor-typicalproperties-enclosure-div"));
 }
 exports.polygonMode = polygonMode;
+function polygonModeDestruct() {
+    common_1.displayOff(document.getElementById("svgeditor-typicalproperties-enclosure-div"));
+}
+exports.polygonModeDestruct = polygonModeDestruct;
 
 },{"./common":6,"./svgutils":11,"./utils":12,"jquery":1}],10:[function(require,module,exports){
 Object.defineProperty(exports, "__esModule", { value: true });
@@ -20427,10 +20462,14 @@ Object.defineProperty(exports, "__esModule", { value: true });
 var affine_1 = require("./affine");
 var utils_1 = require("./utils");
 var tinycolor = require("tinycolor2");
+/**
+ * Completion functions of SVG.js
+ */
 var SvgDeformer = /** @class */ (function () {
     function SvgDeformer(elem) {
         this.elem = elem;
     }
+    // SVG.jsのattrは未定義のときデフォルト値を返す？ようなのでelementから直接とる関数を定義
     SvgDeformer.prototype.geta = function (name) {
         var attr = this.elem.node.getAttribute(name);
         if (attr === null)
@@ -20520,6 +20559,9 @@ var SvgDeformer = /** @class */ (function () {
     SvgDeformer.prototype.getColor = function (fillOrStroke) {
         return tinycolor(this.getStyleAttr(fillOrStroke));
     };
+    /**
+     * Get attributes kinds of style in order to validation
+     */
     SvgDeformer.prototype.getStyleAttr = function (name) {
         // @ts-ignore
         if (this.elem.style(name) !== "")
@@ -20536,6 +20578,9 @@ var SvgDeformer = /** @class */ (function () {
     SvgDeformer.prototype.setColor = function (fillOrStroke, color, prior) {
         return this.setStyleAttr(fillOrStroke, color.toHexString(), prior);
     };
+    /**
+     * Set attributes kinds of style with priority. If already defined and required to update the value, follow the way of writing.
+     */
     SvgDeformer.prototype.setStyleAttr = function (name, value, prior) {
         // @ts-ignore
         var style = this.elem.style(name) === "" ? undefined : this.elem.style(name);

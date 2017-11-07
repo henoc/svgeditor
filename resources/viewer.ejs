@@ -14,8 +14,13 @@
     <%- svg %>
   </div>
   <div id="svgeditor-properties">
-    <div id="svgeditor-colorpicker" class="svgeditor-property">
+    <div id="svgeditor-styleattributes" class="svgeditor-property">
       fill: <input type="text" id="svgeditor-colorpicker-fill"> stroke: <input type="text" id="svgeditor-colorpicker-stroke"> stroke-width: <input type="number" id="svgeditor-attributes-strokewidth">
+    </div>
+    <div id="svgeditor-typicalproperties" class="svgeditor-property">
+      <div id="svgeditor-typicalproperties-enclosure-div" class="svgeditor-displaynone"> <!-- change display on/off -->
+        <input type="checkbox" id="svgeditor-typicalproperties-enclosure"><label for="svgeditor-typicalproperties-enclosure">polygon</label>
+      </div>
     </div>
   </div>
   <script type="text/javascript">

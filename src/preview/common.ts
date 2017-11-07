@@ -4,7 +4,7 @@ import {deform} from "./svgutils";
 import {handMode, handModeDestruct} from "./handMode";
 import {rectangleMode} from "./rectangleMode";
 import {ellipseMode} from "./ellipseMode";
-import {polygonMode} from "./polygonMode";
+import {polygonMode, polygonModeDestruct} from "./polygonMode";
 
 import * as SVG from "svgjs";
 import * as jQuery from "jquery";
@@ -58,6 +58,17 @@ export function reflection(preprocess?: () => void, postprocess?: () => void): v
   if (postprocess) postprocess();
 }
 
+export function displayOn(target: HTMLElement): void {
+  let classes = target.getAttribute("class")!.split(" ");
+  target.setAttribute("class", classes.filter(clazz => clazz != "svgeditor-displaynone").join(" "));
+}
+
+export function displayOff(target: HTMLElement): void {
+  let classes = target.getAttribute("class")!.split(" ");
+  if (classes.indexOf("svgeditor-displaynone") === -1) classes.push("svgeditor-displaynone");
+  target.setAttribute("class", classes.join(" "));
+}
+
 /**
  * css selector of color pickers
  */
@@ -102,16 +113,19 @@ jQuery($ => {
 handMode();
 
 document.getElementById("svgeditor-mode-hand")!.onclick = (ev: MouseEvent) => {
+  polygonModeDestruct();
   handMode();
 };
 
 document.getElementById("svgeditor-mode-rectangle")!.onclick = (ev: MouseEvent) => {
   handModeDestruct();
+  polygonModeDestruct();
   rectangleMode();
 };
 
 document.getElementById("svgeditor-mode-ellipse")!.onclick = (ev: MouseEvent) => {
   handModeDestruct();
+  polygonModeDestruct();
   ellipseMode();
 };
 

@@ -19455,6 +19455,18 @@ function reflection(preprocess, postprocess) {
         postprocess();
 }
 exports.reflection = reflection;
+function displayOn(target) {
+    var classes = target.getAttribute("class").split(" ");
+    target.setAttribute("class", classes.filter(function (clazz) { return clazz != "svgeditor-displaynone"; }).join(" "));
+}
+exports.displayOn = displayOn;
+function displayOff(target) {
+    var classes = target.getAttribute("class").split(" ");
+    if (classes.indexOf("svgeditor-displaynone") === -1)
+        classes.push("svgeditor-displaynone");
+    target.setAttribute("class", classes.join(" "));
+}
+exports.displayOff = displayOff;
 /**
  * css selector of color pickers
  */
@@ -19493,14 +19505,17 @@ jQuery(function ($) {
 });
 handMode_1.handMode();
 document.getElementById("svgeditor-mode-hand").onclick = function (ev) {
+    polygonMode_1.polygonModeDestruct();
     handMode_1.handMode();
 };
 document.getElementById("svgeditor-mode-rectangle").onclick = function (ev) {
     handMode_1.handModeDestruct();
+    polygonMode_1.polygonModeDestruct();
     rectangleMode_1.rectangleMode();
 };
 document.getElementById("svgeditor-mode-ellipse").onclick = function (ev) {
     handMode_1.handModeDestruct();
+    polygonMode_1.polygonModeDestruct();
     ellipseMode_1.ellipseMode();
 };
 document.getElementById("svgeditor-mode-polygon").onclick = function (ev) {
@@ -19745,13 +19760,15 @@ function polygonMode() {
     // about color-picker
     var colorSample = common_1.editorRoot.defs().rect().fill("none").stroke({ width: 10, color: "#999999" });
     common_1.refleshStyleAttribues(colorSample);
+    var polygonCheckbox = document.getElementById("svgeditor-typicalproperties-enclosure");
     common_1.svgroot.node.onmousedown = function (ev) {
         ev.stopPropagation();
         var x = ev.clientX - common_1.svgroot.node.clientLeft;
         var y = ev.clientY - common_1.svgroot.node.clientTop;
         if (polyline === undefined) {
+            var seed = polygonCheckbox.checked ? common_1.svgroot.polygon([]) : common_1.svgroot.polyline([]);
             polyline = {
-                elem: common_1.svgroot.polyline([])
+                elem: seed
                     .attr("fill", svgutils_1.deform(colorSample).getColor("fill").toHexString())
                     .attr("stroke", svgutils_1.deform(colorSample).getColor("stroke").toHexString())
                     .attr("stroke-width", svgutils_1.deform(colorSample).getStyleAttr("stroke-width")),
@@ -19793,8 +19810,13 @@ function polygonMode() {
     common_1.svgStyleAttrs.strokewidth.oninput = function (e) {
         svgutils_1.deform(colorSample).setStyleAttr("stroke-width", common_1.svgStyleAttrs.strokewidth.value, "indivisual");
     };
+    common_1.displayOn(document.getElementById("svgeditor-typicalproperties-enclosure-div"));
 }
 exports.polygonMode = polygonMode;
+function polygonModeDestruct() {
+    common_1.displayOff(document.getElementById("svgeditor-typicalproperties-enclosure-div"));
+}
+exports.polygonModeDestruct = polygonModeDestruct;
 
 },{"./common":6,"./svgutils":11,"./utils":12,"jquery":1}],10:[function(require,module,exports){
 Object.defineProperty(exports, "__esModule", { value: true });
@@ -19872,6 +19894,7 @@ var SvgDeformer = /** @class */ (function () {
     function SvgDeformer(elem) {
         this.elem = elem;
     }
+    // SVG.jsのattrは未定義のときデフォルト値を返す？ようなのでelementから直接とる関数を定義
     SvgDeformer.prototype.geta = function (name) {
         var attr = this.elem.node.getAttribute(name);
         if (attr === null)

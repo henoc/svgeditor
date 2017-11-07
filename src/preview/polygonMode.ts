@@ -1,4 +1,4 @@
-import { svgroot, reflection, editorRoot, refleshStyleAttribues, colorpickers, svgStyleAttrs } from "./common";
+import { svgroot, reflection, editorRoot, refleshStyleAttribues, colorpickers, svgStyleAttrs, displayOn, displayOff } from "./common";
 import { Point } from "./utils";
 import { deform } from "./svgutils";
 import * as SVG from "svgjs";
@@ -15,14 +15,17 @@ export function polygonMode() {
   let colorSample = editorRoot.defs().rect().fill("none").stroke({ width: 10, color: "#999999" });
   refleshStyleAttribues(colorSample);
 
+  let polygonCheckbox = <HTMLInputElement>document.getElementById("svgeditor-typicalproperties-enclosure")!;
+
   svgroot.node.onmousedown = (ev: MouseEvent) => {
     ev.stopPropagation();
 
     let x = ev.clientX - svgroot.node.clientLeft;
     let y = ev.clientY - svgroot.node.clientTop;
     if (polyline === undefined) {
+      let seed = polygonCheckbox.checked ? svgroot.polygon([]) : svgroot.polyline([]);
       polyline = {
-        elem: svgroot.polyline([])
+        elem: seed
           .attr("fill", deform(colorSample).getColor("fill").toHexString())
           .attr("stroke", deform(colorSample).getColor("stroke").toHexString())
           .attr("stroke-width", deform(colorSample).getStyleAttr("stroke-width")),
@@ -71,4 +74,10 @@ export function polygonMode() {
   svgStyleAttrs.strokewidth.oninput = e => {
     deform(colorSample).setStyleAttr("stroke-width", svgStyleAttrs.strokewidth.value, "indivisual");
   }
+
+  displayOn(document.getElementById("svgeditor-typicalproperties-enclosure-div")!);
+}
+
+export function polygonModeDestruct() {
+  displayOff(document.getElementById("svgeditor-typicalproperties-enclosure-div")!);
 }
