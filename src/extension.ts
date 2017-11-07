@@ -73,7 +73,7 @@ export function activate(context: vscode.ExtensionContext) {
     provider.editor!.edit(editbuilder => {
       editbuilder.replace(allRange(provider.editor!), htmlPretty.prettyPrint(text, {indent_size: 2}));
     });
-  });
+	});
 }
 
 function allRange(textEditor: vscode.TextEditor): vscode.Range {

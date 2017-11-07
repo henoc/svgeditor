@@ -506,28 +506,37 @@ See http://bgrins.github.io/spectrum/themes/ for instructions.
     background-position: center;
     background-image: url(data:image/gif;base64,R0lGODlhFAAUAPcAAAAAAJmZmZ2dnZ6enqKioqOjo6SkpKWlpaampqenp6ioqKmpqaqqqqurq/Hx8fLy8vT09PX19ff39/j4+Pn5+fr6+vv7+wAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAACH5BAEAAP8ALAAAAAAUABQAAAihAP9FoPCvoMGDBy08+EdhQAIJCCMybCDAAYUEARBAlFiQQoMABQhKUJBxY0SPICEYHBnggEmDKAuoPMjS5cGYMxHW3IiT478JJA8M/CjTZ0GgLRekNGpwAsYABHIypcAgQMsITDtWJYBR6NSqMico9cqR6tKfY7GeBCuVwlipDNmefAtTrkSzB1RaIAoXodsABiZAEFB06gIBWC1mLVgBa0AAOw==);
 }
+
+/* These colors is from theme. Variables will overwrite from scripts */
+:root {
+  --svgeditor-color-bg: black;
+  --svgeditor-color-bg-light: #222222;
+  --svgeditor-color-bg-light2: #444444;
+  --svgeditor-color-text: white;
+}
+
 .svgeditor-button {
   position: relative;
   display: inline-block;
   padding: 0.25em 0.5em;
   text-decoration: none;
-  color: #FFF;
-  background: #fd9535;
-  border-bottom: solid 2px #d27d00;
+  color: var(--svgeditor-color-text);
+  background: var(--svgeditor-color-bg-light2);
+  border-bottom: solid 2px var(--svgeditor-color-bg-light);
   border-radius: 4px;
-  box-shadow: inset 0 2px 0 rgba(255,255,255,0.2), 0 2px 2px rgba(0, 0, 0, 0.19);
+  box-shadow: inset 0 2px 0 var(--svgeditor-color-bg-light2), 0 2px 2px var(--svgeditor-color-bg);
   font-weight: bold;
 }
 
 .svgeditor-button:active {
-    border-bottom: solid 2px #fd9535;
-    box-shadow: 0 0 2px rgba(0, 0, 0, 0.30);
+    border-bottom: solid 2px var(--svgeditor-color-bg-light);
+    box-shadow: 0 0 2px var(--svgeditor-color-bg);
 }
 
 .svgeditor-property, #svgeditor-root {
   padding: 0.5em 1em;
   margin: 2em 0;
-  border: dashed 2px #4f98ff;
+  border: dashed 2px var(--svgeditor-color-bg-light2);
 }
 
 .svgeditor-displaynone {
@@ -535,8 +544,8 @@ See http://bgrins.github.io/spectrum/themes/ for instructions.
 }
 
 .svgeditor-vertex {
-  fill: white;
-  stroke: black;
+  fill: var(--svgeditor-color-bg-light);
+  stroke: var(--svgeditor-color-text);
   stroke-width: 2px;
 }
 
@@ -19986,6 +19995,7 @@ var polygonMode_1 = require("./polygonMode");
 var SVG = require("svgjs");
 var jQuery = require("jquery");
 require("spectrum-colorpicker");
+var tinycolor = require("tinycolor2");
 var erootNative = document.getElementById("svgeditor-root");
 var svgContentText = "";
 if (erootNative.firstElementChild) {
@@ -20078,7 +20088,9 @@ jQuery(function ($) {
         allowEmpty: true
     });
 });
+// set initial mode
 handMode_1.handMode();
+// button events
 document.getElementById("svgeditor-mode-hand").onclick = function (ev) {
     polygonMode_1.polygonModeDestruct();
     handMode_1.handMode();
@@ -20097,8 +20109,17 @@ document.getElementById("svgeditor-mode-polygon").onclick = function (ev) {
     handMode_1.handModeDestruct();
     polygonMode_1.polygonMode();
 };
+// color settings
+var sampleTextElem = document.getElementById("svgeditor-styleattributes");
+var sampleStyle = window.getComputedStyle(sampleTextElem);
+var bgcolor = tinycolor(sampleStyle.backgroundColor);
+var textcolor = tinycolor(sampleStyle.color);
+document.documentElement.style.setProperty("--svgeditor-color-bg", bgcolor.toHexString());
+document.documentElement.style.setProperty("--svgeditor-color-bg-light", bgcolor.lighten(10).toHexString());
+document.documentElement.style.setProperty("--svgeditor-color-bg-light2", bgcolor.lighten(20).toHexString());
+document.documentElement.style.setProperty("--svgeditor-color-text", textcolor.toHexString());
 
-},{"./ellipseMode":7,"./handMode":8,"./polygonMode":9,"./rectangleMode":10,"./svgutils":11,"jquery":1,"spectrum-colorpicker":2,"svgjs":3}],7:[function(require,module,exports){
+},{"./ellipseMode":7,"./handMode":8,"./polygonMode":9,"./rectangleMode":10,"./svgutils":11,"jquery":1,"spectrum-colorpicker":2,"svgjs":3,"tinycolor2":4}],7:[function(require,module,exports){
 Object.defineProperty(exports, "__esModule", { value: true });
 var common_1 = require("./common");
 var utils_1 = require("./utils");

@@ -19411,6 +19411,7 @@ var polygonMode_1 = require("./polygonMode");
 var SVG = require("svgjs");
 var jQuery = require("jquery");
 require("spectrum-colorpicker");
+var tinycolor = require("tinycolor2");
 var erootNative = document.getElementById("svgeditor-root");
 var svgContentText = "";
 if (erootNative.firstElementChild) {
@@ -19503,7 +19504,9 @@ jQuery(function ($) {
         allowEmpty: true
     });
 });
+// set initial mode
 handMode_1.handMode();
+// button events
 document.getElementById("svgeditor-mode-hand").onclick = function (ev) {
     polygonMode_1.polygonModeDestruct();
     handMode_1.handMode();
@@ -19522,8 +19525,17 @@ document.getElementById("svgeditor-mode-polygon").onclick = function (ev) {
     handMode_1.handModeDestruct();
     polygonMode_1.polygonMode();
 };
+// color settings
+var sampleTextElem = document.getElementById("svgeditor-styleattributes");
+var sampleStyle = window.getComputedStyle(sampleTextElem);
+var bgcolor = tinycolor(sampleStyle.backgroundColor);
+var textcolor = tinycolor(sampleStyle.color);
+document.documentElement.style.setProperty("--svgeditor-color-bg", bgcolor.toHexString());
+document.documentElement.style.setProperty("--svgeditor-color-bg-light", bgcolor.lighten(10).toHexString());
+document.documentElement.style.setProperty("--svgeditor-color-bg-light2", bgcolor.lighten(20).toHexString());
+document.documentElement.style.setProperty("--svgeditor-color-text", textcolor.toHexString());
 
-},{"./ellipseMode":7,"./handMode":8,"./polygonMode":9,"./rectangleMode":10,"./svgutils":11,"jquery":1,"spectrum-colorpicker":2,"svgjs":3}],7:[function(require,module,exports){
+},{"./ellipseMode":7,"./handMode":8,"./polygonMode":9,"./rectangleMode":10,"./svgutils":11,"jquery":1,"spectrum-colorpicker":2,"svgjs":3,"tinycolor2":4}],7:[function(require,module,exports){
 Object.defineProperty(exports, "__esModule", { value: true });
 var common_1 = require("./common");
 var utils_1 = require("./utils");

@@ -9,6 +9,7 @@ import {polygonMode, polygonModeDestruct} from "./polygonMode";
 import * as SVG from "svgjs";
 import * as jQuery from "jquery";
 require("spectrum-colorpicker");
+let tinycolor: tinycolor = require("tinycolor2");
 
 let erootNative = document.getElementById("svgeditor-root")!;
 let svgContentText = "";
@@ -110,8 +111,10 @@ jQuery($ => {
   });
 });
 
+// set initial mode
 handMode();
 
+// button events
 document.getElementById("svgeditor-mode-hand")!.onclick = (ev: MouseEvent) => {
   polygonModeDestruct();
   handMode();
@@ -133,3 +136,14 @@ document.getElementById("svgeditor-mode-polygon")!.onclick = (ev: MouseEvent) =>
   handModeDestruct();
   polygonMode();
 };
+
+
+// color settings
+let sampleTextElem = document.getElementById("svgeditor-styleattributes")!;
+let sampleStyle = window.getComputedStyle(sampleTextElem);
+let bgcolor = tinycolor(sampleStyle.backgroundColor!);
+let textcolor = tinycolor(sampleStyle.color!);
+document.documentElement.style.setProperty("--svgeditor-color-bg", bgcolor.toHexString());
+document.documentElement.style.setProperty("--svgeditor-color-bg-light", bgcolor.lighten(10).toHexString());
+document.documentElement.style.setProperty("--svgeditor-color-bg-light2", bgcolor.lighten(20).toHexString());
+document.documentElement.style.setProperty("--svgeditor-color-text", textcolor.toHexString());

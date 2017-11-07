@@ -1,7 +1,6 @@
 # 問題
 - ellipse の rx = ry のとき circle にする
 - 拡大用頂点で反転させるとおかしい
-- cssで、vscodeが使用中の色を流用するようにする
 - rectangle modeで座標がずれている
 
 # TODO
@@ -14,6 +13,8 @@
 - [ ] ベジェ曲線モード
 - [ ] Ctrl+C, Ctrl+X, delete
 - [ ] shift 押しで縦横比を維持した拡大
+- [ ] グループ選択
+- [ ] グループ化
 - [ ] transformモード？
 - [ ] defsのちゃんとした管理
 - [ ] パス編集モード
