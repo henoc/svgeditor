@@ -92,3 +92,8 @@ export function equals(strs1: string[], strs2: string[]): boolean {
   }
   return true;
 }
+
+export function withDefault<T>(value: T | undefined, defaultValue: T): T {
+  if (value === undefined) return defaultValue;
+  else return value;
+}

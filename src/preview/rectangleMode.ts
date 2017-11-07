@@ -1,4 +1,4 @@
-import { svgroot, editorRoot, reflection, refleshColorPicker, colorpickers } from "./common";
+import { svgroot, editorRoot, reflection, refleshStyleAttribues, colorpickers, svgStyleAttrs } from "./common";
 import { Point } from "./utils";
 import { deform } from "./svgutils";
 import * as SVG from "svgjs";
@@ -16,7 +16,7 @@ export function rectangleMode() {
 
   // about color-picker
   let colorSample = editorRoot.defs().rect().fill("#666666").stroke({ width: 10, color: "#999999" });
-  refleshColorPicker(colorSample);
+  refleshStyleAttribues(colorSample);
 
   svgroot.node.onmousedown = (ev: MouseEvent) => {
     ev.stopPropagation();
@@ -27,7 +27,7 @@ export function rectangleMode() {
       elem: editorRoot.rect(0, 0).center(x, y)
         .attr("fill", deform(colorSample).getColor("fill").toHexString())
         .attr("stroke", deform(colorSample).getColor("stroke").toHexString())
-        .attr("stroke-width", colorSample.attr("stroke-width")),
+        .attr("stroke-width", deform(colorSample).getStyleAttr("stroke-width")),
       start: Point.of(x, y),
       end: Point.of(x, y)
     };
@@ -69,5 +69,10 @@ export function rectangleMode() {
       deform(colorSample).setColor("stroke", color, "indivisual");
     });
   });
+
+  // style attributes event
+  svgStyleAttrs.strokewidth.oninput = e => {
+    deform(colorSample).setStyleAttr("stroke-width", svgStyleAttrs.strokewidth.value, "indivisual");
+  }
 
 }

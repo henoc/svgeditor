@@ -31,3 +31,7 @@
   stroke: black;
   stroke-width: 2px;
 }
+
+#svgeditor-colorpicker-strokewidth {
+  width: 30px;
+}

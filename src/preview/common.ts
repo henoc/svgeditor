@@ -59,33 +59,41 @@ export function reflection(preprocess?: () => void, postprocess?: () => void): v
 }
 
 /**
- * DOM of color pickers
+ * css selector of color pickers
  */
 export let colorpickers = {
   fill: "#svgeditor-colorpicker-fill",
-  stroke: "#svgeditor-colorpicker-stroke"
+  stroke: "#svgeditor-colorpicker-stroke",
+  //strokewidth: "#svgeditor-attributes-strokewidth"
 };
 
+export let svgStyleAttrs = {
+  strokewidth: <HTMLInputElement>document.getElementById("svgeditor-attributes-strokewidth")!
+}
+
+
 /**
- * insert color data into the color-picker
+ * insert attributes data into input forms
  */
-export function refleshColorPicker(target: SVG.Element): void {
+export function refleshStyleAttribues(target: SVG.Element): void {
   jQuery($ => {
     // @ts-ignore: no property error
     $(colorpickers.fill).spectrum("set", deform(target).getColor("fill").toHexString());
     // @ts-ignore
     $(colorpickers.stroke).spectrum("set", deform(target).getColor("stroke").toHexString());
   });
+  svgStyleAttrs.strokewidth.value = deform(target).getStyleAttr("stroke-width");
 }
 
+// create color-pickers (not event)
 jQuery($ => {
   // @ts-ignore
-  $("#svgeditor-colorpicker-fill").spectrum({
+  $(colorpickers.fill).spectrum({
     showAlpha: true,
     allowEmpty: true
   });
   // @ts-ignore
-  $("#svgeditor-colorpicker-stroke").spectrum({
+  $(colorpickers.stroke).spectrum({
     showAlpha: true,
     allowEmpty: true
   });

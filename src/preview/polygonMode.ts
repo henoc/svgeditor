@@ -1,4 +1,4 @@
-import { svgroot, reflection, editorRoot, refleshColorPicker, colorpickers } from "./common";
+import { svgroot, reflection, editorRoot, refleshStyleAttribues, colorpickers, svgStyleAttrs } from "./common";
 import { Point } from "./utils";
 import { deform } from "./svgutils";
 import * as SVG from "svgjs";
@@ -13,7 +13,7 @@ export function polygonMode() {
 
   // about color-picker
   let colorSample = editorRoot.defs().rect().fill("none").stroke({ width: 10, color: "#999999" });
-  refleshColorPicker(colorSample);
+  refleshStyleAttribues(colorSample);
 
   svgroot.node.onmousedown = (ev: MouseEvent) => {
     ev.stopPropagation();
@@ -25,7 +25,7 @@ export function polygonMode() {
         elem: svgroot.polyline([])
           .attr("fill", deform(colorSample).getColor("fill").toHexString())
           .attr("stroke", deform(colorSample).getColor("stroke").toHexString())
-          .attr("stroke-width", colorSample.attr("stroke-width")),
+          .attr("stroke-width", deform(colorSample).getStyleAttr("stroke-width")),
         points: []
       };
     }
@@ -67,4 +67,8 @@ export function polygonMode() {
     });
   });
 
+  // style attributes event
+  svgStyleAttrs.strokewidth.oninput = e => {
+    deform(colorSample).setStyleAttr("stroke-width", svgStyleAttrs.strokewidth.value, "indivisual");
+  }
 }

@@ -19456,32 +19456,37 @@ function reflection(preprocess, postprocess) {
 }
 exports.reflection = reflection;
 /**
- * DOM of color pickers
+ * css selector of color pickers
  */
 exports.colorpickers = {
     fill: "#svgeditor-colorpicker-fill",
-    stroke: "#svgeditor-colorpicker-stroke"
+    stroke: "#svgeditor-colorpicker-stroke",
+};
+exports.svgStyleAttrs = {
+    strokewidth: document.getElementById("svgeditor-attributes-strokewidth")
 };
 /**
- * insert color data into the color-picker
+ * insert attributes data into input forms
  */
-function refleshColorPicker(target) {
+function refleshStyleAttribues(target) {
     jQuery(function ($) {
         // @ts-ignore: no property error
         $(exports.colorpickers.fill).spectrum("set", svgutils_1.deform(target).getColor("fill").toHexString());
         // @ts-ignore
         $(exports.colorpickers.stroke).spectrum("set", svgutils_1.deform(target).getColor("stroke").toHexString());
     });
+    exports.svgStyleAttrs.strokewidth.value = svgutils_1.deform(target).getStyleAttr("stroke-width");
 }
-exports.refleshColorPicker = refleshColorPicker;
+exports.refleshStyleAttribues = refleshStyleAttribues;
+// create color-pickers (not event)
 jQuery(function ($) {
     // @ts-ignore
-    $("#svgeditor-colorpicker-fill").spectrum({
+    $(exports.colorpickers.fill).spectrum({
         showAlpha: true,
         allowEmpty: true
     });
     // @ts-ignore
-    $("#svgeditor-colorpicker-stroke").spectrum({
+    $(exports.colorpickers.stroke).spectrum({
         showAlpha: true,
         allowEmpty: true
     });
@@ -19513,7 +19518,7 @@ function ellipseMode() {
     var ellipse = undefined;
     // about color-picker
     var colorSample = common_1.editorRoot.defs().rect().fill("#666666").stroke({ width: 10, color: "#999999" });
-    common_1.refleshColorPicker(colorSample);
+    common_1.refleshStyleAttribues(colorSample);
     common_1.svgroot.node.onmousedown = function (ev) {
         ev.stopPropagation();
         var x = ev.clientX - common_1.svgroot.node.clientLeft;
@@ -19522,7 +19527,7 @@ function ellipseMode() {
             elem: common_1.editorRoot.ellipse(0, 0).center(x, y)
                 .attr("fill", svgutils_1.deform(colorSample).getColor("fill").toHexString())
                 .attr("stroke", svgutils_1.deform(colorSample).getColor("stroke").toHexString())
-                .attr("stroke-width", colorSample.attr("stroke-width")),
+                .attr("stroke-width", svgutils_1.deform(colorSample).getStyleAttr("stroke-width")),
             start: utils_1.Point.of(x, y),
             end: utils_1.Point.of(x, y)
         };
@@ -19560,6 +19565,10 @@ function ellipseMode() {
             svgutils_1.deform(colorSample).setColor("stroke", color, "indivisual");
         });
     });
+    // style attributes event
+    common_1.svgStyleAttrs.strokewidth.oninput = function (e) {
+        svgutils_1.deform(colorSample).setStyleAttr("stroke-width", common_1.svgStyleAttrs.strokewidth.value, "indivisual");
+    };
 }
 exports.ellipseMode = ellipseMode;
 
@@ -19685,7 +19694,7 @@ function handMode() {
             });
             handTarget = mainTarget;
             // colorpicker
-            common_1.refleshColorPicker(mainTarget);
+            common_1.refleshStyleAttribues(mainTarget);
         };
     });
     // colorpicker event
@@ -19705,6 +19714,12 @@ function handMode() {
             }
         });
     });
+    common_1.svgStyleAttrs.strokewidth.oninput = function (e) {
+        var v = utils_1.withDefault(common_1.svgStyleAttrs.strokewidth.value, "0");
+        if (handTarget)
+            svgutils_1.deform(handTarget).setStyleAttr("stroke-width", String(v), "indivisual");
+        handModeReflection();
+    };
 }
 exports.handMode = handMode;
 function handModeDestruct() {
@@ -19729,7 +19744,7 @@ function polygonMode() {
     var polyline = undefined;
     // about color-picker
     var colorSample = common_1.editorRoot.defs().rect().fill("none").stroke({ width: 10, color: "#999999" });
-    common_1.refleshColorPicker(colorSample);
+    common_1.refleshStyleAttribues(colorSample);
     common_1.svgroot.node.onmousedown = function (ev) {
         ev.stopPropagation();
         var x = ev.clientX - common_1.svgroot.node.clientLeft;
@@ -19739,7 +19754,7 @@ function polygonMode() {
                 elem: common_1.svgroot.polyline([])
                     .attr("fill", svgutils_1.deform(colorSample).getColor("fill").toHexString())
                     .attr("stroke", svgutils_1.deform(colorSample).getColor("stroke").toHexString())
-                    .attr("stroke-width", colorSample.attr("stroke-width")),
+                    .attr("stroke-width", svgutils_1.deform(colorSample).getStyleAttr("stroke-width")),
                 points: []
             };
         }
@@ -19774,6 +19789,10 @@ function polygonMode() {
             svgutils_1.deform(colorSample).setColor("stroke", color, "indivisual");
         });
     });
+    // style attributes event
+    common_1.svgStyleAttrs.strokewidth.oninput = function (e) {
+        svgutils_1.deform(colorSample).setStyleAttr("stroke-width", common_1.svgStyleAttrs.strokewidth.value, "indivisual");
+    };
 }
 exports.polygonMode = polygonMode;
 
@@ -19787,7 +19806,7 @@ function rectangleMode() {
     var rectangle = undefined;
     // about color-picker
     var colorSample = common_1.editorRoot.defs().rect().fill("#666666").stroke({ width: 10, color: "#999999" });
-    common_1.refleshColorPicker(colorSample);
+    common_1.refleshStyleAttribues(colorSample);
     common_1.svgroot.node.onmousedown = function (ev) {
         ev.stopPropagation();
         var x = ev.clientX - common_1.svgroot.node.clientLeft;
@@ -19796,7 +19815,7 @@ function rectangleMode() {
             elem: common_1.editorRoot.rect(0, 0).center(x, y)
                 .attr("fill", svgutils_1.deform(colorSample).getColor("fill").toHexString())
                 .attr("stroke", svgutils_1.deform(colorSample).getColor("stroke").toHexString())
-                .attr("stroke-width", colorSample.attr("stroke-width")),
+                .attr("stroke-width", svgutils_1.deform(colorSample).getStyleAttr("stroke-width")),
             start: utils_1.Point.of(x, y),
             end: utils_1.Point.of(x, y)
         };
@@ -19834,6 +19853,10 @@ function rectangleMode() {
             svgutils_1.deform(colorSample).setColor("stroke", color, "indivisual");
         });
     });
+    // style attributes event
+    common_1.svgStyleAttrs.strokewidth.oninput = function (e) {
+        svgutils_1.deform(colorSample).setStyleAttr("stroke-width", common_1.svgStyleAttrs.strokewidth.value, "indivisual");
+    };
 }
 exports.rectangleMode = rectangleMode;
 
@@ -19842,6 +19865,9 @@ Object.defineProperty(exports, "__esModule", { value: true });
 var affine_1 = require("./affine");
 var utils_1 = require("./utils");
 var tinycolor = require("tinycolor2");
+/**
+ * Completion functions of SVG.js
+ */
 var SvgDeformer = /** @class */ (function () {
     function SvgDeformer(elem) {
         this.elem = elem;
@@ -19933,11 +19959,17 @@ var SvgDeformer = /** @class */ (function () {
         });
     };
     SvgDeformer.prototype.getColor = function (fillOrStroke) {
+        return tinycolor(this.getStyleAttr(fillOrStroke));
+    };
+    /**
+     * Get attributes kinds of style in order to validation
+     */
+    SvgDeformer.prototype.getStyleAttr = function (name) {
         // @ts-ignore
-        if (this.elem.style(fillOrStroke) !== "")
-            return tinycolor(this.elem.style(fillOrStroke));
+        if (this.elem.style(name) !== "")
+            return this.elem.style(name);
         else
-            return tinycolor(this.elem.attr(fillOrStroke));
+            return this.elem.attr(name);
     };
     SvgDeformer.prototype.strokeOpacity = function () {
         var so = this.elem.style("stroke-opacity");
@@ -19945,33 +19977,36 @@ var SvgDeformer = /** @class */ (function () {
             return 1;
         return parseFloat(so);
     };
-    /**
-     *
-     */
     SvgDeformer.prototype.setColor = function (fillOrStroke, color, prior) {
+        return this.setStyleAttr(fillOrStroke, color.toHexString(), prior);
+    };
+    /**
+     * Set attributes kinds of style with priority. If already defined and required to update the value, follow the way of writing.
+     */
+    SvgDeformer.prototype.setStyleAttr = function (name, value, prior) {
         // @ts-ignore
-        var styleColor = this.elem.style(fillOrStroke) === "" ? undefined : this.elem.style(fillOrStroke);
-        var indivisualColor = this.geta(fillOrStroke); //　attrだと未定義時は黒が定義されていることになるので注意
-        if (styleColor !== undefined && indivisualColor !== undefined) {
+        var style = this.elem.style(name) === "" ? undefined : this.elem.style(name);
+        var indivisual = this.geta(name); //　attrだと未定義時はデフォルトの数が定義されていることになるので注意
+        if (style !== undefined && indivisual !== undefined) {
             if (prior === "indivisual") {
-                this.elem.attr(fillOrStroke, color.toHexString());
+                this.elem.attr(name, value);
             }
             else {
-                this.elem.style(fillOrStroke, color.toHexString());
+                this.elem.style(name, value);
             }
         }
-        else if (styleColor !== undefined) {
-            this.elem.style(fillOrStroke, color.toHexString());
+        else if (style !== undefined) {
+            this.elem.style(name, value);
         }
-        else if (indivisualColor !== undefined) {
-            this.elem.attr(fillOrStroke, color.toHexString());
+        else if (indivisual !== undefined) {
+            this.elem.attr(name, value);
         }
         else {
             if (prior === "indivisual") {
-                this.elem.attr(fillOrStroke, color.toHexString());
+                this.elem.attr(name, value);
             }
             else {
-                this.elem.style(fillOrStroke, color.toHexString());
+                this.elem.style(name, value);
             }
         }
     };
@@ -20071,5 +20106,12 @@ function equals(strs1, strs2) {
     return true;
 }
 exports.equals = equals;
+function withDefault(value, defaultValue) {
+    if (value === undefined)
+        return defaultValue;
+    else
+        return value;
+}
+exports.withDefault = withDefault;
 
 },{}]},{},[6]);

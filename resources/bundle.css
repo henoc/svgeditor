@@ -538,3 +538,7 @@ See http://bgrins.github.io/spectrum/themes/ for instructions.
   stroke: black;
   stroke-width: 2px;
 }
+
+#svgeditor-colorpicker-strokewidth {
+  width: 30px;
+}

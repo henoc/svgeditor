@@ -1,6 +1,6 @@
-import { editorRoot, svgroot, reflection, refleshColorPicker, colorpickers } from "./common";
+import { editorRoot, svgroot, reflection, refleshStyleAttribues, colorpickers, svgStyleAttrs } from "./common";
 import { ElementScheme, deform } from "./svgutils";
-import { Point, Direction, equals, reverse } from "./utils";
+import { Point, Direction, equals, reverse, withDefault } from "./utils";
 
 import * as SVG from "svgjs";
 import * as jQuery from "jquery";
@@ -140,7 +140,7 @@ export function handMode() {
       handTarget = mainTarget;
 
       // colorpicker
-      refleshColorPicker(mainTarget);
+      refleshStyleAttribues(mainTarget);
     };
   });
 
@@ -162,6 +162,11 @@ export function handMode() {
     });
   });
 
+  svgStyleAttrs.strokewidth.oninput = e => {
+    let v = withDefault<string>(svgStyleAttrs.strokewidth.value, "0");
+    if (handTarget) deform(handTarget).setStyleAttr("stroke-width", String(v), "indivisual");
+    handModeReflection();
+  }
 }
 
 export function handModeDestruct() {

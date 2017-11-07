@@ -8,7 +8,9 @@ export interface ElementScheme {
   attributes: {[name: string]: string};
 }
 
-
+/**
+ * Completion functions of SVG.js
+ */
 class SvgDeformer {
   constructor(public elem: SVG.Element) {
   }
@@ -103,9 +105,16 @@ class SvgDeformer {
   }
 
   getColor(fillOrStroke: "fill" | "stroke"): tinycolorInstance {
+    return tinycolor(this.getStyleAttr(fillOrStroke));
+  }
+
+  /**
+   * Get attributes kinds of style in order to validation
+   */
+  getStyleAttr(name: string): string {
     // @ts-ignore
-    if (this.elem.style(fillOrStroke) !== "") return tinycolor(this.elem.style(fillOrStroke));
-    else return tinycolor(this.elem.attr(fillOrStroke));
+    if (this.elem.style(name) !== "") return this.elem.style(name);
+    else return this.elem.attr(name);
   }
 
   strokeOpacity(): number {
@@ -114,30 +123,34 @@ class SvgDeformer {
     return parseFloat(so);
   }
 
-  /**
-   * 
-   */
   setColor(fillOrStroke: "fill" | "stroke", color: tinycolorInstance , prior: "indivisual" | "style"): void {
-    // @ts-ignore
-    let styleColor : string | undefined = this.elem.style(fillOrStroke) === "" ? undefined : this.elem.style(fillOrStroke);
-    let indivisualColor = this.geta(fillOrStroke); //　attrだと未定義時は黒が定義されていることになるので注意
-    if (styleColor !== undefined && indivisualColor !== undefined) {
-      if (prior === "indivisual") {
-        this.elem.attr(fillOrStroke, color.toHexString());
-      } else {
-        this.elem.style(fillOrStroke, color.toHexString());
-      }
-    } else if (styleColor !== undefined) {
-      this.elem.style(fillOrStroke, color.toHexString());
-    } else if (indivisualColor !== undefined) {
-      this.elem.attr(fillOrStroke, color.toHexString());
-    } else {
-      if (prior === "indivisual") {
-        this.elem.attr(fillOrStroke, color.toHexString());
-      } else {
-        this.elem.style(fillOrStroke, color.toHexString());
-      }
-    }
+    return this.setStyleAttr(fillOrStroke, color.toHexString(), prior);
+  }
+
+  /**
+   * Set attributes kinds of style with priority. If already defined and required to update the value, follow the way of writing.
+   */
+  setStyleAttr(name: string, value: string, prior: "indivisual" | "style"): void {
+     // @ts-ignore
+     let style : string | undefined = this.elem.style(name) === "" ? undefined : this.elem.style(name);
+     let indivisual = this.geta(name); //　attrだと未定義時はデフォルトの数が定義されていることになるので注意
+     if (style !== undefined && indivisual !== undefined) {
+       if (prior === "indivisual") {
+         this.elem.attr(name, value);
+       } else {
+         this.elem.style(name, value);
+       }
+     } else if (style !== undefined) {
+       this.elem.style(name, value);
+     } else if (indivisual !== undefined) {
+       this.elem.attr(name, value);
+     } else {
+       if (prior === "indivisual") {
+         this.elem.attr(name, value);
+       } else {
+         this.elem.style(name, value);
+       }
+     }
   }
 }
 
