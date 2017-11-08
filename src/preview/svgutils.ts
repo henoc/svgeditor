@@ -1,5 +1,5 @@
-import { Affine } from "./affine";
-import {Point, Direction} from "./utils";
+import { unitMatrix, matrixof } from "./matrixutils";
+import {Point, Direction, withDefault} from "./utils";
 import * as SVG from "svgjs";
 let tinycolor: tinycolor = require("tinycolor2");
 
@@ -42,6 +42,22 @@ class SvgDeformer {
   }
 
   /**
+   * Consider tranform property
+   */
+  getAffinedLeftUp(): Point {
+    let e = unitMatrix;
+    let transformMatrix = withDefault(this.elem.transform().matrix, e);
+    return matrixof(transformMatrix).mulvec(this.getLeftUp());
+  }
+
+  getAffinedRightDown(): Point {
+    let e = unitMatrix;
+    let transformMatrix = withDefault(this.elem.transform().matrix, e);
+    let rightDown = this.getLeftUp().addxy(this.getWidth(), this.getHeight());
+    return matrixof(transformMatrix).mulvec(rightDown);
+  }
+
+  /**
    * Set vertexes for expansion. 8 vertexes are arranged around all kinds of target element.
    * @param group the group expand vertexes have joined or will join
    */
@@ -52,7 +68,8 @@ class SvgDeformer {
     for (let i = 0; i < 3; i++) {
       for (let j = 0; j < 3; j++) {
         if (i === 1 && j === 1) continue;
-        let point = this.getLeftUp().addxy(this.elem.width() / 2 * j, this.elem.height() / 2 * i);
+        let affinedWidthHeight = this.getAffinedRightDown().sub(this.getAffinedLeftUp());
+        let point = this.getAffinedLeftUp().addxy(affinedWidthHeight.x / 2 * j, affinedWidthHeight.y / 2 * i);
 
         if (recycle) {
           group.children()[c].center(point.x, point.y);
@@ -78,14 +95,7 @@ class SvgDeformer {
   }
 
   expand(center: Point, scale: Point): void {
-    let affine = Affine.scale(scale, center);
-    let leftUp = this.getLeftUp();
-    let affinedLeftUp = affine.transform(leftUp);
-    let rightDown = this.getLeftUp().addxy(this.elem.width(), this.elem.height());
-    let affinedRightDown = affine.transform(rightDown);
-    this.setLeftUp(affinedLeftUp);
-    this.elem.width(affinedRightDown.x - affinedLeftUp.x);
-    this.elem.height(affinedRightDown.y - affinedLeftUp.y);
+    this.elem.scale(scale.x, scale.y, center.x, center.y);
   }
 
   extractScheme(): ElementScheme {
@@ -109,32 +119,35 @@ class SvgDeformer {
     return tinycolor(this.getStyleAttr(fillOrStroke));
   }
 
+  getColorWithOpacity(fillOrStroke: "fill" | "stroke"): tinycolorInstance {
+    let rgb = tinycolor(this.getStyleAttr(fillOrStroke));
+    let alpha = +this.getStyleAttr(fillOrStroke === "fill" ? "fill-opacity" : "stroke-opacity");
+    return rgb.setAlpha(alpha);
+  }
+
   /**
    * Get attributes kinds of style in order to validation
    */
   getStyleAttr(name: string): string {
-    // @ts-ignore
-    if (this.elem.style(name) !== "") return this.elem.style(name);
+    if (<any>this.elem.style(name) !== "") return <any>this.elem.style(name);
     else return this.elem.attr(name);
-  }
-
-  strokeOpacity(): number {
-    let so = <string><any>this.elem.style("stroke-opacity");
-    if (so === "") return 1;
-    return parseFloat(so);
   }
 
   setColor(fillOrStroke: "fill" | "stroke", color: tinycolorInstance , prior: "indivisual" | "style"): void {
     return this.setStyleAttr(fillOrStroke, color.toHexString(), prior);
   }
 
+  setColorWithOpacity(fillOrStroke: "fill" | "stroke", color: tinycolorInstance, prior: "indivisual" | "style"): void {
+    this.setStyleAttr(fillOrStroke, color.toHexString(), prior);
+    this.setStyleAttr(fillOrStroke === "fill" ? "fill-opacity" : "stroke-opacity", String(color.getAlpha()), prior);
+  }
+
   /**
    * Set attributes kinds of style with priority. If already defined and required to update the value, follow the way of writing.
    */
   setStyleAttr(name: string, value: string, prior: "indivisual" | "style"): void {
-     // @ts-ignore
-     let style : string | undefined = this.elem.style(name) === "" ? undefined : this.elem.style(name);
-     let indivisual = this.geta(name); //　attrだと未定義時はデフォルトの数が定義されていることになるので注意
+     let style: string | undefined = <any>this.elem.style(name) === "" ? undefined : <any>this.elem.style(name);
+     let indivisual = this.geta(name); // attrだと未定義時はデフォルトの数が定義されていることになるので注意
      if (style !== undefined && indivisual !== undefined) {
        if (prior === "indivisual") {
          this.elem.attr(name, value);
@@ -153,9 +166,19 @@ class SvgDeformer {
        }
      }
   }
+
+  // なぜかtext要素の幅と高さがSVG.jsで取れないため再定義
+  getWidth(): number {
+    let seed = <SVGGraphicsElement><any>this.elem.node;
+    return seed.getBBox().width;
+  }
+
+  getHeight(): number {
+    let seed = <SVGGraphicsElement><any>this.elem.node;
+    return seed.getBBox().height;
+  }
 }
 
 export function deform(elem: SVG.Element): SvgDeformer {
   return new SvgDeformer(elem);
 }
-

@@ -27,6 +27,8 @@ export function ellipseMode() {
       elem: editorRoot.ellipse(0, 0).center(x, y)
         .attr("fill", deform(colorSample).getColor("fill").toHexString())
         .attr("stroke", deform(colorSample).getColor("stroke").toHexString())
+        .attr("fill-opacity", deform(colorSample).getColorWithOpacity("fill").getAlpha())
+        .attr("stroke-opacity", deform(colorSample).getColorWithOpacity("stroke").getAlpha())
         .attr("stroke-width", deform(colorSample).getStyleAttr("stroke-width")),
       start: Point.of(x, y),
       end: Point.of(x, y)
@@ -62,11 +64,11 @@ export function ellipseMode() {
   jQuery($ => {
     $(colorpickers.fill).off("change.spectrum");
     $(colorpickers.fill).on("change.spectrum", (e, color) => {
-      deform(colorSample).setColor("fill", color, "indivisual");
+      deform(colorSample).setColorWithOpacity("fill", color, "indivisual");
     });
     $(colorpickers.stroke).off("change.spectrum");
     $(colorpickers.stroke).on("change.spectrum", (e, color) => {
-      deform(colorSample).setColor("stroke", color, "indivisual");
+      deform(colorSample).setColorWithOpacity("stroke", color, "indivisual");
     });
   });
 

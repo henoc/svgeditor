@@ -28,6 +28,8 @@ export function polygonMode() {
         elem: seed
           .attr("fill", deform(colorSample).getColor("fill").toHexString())
           .attr("stroke", deform(colorSample).getColor("stroke").toHexString())
+          .attr("fill-opacity", deform(colorSample).getColorWithOpacity("fill").getAlpha())
+          .attr("stroke-opacity", deform(colorSample).getColorWithOpacity("stroke").getAlpha())
           .attr("stroke-width", deform(colorSample).getStyleAttr("stroke-width")),
         points: []
       };
@@ -62,18 +64,18 @@ export function polygonMode() {
   jQuery($ => {
     $(colorpickers.fill).off("change.spectrum");
     $(colorpickers.fill).on("change.spectrum", (e, color) => {
-      deform(colorSample).setColor("fill", color, "indivisual");
+      deform(colorSample).setColorWithOpacity("fill", color, "indivisual");
     });
     $(colorpickers.stroke).off("change.spectrum");
     $(colorpickers.stroke).on("change.spectrum", (e, color) => {
-      deform(colorSample).setColor("stroke", color, "indivisual");
+      deform(colorSample).setColorWithOpacity("stroke", color, "indivisual");
     });
   });
 
   // style attributes event
   svgStyleAttrs.strokewidth.oninput = e => {
     deform(colorSample).setStyleAttr("stroke-width", svgStyleAttrs.strokewidth.value, "indivisual");
-  }
+  };
 
   displayOn(document.getElementById("svgeditor-typicalproperties-enclosure-div")!);
 }

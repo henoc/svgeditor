@@ -5,6 +5,7 @@ import {handMode, handModeDestruct} from "./handMode";
 import {rectangleMode} from "./rectangleMode";
 import {ellipseMode} from "./ellipseMode";
 import {polygonMode, polygonModeDestruct} from "./polygonMode";
+import {textMode, textModeDestruct} from "./textMode";
 
 import * as SVG from "svgjs";
 import * as jQuery from "jquery";
@@ -61,7 +62,7 @@ export function reflection(preprocess?: () => void, postprocess?: () => void): v
 
 export function displayOn(target: HTMLElement): void {
   let classes = target.getAttribute("class")!.split(" ");
-  target.setAttribute("class", classes.filter(clazz => clazz != "svgeditor-displaynone").join(" "));
+  target.setAttribute("class", classes.filter(clazz => clazz !== "svgeditor-displaynone").join(" "));
 }
 
 export function displayOff(target: HTMLElement): void {
@@ -75,13 +76,12 @@ export function displayOff(target: HTMLElement): void {
  */
 export let colorpickers = {
   fill: "#svgeditor-colorpicker-fill",
-  stroke: "#svgeditor-colorpicker-stroke",
-  //strokewidth: "#svgeditor-attributes-strokewidth"
+  stroke: "#svgeditor-colorpicker-stroke"
 };
 
 export let svgStyleAttrs = {
   strokewidth: <HTMLInputElement>document.getElementById("svgeditor-attributes-strokewidth")!
-}
+};
 
 
 /**
@@ -89,23 +89,19 @@ export let svgStyleAttrs = {
  */
 export function refleshStyleAttribues(target: SVG.Element): void {
   jQuery($ => {
-    // @ts-ignore: no property error
-    $(colorpickers.fill).spectrum("set", deform(target).getColor("fill").toHexString());
-    // @ts-ignore
-    $(colorpickers.stroke).spectrum("set", deform(target).getColor("stroke").toHexString());
+    (<any>$(colorpickers.fill)).spectrum("set", deform(target).getColorWithOpacity("fill").toRgbString());
+    (<any>$(colorpickers.stroke)).spectrum("set", deform(target).getColorWithOpacity("stroke").toRgbString());
   });
   svgStyleAttrs.strokewidth.value = deform(target).getStyleAttr("stroke-width");
 }
 
 // create color-pickers (not event)
 jQuery($ => {
-  // @ts-ignore
-  $(colorpickers.fill).spectrum({
+  (<any>$(colorpickers.fill)).spectrum({
     showAlpha: true,
     allowEmpty: true
   });
-  // @ts-ignore
-  $(colorpickers.stroke).spectrum({
+  (<any>$(colorpickers.stroke)).spectrum({
     showAlpha: true,
     allowEmpty: true
   });
@@ -116,33 +112,41 @@ handMode();
 
 // button events
 document.getElementById("svgeditor-mode-hand")!.onclick = (ev: MouseEvent) => {
-  polygonModeDestruct();
+  destructions();
   handMode();
 };
 
 document.getElementById("svgeditor-mode-rectangle")!.onclick = (ev: MouseEvent) => {
-  handModeDestruct();
-  polygonModeDestruct();
+  destructions();
   rectangleMode();
 };
 
 document.getElementById("svgeditor-mode-ellipse")!.onclick = (ev: MouseEvent) => {
-  handModeDestruct();
-  polygonModeDestruct();
+  destructions();
   ellipseMode();
 };
 
 document.getElementById("svgeditor-mode-polygon")!.onclick = (ev: MouseEvent) => {
-  handModeDestruct();
+  destructions();
   polygonMode();
 };
 
+document.getElementById("svgeditor-mode-text")!.onclick = (ev: MouseEvent) => {
+  destructions();
+  textMode();
+};
+
+function destructions() {
+  handModeDestruct();
+  polygonModeDestruct();
+  textModeDestruct();
+}
 
 // color settings
 let sampleTextElem = document.getElementById("svgeditor-styleattributes")!;
 let sampleStyle = window.getComputedStyle(sampleTextElem);
-let bgcolor = tinycolor(sampleStyle.backgroundColor!);
-let textcolor = tinycolor(sampleStyle.color!);
+export let bgcolor = tinycolor(sampleStyle.backgroundColor!);
+export let textcolor = tinycolor(sampleStyle.color!);
 document.documentElement.style.setProperty("--svgeditor-color-bg", bgcolor.toHexString());
 document.documentElement.style.setProperty("--svgeditor-color-bg-light", bgcolor.lighten(10).toHexString());
 document.documentElement.style.setProperty("--svgeditor-color-bg-light2", bgcolor.lighten(20).toHexString());
