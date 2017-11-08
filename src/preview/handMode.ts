@@ -1,6 +1,7 @@
-import { editorRoot, svgroot, reflection, refleshStyleAttribues, colorpickers, svgStyleAttrs } from "./common";
-import { ElementScheme, deform } from "./svgutils";
-import { Point, Direction, equals, reverse, withDefault } from "./utils";
+import { unitMatrix } from "./matrixutils";
+import { editorRoot, svgroot, reflection, colorpickers, svgStyleAttrs, textcolor, bgcolor } from "./common";
+import { deform } from "./svgutils";
+import { Point, withDefault, reverse, equals } from "./utils";
 
 import * as SVG from "svgjs";
 import * as jQuery from "jquery";
@@ -11,69 +12,33 @@ export function handMode() {
 
   type DragMode = "free" | "vertical" | "horizontal";
 
-  /**
-   * 編集ノードの移動用
-   */
-  let dragTargets: {
-    target: SVG.Element;
-    targetFromCursor: Point;
-    targetInit: Point;
-    dragMode: DragMode;
-    expandVertexes?: {  // 拡大用頂点を選択しているなら存在する
-      target: SVG.Element;
-      vertexes: SVG.Element[];
-      targetInitScheme: ElementScheme;
-    }
-  }[] | undefined = undefined;
+  let dragTarget: {
+    kind: "main"
+    main: SVG.Element;
+    vertexes: SVG.Element[];
+    fromCursor: Point;
+  } | {
+    kind: "vertex"
+    main: SVG.Element;
+    vertex: SVG.Element;
+    vertexes: SVG.Element[];
+    fromCursor: Point;
+    scaleCenter: SVG.Element;
+  } | {
+    kind: "none"
+  } = { kind: "none" };
 
   let handTarget: undefined | SVG.Element = undefined;
 
   svgroot.node.onmouseup = (ev) => {
     // 変更されたHTML（のSVG部分）をエディタに反映させる
-    if (dragTargets) handModeReflection();
-    dragTargets = undefined;
+    if (dragTarget) handModeReflection();
+    dragTarget = { kind: "none" };
   };
 
   function handModeReflection() {
     reflection(() => {expandVertexesGroup.remove(); }, () => {svgroot.add(expandVertexesGroup); });
   }
-
-  svgroot.node.onmousemove = (ev) => {
-    if (dragTargets !== undefined) {
-      let x = ev.clientX;
-      let y = ev.clientY;
-      dragTargets.forEach(dragTarget => {
-        let newPosition = Point.of(x, y).add(dragTarget.targetFromCursor);
-        if (dragTarget.dragMode === "vertical") {
-          newPosition.x = dragTarget.targetInit.x;
-        } else if (dragTarget.dragMode === "horizontal") {
-          newPosition.y = dragTarget.targetInit.y;
-        }
-
-        // 拡大用頂点がdragTargetなら拡大適用先があるので、それの属性をいじる
-        if (dragTarget.expandVertexes) {
-          let dirs = <Direction[]>dragTarget.target.attr("direction").split(" ");
-          // 拡大の中心
-          let center = (() => {
-            let vertex = dragTarget.expandVertexes.vertexes.find(vertex => equals(vertex.attr("direction").split(" "), dirs.map(reverse)))!;
-            return Point.of(vertex.cx(), vertex.cy());
-          })();
-          // 拡大率ベクトル
-          let scale = newPosition.sub(center).div(dragTarget.targetInit.sub(center));
-          if (Number.isNaN(scale.x)) scale.x = 1;
-          if (Number.isNaN(scale.y)) scale.y = 1;
-          // 初期値に戻してから拡大を実行
-          dragTarget.expandVertexes.target.attr(dragTarget.expandVertexes.targetInitScheme.attributes);
-          deform(dragTarget.expandVertexes.target).expand(center, scale);
-
-          // 拡大用頂点すべてを移動
-          deform(dragTarget.expandVertexes.target).setExpandVertexes(expandVertexesGroup);
-        }
-
-        dragTarget.target.move(newPosition.x, newPosition.y);
-      });
-    }
-  };
 
   const moveElems: SVG.Element[] = [];
 
@@ -84,65 +49,141 @@ export function handMode() {
 
   moveElems.forEach((moveElem, i) => {
     moveElem.node.onmousedown = (ev: MouseEvent) => {
-      // イベント伝搬の終了
       ev.stopPropagation();
-      // 既存の拡大用頂点を消す
-      let vertexes = editorRoot.select(".svgeditor-vertex");
-      vertexes.each((i, elems) => {
-        elems[i].remove();
-      });
 
-      let mainTarget = moveElem;
-      // 拡大用頂点を出す
-      let ids = deform(mainTarget).setExpandVertexes(expandVertexesGroup);
-      let targets: SVG.Set = editorRoot.set([mainTarget]);
-      let expandVertexes = ids.map(id => editorRoot.select(`#${id}`).get(0));
-      for (let vertex of expandVertexes) {
-        targets.add(vertex);
-        // 拡大用頂点のクリック時のdragTargets登録
-        vertex.node.onmousedown = (ev: MouseEvent) => {
-          // イベント伝搬の終了
-          ev.stopPropagation();
-
-          let dirs = vertex.attr("direction").split(" ");
-          let mode: DragMode = "free";
-          if (dirs.length === 1) {
-            if (dirs.indexOf(<Direction>"left") !== -1 || dirs.indexOf(<Direction>"right") !== -1) {
-              mode = "horizontal";
-            } else {
-              mode = "vertical";
-            }
-          }
-          dragTargets = [{
-            target: vertex,
-            targetFromCursor: deform(vertex).getLeftUp().sub(Point.of(ev.clientX, ev.clientY)),
-            targetInit: deform(vertex).getLeftUp(),
-            dragMode: mode,
-            expandVertexes: {
-              target: mainTarget,
-              vertexes: expandVertexes,
-              targetInitScheme: deform(mainTarget).extractScheme()
-            }
-          }];
+      if (dragTarget.kind === "none") {
+        dragTarget = {
+          kind: "main",
+          main: moveElem,
+          vertexes: [],
+          fromCursor: deform(moveElem).getAffinedLeftUp().sub(Point.of(ev.clientX, ev.clientY))
         };
-      }
-      dragTargets = [];
-      targets.each((i, elems) => {
-        let target = elems[i];
-        dragTargets!.push({
-          target: target,
-          targetFromCursor: Point.of(target.x(), target.y()).sub(Point.of(ev.clientX, ev.clientY)),
-          targetInit: Point.of(target.x(), target.y()),
-          dragMode: <DragMode>"free"
+        expandVertexesGroup.clear();
+        setScaleVertexes();
+        // 頂点が設定されたのでイベントを追加する
+        expandVertexesGroup.children().forEach(elem => {
+          let reverseVertex = expandVertexesGroup.children().find(t => equals(
+            deform(t).geta("direction")!.split(" "),
+            deform(elem).geta("direction")!.split(" ").map(dir => reverse(<any>dir))
+          ))!;
+          elem.node.onmousedown = (ev) => vertexMousedown(ev, moveElem, elem, expandVertexesGroup.children(), reverseVertex);
         });
-      });
-
-      handTarget = mainTarget;
-
-      // colorpicker
-      refleshStyleAttribues(mainTarget);
+        handTarget = dragTarget.main;
+      }
     };
   });
+
+  document.onmousemove = (ev: MouseEvent) => {
+    ev.stopPropagation();
+
+    if (dragTarget.kind === "main") {
+      // 行列適用後の更新後の座標
+      let updatedTargetAffinedPos = dragTarget.fromCursor.add(Point.of(ev.clientX, ev.clientY));
+      let targetTrMatrix = withDefault(dragTarget.main.transform().matrix, unitMatrix);
+      // 行列適用後の更新前の座標
+      let targetAffinedPos = deform(dragTarget.main).getAffinedLeftUp();
+      // 移動分をtranslateとして行列に追加
+      let updatedTargetTrMatrix = targetTrMatrix.translate(updatedTargetAffinedPos.x - targetAffinedPos.x, updatedTargetAffinedPos.y - targetAffinedPos.y);
+      // 新しい行列を属性に設定
+      dragTarget.main.matrix(updatedTargetTrMatrix);
+      // 関連する頂点を再設置
+      updateScaleVertexes();
+    } else if (dragTarget.kind === "vertex") {
+      // 頂点の移動の仕方
+      let dragMode: DragMode = "free";
+      let dirs = deform(dragTarget.vertex).geta("direction")!.split(" ");
+      if (dirs.length === 1) {
+        if (dirs[0] === "left" || dirs[0] === "right") dragMode = "horizontal";
+        else dragMode = "vertical";
+      }
+      // 更新後の選択中の頂点
+      let updatedVertex = dragTarget.fromCursor.add(Point.of(ev.clientX, ev.clientY));
+      if (dragMode === "horizontal") updatedVertex = dragTarget.fromCursor.add(Point.of(ev.clientX, 0));
+      if (dragMode === "vertical") updatedVertex = dragTarget.fromCursor.add(Point.of(0, ev.clientY));
+      // 変更前の座標
+      let affinedLeftUp = deform(dragTarget.main).getAffinedLeftUp();
+      let affinedRightDown = deform(dragTarget.main).getAffinedRightDown();
+      let affinedWidth = affinedRightDown.x - affinedLeftUp.x;
+      let affinedHeight = affinedRightDown.y - affinedLeftUp.y;
+      // 変更後の座標
+      let updatedAffinedWidth = updatedVertex.x - dragTarget.scaleCenter.x();
+      let updatedAffinedHeight = updatedVertex.y - dragTarget.scaleCenter.y();
+      // scale
+      let scale = Point.of(1, 1);
+      if (dragMode === "horizontal" || dragMode === "free") scale.x = updatedAffinedWidth / affinedWidth;
+      if (dragMode === "vertical" || dragMode === "free") scale.y = updatedAffinedHeight / affinedHeight;
+      // 更新前の行列
+      let targetTrMatrix = withDefault(dragTarget.main.transform().matrix, unitMatrix);
+      // 更新された行列
+      let updatedTargetTrMatrix = targetTrMatrix.scale(scale.x, scale.y, dragTarget.scaleCenter.x(), dragTarget.scaleCenter.y());
+      dragTarget.main.matrix(updatedTargetTrMatrix);
+      // 関連する頂点を再設置
+      updateScaleVertexes();
+    }
+  };
+
+  function vertexMousedown(ev: MouseEvent, main: SVG.Element, vertex: SVG.Element, vertexes: SVG.Element[], scaleCenter: SVG.Element) {
+    ev.stopPropagation();
+
+    if (dragTarget.kind === "none") {
+      dragTarget = {
+        kind: "vertex",
+        main: main,
+        vertex: vertex,
+        vertexes: vertexes,
+        fromCursor: deform(vertex).getAffinedLeftUp().sub(Point.of(ev.clientX, ev.clientY)),
+        scaleCenter: scaleCenter
+      };
+    }
+  }
+
+  function setScaleVertexes() {
+    if (dragTarget.kind === "main") {
+      let leftUp = deform(dragTarget.main).getAffinedLeftUp();
+      let rightDown = deform(dragTarget.main).getAffinedRightDown();
+      let ret: SVG.Element[] = [];
+      for (let i = 0; i <= 2; i++) {
+        for (let j = 0; j <= 2; j++) {
+          if (i === 1 && j === 1) continue;
+          let w = rightDown.x - leftUp.x;
+          let h = rightDown.y - leftUp.y;
+          let pos = Point.of(leftUp.x + w * j / 2, leftUp.y + h * i / 2);
+          let dirs: string[] = [];
+          if (j === 0) dirs.push("left");
+          if (j === 2) dirs.push("right");
+          if (i === 0) dirs.push("up");
+          if (i === 2) dirs.push("down");
+          ret.push(expandVertexesGroup
+            .circle(10)
+            .center(pos.x, pos.y)
+            .stroke({ color: textcolor.toHexString(), width: 3 })
+            .fill({ color: bgcolor.toHexString() })
+            .attr("direction", dirs.join(" "))
+          );
+        }
+      }
+      dragTarget.vertexes = ret;
+    }
+  }
+
+  function updateScaleVertexes() {
+    if (dragTarget.kind !== "none") {
+      let leftUp = deform(dragTarget.main).getAffinedLeftUp();
+      let rightDown = deform(dragTarget.main).getAffinedRightDown();
+      let ret: SVG.Element[] = dragTarget.vertexes;
+      let c = 0;
+      for (let i = 0; i <= 2; i++) {
+        for (let j = 0; j <= 2; j++) {
+          if (i === 1 && j === 1) continue;
+          let w = rightDown.x - leftUp.x;
+          let h = rightDown.y - leftUp.y;
+          let pos = Point.of(leftUp.x + w * j / 2, leftUp.y + h * i / 2);
+          ret[c].center(pos.x, pos.y);
+          c++;
+        }
+      }
+    }
+  }
 
   // colorpicker event
   jQuery($ => {

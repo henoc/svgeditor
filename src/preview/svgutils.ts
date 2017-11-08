@@ -1,5 +1,5 @@
-import { Affine } from "./affine";
-import {Point, Direction} from "./utils";
+import { unitMatrix, matrixof } from "./matrixutils";
+import {Point, Direction, withDefault} from "./utils";
 import * as SVG from "svgjs";
 let tinycolor: tinycolor = require("tinycolor2");
 
@@ -42,6 +42,22 @@ class SvgDeformer {
   }
 
   /**
+   * Consider tranform property
+   */
+  getAffinedLeftUp(): Point {
+    let e = unitMatrix;
+    let transformMatrix = withDefault(this.elem.transform().matrix, e);
+    return matrixof(transformMatrix).mulvec(this.getLeftUp());
+  }
+
+  getAffinedRightDown(): Point {
+    let e = unitMatrix;
+    let transformMatrix = withDefault(this.elem.transform().matrix, e);
+    let rightDown = this.getLeftUp().addxy(this.getWidth(), this.getHeight());
+    return matrixof(transformMatrix).mulvec(rightDown);
+  }
+
+  /**
    * Set vertexes for expansion. 8 vertexes are arranged around all kinds of target element.
    * @param group the group expand vertexes have joined or will join
    */
@@ -52,7 +68,8 @@ class SvgDeformer {
     for (let i = 0; i < 3; i++) {
       for (let j = 0; j < 3; j++) {
         if (i === 1 && j === 1) continue;
-        let point = this.getLeftUp().addxy(this.getWidth() / 2 * j, this.getHeight() / 2 * i);
+        let affinedWidthHeight = this.getAffinedRightDown().sub(this.getAffinedLeftUp());
+        let point = this.getAffinedLeftUp().addxy(affinedWidthHeight.x / 2 * j, affinedWidthHeight.y / 2 * i);
 
         if (recycle) {
           group.children()[c].center(point.x, point.y);
@@ -78,14 +95,7 @@ class SvgDeformer {
   }
 
   expand(center: Point, scale: Point): void {
-    let affine = Affine.scale(scale, center);
-    let leftUp = this.getLeftUp();
-    let affinedLeftUp = affine.transform(leftUp);
-    let rightDown = this.getLeftUp().addxy(this.getWidth(), this.getHeight());
-    let affinedRightDown = affine.transform(rightDown);
-    this.setLeftUp(affinedLeftUp);
-    this.elem.width(affinedRightDown.x - affinedLeftUp.x);
-    this.elem.height(affinedRightDown.y - affinedLeftUp.y);
+    this.elem.scale(scale.x, scale.y, center.x, center.y);
   }
 
   extractScheme(): ElementScheme {
@@ -172,4 +182,3 @@ class SvgDeformer {
 export function deform(elem: SVG.Element): SvgDeformer {
   return new SvgDeformer(elem);
 }
-

@@ -145,8 +145,8 @@ function destructions() {
 // color settings
 let sampleTextElem = document.getElementById("svgeditor-styleattributes")!;
 let sampleStyle = window.getComputedStyle(sampleTextElem);
-let bgcolor = tinycolor(sampleStyle.backgroundColor!);
-let textcolor = tinycolor(sampleStyle.color!);
+export let bgcolor = tinycolor(sampleStyle.backgroundColor!);
+export let textcolor = tinycolor(sampleStyle.color!);
 document.documentElement.style.setProperty("--svgeditor-color-bg", bgcolor.toHexString());
 document.documentElement.style.setProperty("--svgeditor-color-bg-light", bgcolor.lighten(10).toHexString());
 document.documentElement.style.setProperty("--svgeditor-color-bg-light2", bgcolor.lighten(20).toHexString());
