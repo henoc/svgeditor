@@ -19453,6 +19453,8 @@ function destructions() {
     handMode_1.handModeDestruct();
     polygonMode_1.polygonModeDestruct();
     textMode_1.textModeDestruct();
+    rectangleMode_1.rectangleModeDestruct();
+    ellipseMode_1.ellipseModeDestruct();
 }
 // color settings
 var sampleTextElem = document.getElementById("svgeditor-styleattributes");
@@ -19529,6 +19531,12 @@ function ellipseMode() {
     };
 }
 exports.ellipseMode = ellipseMode;
+function ellipseModeDestruct() {
+    common_1.svgroot.node.onmousedown = function () { return undefined; };
+    common_1.svgroot.node.onmousemove = function () { return undefined; };
+    common_1.svgroot.node.onmouseup = function () { return undefined; };
+}
+exports.ellipseModeDestruct = ellipseModeDestruct;
 
 },{"./common":5,"./svgutils":11,"./utils":13,"jquery":1}],7:[function(require,module,exports){
 Object.defineProperty(exports, "__esModule", { value: true });
@@ -19576,7 +19584,7 @@ function handMode() {
             }
         };
     });
-    document.onmousemove = function (ev) {
+    common_1.svgroot.node.onmousemove = function (ev) {
         ev.stopPropagation();
         if (dragTarget.kind === "main") {
             // 行列適用後の更新後の座標
@@ -19728,6 +19736,8 @@ function handModeDestruct() {
         elems[i].node.onmousemove = function () { return undefined; };
         elems[i].node.onmouseup = function () { return undefined; };
     });
+    common_1.svgroot.node.onmouseup = function () { return undefined; };
+    common_1.svgroot.node.onmousemove = function () { return undefined; };
 }
 exports.handModeDestruct = handModeDestruct;
 
@@ -19820,6 +19830,8 @@ function polygonMode() {
 exports.polygonMode = polygonMode;
 function polygonModeDestruct() {
     common_1.displayOff(document.getElementById("svgeditor-typicalproperties-enclosure-div"));
+    common_1.svgroot.node.onmousemove = function () { return undefined; };
+    common_1.svgroot.node.oncontextmenu = function () { return undefined; };
 }
 exports.polygonModeDestruct = polygonModeDestruct;
 
@@ -19888,6 +19900,12 @@ function rectangleMode() {
     };
 }
 exports.rectangleMode = rectangleMode;
+function rectangleModeDestruct() {
+    common_1.svgroot.node.onmousedown = function () { return undefined; };
+    common_1.svgroot.node.onmousemove = function () { return undefined; };
+    common_1.svgroot.node.onmouseup = function () { return undefined; };
+}
+exports.rectangleModeDestruct = rectangleModeDestruct;
 
 },{"./common":5,"./svgutils":11,"./utils":13,"jquery":1}],11:[function(require,module,exports){
 Object.defineProperty(exports, "__esModule", { value: true });

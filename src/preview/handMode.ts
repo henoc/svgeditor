@@ -73,7 +73,7 @@ export function handMode() {
     };
   });
 
-  document.onmousemove = (ev: MouseEvent) => {
+  svgroot.node.onmousemove = (ev: MouseEvent) => {
     ev.stopPropagation();
 
     if (dragTarget.kind === "main") {
@@ -219,4 +219,6 @@ export function handModeDestruct() {
     elems[i].node.onmousemove = () => undefined;
     elems[i].node.onmouseup = () => undefined;
   });
+  svgroot.node.onmouseup = () => undefined;
+  svgroot.node.onmousemove = () => undefined;
 }

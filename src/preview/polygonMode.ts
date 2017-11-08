@@ -82,4 +82,6 @@ export function polygonMode() {
 
 export function polygonModeDestruct() {
   displayOff(document.getElementById("svgeditor-typicalproperties-enclosure-div")!);
+  svgroot.node.onmousemove = () => undefined;
+  svgroot.node.oncontextmenu = () => undefined;
 }

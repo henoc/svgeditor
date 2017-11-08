@@ -33,7 +33,7 @@ export function ellipseMode() {
       start: Point.of(x, y),
       end: Point.of(x, y)
     };
-  }
+  };
 
   svgroot.node.onmousemove = (ev: MouseEvent) => {
     ev.stopPropagation();
@@ -45,7 +45,7 @@ export function ellipseMode() {
       ellipse.elem.move(leftUp.x, leftUp.y);
       ellipse.elem.size(rightDown.x - leftUp.x, rightDown.y - leftUp.y);
     }
-  }
+  };
 
   svgroot.node.onmouseup = (ev: MouseEvent) => {
     ev.stopPropagation();
@@ -58,7 +58,7 @@ export function ellipseMode() {
       }
     }
     ellipse = undefined;
-  }
+  };
 
   // colorpicker event
   jQuery($ => {
@@ -75,5 +75,11 @@ export function ellipseMode() {
   // style attributes event
   svgStyleAttrs.strokewidth.oninput = e => {
     deform(colorSample).setStyleAttr("stroke-width", svgStyleAttrs.strokewidth.value, "indivisual");
-  }
+  };
+}
+
+export function ellipseModeDestruct() {
+  svgroot.node.onmousedown = () => undefined;
+  svgroot.node.onmousemove = () => undefined;
+  svgroot.node.onmouseup = () => undefined;
 }

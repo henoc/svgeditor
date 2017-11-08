@@ -75,6 +75,12 @@ export function rectangleMode() {
   // style attributes event
   svgStyleAttrs.strokewidth.oninput = e => {
     deform(colorSample).setStyleAttr("stroke-width", svgStyleAttrs.strokewidth.value, "indivisual");
-  }
+  };
 
+}
+
+export function rectangleModeDestruct() {
+  svgroot.node.onmousedown = () => undefined;
+  svgroot.node.onmousemove = () => undefined;
+  svgroot.node.onmouseup = () => undefined;
 }

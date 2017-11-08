@@ -2,8 +2,8 @@
 
 import {deform} from "./svgutils";
 import {handMode, handModeDestruct} from "./handMode";
-import {rectangleMode} from "./rectangleMode";
-import {ellipseMode} from "./ellipseMode";
+import {rectangleMode, rectangleModeDestruct} from "./rectangleMode";
+import {ellipseMode, ellipseModeDestruct} from "./ellipseMode";
 import {polygonMode, polygonModeDestruct} from "./polygonMode";
 import {textMode, textModeDestruct} from "./textMode";
 
@@ -140,6 +140,8 @@ function destructions() {
   handModeDestruct();
   polygonModeDestruct();
   textModeDestruct();
+  rectangleModeDestruct();
+  ellipseModeDestruct();
 }
 
 // color settings
