@@ -149,14 +149,13 @@ export function handMode() {
   function setScaleVertexes() {
     if (dragTarget.kind === "main") {
       let leftUp = deform(dragTarget.main).getLeftUp();
-      let rightDown = deform(dragTarget.main).getRightDown();
+      let width = deform(dragTarget.main).getWidth();
+      let height = deform(dragTarget.main).getHeight();
       let ret: SVG.Element[] = [];
       for (let i = 0; i <= 2; i++) {
         for (let j = 0; j <= 2; j++) {
           if (i === 1 && j === 1) continue;
-          let w = rightDown.x - leftUp.x;
-          let h = rightDown.y - leftUp.y;
-          let pos = Point.of(leftUp.x + w * j / 2, leftUp.y + h * i / 2);
+          let pos = Point.of(leftUp.x + width * j / 2, leftUp.y + height * i / 2);
           let dirs: string[] = [];
           if (j === 0) dirs.push("left");
           if (j === 2) dirs.push("right");
@@ -178,15 +177,14 @@ export function handMode() {
   function updateScaleVertexes() {
     if (dragTarget.kind !== "none") {
       let leftUp = deform(dragTarget.main).getLeftUp();
-      let rightDown = deform(dragTarget.main).getRightDown();
+      let width = deform(dragTarget.main).getWidth();
+      let height = deform(dragTarget.main).getHeight();
       let ret: SVG.Element[] = dragTarget.vertexes;
       let c = 0;
       for (let i = 0; i <= 2; i++) {
         for (let j = 0; j <= 2; j++) {
           if (i === 1 && j === 1) continue;
-          let w = rightDown.x - leftUp.x;
-          let h = rightDown.y - leftUp.y;
-          let pos = Point.of(leftUp.x + w * j / 2, leftUp.y + h * i / 2);
+          let pos = Point.of(leftUp.x + width * j / 2, leftUp.y + height * i / 2);
           ret[c].center(pos.x, pos.y);
           c++;
         }
