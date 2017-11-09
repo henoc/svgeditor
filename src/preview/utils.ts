@@ -45,6 +45,9 @@ export class Point {
   div(that: Point): Point {
     return Point.of(this.x / that.x, this.y / that.y);
   }
+  mul(that: Point): Point {
+    return Point.of(this.x * that.x, this.y * that.y);
+  }
   innerProd(that: Point): number {
     return this.x * that.x + this.y * that.y;
   }
