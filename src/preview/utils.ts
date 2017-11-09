@@ -45,6 +45,12 @@ export class Point {
   div(that: Point): Point {
     return Point.of(this.x / that.x, this.y / that.y);
   }
+  innerProd(that: Point): number {
+    return this.x * that.x + this.y * that.y;
+  }
+  clossProd(that: Point): number {
+    return this.x * that.y - this.y * that.x;
+  }
 }
 
 export function uuid(): string {
