@@ -1,6 +1,6 @@
 import { matrixof } from "./matrixutils";
 import { scale } from "./coordinateutils";
-import { editorRoot, svgroot, reflection, colorpickers, svgStyleAttrs, textcolor, bgcolor } from "./common";
+import { editorRoot, svgroot, reflection, colorpickers, svgStyleAttrs, textcolor, bgcolor, refleshStyleAttribues } from "./common";
 import { deform } from "./svgutils";
 import { Point, withDefault, reverse, equals } from "./utils";
 
@@ -85,6 +85,7 @@ export function handMode() {
           elem.node.onmousedown = (ev) => vertexMousedown(ev, moveElem, elem, expandVertexesGroup.children(), reverseVertex);
         });
         handTarget = dragTarget.main;
+        refleshStyleAttribues(moveElem);
       }
     };
   });
