@@ -1,5 +1,5 @@
 import { unitMatrix, matrixof } from "./matrixutils";
-import {Point, Direction, withDefault} from "./utils";
+import {Point, withDefault} from "./utils";
 import * as SVG from "svgjs";
 let tinycolor: tinycolor = require("tinycolor2");
 
@@ -37,8 +37,16 @@ class SvgDeformer {
     return Point.of(this.elem.x(), this.elem.y());
   }
 
+  getRightDown(): Point {
+    return Point.of(this.elem.x() + this.elem.width(), this.elem.y() + this.elem.height());
+  }
+
   getCenter(): Point {
     return Point.of(this.elem.cx(), this.elem.cy());
+  }
+
+  getSize(): Point {
+    return Point.of(this.elem.width(), this.elem.height());
   }
 
   /**
@@ -57,62 +65,24 @@ class SvgDeformer {
     return matrixof(transformMatrix).mulvec(rightDown);
   }
 
-  /**
-   * Set vertexes for expansion. 8 vertexes are arranged around all kinds of target element.
-   * @param group the group expand vertexes have joined or will join
-   */
-  setExpandVertexes(group: SVG.G): SVG.Element[] {
-    let recycle = group.children().length !== 0;
-    let elems: SVG.Element[] = [];
-    let c = 0;
-    for (let i = 0; i < 3; i++) {
-      for (let j = 0; j < 3; j++) {
-        if (i === 1 && j === 1) continue;
-        let affinedWidthHeight = this.getAffinedRightDown().sub(this.getAffinedLeftUp());
-        let point = this.getAffinedLeftUp().addxy(affinedWidthHeight.x / 2 * j, affinedWidthHeight.y / 2 * i);
-
-        if (recycle) {
-          group.children()[c].center(point.x, point.y);
-          elems.push(group.children()[c]);
-          c++;
-        } else {
-          let dirs: Direction[] = [];
-          if (i === 0) dirs.push("up");
-          if (i === 2) dirs.push("down");
-          if (j === 0) dirs.push("left");
-          if (j === 2) dirs.push("right");
-
-          elems.push(this.setExpandVertex(point, dirs, group));
-        }
-      }
-    }
-    return elems;
+  getAffinedCenter(): Point {
+    let e = unitMatrix;
+    let transformMatrix = withDefault(this.elem.transform().matrix, e);
+    return matrixof(transformMatrix).mulvec(this.getCenter());
   }
 
-  private setExpandVertex(verticalPoint: Point, directions: Direction[], group: SVG.G): SVG.Element {
-    return group.circle(10).center(verticalPoint.x, verticalPoint.y).attr("direction", directions.join(" "))
-      .addClass("svgeditor-vertex");
+  getAffinedSize(): Point {
+    return this.getAffinedRightDown().sub(this.getAffinedLeftUp());
+  }
+
+  setInverseAffinedCenter(center: Point): void {
+    let inverseMatrix = withDefault(this.elem.transform().matrix, unitMatrix).inverse();
+    let inverseCenter = matrixof(inverseMatrix).mulvec(center);
+    this.setCenter(inverseCenter);
   }
 
   expand(center: Point, scale: Point): void {
     this.elem.scale(scale.x, scale.y, center.x, center.y);
-  }
-
-  extractScheme(): ElementScheme {
-    let attrs: {[name: string]: string} = {};
-    for (let i = 0; i < this.elem.node.attributes.length; i++) {
-      attrs[this.elem.node.attributes.item(i).name] = this.elem.node.attributes.item(i).value;
-    }
-    return {
-      tagName: this.elem.node.tagName,
-      attributes: attrs
-    };
-  }
-
-  insertScheme(scheme: ElementScheme): void {
-    Object.keys(scheme.attributes).forEach(name => {
-      this.seta(name, scheme.attributes[name]);
-    });
   }
 
   getColor(fillOrStroke: "fill" | "stroke"): tinycolorInstance {

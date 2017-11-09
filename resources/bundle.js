@@ -19466,7 +19466,41 @@ document.documentElement.style.setProperty("--svgeditor-color-bg-light", exports
 document.documentElement.style.setProperty("--svgeditor-color-bg-light2", exports.bgcolor.lighten(20).toHexString());
 document.documentElement.style.setProperty("--svgeditor-color-text", exports.textcolor.toHexString());
 
-},{"./ellipseMode":6,"./handMode":7,"./polygonMode":9,"./rectangleMode":10,"./svgutils":11,"./textMode":12,"jquery":1,"spectrum-colorpicker":2,"svgjs":3,"tinycolor2":4}],6:[function(require,module,exports){
+},{"./ellipseMode":7,"./handMode":8,"./polygonMode":10,"./rectangleMode":11,"./svgutils":12,"./textMode":13,"jquery":1,"spectrum-colorpicker":2,"svgjs":3,"tinycolor2":4}],6:[function(require,module,exports){
+Object.defineProperty(exports, "__esModule", { value: true });
+var utils_1 = require("./utils");
+/**
+ * ```
+ *    b
+ *   /
+ *  /
+ * o ---> a
+ * ```
+ * Get the angle between three points with sign
+ * @param a base point
+ * @param o center
+ * @param b relative point
+ */
+function angle(a, o, b) {
+    var oa = a.sub(o);
+    var ob = b.sub(o);
+    return Math.atan2(oa.clossProd(ob), oa.innerProd(ob));
+}
+exports.angle = angle;
+/**
+ * Get the scale from rectangle or line pallarel with axis, (o, from) to (o, to)
+ */
+function scale(o, from, to) {
+    var ret = utils_1.Point.of((to.x - o.x) / (from.x - o.x), (to.y - o.y) / (from.y - o.y));
+    if (Number.isNaN(ret.x))
+        ret.x = 1;
+    if (Number.isNaN(ret.y))
+        ret.y = 1;
+    return ret;
+}
+exports.scale = scale;
+
+},{"./utils":14}],7:[function(require,module,exports){
 Object.defineProperty(exports, "__esModule", { value: true });
 var common_1 = require("./common");
 var utils_1 = require("./utils");
@@ -19538,9 +19572,9 @@ function ellipseModeDestruct() {
 }
 exports.ellipseModeDestruct = ellipseModeDestruct;
 
-},{"./common":5,"./svgutils":11,"./utils":13,"jquery":1}],7:[function(require,module,exports){
+},{"./common":5,"./svgutils":12,"./utils":14,"jquery":1}],8:[function(require,module,exports){
 Object.defineProperty(exports, "__esModule", { value: true });
-var matrixutils_1 = require("./matrixutils");
+var coordinateutils_1 = require("./coordinateutils");
 var common_1 = require("./common");
 var svgutils_1 = require("./svgutils");
 var utils_1 = require("./utils");
@@ -19553,6 +19587,8 @@ function handMode() {
         // 変更されたHTML（のSVG部分）をエディタに反映させる
         if (dragTarget)
             handModeReflection();
+        // 関連する頂点を再設置
+        updateScaleVertexes();
         dragTarget = { kind: "none" };
     };
     function handModeReflection() {
@@ -19571,7 +19607,11 @@ function handMode() {
                     kind: "main",
                     main: moveElem,
                     vertexes: [],
-                    fromCursor: svgutils_1.deform(moveElem).getAffinedLeftUp().sub(utils_1.Point.of(ev.clientX, ev.clientY))
+                    fromCursor: svgutils_1.deform(moveElem).getAffinedCenter().sub(utils_1.Point.of(ev.clientX, ev.clientY)),
+                    initialScheme: {
+                        center: svgutils_1.deform(moveElem).getCenter(),
+                        size: svgutils_1.deform(moveElem).getSize()
+                    }
                 };
                 expandVertexesGroup.clear();
                 setScaleVertexes();
@@ -19581,25 +19621,21 @@ function handMode() {
                     elem.node.onmousedown = function (ev) { return vertexMousedown(ev, moveElem, elem, expandVertexesGroup.children(), reverseVertex); };
                 });
                 handTarget = dragTarget.main;
+                common_1.refleshStyleAttribues(moveElem);
             }
         };
     });
     common_1.svgroot.node.onmousemove = function (ev) {
         ev.stopPropagation();
         if (dragTarget.kind === "main") {
-            // 行列適用後の更新後の座標
-            var updatedTargetAffinedPos = dragTarget.fromCursor.add(utils_1.Point.of(ev.clientX, ev.clientY));
-            var targetTrMatrix = utils_1.withDefault(dragTarget.main.transform().matrix, matrixutils_1.unitMatrix);
-            // 行列適用後の更新前の座標
-            var targetAffinedPos = svgutils_1.deform(dragTarget.main).getAffinedLeftUp();
-            // 移動分をtranslateとして行列に追加
-            var updatedTargetTrMatrix = targetTrMatrix.translate(updatedTargetAffinedPos.x - targetAffinedPos.x, updatedTargetAffinedPos.y - targetAffinedPos.y);
-            // 新しい行列を属性に設定
-            dragTarget.main.matrix(updatedTargetTrMatrix);
-            // 関連する頂点を再設置
-            updateScaleVertexes();
+            // 平行移動（図形を変更）
+            // 更新後の座標
+            var updatedTargetPos = dragTarget.fromCursor.add(utils_1.Point.of(ev.clientX, ev.clientY));
+            // 移動
+            svgutils_1.deform(dragTarget.main).setInverseAffinedCenter(updatedTargetPos);
         }
         else if (dragTarget.kind === "vertex") {
+            // 拡大（図形を変更）
             // 頂点の移動の仕方
             var dragMode = "free";
             var dirs = svgutils_1.deform(dragTarget.vertex).geta("direction").split(" ");
@@ -19610,32 +19646,21 @@ function handMode() {
                     dragMode = "vertical";
             }
             // 更新後の選択中の頂点
-            var updatedVertex = dragTarget.fromCursor.add(utils_1.Point.of(ev.clientX, ev.clientY));
-            if (dragMode === "horizontal")
-                updatedVertex = dragTarget.fromCursor.add(utils_1.Point.of(ev.clientX, 0));
-            if (dragMode === "vertical")
-                updatedVertex = dragTarget.fromCursor.add(utils_1.Point.of(0, ev.clientY));
-            // 変更前の座標
-            var affinedLeftUp = svgutils_1.deform(dragTarget.main).getAffinedLeftUp();
-            var affinedRightDown = svgutils_1.deform(dragTarget.main).getAffinedRightDown();
-            var affinedWidth = affinedRightDown.x - affinedLeftUp.x;
-            var affinedHeight = affinedRightDown.y - affinedLeftUp.y;
-            // 変更後の座標
-            var updatedAffinedWidth = updatedVertex.x - dragTarget.scaleCenter.x();
-            var updatedAffinedHeight = updatedVertex.y - dragTarget.scaleCenter.y();
+            var updatedVertexPos = dragTarget.fromCursor.add(utils_1.Point.of(ev.clientX, ev.clientY));
+            // 拡大の中心点
+            var scaleCenterPos = svgutils_1.deform(dragTarget.scaleCenter).getCenter();
             // scale
-            var scale = utils_1.Point.of(1, 1);
-            if (dragMode === "horizontal" || dragMode === "free")
-                scale.x = updatedAffinedWidth / affinedWidth;
-            if (dragMode === "vertical" || dragMode === "free")
-                scale.y = updatedAffinedHeight / affinedHeight;
-            // 更新前の行列
-            var targetTrMatrix = utils_1.withDefault(dragTarget.main.transform().matrix, matrixutils_1.unitMatrix);
-            // 更新された行列
-            var updatedTargetTrMatrix = targetTrMatrix.scale(scale.x, scale.y, dragTarget.scaleCenter.x(), dragTarget.scaleCenter.y());
-            dragTarget.main.matrix(updatedTargetTrMatrix);
-            // 関連する頂点を再設置
-            updateScaleVertexes();
+            var scaleRatio = coordinateutils_1.scale(scaleCenterPos, dragTarget.initialVertexPos, updatedVertexPos);
+            if (dragMode === "vertical")
+                scaleRatio.x = 1;
+            if (dragMode === "horizontal")
+                scaleRatio.y = 1;
+            // scaleによる図形の中心と高さ幅
+            var scaledMain = dragTarget.initialScheme.center.sub(scaleCenterPos).mul(scaleRatio).add(scaleCenterPos);
+            var scaledSize = dragTarget.initialScheme.size.mul(scaleRatio.abs2());
+            // 更新
+            dragTarget.main.center(scaledMain.x, scaledMain.y);
+            dragTarget.main.size(scaledSize.x, scaledSize.y);
         }
     };
     function vertexMousedown(ev, main, vertex, vertexes, scaleCenter) {
@@ -19646,23 +19671,27 @@ function handMode() {
                 main: main,
                 vertex: vertex,
                 vertexes: vertexes,
-                fromCursor: svgutils_1.deform(vertex).getAffinedLeftUp().sub(utils_1.Point.of(ev.clientX, ev.clientY)),
-                scaleCenter: scaleCenter
+                fromCursor: svgutils_1.deform(vertex).getCenter().sub(utils_1.Point.of(ev.clientX, ev.clientY)),
+                scaleCenter: scaleCenter,
+                initialVertexPos: svgutils_1.deform(vertex).getCenter(),
+                initialScheme: {
+                    center: svgutils_1.deform(main).getAffinedCenter(),
+                    size: svgutils_1.deform(main).getAffinedSize()
+                }
             };
         }
     }
     function setScaleVertexes() {
         if (dragTarget.kind === "main") {
-            var leftUp = svgutils_1.deform(dragTarget.main).getAffinedLeftUp();
-            var rightDown = svgutils_1.deform(dragTarget.main).getAffinedRightDown();
+            var leftUp = svgutils_1.deform(dragTarget.main).getLeftUp();
+            var width = svgutils_1.deform(dragTarget.main).getWidth();
+            var height = svgutils_1.deform(dragTarget.main).getHeight();
             var ret = [];
             for (var i = 0; i <= 2; i++) {
                 for (var j = 0; j <= 2; j++) {
                     if (i === 1 && j === 1)
                         continue;
-                    var w = rightDown.x - leftUp.x;
-                    var h = rightDown.y - leftUp.y;
-                    var pos = utils_1.Point.of(leftUp.x + w * j / 2, leftUp.y + h * i / 2);
+                    var pos = utils_1.Point.of(leftUp.x + width * j / 2, leftUp.y + height * i / 2);
                     var dirs = [];
                     if (j === 0)
                         dirs.push("left");
@@ -19685,17 +19714,16 @@ function handMode() {
     }
     function updateScaleVertexes() {
         if (dragTarget.kind !== "none") {
-            var leftUp = svgutils_1.deform(dragTarget.main).getAffinedLeftUp();
-            var rightDown = svgutils_1.deform(dragTarget.main).getAffinedRightDown();
+            var leftUp = svgutils_1.deform(dragTarget.main).getLeftUp();
+            var width = svgutils_1.deform(dragTarget.main).getWidth();
+            var height = svgutils_1.deform(dragTarget.main).getHeight();
             var ret = dragTarget.vertexes;
             var c = 0;
             for (var i = 0; i <= 2; i++) {
                 for (var j = 0; j <= 2; j++) {
                     if (i === 1 && j === 1)
                         continue;
-                    var w = rightDown.x - leftUp.x;
-                    var h = rightDown.y - leftUp.y;
-                    var pos = utils_1.Point.of(leftUp.x + w * j / 2, leftUp.y + h * i / 2);
+                    var pos = utils_1.Point.of(leftUp.x + width * j / 2, leftUp.y + height * i / 2);
                     ret[c].center(pos.x, pos.y);
                     c++;
                 }
@@ -19741,7 +19769,7 @@ function handModeDestruct() {
 }
 exports.handModeDestruct = handModeDestruct;
 
-},{"./common":5,"./matrixutils":8,"./svgutils":11,"./utils":13,"jquery":1}],8:[function(require,module,exports){
+},{"./common":5,"./coordinateutils":6,"./svgutils":12,"./utils":14,"jquery":1}],9:[function(require,module,exports){
 Object.defineProperty(exports, "__esModule", { value: true });
 var utils_1 = require("./utils");
 var SVG = require("svgjs");
@@ -19762,7 +19790,7 @@ function matrixof(mat) {
 exports.matrixof = matrixof;
 exports.unitMatrix = new SVG.Matrix(1, 0, 0, 1, 0, 0);
 
-},{"./utils":13,"svgjs":3}],9:[function(require,module,exports){
+},{"./utils":14,"svgjs":3}],10:[function(require,module,exports){
 Object.defineProperty(exports, "__esModule", { value: true });
 var common_1 = require("./common");
 var utils_1 = require("./utils");
@@ -19835,7 +19863,7 @@ function polygonModeDestruct() {
 }
 exports.polygonModeDestruct = polygonModeDestruct;
 
-},{"./common":5,"./svgutils":11,"./utils":13,"jquery":1}],10:[function(require,module,exports){
+},{"./common":5,"./svgutils":12,"./utils":14,"jquery":1}],11:[function(require,module,exports){
 Object.defineProperty(exports, "__esModule", { value: true });
 var common_1 = require("./common");
 var utils_1 = require("./utils");
@@ -19907,7 +19935,7 @@ function rectangleModeDestruct() {
 }
 exports.rectangleModeDestruct = rectangleModeDestruct;
 
-},{"./common":5,"./svgutils":11,"./utils":13,"jquery":1}],11:[function(require,module,exports){
+},{"./common":5,"./svgutils":12,"./utils":14,"jquery":1}],12:[function(require,module,exports){
 Object.defineProperty(exports, "__esModule", { value: true });
 var matrixutils_1 = require("./matrixutils");
 var utils_1 = require("./utils");
@@ -19939,8 +19967,14 @@ var SvgDeformer = /** @class */ (function () {
     SvgDeformer.prototype.getLeftUp = function () {
         return utils_1.Point.of(this.elem.x(), this.elem.y());
     };
+    SvgDeformer.prototype.getRightDown = function () {
+        return utils_1.Point.of(this.elem.x() + this.elem.width(), this.elem.y() + this.elem.height());
+    };
     SvgDeformer.prototype.getCenter = function () {
         return utils_1.Point.of(this.elem.cx(), this.elem.cy());
+    };
+    SvgDeformer.prototype.getSize = function () {
+        return utils_1.Point.of(this.elem.width(), this.elem.height());
     };
     /**
      * Consider tranform property
@@ -19956,63 +19990,21 @@ var SvgDeformer = /** @class */ (function () {
         var rightDown = this.getLeftUp().addxy(this.getWidth(), this.getHeight());
         return matrixutils_1.matrixof(transformMatrix).mulvec(rightDown);
     };
-    /**
-     * Set vertexes for expansion. 8 vertexes are arranged around all kinds of target element.
-     * @param group the group expand vertexes have joined or will join
-     */
-    SvgDeformer.prototype.setExpandVertexes = function (group) {
-        var recycle = group.children().length !== 0;
-        var elems = [];
-        var c = 0;
-        for (var i = 0; i < 3; i++) {
-            for (var j = 0; j < 3; j++) {
-                if (i === 1 && j === 1)
-                    continue;
-                var affinedWidthHeight = this.getAffinedRightDown().sub(this.getAffinedLeftUp());
-                var point = this.getAffinedLeftUp().addxy(affinedWidthHeight.x / 2 * j, affinedWidthHeight.y / 2 * i);
-                if (recycle) {
-                    group.children()[c].center(point.x, point.y);
-                    elems.push(group.children()[c]);
-                    c++;
-                }
-                else {
-                    var dirs = [];
-                    if (i === 0)
-                        dirs.push("up");
-                    if (i === 2)
-                        dirs.push("down");
-                    if (j === 0)
-                        dirs.push("left");
-                    if (j === 2)
-                        dirs.push("right");
-                    elems.push(this.setExpandVertex(point, dirs, group));
-                }
-            }
-        }
-        return elems;
+    SvgDeformer.prototype.getAffinedCenter = function () {
+        var e = matrixutils_1.unitMatrix;
+        var transformMatrix = utils_1.withDefault(this.elem.transform().matrix, e);
+        return matrixutils_1.matrixof(transformMatrix).mulvec(this.getCenter());
     };
-    SvgDeformer.prototype.setExpandVertex = function (verticalPoint, directions, group) {
-        return group.circle(10).center(verticalPoint.x, verticalPoint.y).attr("direction", directions.join(" "))
-            .addClass("svgeditor-vertex");
+    SvgDeformer.prototype.getAffinedSize = function () {
+        return this.getAffinedRightDown().sub(this.getAffinedLeftUp());
+    };
+    SvgDeformer.prototype.setInverseAffinedCenter = function (center) {
+        var inverseMatrix = utils_1.withDefault(this.elem.transform().matrix, matrixutils_1.unitMatrix).inverse();
+        var inverseCenter = matrixutils_1.matrixof(inverseMatrix).mulvec(center);
+        this.setCenter(inverseCenter);
     };
     SvgDeformer.prototype.expand = function (center, scale) {
         this.elem.scale(scale.x, scale.y, center.x, center.y);
-    };
-    SvgDeformer.prototype.extractScheme = function () {
-        var attrs = {};
-        for (var i = 0; i < this.elem.node.attributes.length; i++) {
-            attrs[this.elem.node.attributes.item(i).name] = this.elem.node.attributes.item(i).value;
-        }
-        return {
-            tagName: this.elem.node.tagName,
-            attributes: attrs
-        };
-    };
-    SvgDeformer.prototype.insertScheme = function (scheme) {
-        var _this = this;
-        Object.keys(scheme.attributes).forEach(function (name) {
-            _this.seta(name, scheme.attributes[name]);
-        });
     };
     SvgDeformer.prototype.getColor = function (fillOrStroke) {
         return tinycolor(this.getStyleAttr(fillOrStroke));
@@ -20083,7 +20075,7 @@ function deform(elem) {
 }
 exports.deform = deform;
 
-},{"./matrixutils":8,"./utils":13,"tinycolor2":4}],12:[function(require,module,exports){
+},{"./matrixutils":9,"./utils":14,"tinycolor2":4}],13:[function(require,module,exports){
 Object.defineProperty(exports, "__esModule", { value: true });
 var common_1 = require("./common");
 var svgutils_1 = require("./svgutils");
@@ -20131,7 +20123,7 @@ function textModeDestruct() {
 }
 exports.textModeDestruct = textModeDestruct;
 
-},{"./common":5,"./svgutils":11,"jquery":1}],13:[function(require,module,exports){
+},{"./common":5,"./svgutils":12,"jquery":1}],14:[function(require,module,exports){
 Object.defineProperty(exports, "__esModule", { value: true });
 var Point = /** @class */ (function () {
     function Point(x, y) {
@@ -20170,6 +20162,15 @@ var Point = /** @class */ (function () {
     };
     Point.prototype.div = function (that) {
         return Point.of(this.x / that.x, this.y / that.y);
+    };
+    Point.prototype.mul = function (that) {
+        return Point.of(this.x * that.x, this.y * that.y);
+    };
+    Point.prototype.innerProd = function (that) {
+        return this.x * that.x + this.y * that.y;
+    };
+    Point.prototype.clossProd = function (that) {
+        return this.x * that.y - this.y * that.x;
     };
     return Point;
 }());

@@ -1,5 +1,6 @@
-import { unitMatrix } from "./matrixutils";
-import { editorRoot, svgroot, reflection, colorpickers, svgStyleAttrs, textcolor, bgcolor } from "./common";
+import { matrixof } from "./matrixutils";
+import { scale } from "./coordinateutils";
+import { editorRoot, svgroot, reflection, colorpickers, svgStyleAttrs, textcolor, bgcolor, refleshStyleAttribues } from "./common";
 import { deform } from "./svgutils";
 import { Point, withDefault, reverse, equals } from "./utils";
 
@@ -17,6 +18,10 @@ export function handMode() {
     main: SVG.Element;
     vertexes: SVG.Element[];
     fromCursor: Point;
+    initialScheme: {
+      center: Point,
+      size: Point
+    };
   } | {
     kind: "vertex"
     main: SVG.Element;
@@ -24,6 +29,11 @@ export function handMode() {
     vertexes: SVG.Element[];
     fromCursor: Point;
     scaleCenter: SVG.Element;
+    initialVertexPos: Point;
+    initialScheme: {
+      center: Point,
+      size: Point
+    };
   } | {
     kind: "none"
   } = { kind: "none" };
@@ -33,6 +43,8 @@ export function handMode() {
   svgroot.node.onmouseup = (ev) => {
     // 変更されたHTML（のSVG部分）をエディタに反映させる
     if (dragTarget) handModeReflection();
+    // 関連する頂点を再設置
+    updateScaleVertexes();
     dragTarget = { kind: "none" };
   };
 
@@ -56,7 +68,11 @@ export function handMode() {
           kind: "main",
           main: moveElem,
           vertexes: [],
-          fromCursor: deform(moveElem).getAffinedLeftUp().sub(Point.of(ev.clientX, ev.clientY))
+          fromCursor: deform(moveElem).getAffinedCenter().sub(Point.of(ev.clientX, ev.clientY)),
+          initialScheme: {
+            center: deform(moveElem).getCenter(),
+            size: deform(moveElem).getSize()
+          }
         };
         expandVertexesGroup.clear();
         setScaleVertexes();
@@ -69,6 +85,7 @@ export function handMode() {
           elem.node.onmousedown = (ev) => vertexMousedown(ev, moveElem, elem, expandVertexesGroup.children(), reverseVertex);
         });
         handTarget = dragTarget.main;
+        refleshStyleAttribues(moveElem);
       }
     };
   });
@@ -77,18 +94,15 @@ export function handMode() {
     ev.stopPropagation();
 
     if (dragTarget.kind === "main") {
-      // 行列適用後の更新後の座標
-      let updatedTargetAffinedPos = dragTarget.fromCursor.add(Point.of(ev.clientX, ev.clientY));
-      let targetTrMatrix = withDefault(dragTarget.main.transform().matrix, unitMatrix);
-      // 行列適用後の更新前の座標
-      let targetAffinedPos = deform(dragTarget.main).getAffinedLeftUp();
-      // 移動分をtranslateとして行列に追加
-      let updatedTargetTrMatrix = targetTrMatrix.translate(updatedTargetAffinedPos.x - targetAffinedPos.x, updatedTargetAffinedPos.y - targetAffinedPos.y);
-      // 新しい行列を属性に設定
-      dragTarget.main.matrix(updatedTargetTrMatrix);
-      // 関連する頂点を再設置
-      updateScaleVertexes();
+      // 平行移動（図形を変更）
+
+      // 更新後の座標
+      let updatedTargetPos = dragTarget.fromCursor.add(Point.of(ev.clientX, ev.clientY));
+      // 移動
+      deform(dragTarget.main).setInverseAffinedCenter(updatedTargetPos);
     } else if (dragTarget.kind === "vertex") {
+      // 拡大（図形を変更）
+
       // 頂点の移動の仕方
       let dragMode: DragMode = "free";
       let dirs = deform(dragTarget.vertex).geta("direction")!.split(" ");
@@ -97,28 +111,19 @@ export function handMode() {
         else dragMode = "vertical";
       }
       // 更新後の選択中の頂点
-      let updatedVertex = dragTarget.fromCursor.add(Point.of(ev.clientX, ev.clientY));
-      if (dragMode === "horizontal") updatedVertex = dragTarget.fromCursor.add(Point.of(ev.clientX, 0));
-      if (dragMode === "vertical") updatedVertex = dragTarget.fromCursor.add(Point.of(0, ev.clientY));
-      // 変更前の座標
-      let affinedLeftUp = deform(dragTarget.main).getAffinedLeftUp();
-      let affinedRightDown = deform(dragTarget.main).getAffinedRightDown();
-      let affinedWidth = affinedRightDown.x - affinedLeftUp.x;
-      let affinedHeight = affinedRightDown.y - affinedLeftUp.y;
-      // 変更後の座標
-      let updatedAffinedWidth = updatedVertex.x - dragTarget.scaleCenter.x();
-      let updatedAffinedHeight = updatedVertex.y - dragTarget.scaleCenter.y();
+      let updatedVertexPos = dragTarget.fromCursor.add(Point.of(ev.clientX, ev.clientY));
+      // 拡大の中心点
+      let scaleCenterPos = deform(dragTarget.scaleCenter).getCenter();
       // scale
-      let scale = Point.of(1, 1);
-      if (dragMode === "horizontal" || dragMode === "free") scale.x = updatedAffinedWidth / affinedWidth;
-      if (dragMode === "vertical" || dragMode === "free") scale.y = updatedAffinedHeight / affinedHeight;
-      // 更新前の行列
-      let targetTrMatrix = withDefault(dragTarget.main.transform().matrix, unitMatrix);
-      // 更新された行列
-      let updatedTargetTrMatrix = targetTrMatrix.scale(scale.x, scale.y, dragTarget.scaleCenter.x(), dragTarget.scaleCenter.y());
-      dragTarget.main.matrix(updatedTargetTrMatrix);
-      // 関連する頂点を再設置
-      updateScaleVertexes();
+      let scaleRatio = scale(scaleCenterPos, dragTarget.initialVertexPos, updatedVertexPos);
+      if (dragMode === "vertical") scaleRatio.x = 1;
+      if (dragMode === "horizontal") scaleRatio.y = 1;
+      // scaleによる図形の中心と高さ幅
+      let scaledMain = dragTarget.initialScheme.center.sub(scaleCenterPos).mul(scaleRatio).add(scaleCenterPos);
+      let scaledSize = dragTarget.initialScheme.size.mul(scaleRatio.abs2());
+      // 更新
+      dragTarget.main.center(scaledMain.x, scaledMain.y);
+      dragTarget.main.size(scaledSize.x, scaledSize.y);
     }
   };
 
@@ -131,23 +136,27 @@ export function handMode() {
         main: main,
         vertex: vertex,
         vertexes: vertexes,
-        fromCursor: deform(vertex).getAffinedLeftUp().sub(Point.of(ev.clientX, ev.clientY)),
-        scaleCenter: scaleCenter
+        fromCursor: deform(vertex).getCenter().sub(Point.of(ev.clientX, ev.clientY)),
+        scaleCenter: scaleCenter,
+        initialVertexPos: deform(vertex).getCenter(),
+        initialScheme: {
+          center: deform(main).getAffinedCenter(),
+          size: deform(main).getAffinedSize()
+        }
       };
     }
   }
 
   function setScaleVertexes() {
     if (dragTarget.kind === "main") {
-      let leftUp = deform(dragTarget.main).getAffinedLeftUp();
-      let rightDown = deform(dragTarget.main).getAffinedRightDown();
+      let leftUp = deform(dragTarget.main).getLeftUp();
+      let width = deform(dragTarget.main).getWidth();
+      let height = deform(dragTarget.main).getHeight();
       let ret: SVG.Element[] = [];
       for (let i = 0; i <= 2; i++) {
         for (let j = 0; j <= 2; j++) {
           if (i === 1 && j === 1) continue;
-          let w = rightDown.x - leftUp.x;
-          let h = rightDown.y - leftUp.y;
-          let pos = Point.of(leftUp.x + w * j / 2, leftUp.y + h * i / 2);
+          let pos = Point.of(leftUp.x + width * j / 2, leftUp.y + height * i / 2);
           let dirs: string[] = [];
           if (j === 0) dirs.push("left");
           if (j === 2) dirs.push("right");
@@ -168,16 +177,15 @@ export function handMode() {
 
   function updateScaleVertexes() {
     if (dragTarget.kind !== "none") {
-      let leftUp = deform(dragTarget.main).getAffinedLeftUp();
-      let rightDown = deform(dragTarget.main).getAffinedRightDown();
+      let leftUp = deform(dragTarget.main).getLeftUp();
+      let width = deform(dragTarget.main).getWidth();
+      let height = deform(dragTarget.main).getHeight();
       let ret: SVG.Element[] = dragTarget.vertexes;
       let c = 0;
       for (let i = 0; i <= 2; i++) {
         for (let j = 0; j <= 2; j++) {
           if (i === 1 && j === 1) continue;
-          let w = rightDown.x - leftUp.x;
-          let h = rightDown.y - leftUp.y;
-          let pos = Point.of(leftUp.x + w * j / 2, leftUp.y + h * i / 2);
+          let pos = Point.of(leftUp.x + width * j / 2, leftUp.y + height * i / 2);
           ret[c].center(pos.x, pos.y);
           c++;
         }
