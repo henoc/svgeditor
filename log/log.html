@@ -20348,10 +20348,12 @@ function handMode() {
                 scaleRatio.x = 1;
             if (dragMode === "horizontal")
                 scaleRatio.y = 1;
+            // scaleによる図形の中心と高さ幅
+            var scaledMain = dragTarget.initialScheme.center.sub(scaleCenterPos).mul(scaleRatio).add(scaleCenterPos);
+            var scaledSize = dragTarget.initialScheme.size.mul(scaleRatio.abs2());
             // 更新
-            var newFixed = Object.assign({}, dragTarget.initialScheme.fixedTransform);
-            newFixed.scale = newFixed.scale.mul(scaleRatio);
-            svgutils_1.svgof(dragTarget.main).setFixedTransformAttr(newFixed);
+            dragTarget.main.center(scaledMain.x, scaledMain.y);
+            dragTarget.main.size(scaledSize.x, scaledSize.y);
         }
         else if (dragTarget.kind === "rotate") {
             // 回転

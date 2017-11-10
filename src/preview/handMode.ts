@@ -151,10 +151,12 @@ export function handMode() {
       let scaleRatio = scale(scaleCenterPos, dragTarget.initialVertexPos, updatedVertexPos);
       if (dragMode === "vertical") scaleRatio.x = 1;
       if (dragMode === "horizontal") scaleRatio.y = 1;
+      // scaleによる図形の中心と高さ幅
+      let scaledMain = dragTarget.initialScheme.center.sub(scaleCenterPos).mul(scaleRatio).add(scaleCenterPos);
+      let scaledSize = dragTarget.initialScheme.size.mul(scaleRatio.abs2());
       // 更新
-      let newFixed = Object.assign({}, dragTarget.initialScheme.fixedTransform);
-      newFixed.scale = newFixed.scale.mul(scaleRatio);
-      svgof(dragTarget.main).setFixedTransformAttr(newFixed);
+      dragTarget.main.center(scaledMain.x, scaledMain.y);
+      dragTarget.main.size(scaledSize.x, scaledSize.y);
     } else if (dragTarget.kind === "rotate") {
       // 回転
 
