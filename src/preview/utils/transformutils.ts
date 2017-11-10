@@ -135,7 +135,7 @@ export function makeMatrix(fixed: FixedTransformAttr, ignoreRotate?: boolean): A
   return leftTranslate.mulAffine(rotate).mulAffine(scale).mulAffine(rightTranslate);
 }
 
-export function getFixed(transformFns: TransformFn[]): FixedTransformAttr {
+export function getFixed(transformFns: TransformFn[], target: SVG.Element): FixedTransformAttr {
   let ret: FixedTransformAttr;
   try {
     ret = {
@@ -145,7 +145,7 @@ export function getFixed(transformFns: TransformFn[]): FixedTransformAttr {
     };
   } catch (err) {
     ret = {
-      translate: Point.of(0, 0),
+      translate: Point.of(target.cx(), target.cy()),
       rotate: 0,
       scale: Point.of(1, 1)
     };

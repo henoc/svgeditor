@@ -20298,32 +20298,41 @@ function handMode() {
         }
         else if (dragTarget.kind === "vertex") {
             // 拡大
-            // 頂点の移動の仕方
-            var dragMode = "free";
-            var dirs = svgutils_1.svgof(dragTarget.vertex).geta("direction").split(" ");
-            if (dirs.length === 1) {
-                if (dirs[0] === "left" || dirs[0] === "right")
-                    dragMode = "horizontal";
-                else
-                    dragMode = "vertical";
+            // テキストはfont-sizeを変える
+            if (dragTarget.initialScheme.fontSize) {
+                var updatedPos = dragTarget.fromCursor.add(utils_1.Point.of(ev.clientX, ev.clientY));
+                var deltaX = updatedPos.x - dragTarget.initialVertexPos.x;
+                var newFontSize = dragTarget.initialScheme.fontSize + deltaX * 0.2;
+                dragTarget.main.attr("font-size", newFontSize);
             }
-            // 更新後の選択中の頂点
-            var updatedVertexPos = dragTarget.fromCursor.add(utils_1.Point.of(ev.clientX, ev.clientY));
-            // 拡大の中心点
-            var scaleCenterPos = svgutils_1.svgof(dragTarget.scaleCenter).getCenter();
-            // scale
-            var rotate = dragTarget.initialScheme.fixedTransform.rotate;
-            var scaleRatio = coordinateutils_1.scale(scaleCenterPos, dragTarget.initialVertexPos, updatedVertexPos);
-            if (dragMode === "vertical")
-                scaleRatio.x = 1;
-            if (dragMode === "horizontal")
-                scaleRatio.y = 1;
-            // scaleによる図形の中心と高さ幅
-            var scaledMain = dragTarget.initialScheme.center.sub(scaleCenterPos).mul(scaleRatio).add(scaleCenterPos);
-            var scaledSize = dragTarget.initialScheme.size.mul(scaleRatio.abs2());
-            // 更新
-            dragTarget.main.center(scaledMain.x, scaledMain.y);
-            dragTarget.main.size(scaledSize.x, scaledSize.y);
+            else {
+                // 頂点の移動の仕方
+                var dragMode = "free";
+                var dirs = svgutils_1.svgof(dragTarget.vertex).geta("direction").split(" ");
+                if (dirs.length === 1) {
+                    if (dirs[0] === "left" || dirs[0] === "right")
+                        dragMode = "horizontal";
+                    else
+                        dragMode = "vertical";
+                }
+                // 更新後の選択中の頂点
+                var updatedVertexPos = dragTarget.fromCursor.add(utils_1.Point.of(ev.clientX, ev.clientY));
+                // 拡大の中心点
+                var scaleCenterPos = svgutils_1.svgof(dragTarget.scaleCenter).getCenter();
+                // scale
+                var rotate = dragTarget.initialScheme.fixedTransform.rotate;
+                var scaleRatio = coordinateutils_1.scale(scaleCenterPos, dragTarget.initialVertexPos, updatedVertexPos);
+                if (dragMode === "vertical")
+                    scaleRatio.x = 1;
+                if (dragMode === "horizontal")
+                    scaleRatio.y = 1;
+                // scaleによる図形の中心と高さ幅
+                var scaledMain = dragTarget.initialScheme.center.sub(scaleCenterPos).mul(scaleRatio).add(scaleCenterPos);
+                var scaledSize = dragTarget.initialScheme.size.mul(scaleRatio.abs2());
+                // 更新
+                dragTarget.main.center(scaledMain.x, scaledMain.y);
+                dragTarget.main.size(scaledSize.x, scaledSize.y);
+            }
         }
         else if (dragTarget.kind === "rotate") {
             // 回転
@@ -20349,7 +20358,8 @@ function handMode() {
                 initialScheme: {
                     center: svgutils_1.svgof(main).getCenter(),
                     size: svgutils_1.svgof(main).getBBoxSize(),
-                    fixedTransform: svgutils_1.svgof(main).getFixedTransformAttr()
+                    fixedTransform: svgutils_1.svgof(main).getFixedTransformAttr(),
+                    fontSize: main.node.tagName === "text" ? +utils_1.withDefault(svgutils_1.svgof(main).geta("font-size"), "12") : undefined
                 }
             };
         }
@@ -20925,7 +20935,7 @@ var SvgDeformer = /** @class */ (function () {
     };
     SvgDeformer.prototype.getFixedTransformAttr = function () {
         var trattr = utils_1.withDefault(this.getTransformAttr(), []);
-        return transformutils_1.getFixed(trattr);
+        return transformutils_1.getFixed(trattr, this.elem);
     };
     SvgDeformer.prototype.setFixedTransformAttr = function (fixed) {
         this.setTransformAttr([
@@ -21091,7 +21101,7 @@ function makeMatrix(fixed, ignoreRotate) {
     return leftTranslate.mulAffine(rotate).mulAffine(scale).mulAffine(rightTranslate);
 }
 exports.makeMatrix = makeMatrix;
-function getFixed(transformFns) {
+function getFixed(transformFns, target) {
     var ret;
     try {
         ret = {
@@ -21102,7 +21112,7 @@ function getFixed(transformFns) {
     }
     catch (err) {
         ret = {
-            translate: utils_1.Point.of(0, 0),
+            translate: utils_1.Point.of(target.cx(), target.cy()),
             rotate: 0,
             scale: utils_1.Point.of(1, 1)
         };

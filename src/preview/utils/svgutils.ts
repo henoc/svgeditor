@@ -118,7 +118,7 @@ class SvgDeformer {
 
   getFixedTransformAttr(): FixedTransformAttr {
     let trattr = withDefault(this.getTransformAttr(), []);
-    return getFixed(trattr);
+    return getFixed(trattr, this.elem);
   }
 
   setFixedTransformAttr(fixed: FixedTransformAttr): void {
