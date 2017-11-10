@@ -19472,6 +19472,12 @@ document.getElementById("svgeditor-function-duplicate").onclick = function (ev) 
     destructions();
     handMode_1.handMode();
 };
+document.getElementById("svgeditor-function-forward").onclick = function (ev) {
+    functionButtons_1.forwardEvent(exports.svgroot);
+};
+document.getElementById("svgeditor-function-backward").onclick = function (ev) {
+    functionButtons_1.backwardEvent(exports.svgroot);
+};
 
 },{"./mode/ellipseMode":6,"./mode/functionButtons":7,"./mode/handMode":8,"./mode/polygonMode":9,"./mode/rectangleMode":10,"./mode/textMode":11,"./utils/svgutils":14,"jquery":1,"spectrum-colorpicker":2,"svgjs":3,"tinycolor2":4}],6:[function(require,module,exports){
 Object.defineProperty(exports, "__esModule", { value: true });
@@ -19557,6 +19563,20 @@ function duplicateEvent(svgroot) {
     });
 }
 exports.duplicateEvent = duplicateEvent;
+function forwardEvent(svgroot) {
+    var targets = svgroot.select(".svgeditor-handtarget");
+    targets.each(function (i, elems) {
+        elems[i].forward();
+    });
+}
+exports.forwardEvent = forwardEvent;
+function backwardEvent(svgroot) {
+    var targets = svgroot.select(".svgeditor-handtarget");
+    targets.each(function (i, elems) {
+        elems[i].backward();
+    });
+}
+exports.backwardEvent = backwardEvent;
 
 },{}],8:[function(require,module,exports){
 Object.defineProperty(exports, "__esModule", { value: true });
@@ -20030,8 +20050,8 @@ function textMode() {
     };
     common_1.svgroot.node.onmousedown = function (ev) {
         ev.stopPropagation();
-        var x = ev.clientX - common_1.svgroot.node.clientLeft;
-        var y = ev.clientY - common_1.svgroot.node.clientTop;
+        var x = ev.clientX - common_1.svgroot.node.getBoundingClientRect().left;
+        var y = ev.clientY - common_1.svgroot.node.getBoundingClientRect().top;
         common_1.editorRoot.plain(attributeElems.text.value).move(x, y)
             .attr("fill", svgutils_1.svgof(colorSample).getColor("fill").toHexString())
             .attr("stroke", svgutils_1.svgof(colorSample).getColor("stroke").toHexString())
@@ -20329,10 +20349,10 @@ var SvgDeformer = /** @class */ (function () {
         this.seta("transform", attr.map(function (fn) { return fn.kind + "(" + fn.args.join(" ") + ")"; }) + "})");
     };
     SvgDeformer.prototype.addClass = function (name) {
-        this.elem.attr("class", utils_1.withDefault(this.geta("class"), "") + " " + name);
+        this.elem.attr("class", (utils_1.withDefault(this.geta("class"), "") + " " + name).trim());
     };
     SvgDeformer.prototype.removeClass = function (name) {
-        this.elem.attr("class", utils_1.withDefault(this.geta("class"), "").replace(name, ""));
+        this.elem.attr("class", (utils_1.withDefault(this.geta("class"), "").replace(name, "")).trim());
     };
     return SvgDeformer;
 }());

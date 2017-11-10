@@ -6,7 +6,7 @@ import {rectangleMode, rectangleModeDestruct} from "./mode/rectangleMode";
 import {ellipseMode, ellipseModeDestruct} from "./mode/ellipseMode";
 import {polygonMode, polygonModeDestruct} from "./mode/polygonMode";
 import {textMode, textModeDestruct} from "./mode/textMode";
-import {duplicateEvent} from "./mode/functionButtons";
+import {duplicateEvent, forwardEvent, backwardEvent} from "./mode/functionButtons";
 
 import * as SVG from "svgjs";
 import * as jQuery from "jquery";
@@ -161,3 +161,12 @@ document.getElementById("svgeditor-function-duplicate")!.onclick = (ev: MouseEve
   destructions();
   handMode();
 };
+
+document.getElementById("svgeditor-function-forward")!.onclick = (ev: MouseEvent) => {
+  forwardEvent(svgroot);
+};
+
+document.getElementById("svgeditor-function-backward")!.onclick = (ev: MouseEvent) => {
+  backwardEvent(svgroot);
+};
+

@@ -172,11 +172,11 @@ class SvgDeformer {
   }
 
   addClass(name: string): void {
-    this.elem.attr("class", withDefault(this.geta("class"), "") + " " + name);
+    this.elem.attr("class", (withDefault(this.geta("class"), "") + " " + name).trim());
   }
 
   removeClass(name: string): void {
-    this.elem.attr("class", withDefault(this.geta("class"), "").replace(name, ""));
+    this.elem.attr("class", (withDefault(this.geta("class"), "").replace(name, "")).trim());
   }
 }
 
