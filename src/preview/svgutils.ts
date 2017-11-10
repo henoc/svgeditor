@@ -50,32 +50,6 @@ class SvgDeformer {
     return Point.of(this.elem.width(), this.elem.height());
   }
 
-  /**
-   * Consider tranform property
-   */
-  getAffinedLeftUp(): Point {
-    let e = unitMatrix;
-    let transformMatrix = withDefault(this.elem.transform().matrix, e);
-    return matrixof(transformMatrix).mulvec(this.getLeftUp());
-  }
-
-  getAffinedRightDown(): Point {
-    let e = unitMatrix;
-    let transformMatrix = withDefault(this.elem.transform().matrix, e);
-    let rightDown = this.getLeftUp().addxy(this.getWidth(), this.getHeight());
-    return matrixof(transformMatrix).mulvec(rightDown);
-  }
-
-  getAffinedCenter(): Point {
-    let e = unitMatrix;
-    let transformMatrix = withDefault(this.elem.transform().matrix, e);
-    return matrixof(transformMatrix).mulvec(this.getCenter());
-  }
-
-  getAffinedSize(): Point {
-    return this.getAffinedRightDown().sub(this.getAffinedLeftUp());
-  }
-
   expand(center: Point, scale: Point): void {
     this.elem.scale(scale.x, scale.y, center.x, center.y);
   }
@@ -143,25 +117,6 @@ class SvgDeformer {
     return seed.getBBox().height;
   }
 
-  /**
-   * P A P^(-1)
-   */
-  appendInverseTranslateMatrix(delta: Point): void {
-    let newMatrix =
-      unitMatrix.translate(delta.x, delta.y)
-      .multiply(withDefault(this.elem.transform().matrix, unitMatrix))
-      .multiply(unitMatrix.translate(delta.x, delta.y).inverse());
-    this.elem.matrix(newMatrix);
-  }
-
-  appendInverseScaleMatrix(scaleRatio: Point, center: Point) {
-    let newMatrix =
-      unitMatrix.scale(scaleRatio.x, scaleRatio.y, center.x, center.y)
-      .multiply(withDefault(this.elem.transform().matrix, unitMatrix))
-      .multiply(unitMatrix.scale(scaleRatio.x, scaleRatio.y, center.x, center.y).inverse());
-    this.elem.matrix(newMatrix);
-  }
-
   getTransformAttr(): TransformFn[] | undefined {
     let rawAttr = this.geta("transform");
     return rawAttr === undefined ? undefined : parseTransform(rawAttr);
@@ -223,6 +178,24 @@ class SvgDeformer {
       return rawAttr === undefined ? [] : compressCognate(parseTransform(rawAttr));
     })();
     return matrixof(makeMatrix(transformFns)).mulvec(center);
+  }
+
+  getTransformedSize(): Point {
+    let size = this.getSize();
+    let transformFns = (() => {
+      let rawAttr = this.geta("transform");
+      return rawAttr === undefined ? [] : compressCognate(parseTransform(rawAttr));
+    })();
+    return matrixof(makeMatrix(transformFns)).mulvec(size);
+  }
+
+  getTransformedLeftUp(): Point {
+    let leftup = this.getLeftUp();
+    let transformFns = (() => {
+      let rawAttr = this.geta("transform");
+      return rawAttr === undefined ? [] : compressCognate(parseTransform(rawAttr));
+    })();
+    return matrixof(makeMatrix(transformFns)).mulvec(leftup);
   }
 }
 

@@ -20163,6 +20163,8 @@ exports.ellipseModeDestruct = ellipseModeDestruct;
 
 },{"./common":5,"./svgutils":12,"./utils":15,"jquery":1}],8:[function(require,module,exports){
 Object.defineProperty(exports, "__esModule", { value: true });
+var transformutils_1 = require("./transformutils");
+var matrixutils_1 = require("./matrixutils");
 var coordinateutils_1 = require("./coordinateutils");
 var common_1 = require("./common");
 var svgutils_1 = require("./svgutils");
@@ -20261,10 +20263,6 @@ function handMode() {
             // 更新
             dragTarget.main.center(scaledMain.x, scaledMain.y);
             dragTarget.main.size(scaledSize.x, scaledSize.y);
-            // transform
-            var newFixed = Object.assign({}, dragTarget.initialScheme.fixedTransform);
-            newFixed.scale = newFixed.scale.mul(scaleRatio);
-            svgutils_1.svgof(dragTarget.main).setFixedTransformAttr(newFixed);
         }
         else if (dragTarget.kind === "rotate") {
             // 回転（行列に追加）
@@ -20302,6 +20300,7 @@ function handMode() {
                 kind: "rotate",
                 main: main,
                 vertex: rotateVertex,
+                vertexes: expandVertexesGroup.children(),
                 fromCursor: svgutils_1.svgof(rotateVertex).getCenter().sub(utils_1.Point.of(ev.clientX, ev.clientY)),
                 initialVertexPos: svgutils_1.svgof(rotateVertex).getCenter(),
                 initialScheme: {
@@ -20313,14 +20312,25 @@ function handMode() {
     function setScaleVertexes() {
         if (dragTarget.kind === "main") {
             var leftUp = svgutils_1.svgof(dragTarget.main).getLeftUp();
-            var width = svgutils_1.svgof(dragTarget.main).getWidth();
-            var height = svgutils_1.svgof(dragTarget.main).getHeight();
-            var ret = [];
+            var size = svgutils_1.svgof(dragTarget.main).getSize();
+            var points = [];
             for (var i = 0; i <= 2; i++) {
                 for (var j = 0; j <= 2; j++) {
                     if (i === 1 && j === 1)
                         continue;
-                    var pos = utils_1.Point.of(leftUp.x + width * j / 2, leftUp.y + height * i / 2);
+                    var pos = utils_1.Point.of(leftUp.x + size.x * j / 2, leftUp.y + size.y * i / 2);
+                    points.push(pos);
+                }
+            }
+            var trattr = svgutils_1.svgof(dragTarget.main).getTransformAttr();
+            var matrix_1 = trattr ? transformutils_1.makeMatrix(trattr) : matrixutils_1.unitMatrix();
+            points = points.map(function (p) { return matrixutils_1.matrixof(matrix_1).mulvec(p); });
+            var ret = [];
+            var k = 0;
+            for (var i = 0; i <= 2; i++) {
+                for (var j = 0; j <= 2; j++) {
+                    if (i === 1 && j === 1)
+                        continue;
                     var dirs = [];
                     if (j === 0)
                         dirs.push("left");
@@ -20332,29 +20342,39 @@ function handMode() {
                         dirs.push("down");
                     ret.push(expandVertexesGroup
                         .circle(10)
-                        .center(pos.x, pos.y)
+                        .center(points[k].x, points[k].y)
                         .stroke({ color: common_1.textcolor.toHexString(), width: 3 })
                         .fill({ color: common_1.bgcolor.toHexString() })
                         .attr("direction", dirs.join(" ")));
+                    k++;
                 }
             }
             dragTarget.vertexes = ret;
         }
     }
     function updateScaleVertexes() {
-        if (dragTarget.kind !== "none" && dragTarget.kind !== "rotate") {
+        if (dragTarget.kind !== "none") {
             var leftUp = svgutils_1.svgof(dragTarget.main).getLeftUp();
-            var width = svgutils_1.svgof(dragTarget.main).getWidth();
-            var height = svgutils_1.svgof(dragTarget.main).getHeight();
-            var ret = dragTarget.vertexes;
-            var c = 0;
+            var size = svgutils_1.svgof(dragTarget.main).getSize();
+            var points = [];
             for (var i = 0; i <= 2; i++) {
                 for (var j = 0; j <= 2; j++) {
                     if (i === 1 && j === 1)
                         continue;
-                    var pos = utils_1.Point.of(leftUp.x + width * j / 2, leftUp.y + height * i / 2);
-                    ret[c].center(pos.x, pos.y);
-                    c++;
+                    var pos = utils_1.Point.of(leftUp.x + size.x * j / 2, leftUp.y + size.y * i / 2);
+                    points.push(pos);
+                }
+            }
+            var trattr = svgutils_1.svgof(dragTarget.main).getTransformAttr();
+            var matrix_2 = trattr ? transformutils_1.makeMatrix(trattr) : matrixutils_1.unitMatrix();
+            points = points.map(function (p) { return matrixutils_1.matrixof(matrix_2).mulvec(p); });
+            var k = 0;
+            for (var i = 0; i <= 2; i++) {
+                for (var j = 0; j <= 2; j++) {
+                    if (i === 1 && j === 1)
+                        continue;
+                    dragTarget.vertexes[k].center(points[k].x, points[k].y);
+                    k++;
                 }
             }
         }
@@ -20365,6 +20385,9 @@ function handMode() {
             var width = svgutils_1.svgof(dragTarget.main).getWidth();
             var height = svgutils_1.svgof(dragTarget.main).getHeight();
             var rotateVertexPos = leftUp.addxy(width / 2, -height / 2);
+            var trattr = svgutils_1.svgof(dragTarget.main).getTransformAttr();
+            var matrix = trattr ? transformutils_1.makeMatrix(trattr) : matrixutils_1.unitMatrix();
+            rotateVertexPos = matrixutils_1.matrixof(matrix).mulvec(rotateVertexPos);
             rotateVertex = common_1.svgroot
                 .circle(10)
                 .center(rotateVertexPos.x, rotateVertexPos.y)
@@ -20378,6 +20401,9 @@ function handMode() {
             var width = svgutils_1.svgof(dragTarget.main).getWidth();
             var height = svgutils_1.svgof(dragTarget.main).getHeight();
             var rotateVertexPos = leftUp.addxy(width / 2, -height / 2);
+            var trattr = svgutils_1.svgof(dragTarget.main).getTransformAttr();
+            var matrix = trattr ? transformutils_1.makeMatrix(trattr) : matrixutils_1.unitMatrix();
+            rotateVertexPos = matrixutils_1.matrixof(matrix).mulvec(rotateVertexPos);
             rotateVertex.center(rotateVertexPos.x, rotateVertexPos.y);
         }
     }
@@ -20420,7 +20446,7 @@ function handModeDestruct() {
 }
 exports.handModeDestruct = handModeDestruct;
 
-},{"./common":5,"./coordinateutils":6,"./svgutils":12,"./utils":15,"jquery":1}],9:[function(require,module,exports){
+},{"./common":5,"./coordinateutils":6,"./matrixutils":9,"./svgutils":12,"./transformutils":14,"./utils":15,"jquery":1}],9:[function(require,module,exports){
 Object.defineProperty(exports, "__esModule", { value: true });
 var utils_1 = require("./utils");
 var SVG = require("svgjs");
@@ -20439,7 +20465,10 @@ function matrixof(mat) {
     return new MatrixUtil(mat);
 }
 exports.matrixof = matrixof;
-exports.unitMatrix = new SVG.Matrix(1, 0, 0, 1, 0, 0);
+function unitMatrix() {
+    return new SVG.Matrix(1, 0, 0, 1, 0, 0);
+}
+exports.unitMatrix = unitMatrix;
 
 },{"./utils":15,"svgjs":3}],10:[function(require,module,exports){
 Object.defineProperty(exports, "__esModule", { value: true });
@@ -20628,28 +20657,6 @@ var SvgDeformer = /** @class */ (function () {
     SvgDeformer.prototype.getSize = function () {
         return utils_1.Point.of(this.elem.width(), this.elem.height());
     };
-    /**
-     * Consider tranform property
-     */
-    SvgDeformer.prototype.getAffinedLeftUp = function () {
-        var e = matrixutils_1.unitMatrix;
-        var transformMatrix = utils_1.withDefault(this.elem.transform().matrix, e);
-        return matrixutils_1.matrixof(transformMatrix).mulvec(this.getLeftUp());
-    };
-    SvgDeformer.prototype.getAffinedRightDown = function () {
-        var e = matrixutils_1.unitMatrix;
-        var transformMatrix = utils_1.withDefault(this.elem.transform().matrix, e);
-        var rightDown = this.getLeftUp().addxy(this.getWidth(), this.getHeight());
-        return matrixutils_1.matrixof(transformMatrix).mulvec(rightDown);
-    };
-    SvgDeformer.prototype.getAffinedCenter = function () {
-        var e = matrixutils_1.unitMatrix;
-        var transformMatrix = utils_1.withDefault(this.elem.transform().matrix, e);
-        return matrixutils_1.matrixof(transformMatrix).mulvec(this.getCenter());
-    };
-    SvgDeformer.prototype.getAffinedSize = function () {
-        return this.getAffinedRightDown().sub(this.getAffinedLeftUp());
-    };
     SvgDeformer.prototype.expand = function (center, scale) {
         this.elem.scale(scale.x, scale.y, center.x, center.y);
     };
@@ -20715,21 +20722,6 @@ var SvgDeformer = /** @class */ (function () {
         var seed = this.elem.node;
         return seed.getBBox().height;
     };
-    /**
-     * P A P^(-1)
-     */
-    SvgDeformer.prototype.appendInverseTranslateMatrix = function (delta) {
-        var newMatrix = matrixutils_1.unitMatrix.translate(delta.x, delta.y)
-            .multiply(utils_1.withDefault(this.elem.transform().matrix, matrixutils_1.unitMatrix))
-            .multiply(matrixutils_1.unitMatrix.translate(delta.x, delta.y).inverse());
-        this.elem.matrix(newMatrix);
-    };
-    SvgDeformer.prototype.appendInverseScaleMatrix = function (scaleRatio, center) {
-        var newMatrix = matrixutils_1.unitMatrix.scale(scaleRatio.x, scaleRatio.y, center.x, center.y)
-            .multiply(utils_1.withDefault(this.elem.transform().matrix, matrixutils_1.unitMatrix))
-            .multiply(matrixutils_1.unitMatrix.scale(scaleRatio.x, scaleRatio.y, center.x, center.y).inverse());
-        this.elem.matrix(newMatrix);
-    };
     SvgDeformer.prototype.getTransformAttr = function () {
         var rawAttr = this.geta("transform");
         return rawAttr === undefined ? undefined : transformutils_1.parseTransform(rawAttr);
@@ -20781,6 +20773,24 @@ var SvgDeformer = /** @class */ (function () {
             return rawAttr === undefined ? [] : transformutils_1.compressCognate(transformutils_1.parseTransform(rawAttr));
         })();
         return matrixutils_1.matrixof(transformutils_1.makeMatrix(transformFns)).mulvec(center);
+    };
+    SvgDeformer.prototype.getTransformedSize = function () {
+        var _this = this;
+        var size = this.getSize();
+        var transformFns = (function () {
+            var rawAttr = _this.geta("transform");
+            return rawAttr === undefined ? [] : transformutils_1.compressCognate(transformutils_1.parseTransform(rawAttr));
+        })();
+        return matrixutils_1.matrixof(transformutils_1.makeMatrix(transformFns)).mulvec(size);
+    };
+    SvgDeformer.prototype.getTransformedLeftUp = function () {
+        var _this = this;
+        var leftup = this.getLeftUp();
+        var transformFns = (function () {
+            var rawAttr = _this.geta("transform");
+            return rawAttr === undefined ? [] : transformutils_1.compressCognate(transformutils_1.parseTransform(rawAttr));
+        })();
+        return matrixutils_1.matrixof(transformutils_1.makeMatrix(transformFns)).mulvec(leftup);
     };
     return SvgDeformer;
 }());
@@ -20952,7 +20962,7 @@ exports.normalize = normalize;
  * Make one affine transform matrix from transform function sequence
  */
 function makeMatrix(transformFns) {
-    var matrix = matrixutils_1.unitMatrix;
+    var matrix = matrixutils_1.unitMatrix();
     for (var i = transformFns.length - 1; i >= 0; i--) {
         var fn = transformFns[i];
         switch (fn.kind) {

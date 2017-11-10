@@ -129,7 +129,7 @@ export function normalize(transformFns: TransformFn[]): void {
  * Make one affine transform matrix from transform function sequence
  */
 export function makeMatrix(transformFns: TransformFn[]): SVG.Matrix {
-  let matrix = unitMatrix;
+  let matrix = unitMatrix();
   for (let i = transformFns.length - 1; i >= 0; i--) {
     let fn = transformFns[i];
     switch (fn.kind) {
