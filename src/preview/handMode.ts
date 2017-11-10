@@ -1,15 +1,18 @@
-import { matrixof } from "./matrixutils";
+import { TransformFn, FixedTransformAttr, makeMatrix } from "./transformutils";
+import { matrixof, unitMatrix } from "./matrixutils";
 import { scale } from "./coordinateutils";
 import { editorRoot, svgroot, reflection, colorpickers, svgStyleAttrs, textcolor, bgcolor, refleshStyleAttribues } from "./common";
-import { deform } from "./svgutils";
+import { svgof } from "./svgutils";
 import { Point, withDefault, reverse, equals } from "./utils";
 
 import * as SVG from "svgjs";
 import * as jQuery from "jquery";
+import { Affine } from "./affine";
 
 export function handMode() {
 
   let expandVertexesGroup = editorRoot.group().addClass("svgeditor-expandVertexes");
+  let rotateVertex: SVG.Element | undefined = undefined;
 
   type DragMode = "free" | "vertical" | "horizontal";
 
@@ -20,7 +23,8 @@ export function handMode() {
     fromCursor: Point;
     initialScheme: {
       center: Point,
-      size: Point
+      size: Point,
+      fixedTransform: FixedTransformAttr;
     };
   } | {
     kind: "vertex"
@@ -32,8 +36,19 @@ export function handMode() {
     initialVertexPos: Point;
     initialScheme: {
       center: Point,
-      size: Point
+      size: Point,
+      fixedTransform: FixedTransformAttr;
     };
+  } | {
+    kind: "rotate";
+    main: SVG.Element;
+    vertex: SVG.Element;
+    vertexes: SVG.Element[];
+    fromCursor: Point;
+    initialVertexPos: Point;
+    initialScheme: {
+      fixedTransform: FixedTransformAttr;
+    }
   } | {
     kind: "none"
   } = { kind: "none" };
@@ -45,6 +60,7 @@ export function handMode() {
     if (dragTarget) handModeReflection();
     // 関連する頂点を再設置
     updateScaleVertexes();
+    updateRotateVertex();
     dragTarget = { kind: "none" };
   };
 
@@ -68,10 +84,11 @@ export function handMode() {
           kind: "main",
           main: moveElem,
           vertexes: [],
-          fromCursor: deform(moveElem).getAffinedCenter().sub(Point.of(ev.clientX, ev.clientY)),
+          fromCursor: svgof(moveElem).getCenter().sub(Point.of(ev.clientX, ev.clientY)),
           initialScheme: {
-            center: deform(moveElem).getCenter(),
-            size: deform(moveElem).getSize()
+            center: svgof(moveElem).getCenter(),
+            size: svgof(moveElem).getSize(),
+            fixedTransform: svgof(moveElem).getFixedTransformAttr()
           }
         };
         expandVertexesGroup.clear();
@@ -79,11 +96,14 @@ export function handMode() {
         // 頂点が設定されたのでイベントを追加する
         expandVertexesGroup.children().forEach(elem => {
           let reverseVertex = expandVertexesGroup.children().find(t => equals(
-            deform(t).geta("direction")!.split(" "),
-            deform(elem).geta("direction")!.split(" ").map(dir => reverse(<any>dir))
+            svgof(t).geta("direction")!.split(" "),
+            svgof(elem).geta("direction")!.split(" ").map(dir => reverse(<any>dir))
           ))!;
           elem.node.onmousedown = (ev) => vertexMousedown(ev, moveElem, elem, expandVertexesGroup.children(), reverseVertex);
         });
+        if (rotateVertex) rotateVertex.remove();
+        setRotateVertex();
+        rotateVertex!.node.onmousedown = (ev) => rotateVertexMousedown(ev, moveElem);
         handTarget = dragTarget.main;
         refleshStyleAttribues(moveElem);
       }
@@ -99,13 +119,17 @@ export function handMode() {
       // 更新後の座標
       let updatedTargetPos = dragTarget.fromCursor.add(Point.of(ev.clientX, ev.clientY));
       // 移動
-      deform(dragTarget.main).setInverseAffinedCenter(updatedTargetPos);
+      svgof(dragTarget.main).setCenter(updatedTargetPos);
+      // transform
+      let newFixed = Object.assign({}, dragTarget.initialScheme.fixedTransform);
+      newFixed.translate = updatedTargetPos;
+      svgof(dragTarget.main).setFixedTransformAttr(newFixed);
     } else if (dragTarget.kind === "vertex") {
-      // 拡大（図形を変更）
+      // 拡大
 
       // 頂点の移動の仕方
       let dragMode: DragMode = "free";
-      let dirs = deform(dragTarget.vertex).geta("direction")!.split(" ");
+      let dirs = svgof(dragTarget.vertex).geta("direction")!.split(" ");
       if (dirs.length === 1) {
         if (dirs[0] === "left" || dirs[0] === "right") dragMode = "horizontal";
         else dragMode = "vertical";
@@ -113,17 +137,25 @@ export function handMode() {
       // 更新後の選択中の頂点
       let updatedVertexPos = dragTarget.fromCursor.add(Point.of(ev.clientX, ev.clientY));
       // 拡大の中心点
-      let scaleCenterPos = deform(dragTarget.scaleCenter).getCenter();
+      let scaleCenterPos = svgof(dragTarget.scaleCenter).getCenter();
       // scale
+      let rotate = dragTarget.initialScheme.fixedTransform.rotate;
       let scaleRatio = scale(scaleCenterPos, dragTarget.initialVertexPos, updatedVertexPos);
       if (dragMode === "vertical") scaleRatio.x = 1;
       if (dragMode === "horizontal") scaleRatio.y = 1;
-      // scaleによる図形の中心と高さ幅
-      let scaledMain = dragTarget.initialScheme.center.sub(scaleCenterPos).mul(scaleRatio).add(scaleCenterPos);
-      let scaledSize = dragTarget.initialScheme.size.mul(scaleRatio.abs2());
       // 更新
-      dragTarget.main.center(scaledMain.x, scaledMain.y);
-      dragTarget.main.size(scaledSize.x, scaledSize.y);
+      let newFixed = Object.assign({}, dragTarget.initialScheme.fixedTransform);
+      newFixed.scale = newFixed.scale.mul(scaleRatio);
+      svgof(dragTarget.main).setFixedTransformAttr(newFixed);
+    } else if (dragTarget.kind === "rotate") {
+      // 回転
+
+      let updatedPos = dragTarget.fromCursor.add(Point.of(ev.clientX, ev.clientY));
+      let deltaX = updatedPos.x - dragTarget.initialVertexPos.x;
+      // 更新
+      let newFixed = Object.assign({}, dragTarget.initialScheme.fixedTransform);
+      newFixed.rotate += deltaX;
+      svgof(dragTarget.main).setFixedTransformAttr(newFixed);
     }
   };
 
@@ -136,12 +168,31 @@ export function handMode() {
         main: main,
         vertex: vertex,
         vertexes: vertexes,
-        fromCursor: deform(vertex).getCenter().sub(Point.of(ev.clientX, ev.clientY)),
+        fromCursor: svgof(vertex).getCenter().sub(Point.of(ev.clientX, ev.clientY)),
         scaleCenter: scaleCenter,
-        initialVertexPos: deform(vertex).getCenter(),
+        initialVertexPos: svgof(vertex).getCenter(),
         initialScheme: {
-          center: deform(main).getAffinedCenter(),
-          size: deform(main).getAffinedSize()
+          center: svgof(main).getCenter(),
+          size: svgof(main).getSize(),
+          fixedTransform: svgof(main).getFixedTransformAttr()
+        }
+      };
+    }
+  }
+
+  function rotateVertexMousedown(ev: MouseEvent, main: SVG.Element) {
+    ev.stopPropagation();
+
+    if (dragTarget.kind === "none") {
+      dragTarget = {
+        kind: "rotate",
+        main: main,
+        vertex: rotateVertex!,
+        vertexes: expandVertexesGroup.children(),
+        fromCursor: svgof(rotateVertex!).getCenter().sub(Point.of(ev.clientX, ev.clientY)),
+        initialVertexPos: svgof(rotateVertex!).getCenter(),
+        initialScheme: {
+          fixedTransform: svgof(main).getFixedTransformAttr()
         }
       };
     }
@@ -149,14 +200,25 @@ export function handMode() {
 
   function setScaleVertexes() {
     if (dragTarget.kind === "main") {
-      let leftUp = deform(dragTarget.main).getLeftUp();
-      let width = deform(dragTarget.main).getWidth();
-      let height = deform(dragTarget.main).getHeight();
-      let ret: SVG.Element[] = [];
+      let leftUp = svgof(dragTarget.main).getLeftUp();
+      let size = svgof(dragTarget.main).getSize();
+      let points: Point[] = [];
       for (let i = 0; i <= 2; i++) {
         for (let j = 0; j <= 2; j++) {
           if (i === 1 && j === 1) continue;
-          let pos = Point.of(leftUp.x + width * j / 2, leftUp.y + height * i / 2);
+          let pos = Point.of(leftUp.x + size.x * j / 2, leftUp.y + size.y * i / 2);
+          points.push(pos);
+        }
+      }
+      let trattr = svgof(dragTarget.main).getFixedTransformAttr();
+      let matrix = trattr ? makeMatrix(trattr, true) : Affine.unit();
+      points = points.map(p => matrix.transform(p));
+
+      let ret: SVG.Element[] = [];
+      let k = 0;
+      for (let i = 0; i <= 2; i++) {
+        for (let j = 0; j <= 2; j++) {
+          if (i === 1 && j === 1) continue;
           let dirs: string[] = [];
           if (j === 0) dirs.push("left");
           if (j === 2) dirs.push("right");
@@ -164,11 +226,12 @@ export function handMode() {
           if (i === 2) dirs.push("down");
           ret.push(expandVertexesGroup
             .circle(10)
-            .center(pos.x, pos.y)
+            .center(points[k].x, points[k].y)
             .stroke({ color: textcolor.toHexString(), width: 3 })
             .fill({ color: bgcolor.toHexString() })
             .attr("direction", dirs.join(" "))
           );
+          k++;
         }
       }
       dragTarget.vertexes = ret;
@@ -177,19 +240,58 @@ export function handMode() {
 
   function updateScaleVertexes() {
     if (dragTarget.kind !== "none") {
-      let leftUp = deform(dragTarget.main).getLeftUp();
-      let width = deform(dragTarget.main).getWidth();
-      let height = deform(dragTarget.main).getHeight();
-      let ret: SVG.Element[] = dragTarget.vertexes;
-      let c = 0;
+      let leftUp = svgof(dragTarget.main).getLeftUp();
+      let size = svgof(dragTarget.main).getSize();
+      let points: Point[] = [];
       for (let i = 0; i <= 2; i++) {
         for (let j = 0; j <= 2; j++) {
           if (i === 1 && j === 1) continue;
-          let pos = Point.of(leftUp.x + width * j / 2, leftUp.y + height * i / 2);
-          ret[c].center(pos.x, pos.y);
-          c++;
+          let pos = Point.of(leftUp.x + size.x * j / 2, leftUp.y + size.y * i / 2);
+          points.push(pos);
         }
       }
+      let trattr = svgof(dragTarget.main).getFixedTransformAttr();
+      let matrix = trattr ? makeMatrix(trattr, true) : Affine.unit();
+      points = points.map(p => matrix.transform(p));
+
+      let k = 0;
+      for (let i = 0; i <= 2; i++) {
+        for (let j = 0; j <= 2; j++) {
+          if (i === 1 && j === 1) continue;
+          dragTarget.vertexes[k].center(points[k].x, points[k].y);
+          k++;
+        }
+      }
+    }
+  }
+
+  function setRotateVertex() {
+    if (dragTarget.kind === "main") {
+      let leftUp = svgof(dragTarget.main).getLeftUp();
+      let width = svgof(dragTarget.main).getWidth();
+      let height = svgof(dragTarget.main).getHeight();
+      let rotateVertexPos = leftUp.addxy(width / 2, -height / 2);
+      let trattr = svgof(dragTarget.main).getFixedTransformAttr();
+      let matrix = trattr ? makeMatrix(trattr, true) : Affine.unit();
+      rotateVertexPos = matrix.transform(rotateVertexPos);
+      rotateVertex = svgroot
+        .circle(10)
+        .center(rotateVertexPos.x, rotateVertexPos.y)
+        .stroke({ color: textcolor.toHexString(), width: 3 })
+        .fill({ color: bgcolor.toHexString() });
+    }
+  }
+
+  function updateRotateVertex() {
+    if (dragTarget.kind !== "none") {
+      let leftUp = svgof(dragTarget.main).getLeftUp();
+      let width = svgof(dragTarget.main).getWidth();
+      let height = svgof(dragTarget.main).getHeight();
+      let rotateVertexPos = leftUp.addxy(width / 2, -height / 2);
+      let trattr = svgof(dragTarget.main).getFixedTransformAttr();
+      let matrix = trattr ? makeMatrix(trattr, true) : Affine.unit();
+      rotateVertexPos = matrix.transform(rotateVertexPos);
+      rotateVertex!.center(rotateVertexPos.x, rotateVertexPos.y);
     }
   }
 
@@ -198,14 +300,14 @@ export function handMode() {
     $(colorpickers.fill).off("change.spectrum");
     $(colorpickers.fill).on("change.spectrum", (e, color) => {
       if (handTarget) {
-        deform(handTarget).setColorWithOpacity("fill", color, "indivisual");
+        svgof(handTarget).setColorWithOpacity("fill", color, "indivisual");
         handModeReflection();
       }
     });
     $(colorpickers.stroke).off("change.spectrum");
     $(colorpickers.stroke).on("change.spectrum", (e, color) => {
       if (handTarget) {
-        deform(handTarget).setColorWithOpacity("stroke", color, "indivisual");
+        svgof(handTarget).setColorWithOpacity("stroke", color, "indivisual");
         handModeReflection();
       }
     });
@@ -213,7 +315,7 @@ export function handMode() {
 
   svgStyleAttrs.strokewidth.oninput = e => {
     let v = withDefault<string>(svgStyleAttrs.strokewidth.value, "0");
-    if (handTarget) deform(handTarget).setStyleAttr("stroke-width", String(v), "indivisual");
+    if (handTarget) svgof(handTarget).setStyleAttr("stroke-width", String(v), "indivisual");
     handModeReflection();
   };
 }

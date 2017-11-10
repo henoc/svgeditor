@@ -1,6 +1,6 @@
 // Common process through any modes.
 
-import {deform} from "./svgutils";
+import {svgof} from "./svgutils";
 import {handMode, handModeDestruct} from "./handMode";
 import {rectangleMode, rectangleModeDestruct} from "./rectangleMode";
 import {ellipseMode, ellipseModeDestruct} from "./ellipseMode";
@@ -89,10 +89,10 @@ export let svgStyleAttrs = {
  */
 export function refleshStyleAttribues(target: SVG.Element): void {
   jQuery($ => {
-    (<any>$(colorpickers.fill)).spectrum("set", deform(target).getColorWithOpacity("fill").toRgbString());
-    (<any>$(colorpickers.stroke)).spectrum("set", deform(target).getColorWithOpacity("stroke").toRgbString());
+    (<any>$(colorpickers.fill)).spectrum("set", svgof(target).getColorWithOpacity("fill").toRgbString());
+    (<any>$(colorpickers.stroke)).spectrum("set", svgof(target).getColorWithOpacity("stroke").toRgbString());
   });
-  svgStyleAttrs.strokewidth.value = deform(target).getStyleAttr("stroke-width");
+  svgStyleAttrs.strokewidth.value = svgof(target).getStyleAttr("stroke-width");
 }
 
 // create color-pickers (not event)

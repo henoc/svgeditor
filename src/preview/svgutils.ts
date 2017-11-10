@@ -1,5 +1,6 @@
 import { unitMatrix, matrixof } from "./matrixutils";
 import {Point, withDefault} from "./utils";
+import {TransformFn, compressCognate, parseTransform, makeMatrix, FixedTransformAttr, getFixed } from "./transformutils";
 import * as SVG from "svgjs";
 let tinycolor: tinycolor = require("tinycolor2");
 
@@ -47,38 +48,6 @@ class SvgDeformer {
 
   getSize(): Point {
     return Point.of(this.elem.width(), this.elem.height());
-  }
-
-  /**
-   * Consider tranform property
-   */
-  getAffinedLeftUp(): Point {
-    let e = unitMatrix;
-    let transformMatrix = withDefault(this.elem.transform().matrix, e);
-    return matrixof(transformMatrix).mulvec(this.getLeftUp());
-  }
-
-  getAffinedRightDown(): Point {
-    let e = unitMatrix;
-    let transformMatrix = withDefault(this.elem.transform().matrix, e);
-    let rightDown = this.getLeftUp().addxy(this.getWidth(), this.getHeight());
-    return matrixof(transformMatrix).mulvec(rightDown);
-  }
-
-  getAffinedCenter(): Point {
-    let e = unitMatrix;
-    let transformMatrix = withDefault(this.elem.transform().matrix, e);
-    return matrixof(transformMatrix).mulvec(this.getCenter());
-  }
-
-  getAffinedSize(): Point {
-    return this.getAffinedRightDown().sub(this.getAffinedLeftUp());
-  }
-
-  setInverseAffinedCenter(center: Point): void {
-    let inverseMatrix = withDefault(this.elem.transform().matrix, unitMatrix).inverse();
-    let inverseCenter = matrixof(inverseMatrix).mulvec(center);
-    this.setCenter(inverseCenter);
   }
 
   expand(center: Point, scale: Point): void {
@@ -147,8 +116,62 @@ class SvgDeformer {
     let seed = <SVGGraphicsElement><any>this.elem.node;
     return seed.getBBox().height;
   }
+
+  getTransformAttr(): TransformFn[] | undefined {
+    let rawAttr = this.geta("transform");
+    return rawAttr === undefined ? undefined : parseTransform(rawAttr);
+  }
+
+  setTransformAttr(transformfns: TransformFn[]): void {
+    transformfns = compressCognate(transformfns);
+    this.seta("transform", transformfns.map(fn => `${fn.kind} (${fn.args.join(" ")})`).join(" "));
+  }
+
+  getFixedTransformAttr(): FixedTransformAttr {
+    let trattr = withDefault(this.getTransformAttr(), []);
+    return getFixed(trattr);
+  }
+
+  setFixedTransformAttr(fixed: FixedTransformAttr): void {
+    this.setTransformAttr([
+      { kind: "translate", args: fixed.translate.toArray()},
+      { kind: "rotate", args: [fixed.rotate]},
+      { kind: "scale", args: fixed.scale.toArray()},
+      { kind: "translate", args: fixed.translate.toArray().map(k => -k)}
+    ]);
+  }
+
+  /**
+   * Add transform function in right
+   */
+  addTransformFnRight(transformFn: TransformFn): void {
+    let rawAttr = this.geta("transform");
+    let attr = rawAttr === undefined ? [] : parseTransform(rawAttr);
+    attr.push(transformFn);
+    attr = compressCognate(attr);
+    this.seta(
+      "transform",
+      `${attr.map(fn => fn.kind + "(" + fn.args.join(" ") + ")")}})`
+    );
+  }
+
+  /**
+   * Add transform function in left
+   */
+  addTransformFnLeft(transformFn: TransformFn): void {
+    let attr = (() => {
+      let rawAttr = this.geta("transform");
+      return rawAttr === undefined ? [] : parseTransform(rawAttr);
+    })();
+    attr.unshift(transformFn);
+    attr = compressCognate(attr);
+    this.seta(
+      "transform",
+      `${attr.map(fn => fn.kind + "(" + fn.args.join(" ") + ")")}})`
+    );
+  }
 }
 
-export function deform(elem: SVG.Element): SvgDeformer {
+export function svgof(elem: SVG.Element): SvgDeformer {
   return new SvgDeformer(elem);
 }

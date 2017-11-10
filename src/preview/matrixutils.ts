@@ -19,4 +19,7 @@ export function matrixof(mat: SVG.Matrix): MatrixUtil {
   return new MatrixUtil(mat);
 }
 
-export let unitMatrix = new SVG.Matrix(1, 0, 0, 1, 0, 0);
+export function unitMatrix() {
+  return new SVG.Matrix(1, 0, 0, 1, 0, 0);
+}
+
