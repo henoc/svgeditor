@@ -1,7 +1,8 @@
+import { TransformFn } from "./transformutils";
 import { matrixof, unitMatrix } from "./matrixutils";
 import { scale } from "./coordinateutils";
 import { editorRoot, svgroot, reflection, colorpickers, svgStyleAttrs, textcolor, bgcolor, refleshStyleAttribues } from "./common";
-import { deform } from "./svgutils";
+import { svgof } from "./svgutils";
 import { Point, withDefault, reverse, equals } from "./utils";
 
 import * as SVG from "svgjs";
@@ -42,7 +43,7 @@ export function handMode() {
     fromCursor: Point;
     initialVertexPos: Point;
     initialScheme: {
-      matrix: SVG.Matrix
+      transform: TransformFn[] | undefined;
     }
   } | {
     kind: "none"
@@ -79,10 +80,10 @@ export function handMode() {
           kind: "main",
           main: moveElem,
           vertexes: [],
-          fromCursor: deform(moveElem).getAffinedCenter().sub(Point.of(ev.clientX, ev.clientY)),
+          fromCursor: svgof(moveElem).getCenter().sub(Point.of(ev.clientX, ev.clientY)),
           initialScheme: {
-            center: deform(moveElem).getCenter(),
-            size: deform(moveElem).getSize()
+            center: svgof(moveElem).getCenter(),
+            size: svgof(moveElem).getSize()
           }
         };
         expandVertexesGroup.clear();
@@ -90,8 +91,8 @@ export function handMode() {
         // 頂点が設定されたのでイベントを追加する
         expandVertexesGroup.children().forEach(elem => {
           let reverseVertex = expandVertexesGroup.children().find(t => equals(
-            deform(t).geta("direction")!.split(" "),
-            deform(elem).geta("direction")!.split(" ").map(dir => reverse(<any>dir))
+            svgof(t).geta("direction")!.split(" "),
+            svgof(elem).geta("direction")!.split(" ").map(dir => reverse(<any>dir))
           ))!;
           elem.node.onmousedown = (ev) => vertexMousedown(ev, moveElem, elem, expandVertexesGroup.children(), reverseVertex);
         });
@@ -113,13 +114,13 @@ export function handMode() {
       // 更新後の座標
       let updatedTargetPos = dragTarget.fromCursor.add(Point.of(ev.clientX, ev.clientY));
       // 移動
-      deform(dragTarget.main).setCenter(updatedTargetPos);
+      svgof(dragTarget.main).setCenter(updatedTargetPos);
     } else if (dragTarget.kind === "vertex") {
       // 拡大（図形を変更）
 
       // 頂点の移動の仕方
       let dragMode: DragMode = "free";
-      let dirs = deform(dragTarget.vertex).geta("direction")!.split(" ");
+      let dirs = svgof(dragTarget.vertex).geta("direction")!.split(" ");
       if (dirs.length === 1) {
         if (dirs[0] === "left" || dirs[0] === "right") dragMode = "horizontal";
         else dragMode = "vertical";
@@ -127,7 +128,7 @@ export function handMode() {
       // 更新後の選択中の頂点
       let updatedVertexPos = dragTarget.fromCursor.add(Point.of(ev.clientX, ev.clientY));
       // 拡大の中心点
-      let scaleCenterPos = deform(dragTarget.scaleCenter).getCenter();
+      let scaleCenterPos = svgof(dragTarget.scaleCenter).getCenter();
       // scale
       let scaleRatio = scale(scaleCenterPos, dragTarget.initialVertexPos, updatedVertexPos);
       if (dragMode === "vertical") scaleRatio.x = 1;
@@ -143,10 +144,10 @@ export function handMode() {
 
       let updatedPos = dragTarget.fromCursor.add(Point.of(ev.clientX, ev.clientY));
       let deltaX = updatedPos.x - dragTarget.initialVertexPos.x;
-      let center = deform(dragTarget.main).getCenter();
-      let updatedMatrix = dragTarget.initialScheme.matrix.rotate(deltaX * 0.1, center.x, center.y);
+      let center = svgof(dragTarget.main).getCenter();
       // 更新
-      dragTarget.main.matrix(updatedMatrix);
+      let updatedTransform = withDefault(dragTarget.initialScheme.transform, []).concat({ kind: "rotate", args: [deltaX * 0.1]});
+      svgof(dragTarget.main).setTransformAttr(updatedTransform);
     }
   };
 
@@ -159,12 +160,12 @@ export function handMode() {
         main: main,
         vertex: vertex,
         vertexes: vertexes,
-        fromCursor: deform(vertex).getCenter().sub(Point.of(ev.clientX, ev.clientY)),
+        fromCursor: svgof(vertex).getCenter().sub(Point.of(ev.clientX, ev.clientY)),
         scaleCenter: scaleCenter,
-        initialVertexPos: deform(vertex).getCenter(),
+        initialVertexPos: svgof(vertex).getCenter(),
         initialScheme: {
-          center: deform(main).getAffinedCenter(),
-          size: deform(main).getAffinedSize()
+          center: svgof(main).getCenter(),
+          size: svgof(main).getSize()
         }
       };
     }
@@ -174,14 +175,15 @@ export function handMode() {
     ev.stopPropagation();
 
     if (dragTarget.kind === "none") {
+      let transform = svgof(main).getTransformAttr();
       dragTarget = {
         kind: "rotate",
         main: main,
         vertex: rotateVertex!,
-        fromCursor: deform(rotateVertex!).getCenter().sub(Point.of(ev.clientX, ev.clientY)),
-        initialVertexPos: deform(rotateVertex!).getCenter(),
+        fromCursor: svgof(rotateVertex!).getCenter().sub(Point.of(ev.clientX, ev.clientY)),
+        initialVertexPos: svgof(rotateVertex!).getCenter(),
         initialScheme: {
-          matrix: withDefault(main.transform().matrix, unitMatrix)
+          transform: transform
         }
       };
     }
@@ -189,9 +191,9 @@ export function handMode() {
 
   function setScaleVertexes() {
     if (dragTarget.kind === "main") {
-      let leftUp = deform(dragTarget.main).getLeftUp();
-      let width = deform(dragTarget.main).getWidth();
-      let height = deform(dragTarget.main).getHeight();
+      let leftUp = svgof(dragTarget.main).getLeftUp();
+      let width = svgof(dragTarget.main).getWidth();
+      let height = svgof(dragTarget.main).getHeight();
       let ret: SVG.Element[] = [];
       for (let i = 0; i <= 2; i++) {
         for (let j = 0; j <= 2; j++) {
@@ -217,9 +219,9 @@ export function handMode() {
 
   function updateScaleVertexes() {
     if (dragTarget.kind !== "none" && dragTarget.kind !== "rotate") {
-      let leftUp = deform(dragTarget.main).getLeftUp();
-      let width = deform(dragTarget.main).getWidth();
-      let height = deform(dragTarget.main).getHeight();
+      let leftUp = svgof(dragTarget.main).getLeftUp();
+      let width = svgof(dragTarget.main).getWidth();
+      let height = svgof(dragTarget.main).getHeight();
       let ret: SVG.Element[] = dragTarget.vertexes;
       let c = 0;
       for (let i = 0; i <= 2; i++) {
@@ -235,9 +237,9 @@ export function handMode() {
 
   function setRotateVertex() {
     if (dragTarget.kind === "main") {
-      let leftUp = deform(dragTarget.main).getLeftUp();
-      let width = deform(dragTarget.main).getWidth();
-      let height = deform(dragTarget.main).getHeight();
+      let leftUp = svgof(dragTarget.main).getLeftUp();
+      let width = svgof(dragTarget.main).getWidth();
+      let height = svgof(dragTarget.main).getHeight();
       let rotateVertexPos = leftUp.addxy(width / 2, -height / 2);
       rotateVertex = svgroot
         .circle(10)
@@ -249,9 +251,9 @@ export function handMode() {
 
   function updateRotateVertex() {
     if (dragTarget.kind !== "none") {
-      let leftUp = deform(dragTarget.main).getLeftUp();
-      let width = deform(dragTarget.main).getWidth();
-      let height = deform(dragTarget.main).getHeight();
+      let leftUp = svgof(dragTarget.main).getLeftUp();
+      let width = svgof(dragTarget.main).getWidth();
+      let height = svgof(dragTarget.main).getHeight();
       let rotateVertexPos = leftUp.addxy(width / 2, -height / 2);
       rotateVertex!.center(rotateVertexPos.x, rotateVertexPos.y);
     }
@@ -262,14 +264,14 @@ export function handMode() {
     $(colorpickers.fill).off("change.spectrum");
     $(colorpickers.fill).on("change.spectrum", (e, color) => {
       if (handTarget) {
-        deform(handTarget).setColorWithOpacity("fill", color, "indivisual");
+        svgof(handTarget).setColorWithOpacity("fill", color, "indivisual");
         handModeReflection();
       }
     });
     $(colorpickers.stroke).off("change.spectrum");
     $(colorpickers.stroke).on("change.spectrum", (e, color) => {
       if (handTarget) {
-        deform(handTarget).setColorWithOpacity("stroke", color, "indivisual");
+        svgof(handTarget).setColorWithOpacity("stroke", color, "indivisual");
         handModeReflection();
       }
     });
@@ -277,7 +279,7 @@ export function handMode() {
 
   svgStyleAttrs.strokewidth.oninput = e => {
     let v = withDefault<string>(svgStyleAttrs.strokewidth.value, "0");
-    if (handTarget) deform(handTarget).setStyleAttr("stroke-width", String(v), "indivisual");
+    if (handTarget) svgof(handTarget).setStyleAttr("stroke-width", String(v), "indivisual");
     handModeReflection();
   };
 }

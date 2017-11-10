@@ -1,6 +1,6 @@
 import { svgroot, editorRoot, reflection, refleshStyleAttribues, colorpickers, svgStyleAttrs } from "./common";
 import { Point } from "./utils";
-import { deform } from "./svgutils";
+import { svgof } from "./svgutils";
 import * as SVG from "svgjs";
 import * as jQuery from "jquery";
 
@@ -25,11 +25,11 @@ export function rectangleMode() {
     let y = ev.clientY - svgroot.node.clientTop;
     rectangle = {
       elem: editorRoot.rect(0, 0).center(x, y)
-        .attr("fill", deform(colorSample).getColor("fill").toHexString())
-        .attr("stroke", deform(colorSample).getColor("stroke").toHexString())
-        .attr("fill-opacity", deform(colorSample).getColorWithOpacity("fill").getAlpha())
-        .attr("stroke-opacity", deform(colorSample).getColorWithOpacity("stroke").getAlpha())
-        .attr("stroke-width", deform(colorSample).getStyleAttr("stroke-width")),
+        .attr("fill", svgof(colorSample).getColor("fill").toHexString())
+        .attr("stroke", svgof(colorSample).getColor("stroke").toHexString())
+        .attr("fill-opacity", svgof(colorSample).getColorWithOpacity("fill").getAlpha())
+        .attr("stroke-opacity", svgof(colorSample).getColorWithOpacity("stroke").getAlpha())
+        .attr("stroke-width", svgof(colorSample).getStyleAttr("stroke-width")),
       start: Point.of(x, y),
       end: Point.of(x, y)
     };
@@ -64,17 +64,17 @@ export function rectangleMode() {
   jQuery($ => {
     $(colorpickers.fill).off("change.spectrum");
     $(colorpickers.fill).on("change.spectrum", (e, color) => {
-      deform(colorSample).setColorWithOpacity("fill", color, "indivisual");
+      svgof(colorSample).setColorWithOpacity("fill", color, "indivisual");
     });
     $(colorpickers.stroke).off("change.spectrum");
     $(colorpickers.stroke).on("change.spectrum", (e, color) => {
-      deform(colorSample).setColorWithOpacity("stroke", color, "indivisual");
+      svgof(colorSample).setColorWithOpacity("stroke", color, "indivisual");
     });
   });
 
   // style attributes event
   svgStyleAttrs.strokewidth.oninput = e => {
-    deform(colorSample).setStyleAttr("stroke-width", svgStyleAttrs.strokewidth.value, "indivisual");
+    svgof(colorSample).setStyleAttr("stroke-width", svgStyleAttrs.strokewidth.value, "indivisual");
   };
 
 }

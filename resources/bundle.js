@@ -19409,10 +19409,10 @@ exports.svgStyleAttrs = {
  */
 function refleshStyleAttribues(target) {
     jQuery(function ($) {
-        $(exports.colorpickers.fill).spectrum("set", svgutils_1.deform(target).getColorWithOpacity("fill").toRgbString());
-        $(exports.colorpickers.stroke).spectrum("set", svgutils_1.deform(target).getColorWithOpacity("stroke").toRgbString());
+        $(exports.colorpickers.fill).spectrum("set", svgutils_1.svgof(target).getColorWithOpacity("fill").toRgbString());
+        $(exports.colorpickers.stroke).spectrum("set", svgutils_1.svgof(target).getColorWithOpacity("stroke").toRgbString());
     });
-    exports.svgStyleAttrs.strokewidth.value = svgutils_1.deform(target).getStyleAttr("stroke-width");
+    exports.svgStyleAttrs.strokewidth.value = svgutils_1.svgof(target).getStyleAttr("stroke-width");
 }
 exports.refleshStyleAttribues = refleshStyleAttribues;
 // create color-pickers (not event)
@@ -19500,7 +19500,7 @@ function scale(o, from, to) {
 }
 exports.scale = scale;
 
-},{"./utils":14}],7:[function(require,module,exports){
+},{"./utils":15}],7:[function(require,module,exports){
 Object.defineProperty(exports, "__esModule", { value: true });
 var common_1 = require("./common");
 var utils_1 = require("./utils");
@@ -19517,11 +19517,11 @@ function ellipseMode() {
         var y = ev.clientY - common_1.svgroot.node.clientTop;
         ellipse = {
             elem: common_1.editorRoot.ellipse(0, 0).center(x, y)
-                .attr("fill", svgutils_1.deform(colorSample).getColor("fill").toHexString())
-                .attr("stroke", svgutils_1.deform(colorSample).getColor("stroke").toHexString())
-                .attr("fill-opacity", svgutils_1.deform(colorSample).getColorWithOpacity("fill").getAlpha())
-                .attr("stroke-opacity", svgutils_1.deform(colorSample).getColorWithOpacity("stroke").getAlpha())
-                .attr("stroke-width", svgutils_1.deform(colorSample).getStyleAttr("stroke-width")),
+                .attr("fill", svgutils_1.svgof(colorSample).getColor("fill").toHexString())
+                .attr("stroke", svgutils_1.svgof(colorSample).getColor("stroke").toHexString())
+                .attr("fill-opacity", svgutils_1.svgof(colorSample).getColorWithOpacity("fill").getAlpha())
+                .attr("stroke-opacity", svgutils_1.svgof(colorSample).getColorWithOpacity("stroke").getAlpha())
+                .attr("stroke-width", svgutils_1.svgof(colorSample).getStyleAttr("stroke-width")),
             start: utils_1.Point.of(x, y),
             end: utils_1.Point.of(x, y)
         };
@@ -19552,16 +19552,16 @@ function ellipseMode() {
     jQuery(function ($) {
         $(common_1.colorpickers.fill).off("change.spectrum");
         $(common_1.colorpickers.fill).on("change.spectrum", function (e, color) {
-            svgutils_1.deform(colorSample).setColorWithOpacity("fill", color, "indivisual");
+            svgutils_1.svgof(colorSample).setColorWithOpacity("fill", color, "indivisual");
         });
         $(common_1.colorpickers.stroke).off("change.spectrum");
         $(common_1.colorpickers.stroke).on("change.spectrum", function (e, color) {
-            svgutils_1.deform(colorSample).setColorWithOpacity("stroke", color, "indivisual");
+            svgutils_1.svgof(colorSample).setColorWithOpacity("stroke", color, "indivisual");
         });
     });
     // style attributes event
     common_1.svgStyleAttrs.strokewidth.oninput = function (e) {
-        svgutils_1.deform(colorSample).setStyleAttr("stroke-width", common_1.svgStyleAttrs.strokewidth.value, "indivisual");
+        svgutils_1.svgof(colorSample).setStyleAttr("stroke-width", common_1.svgStyleAttrs.strokewidth.value, "indivisual");
     };
 }
 exports.ellipseMode = ellipseMode;
@@ -19572,9 +19572,8 @@ function ellipseModeDestruct() {
 }
 exports.ellipseModeDestruct = ellipseModeDestruct;
 
-},{"./common":5,"./svgutils":12,"./utils":14,"jquery":1}],8:[function(require,module,exports){
+},{"./common":5,"./svgutils":12,"./utils":15,"jquery":1}],8:[function(require,module,exports){
 Object.defineProperty(exports, "__esModule", { value: true });
-var matrixutils_1 = require("./matrixutils");
 var coordinateutils_1 = require("./coordinateutils");
 var common_1 = require("./common");
 var svgutils_1 = require("./svgutils");
@@ -19610,17 +19609,17 @@ function handMode() {
                     kind: "main",
                     main: moveElem,
                     vertexes: [],
-                    fromCursor: svgutils_1.deform(moveElem).getAffinedCenter().sub(utils_1.Point.of(ev.clientX, ev.clientY)),
+                    fromCursor: svgutils_1.svgof(moveElem).getCenter().sub(utils_1.Point.of(ev.clientX, ev.clientY)),
                     initialScheme: {
-                        center: svgutils_1.deform(moveElem).getCenter(),
-                        size: svgutils_1.deform(moveElem).getSize()
+                        center: svgutils_1.svgof(moveElem).getCenter(),
+                        size: svgutils_1.svgof(moveElem).getSize()
                     }
                 };
                 expandVertexesGroup.clear();
                 setScaleVertexes();
                 // 頂点が設定されたのでイベントを追加する
                 expandVertexesGroup.children().forEach(function (elem) {
-                    var reverseVertex = expandVertexesGroup.children().find(function (t) { return utils_1.equals(svgutils_1.deform(t).geta("direction").split(" "), svgutils_1.deform(elem).geta("direction").split(" ").map(function (dir) { return utils_1.reverse(dir); })); });
+                    var reverseVertex = expandVertexesGroup.children().find(function (t) { return utils_1.equals(svgutils_1.svgof(t).geta("direction").split(" "), svgutils_1.svgof(elem).geta("direction").split(" ").map(function (dir) { return utils_1.reverse(dir); })); });
                     elem.node.onmousedown = function (ev) { return vertexMousedown(ev, moveElem, elem, expandVertexesGroup.children(), reverseVertex); };
                 });
                 if (rotateVertex)
@@ -19639,13 +19638,13 @@ function handMode() {
             // 更新後の座標
             var updatedTargetPos = dragTarget.fromCursor.add(utils_1.Point.of(ev.clientX, ev.clientY));
             // 移動
-            svgutils_1.deform(dragTarget.main).setCenter(updatedTargetPos);
+            svgutils_1.svgof(dragTarget.main).setCenter(updatedTargetPos);
         }
         else if (dragTarget.kind === "vertex") {
             // 拡大（図形を変更）
             // 頂点の移動の仕方
             var dragMode = "free";
-            var dirs = svgutils_1.deform(dragTarget.vertex).geta("direction").split(" ");
+            var dirs = svgutils_1.svgof(dragTarget.vertex).geta("direction").split(" ");
             if (dirs.length === 1) {
                 if (dirs[0] === "left" || dirs[0] === "right")
                     dragMode = "horizontal";
@@ -19655,7 +19654,7 @@ function handMode() {
             // 更新後の選択中の頂点
             var updatedVertexPos = dragTarget.fromCursor.add(utils_1.Point.of(ev.clientX, ev.clientY));
             // 拡大の中心点
-            var scaleCenterPos = svgutils_1.deform(dragTarget.scaleCenter).getCenter();
+            var scaleCenterPos = svgutils_1.svgof(dragTarget.scaleCenter).getCenter();
             // scale
             var scaleRatio = coordinateutils_1.scale(scaleCenterPos, dragTarget.initialVertexPos, updatedVertexPos);
             if (dragMode === "vertical")
@@ -19673,10 +19672,10 @@ function handMode() {
             // 回転（行列に追加）
             var updatedPos = dragTarget.fromCursor.add(utils_1.Point.of(ev.clientX, ev.clientY));
             var deltaX = updatedPos.x - dragTarget.initialVertexPos.x;
-            var center = svgutils_1.deform(dragTarget.main).getCenter();
-            var updatedMatrix = dragTarget.initialScheme.matrix.rotate(deltaX * 0.1, center.x, center.y);
+            var center = svgutils_1.svgof(dragTarget.main).getCenter();
             // 更新
-            dragTarget.main.matrix(updatedMatrix);
+            var updatedTransform = utils_1.withDefault(dragTarget.initialScheme.transform, []).concat({ kind: "rotate", args: [deltaX * 0.1] });
+            svgutils_1.svgof(dragTarget.main).setTransformAttr(updatedTransform);
         }
     };
     function vertexMousedown(ev, main, vertex, vertexes, scaleCenter) {
@@ -19687,12 +19686,12 @@ function handMode() {
                 main: main,
                 vertex: vertex,
                 vertexes: vertexes,
-                fromCursor: svgutils_1.deform(vertex).getCenter().sub(utils_1.Point.of(ev.clientX, ev.clientY)),
+                fromCursor: svgutils_1.svgof(vertex).getCenter().sub(utils_1.Point.of(ev.clientX, ev.clientY)),
                 scaleCenter: scaleCenter,
-                initialVertexPos: svgutils_1.deform(vertex).getCenter(),
+                initialVertexPos: svgutils_1.svgof(vertex).getCenter(),
                 initialScheme: {
-                    center: svgutils_1.deform(main).getAffinedCenter(),
-                    size: svgutils_1.deform(main).getAffinedSize()
+                    center: svgutils_1.svgof(main).getCenter(),
+                    size: svgutils_1.svgof(main).getSize()
                 }
             };
         }
@@ -19700,23 +19699,24 @@ function handMode() {
     function rotateVertexMousedown(ev, main) {
         ev.stopPropagation();
         if (dragTarget.kind === "none") {
+            var transform = svgutils_1.svgof(main).getTransformAttr();
             dragTarget = {
                 kind: "rotate",
                 main: main,
                 vertex: rotateVertex,
-                fromCursor: svgutils_1.deform(rotateVertex).getCenter().sub(utils_1.Point.of(ev.clientX, ev.clientY)),
-                initialVertexPos: svgutils_1.deform(rotateVertex).getCenter(),
+                fromCursor: svgutils_1.svgof(rotateVertex).getCenter().sub(utils_1.Point.of(ev.clientX, ev.clientY)),
+                initialVertexPos: svgutils_1.svgof(rotateVertex).getCenter(),
                 initialScheme: {
-                    matrix: utils_1.withDefault(main.transform().matrix, matrixutils_1.unitMatrix)
+                    transform: transform
                 }
             };
         }
     }
     function setScaleVertexes() {
         if (dragTarget.kind === "main") {
-            var leftUp = svgutils_1.deform(dragTarget.main).getLeftUp();
-            var width = svgutils_1.deform(dragTarget.main).getWidth();
-            var height = svgutils_1.deform(dragTarget.main).getHeight();
+            var leftUp = svgutils_1.svgof(dragTarget.main).getLeftUp();
+            var width = svgutils_1.svgof(dragTarget.main).getWidth();
+            var height = svgutils_1.svgof(dragTarget.main).getHeight();
             var ret = [];
             for (var i = 0; i <= 2; i++) {
                 for (var j = 0; j <= 2; j++) {
@@ -19745,9 +19745,9 @@ function handMode() {
     }
     function updateScaleVertexes() {
         if (dragTarget.kind !== "none" && dragTarget.kind !== "rotate") {
-            var leftUp = svgutils_1.deform(dragTarget.main).getLeftUp();
-            var width = svgutils_1.deform(dragTarget.main).getWidth();
-            var height = svgutils_1.deform(dragTarget.main).getHeight();
+            var leftUp = svgutils_1.svgof(dragTarget.main).getLeftUp();
+            var width = svgutils_1.svgof(dragTarget.main).getWidth();
+            var height = svgutils_1.svgof(dragTarget.main).getHeight();
             var ret = dragTarget.vertexes;
             var c = 0;
             for (var i = 0; i <= 2; i++) {
@@ -19763,9 +19763,9 @@ function handMode() {
     }
     function setRotateVertex() {
         if (dragTarget.kind === "main") {
-            var leftUp = svgutils_1.deform(dragTarget.main).getLeftUp();
-            var width = svgutils_1.deform(dragTarget.main).getWidth();
-            var height = svgutils_1.deform(dragTarget.main).getHeight();
+            var leftUp = svgutils_1.svgof(dragTarget.main).getLeftUp();
+            var width = svgutils_1.svgof(dragTarget.main).getWidth();
+            var height = svgutils_1.svgof(dragTarget.main).getHeight();
             var rotateVertexPos = leftUp.addxy(width / 2, -height / 2);
             rotateVertex = common_1.svgroot
                 .circle(10)
@@ -19776,9 +19776,9 @@ function handMode() {
     }
     function updateRotateVertex() {
         if (dragTarget.kind !== "none") {
-            var leftUp = svgutils_1.deform(dragTarget.main).getLeftUp();
-            var width = svgutils_1.deform(dragTarget.main).getWidth();
-            var height = svgutils_1.deform(dragTarget.main).getHeight();
+            var leftUp = svgutils_1.svgof(dragTarget.main).getLeftUp();
+            var width = svgutils_1.svgof(dragTarget.main).getWidth();
+            var height = svgutils_1.svgof(dragTarget.main).getHeight();
             var rotateVertexPos = leftUp.addxy(width / 2, -height / 2);
             rotateVertex.center(rotateVertexPos.x, rotateVertexPos.y);
         }
@@ -19788,14 +19788,14 @@ function handMode() {
         $(common_1.colorpickers.fill).off("change.spectrum");
         $(common_1.colorpickers.fill).on("change.spectrum", function (e, color) {
             if (handTarget) {
-                svgutils_1.deform(handTarget).setColorWithOpacity("fill", color, "indivisual");
+                svgutils_1.svgof(handTarget).setColorWithOpacity("fill", color, "indivisual");
                 handModeReflection();
             }
         });
         $(common_1.colorpickers.stroke).off("change.spectrum");
         $(common_1.colorpickers.stroke).on("change.spectrum", function (e, color) {
             if (handTarget) {
-                svgutils_1.deform(handTarget).setColorWithOpacity("stroke", color, "indivisual");
+                svgutils_1.svgof(handTarget).setColorWithOpacity("stroke", color, "indivisual");
                 handModeReflection();
             }
         });
@@ -19803,7 +19803,7 @@ function handMode() {
     common_1.svgStyleAttrs.strokewidth.oninput = function (e) {
         var v = utils_1.withDefault(common_1.svgStyleAttrs.strokewidth.value, "0");
         if (handTarget)
-            svgutils_1.deform(handTarget).setStyleAttr("stroke-width", String(v), "indivisual");
+            svgutils_1.svgof(handTarget).setStyleAttr("stroke-width", String(v), "indivisual");
         handModeReflection();
     };
 }
@@ -19822,7 +19822,7 @@ function handModeDestruct() {
 }
 exports.handModeDestruct = handModeDestruct;
 
-},{"./common":5,"./coordinateutils":6,"./matrixutils":9,"./svgutils":12,"./utils":14,"jquery":1}],9:[function(require,module,exports){
+},{"./common":5,"./coordinateutils":6,"./svgutils":12,"./utils":15,"jquery":1}],9:[function(require,module,exports){
 Object.defineProperty(exports, "__esModule", { value: true });
 var utils_1 = require("./utils");
 var SVG = require("svgjs");
@@ -19843,7 +19843,7 @@ function matrixof(mat) {
 exports.matrixof = matrixof;
 exports.unitMatrix = new SVG.Matrix(1, 0, 0, 1, 0, 0);
 
-},{"./utils":14,"svgjs":3}],10:[function(require,module,exports){
+},{"./utils":15,"svgjs":3}],10:[function(require,module,exports){
 Object.defineProperty(exports, "__esModule", { value: true });
 var common_1 = require("./common");
 var utils_1 = require("./utils");
@@ -19863,11 +19863,11 @@ function polygonMode() {
             var seed = polygonCheckbox.checked ? common_1.svgroot.polygon([]) : common_1.svgroot.polyline([]);
             polyline = {
                 elem: seed
-                    .attr("fill", svgutils_1.deform(colorSample).getColor("fill").toHexString())
-                    .attr("stroke", svgutils_1.deform(colorSample).getColor("stroke").toHexString())
-                    .attr("fill-opacity", svgutils_1.deform(colorSample).getColorWithOpacity("fill").getAlpha())
-                    .attr("stroke-opacity", svgutils_1.deform(colorSample).getColorWithOpacity("stroke").getAlpha())
-                    .attr("stroke-width", svgutils_1.deform(colorSample).getStyleAttr("stroke-width")),
+                    .attr("fill", svgutils_1.svgof(colorSample).getColor("fill").toHexString())
+                    .attr("stroke", svgutils_1.svgof(colorSample).getColor("stroke").toHexString())
+                    .attr("fill-opacity", svgutils_1.svgof(colorSample).getColorWithOpacity("fill").getAlpha())
+                    .attr("stroke-opacity", svgutils_1.svgof(colorSample).getColorWithOpacity("stroke").getAlpha())
+                    .attr("stroke-width", svgutils_1.svgof(colorSample).getStyleAttr("stroke-width")),
                 points: []
             };
         }
@@ -19895,16 +19895,16 @@ function polygonMode() {
     jQuery(function ($) {
         $(common_1.colorpickers.fill).off("change.spectrum");
         $(common_1.colorpickers.fill).on("change.spectrum", function (e, color) {
-            svgutils_1.deform(colorSample).setColorWithOpacity("fill", color, "indivisual");
+            svgutils_1.svgof(colorSample).setColorWithOpacity("fill", color, "indivisual");
         });
         $(common_1.colorpickers.stroke).off("change.spectrum");
         $(common_1.colorpickers.stroke).on("change.spectrum", function (e, color) {
-            svgutils_1.deform(colorSample).setColorWithOpacity("stroke", color, "indivisual");
+            svgutils_1.svgof(colorSample).setColorWithOpacity("stroke", color, "indivisual");
         });
     });
     // style attributes event
     common_1.svgStyleAttrs.strokewidth.oninput = function (e) {
-        svgutils_1.deform(colorSample).setStyleAttr("stroke-width", common_1.svgStyleAttrs.strokewidth.value, "indivisual");
+        svgutils_1.svgof(colorSample).setStyleAttr("stroke-width", common_1.svgStyleAttrs.strokewidth.value, "indivisual");
     };
     common_1.displayOn(document.getElementById("svgeditor-typicalproperties-enclosure-div"));
 }
@@ -19916,7 +19916,7 @@ function polygonModeDestruct() {
 }
 exports.polygonModeDestruct = polygonModeDestruct;
 
-},{"./common":5,"./svgutils":12,"./utils":14,"jquery":1}],11:[function(require,module,exports){
+},{"./common":5,"./svgutils":12,"./utils":15,"jquery":1}],11:[function(require,module,exports){
 Object.defineProperty(exports, "__esModule", { value: true });
 var common_1 = require("./common");
 var utils_1 = require("./utils");
@@ -19933,11 +19933,11 @@ function rectangleMode() {
         var y = ev.clientY - common_1.svgroot.node.clientTop;
         rectangle = {
             elem: common_1.editorRoot.rect(0, 0).center(x, y)
-                .attr("fill", svgutils_1.deform(colorSample).getColor("fill").toHexString())
-                .attr("stroke", svgutils_1.deform(colorSample).getColor("stroke").toHexString())
-                .attr("fill-opacity", svgutils_1.deform(colorSample).getColorWithOpacity("fill").getAlpha())
-                .attr("stroke-opacity", svgutils_1.deform(colorSample).getColorWithOpacity("stroke").getAlpha())
-                .attr("stroke-width", svgutils_1.deform(colorSample).getStyleAttr("stroke-width")),
+                .attr("fill", svgutils_1.svgof(colorSample).getColor("fill").toHexString())
+                .attr("stroke", svgutils_1.svgof(colorSample).getColor("stroke").toHexString())
+                .attr("fill-opacity", svgutils_1.svgof(colorSample).getColorWithOpacity("fill").getAlpha())
+                .attr("stroke-opacity", svgutils_1.svgof(colorSample).getColorWithOpacity("stroke").getAlpha())
+                .attr("stroke-width", svgutils_1.svgof(colorSample).getStyleAttr("stroke-width")),
             start: utils_1.Point.of(x, y),
             end: utils_1.Point.of(x, y)
         };
@@ -19968,16 +19968,16 @@ function rectangleMode() {
     jQuery(function ($) {
         $(common_1.colorpickers.fill).off("change.spectrum");
         $(common_1.colorpickers.fill).on("change.spectrum", function (e, color) {
-            svgutils_1.deform(colorSample).setColorWithOpacity("fill", color, "indivisual");
+            svgutils_1.svgof(colorSample).setColorWithOpacity("fill", color, "indivisual");
         });
         $(common_1.colorpickers.stroke).off("change.spectrum");
         $(common_1.colorpickers.stroke).on("change.spectrum", function (e, color) {
-            svgutils_1.deform(colorSample).setColorWithOpacity("stroke", color, "indivisual");
+            svgutils_1.svgof(colorSample).setColorWithOpacity("stroke", color, "indivisual");
         });
     });
     // style attributes event
     common_1.svgStyleAttrs.strokewidth.oninput = function (e) {
-        svgutils_1.deform(colorSample).setStyleAttr("stroke-width", common_1.svgStyleAttrs.strokewidth.value, "indivisual");
+        svgutils_1.svgof(colorSample).setStyleAttr("stroke-width", common_1.svgStyleAttrs.strokewidth.value, "indivisual");
     };
 }
 exports.rectangleMode = rectangleMode;
@@ -19988,10 +19988,11 @@ function rectangleModeDestruct() {
 }
 exports.rectangleModeDestruct = rectangleModeDestruct;
 
-},{"./common":5,"./svgutils":12,"./utils":14,"jquery":1}],12:[function(require,module,exports){
+},{"./common":5,"./svgutils":12,"./utils":15,"jquery":1}],12:[function(require,module,exports){
 Object.defineProperty(exports, "__esModule", { value: true });
 var matrixutils_1 = require("./matrixutils");
 var utils_1 = require("./utils");
+var transformutils_1 = require("./transformutils");
 var tinycolor = require("tinycolor2");
 /**
  * Completion functions of SVG.js
@@ -20117,28 +20118,68 @@ var SvgDeformer = /** @class */ (function () {
         return seed.getBBox().height;
     };
     /**
-     * P^(-1) A P
+     * P A P^(-1)
      */
     SvgDeformer.prototype.appendInverseTranslateMatrix = function (delta) {
-        var newMatrix = matrixutils_1.unitMatrix.translate(delta.x, delta.y).inverse()
+        var newMatrix = matrixutils_1.unitMatrix.translate(delta.x, delta.y)
             .multiply(utils_1.withDefault(this.elem.transform().matrix, matrixutils_1.unitMatrix))
-            .multiply(matrixutils_1.unitMatrix.translate(delta.x, delta.y));
+            .multiply(matrixutils_1.unitMatrix.translate(delta.x, delta.y).inverse());
         this.elem.matrix(newMatrix);
     };
     SvgDeformer.prototype.appendInverseScaleMatrix = function (scaleRatio, center) {
-        var newMatrix = matrixutils_1.unitMatrix.scale(scaleRatio.x, scaleRatio.y, center.x, center.y).inverse()
+        var newMatrix = matrixutils_1.unitMatrix.scale(scaleRatio.x, scaleRatio.y, center.x, center.y)
             .multiply(utils_1.withDefault(this.elem.transform().matrix, matrixutils_1.unitMatrix))
-            .multiply(matrixutils_1.unitMatrix.scale(scaleRatio.x, scaleRatio.y, center.x, center.y));
+            .multiply(matrixutils_1.unitMatrix.scale(scaleRatio.x, scaleRatio.y, center.x, center.y).inverse());
         this.elem.matrix(newMatrix);
+    };
+    SvgDeformer.prototype.getTransformAttr = function () {
+        var rawAttr = this.geta("transform");
+        return rawAttr === undefined ? undefined : transformutils_1.parseTransform(rawAttr);
+    };
+    SvgDeformer.prototype.setTransformAttr = function (transformfns) {
+        transformfns = transformutils_1.compressCognate(transformfns);
+        this.seta("transform", transformfns.map(function (fn) { return fn.kind + " (" + fn.args.join(" ") + ")"; }).join(" "));
+    };
+    /**
+     * Add transform function in right
+     */
+    SvgDeformer.prototype.addTransformFnRight = function (transformFn) {
+        var rawAttr = this.geta("transform");
+        var attr = rawAttr === undefined ? [] : transformutils_1.parseTransform(rawAttr);
+        attr.push(transformFn);
+        attr = transformutils_1.compressCognate(attr);
+        this.seta("transform", attr.map(function (fn) { return fn.kind + "(" + fn.args.join(" ") + ")"; }) + "})");
+    };
+    /**
+     * Add transform function in left
+     */
+    SvgDeformer.prototype.addTransformFnLeft = function (transformFn) {
+        var _this = this;
+        var attr = (function () {
+            var rawAttr = _this.geta("transform");
+            return rawAttr === undefined ? [] : transformutils_1.parseTransform(rawAttr);
+        })();
+        attr.unshift(transformFn);
+        attr = transformutils_1.compressCognate(attr);
+        this.seta("transform", attr.map(function (fn) { return fn.kind + "(" + fn.args.join(" ") + ")"; }) + "})");
+    };
+    SvgDeformer.prototype.getTransformedCenter = function () {
+        var _this = this;
+        var center = this.getCenter();
+        var transformFns = (function () {
+            var rawAttr = _this.geta("transform");
+            return rawAttr === undefined ? [] : transformutils_1.compressCognate(transformutils_1.parseTransform(rawAttr));
+        })();
+        return matrixutils_1.matrixof(transformutils_1.makeMatrix(transformFns)).mulvec(center);
     };
     return SvgDeformer;
 }());
-function deform(elem) {
+function svgof(elem) {
     return new SvgDeformer(elem);
 }
-exports.deform = deform;
+exports.svgof = svgof;
 
-},{"./matrixutils":9,"./utils":14,"tinycolor2":4}],13:[function(require,module,exports){
+},{"./matrixutils":9,"./transformutils":14,"./utils":15,"tinycolor2":4}],13:[function(require,module,exports){
 Object.defineProperty(exports, "__esModule", { value: true });
 var common_1 = require("./common");
 var svgutils_1 = require("./svgutils");
@@ -20156,26 +20197,26 @@ function textMode() {
         var x = ev.clientX - common_1.svgroot.node.clientLeft;
         var y = ev.clientY - common_1.svgroot.node.clientTop;
         common_1.editorRoot.plain(attributeElems.text.value).move(x, y)
-            .attr("fill", svgutils_1.deform(colorSample).getColor("fill").toHexString())
-            .attr("stroke", svgutils_1.deform(colorSample).getColor("stroke").toHexString())
-            .attr("fill-opacity", svgutils_1.deform(colorSample).getColorWithOpacity("fill").getAlpha())
-            .attr("stroke-opacity", svgutils_1.deform(colorSample).getColorWithOpacity("stroke").getAlpha())
-            .attr("stroke-width", svgutils_1.deform(colorSample).getStyleAttr("stroke-width"));
+            .attr("fill", svgutils_1.svgof(colorSample).getColor("fill").toHexString())
+            .attr("stroke", svgutils_1.svgof(colorSample).getColor("stroke").toHexString())
+            .attr("fill-opacity", svgutils_1.svgof(colorSample).getColorWithOpacity("fill").getAlpha())
+            .attr("stroke-opacity", svgutils_1.svgof(colorSample).getColorWithOpacity("stroke").getAlpha())
+            .attr("stroke-width", svgutils_1.svgof(colorSample).getStyleAttr("stroke-width"));
     };
     // colorpicker event
     jQuery(function ($) {
         $(common_1.colorpickers.fill).off("change.spectrum");
         $(common_1.colorpickers.fill).on("change.spectrum", function (e, color) {
-            svgutils_1.deform(colorSample).setColorWithOpacity("fill", color, "indivisual");
+            svgutils_1.svgof(colorSample).setColorWithOpacity("fill", color, "indivisual");
         });
         $(common_1.colorpickers.stroke).off("change.spectrum");
         $(common_1.colorpickers.stroke).on("change.spectrum", function (e, color) {
-            svgutils_1.deform(colorSample).setColorWithOpacity("stroke", color, "indivisual");
+            svgutils_1.svgof(colorSample).setColorWithOpacity("stroke", color, "indivisual");
         });
     });
     // style attributes event
     common_1.svgStyleAttrs.strokewidth.oninput = function (e) {
-        svgutils_1.deform(colorSample).setStyleAttr("stroke-width", common_1.svgStyleAttrs.strokewidth.value, "indivisual");
+        svgutils_1.svgof(colorSample).setStyleAttr("stroke-width", common_1.svgStyleAttrs.strokewidth.value, "indivisual");
     };
     common_1.displayOn(document.getElementById("svgeditor-typicalproperties-textmode"));
 }
@@ -20187,6 +20228,149 @@ function textModeDestruct() {
 exports.textModeDestruct = textModeDestruct;
 
 },{"./common":5,"./svgutils":12,"jquery":1}],14:[function(require,module,exports){
+Object.defineProperty(exports, "__esModule", { value: true });
+var matrixutils_1 = require("./matrixutils");
+var utils_1 = require("./utils");
+var SVG = require("svgjs");
+/**
+ * Parse transform property of SVG
+ */
+function parseTransform(transformProperty) {
+    var tfns = [];
+    var tfn = {
+        kind: undefined,
+        args: []
+    };
+    var str = null;
+    var identify = /[^\s(),]+/g;
+    while (str = identify.exec(transformProperty)) {
+        var matched = str[0];
+        if (matched.match(/[a-zA-Z]+/)) {
+            if (tfn.kind) {
+                tfns.push(tfn);
+                tfn = { kind: undefined, args: [] };
+                tfn.kind = matched;
+            }
+            else {
+                tfn.kind = matched;
+            }
+        }
+        else {
+            tfn.args.push(+matched);
+        }
+    }
+    tfns.push(tfn);
+    return tfns;
+}
+exports.parseTransform = parseTransform;
+/**
+ * Unify the same kind of transformation
+ */
+function compressCognate(transformFns) {
+    normalize(transformFns);
+    var ret = [transformFns[0]];
+    for (var i = 1; i < transformFns.length; i++) {
+        if (ret[ret.length - 1].kind === transformFns[i].kind) {
+            switch (transformFns[i].kind) {
+                case "translate":
+                    ret[ret.length - 1].args = utils_1.zip(ret[ret.length - 1].args, transformFns[i].args).map(function (pair) { return pair[0] + pair[1]; });
+                    break;
+                case "scale":
+                    ret[ret.length - 1].args = utils_1.zip(ret[ret.length - 1].args, transformFns[i].args).map(function (pair) { return pair[0] * pair[1]; });
+                    break;
+                case "rotate":
+                    ret[ret.length - 1].args = [ret[ret.length - 1].args[0] + transformFns[i].args[0]];
+                    break;
+                case "skewX":
+                case "skewY":
+                    var a = ret[ret.length - 1].args[0];
+                    var b = transformFns[i].args[0];
+                    ret[ret.length - 1].args = [
+                        Math.atan(Math.tan(a) + Math.tan(b))
+                    ];
+                    break;
+                case "matrix":
+                    var mat1 = ret[ret.length - 1].args;
+                    var mat2 = transformFns[i].args;
+                    ret[ret.length - 1].args =
+                        [
+                            mat1[0] * mat2[0] + mat1[2] * mat2[1],
+                            mat1[1] * mat2[0] + mat1[3] * mat2[1],
+                            mat1[0] * mat2[2] + mat1[2] * mat2[3],
+                            mat1[1] * mat2[2] + mat1[3] * mat2[3],
+                            mat1[4] + mat1[0] * mat2[4] + mat1[2] * mat2[5],
+                            mat1[5] + mat1[1] * mat2[4] + mat1[3] * mat2[5]
+                        ];
+                    break;
+            }
+        }
+        else {
+            ret.push(transformFns[i]);
+        }
+    }
+    return ret;
+}
+exports.compressCognate = compressCognate;
+/**
+ * Reveal the implicit arguments
+ */
+function normalize(transformFns) {
+    transformFns.forEach(function (fn, i) {
+        switch (fn.kind) {
+            case "translate":
+                if (fn.args.length === 1) {
+                    fn.args.push(0);
+                }
+                break;
+            case "scale":
+                if (fn.args.length === 1) {
+                    fn.args.push(fn.args[0]);
+                }
+                break;
+            case "rotate":
+                if (fn.args.length === 3) {
+                    transformFns.splice(i, 1, { kind: "translate", args: [fn.args[1], fn.args[2]] }, { kind: "rotate", args: [fn.args[0]] }, { kind: "translate", args: [-fn.args[1], -fn.args[2]] });
+                }
+                break;
+            default:
+                break;
+        }
+    });
+}
+exports.normalize = normalize;
+/**
+ * Make one affine transform matrix from transform function sequence
+ */
+function makeMatrix(transformFns) {
+    var matrix = matrixutils_1.unitMatrix;
+    for (var i = transformFns.length - 1; i >= 0; i--) {
+        var fn = transformFns[i];
+        switch (fn.kind) {
+            case "translate":
+                matrix = matrix.translate(fn.args[0], fn.args[1]);
+                break;
+            case "scale":
+                matrix = matrix.scale(fn.args[0], fn.args[1]);
+                break;
+            case "rotate":
+                matrix = matrix.rotate(fn.args[0]);
+                break;
+            case "skewX":
+                matrix = matrix.skewX(fn.args[0]);
+                break;
+            case "skewY":
+                matrix = matrix.skewY(fn.args[0]);
+                break;
+            case "matrix":
+                matrix = matrix.multiply(new SVG.Matrix(fn.args[0], fn.args[1], fn.args[2], fn.args[3], fn.args[4], fn.args[5]));
+                break;
+        }
+    }
+    return matrix;
+}
+exports.makeMatrix = makeMatrix;
+
+},{"./matrixutils":9,"./utils":15,"svgjs":3}],15:[function(require,module,exports){
 Object.defineProperty(exports, "__esModule", { value: true });
 var Point = /** @class */ (function () {
     function Point(x, y) {
@@ -20291,5 +20475,13 @@ function withDefault(value, defaultValue) {
         return value;
 }
 exports.withDefault = withDefault;
+function zip(a, b) {
+    var ret = [];
+    for (var i = 0; i < Math.min(a.length, b.length); i++) {
+        ret.push([a[i], b[i]]);
+    }
+    return ret;
+}
+exports.zip = zip;
 
 },{}]},{},[5]);
