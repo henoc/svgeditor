@@ -65,7 +65,15 @@ export function handMode() {
   };
 
   function handModeReflection() {
-    reflection(() => {expandVertexesGroup.remove(); }, () => {svgroot.add(expandVertexesGroup); });
+    reflection(
+      () => {
+        expandVertexesGroup.remove();
+        if (rotateVertex) rotateVertex.remove();
+      },
+      () => {
+        svgroot.add(expandVertexesGroup);
+        if (rotateVertex) svgroot.add(rotateVertex);
+      });
   }
 
   const moveElems: SVG.Element[] = [];
@@ -278,7 +286,8 @@ export function handMode() {
         .circle(10)
         .center(rotateVertexPos.x, rotateVertexPos.y)
         .stroke({ color: textcolor.toHexString(), width: 3 })
-        .fill({ color: bgcolor.toHexString() });
+        .fill({ color: bgcolor.toHexString() })
+        .id("svgeditor-vertex-rotate");
     }
   }
 
@@ -322,6 +331,9 @@ export function handMode() {
 
 export function handModeDestruct() {
   editorRoot.select(".svgeditor-expandVertexes").each((i, elems) => {
+    elems[i].remove();
+  });
+  editorRoot.select("#svgeditor-vertex-rotate").each((i , elems) => {
     elems[i].remove();
   });
   editorRoot.each((i, elems) => {

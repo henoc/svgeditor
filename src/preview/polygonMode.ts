@@ -20,8 +20,8 @@ export function polygonMode() {
   svgroot.node.onmousedown = (ev: MouseEvent) => {
     ev.stopPropagation();
 
-    let x = ev.clientX - svgroot.node.clientLeft;
-    let y = ev.clientY - svgroot.node.clientTop;
+    let x = ev.clientX - svgroot.node.getBoundingClientRect().left;
+    let y = ev.clientY - svgroot.node.getBoundingClientRect().top;
     if (polyline === undefined) {
       let seed = polygonCheckbox.checked ? svgroot.polygon([]) : svgroot.polyline([]);
       polyline = {
@@ -42,8 +42,8 @@ export function polygonMode() {
     ev.stopPropagation();
 
     if (polyline) {
-      let x = ev.clientX - svgroot.node.clientLeft;
-      let y = ev.clientY - svgroot.node.clientTop;
+      let x = ev.clientX - svgroot.node.getBoundingClientRect().left;
+      let y = ev.clientY - svgroot.node.getBoundingClientRect().top;
 
       let points = polyline.points.map(p => [p.x, p.y]).concat();
       points.push([x, y]);

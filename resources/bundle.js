@@ -19595,8 +19595,8 @@ function ellipseMode() {
     common_1.refleshStyleAttribues(colorSample);
     common_1.svgroot.node.onmousedown = function (ev) {
         ev.stopPropagation();
-        var x = ev.clientX - common_1.svgroot.node.clientLeft;
-        var y = ev.clientY - common_1.svgroot.node.clientTop;
+        var x = ev.clientX - common_1.svgroot.node.getBoundingClientRect().left;
+        var y = ev.clientY - common_1.svgroot.node.getBoundingClientRect().top;
         ellipse = {
             elem: common_1.editorRoot.ellipse(0, 0).center(x, y)
                 .attr("fill", svgutils_1.svgof(colorSample).getColor("fill").toHexString())
@@ -19611,7 +19611,7 @@ function ellipseMode() {
     common_1.svgroot.node.onmousemove = function (ev) {
         ev.stopPropagation();
         if (ellipse) {
-            ellipse.end = utils_1.Point.of(ev.clientX - common_1.svgroot.node.clientLeft, ev.clientY - common_1.svgroot.node.clientTop);
+            ellipse.end = utils_1.Point.of(ev.clientX - common_1.svgroot.node.getBoundingClientRect().left, ev.clientY - common_1.svgroot.node.getBoundingClientRect().top);
             var leftUp = utils_1.Point.of(Math.min(ellipse.start.x, ellipse.end.x), Math.min(ellipse.start.y, ellipse.end.y));
             var rightDown = utils_1.Point.of(Math.max(ellipse.start.x, ellipse.end.x), Math.max(ellipse.start.y, ellipse.end.y));
             ellipse.elem.move(leftUp.x, leftUp.y);
@@ -19678,7 +19678,15 @@ function handMode() {
         dragTarget = { kind: "none" };
     };
     function handModeReflection() {
-        common_1.reflection(function () { expandVertexesGroup.remove(); }, function () { common_1.svgroot.add(expandVertexesGroup); });
+        common_1.reflection(function () {
+            expandVertexesGroup.remove();
+            if (rotateVertex)
+                rotateVertex.remove();
+        }, function () {
+            common_1.svgroot.add(expandVertexesGroup);
+            if (rotateVertex)
+                common_1.svgroot.add(rotateVertex);
+        });
     }
     var moveElems = [];
     common_1.editorRoot.each(function (i, elems) {
@@ -19884,7 +19892,8 @@ function handMode() {
                 .circle(10)
                 .center(rotateVertexPos.x, rotateVertexPos.y)
                 .stroke({ color: common_1.textcolor.toHexString(), width: 3 })
-                .fill({ color: common_1.bgcolor.toHexString() });
+                .fill({ color: common_1.bgcolor.toHexString() })
+                .id("svgeditor-vertex-rotate");
         }
     }
     function updateRotateVertex() {
@@ -19928,6 +19937,9 @@ function handModeDestruct() {
     common_1.editorRoot.select(".svgeditor-expandVertexes").each(function (i, elems) {
         elems[i].remove();
     });
+    common_1.editorRoot.select("#svgeditor-vertex-rotate").each(function (i, elems) {
+        elems[i].remove();
+    });
     common_1.editorRoot.each(function (i, elems) {
         elems[i].node.onmousedown = function () { return undefined; };
         elems[i].node.onmousemove = function () { return undefined; };
@@ -19952,8 +19964,8 @@ function polygonMode() {
     var polygonCheckbox = document.getElementById("svgeditor-typicalproperties-enclosure");
     common_1.svgroot.node.onmousedown = function (ev) {
         ev.stopPropagation();
-        var x = ev.clientX - common_1.svgroot.node.clientLeft;
-        var y = ev.clientY - common_1.svgroot.node.clientTop;
+        var x = ev.clientX - common_1.svgroot.node.getBoundingClientRect().left;
+        var y = ev.clientY - common_1.svgroot.node.getBoundingClientRect().top;
         if (polyline === undefined) {
             var seed = polygonCheckbox.checked ? common_1.svgroot.polygon([]) : common_1.svgroot.polyline([]);
             polyline = {
@@ -19972,8 +19984,8 @@ function polygonMode() {
     common_1.svgroot.node.onmousemove = function (ev) {
         ev.stopPropagation();
         if (polyline) {
-            var x = ev.clientX - common_1.svgroot.node.clientLeft;
-            var y = ev.clientY - common_1.svgroot.node.clientTop;
+            var x = ev.clientX - common_1.svgroot.node.getBoundingClientRect().left;
+            var y = ev.clientY - common_1.svgroot.node.getBoundingClientRect().top;
             var points = polyline.points.map(function (p) { return [p.x, p.y]; }).concat();
             points.push([x, y]);
             polyline.elem.plot(points);
@@ -20024,8 +20036,8 @@ function rectangleMode() {
     common_1.refleshStyleAttribues(colorSample);
     common_1.svgroot.node.onmousedown = function (ev) {
         ev.stopPropagation();
-        var x = ev.clientX - common_1.svgroot.node.clientLeft;
-        var y = ev.clientY - common_1.svgroot.node.clientTop;
+        var x = ev.clientX - common_1.svgroot.node.getBoundingClientRect().left;
+        var y = ev.clientY - common_1.svgroot.node.getBoundingClientRect().top;
         rectangle = {
             elem: common_1.editorRoot.rect(0, 0).center(x, y)
                 .attr("fill", svgutils_1.svgof(colorSample).getColor("fill").toHexString())
@@ -20040,7 +20052,7 @@ function rectangleMode() {
     common_1.svgroot.node.onmousemove = function (ev) {
         ev.stopPropagation();
         if (rectangle) {
-            rectangle.end = utils_1.Point.of(ev.clientX - common_1.svgroot.node.clientLeft, ev.clientY - common_1.svgroot.node.clientTop);
+            rectangle.end = utils_1.Point.of(ev.clientX - common_1.svgroot.node.getBoundingClientRect().left, ev.clientY - common_1.svgroot.node.getBoundingClientRect().top);
             var leftUp = utils_1.Point.of(Math.min(rectangle.start.x, rectangle.end.x), Math.min(rectangle.start.y, rectangle.end.y));
             var rightDown = utils_1.Point.of(Math.max(rectangle.start.x, rectangle.end.x), Math.max(rectangle.start.y, rectangle.end.y));
             rectangle.elem.move(leftUp.x, leftUp.y);

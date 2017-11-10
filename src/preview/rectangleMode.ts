@@ -21,8 +21,8 @@ export function rectangleMode() {
   svgroot.node.onmousedown = (ev: MouseEvent) => {
     ev.stopPropagation();
 
-    let x = ev.clientX - svgroot.node.clientLeft;
-    let y = ev.clientY - svgroot.node.clientTop;
+    let x = ev.clientX - svgroot.node.getBoundingClientRect().left;
+    let y = ev.clientY - svgroot.node.getBoundingClientRect().top;
     rectangle = {
       elem: editorRoot.rect(0, 0).center(x, y)
         .attr("fill", svgof(colorSample).getColor("fill").toHexString())
@@ -39,7 +39,7 @@ export function rectangleMode() {
     ev.stopPropagation();
 
     if (rectangle) {
-      rectangle.end = Point.of(ev.clientX - svgroot.node.clientLeft, ev.clientY - svgroot.node.clientTop);
+      rectangle.end = Point.of(ev.clientX - svgroot.node.getBoundingClientRect().left, ev.clientY - svgroot.node.getBoundingClientRect().top);
       let leftUp = Point.of(Math.min(rectangle.start.x, rectangle.end.x), Math.min(rectangle.start.y, rectangle.end.y));
       let rightDown = Point.of(Math.max(rectangle.start.x, rectangle.end.x), Math.max(rectangle.start.y, rectangle.end.y));
       rectangle.elem.move(leftUp.x, leftUp.y);

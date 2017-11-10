@@ -21,8 +21,8 @@ export function ellipseMode() {
   svgroot.node.onmousedown = (ev: MouseEvent) => {
     ev.stopPropagation();
 
-    let x = ev.clientX - svgroot.node.clientLeft;
-    let y = ev.clientY - svgroot.node.clientTop;
+    let x = ev.clientX - svgroot.node.getBoundingClientRect().left;
+    let y = ev.clientY - svgroot.node.getBoundingClientRect().top;
     ellipse = {
       elem: editorRoot.ellipse(0, 0).center(x, y)
         .attr("fill", svgof(colorSample).getColor("fill").toHexString())
@@ -39,7 +39,7 @@ export function ellipseMode() {
     ev.stopPropagation();
 
     if (ellipse) {
-      ellipse.end = Point.of(ev.clientX - svgroot.node.clientLeft, ev.clientY - svgroot.node.clientTop);
+      ellipse.end = Point.of(ev.clientX - svgroot.node.getBoundingClientRect().left, ev.clientY - svgroot.node.getBoundingClientRect().top);
       let leftUp = Point.of(Math.min(ellipse.start.x, ellipse.end.x), Math.min(ellipse.start.y, ellipse.end.y));
       let rightDown = Point.of(Math.max(ellipse.start.x, ellipse.end.x), Math.max(ellipse.start.y, ellipse.end.y));
       ellipse.elem.move(leftUp.x, leftUp.y);
