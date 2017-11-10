@@ -1,11 +1,11 @@
 // Common process through any modes.
 
-import {svgof} from "./svgutils";
-import {handMode, handModeDestruct} from "./handMode";
-import {rectangleMode, rectangleModeDestruct} from "./rectangleMode";
-import {ellipseMode, ellipseModeDestruct} from "./ellipseMode";
-import {polygonMode, polygonModeDestruct} from "./polygonMode";
-import {textMode, textModeDestruct} from "./textMode";
+import {svgof} from "./utils/svgutils";
+import {handMode, handModeDestruct} from "./mode/handMode";
+import {rectangleMode, rectangleModeDestruct} from "./mode/rectangleMode";
+import {ellipseMode, ellipseModeDestruct} from "./mode/ellipseMode";
+import {polygonMode, polygonModeDestruct} from "./mode/polygonMode";
+import {textMode, textModeDestruct} from "./mode/textMode";
 
 import * as SVG from "svgjs";
 import * as jQuery from "jquery";

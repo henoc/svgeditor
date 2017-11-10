@@ -1,13 +1,13 @@
-import { TransformFn, FixedTransformAttr, makeMatrix } from "./transformutils";
-import { matrixof, unitMatrix } from "./matrixutils";
-import { scale } from "./coordinateutils";
-import { editorRoot, svgroot, reflection, colorpickers, svgStyleAttrs, textcolor, bgcolor, refleshStyleAttribues } from "./common";
-import { svgof } from "./svgutils";
-import { Point, withDefault, reverse, equals } from "./utils";
+import { TransformFn, FixedTransformAttr, makeMatrix } from "../utils/transformutils";
+import { matrixof, unitMatrix } from "../utils/matrixutils";
+import { scale } from "../utils/coordinateutils";
+import { editorRoot, svgroot, reflection, colorpickers, svgStyleAttrs, textcolor, bgcolor, refleshStyleAttribues } from "../common";
+import { svgof } from "../utils/svgutils";
+import { Point, withDefault, reverse, equals } from "../utils/utils";
+import { Affine } from "../utils/affine";
 
 import * as SVG from "svgjs";
 import * as jQuery from "jquery";
-import { Affine } from "./affine";
 
 export function handMode() {
 

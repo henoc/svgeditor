@@ -19326,96 +19326,14 @@ else {
 })(Math);
 
 },{}],5:[function(require,module,exports){
-var __extends = (this && this.__extends) || (function () {
-    var extendStatics = Object.setPrototypeOf ||
-        ({ __proto__: [] } instanceof Array && function (d, b) { d.__proto__ = b; }) ||
-        function (d, b) { for (var p in b) if (b.hasOwnProperty(p)) d[p] = b[p]; };
-    return function (d, b) {
-        extendStatics(d, b);
-        function __() { this.constructor = d; }
-        d.prototype = b === null ? Object.create(b) : (__.prototype = b.prototype, new __());
-    };
-})();
-Object.defineProperty(exports, "__esModule", { value: true });
-var utils_1 = require("./utils");
-function innerProd(v1, v2) {
-    return v1[0] * v2[0] + v1[1] * v2[1] + v1[2] * v2[2];
-}
-var Matrix3 = /** @class */ (function () {
-    function Matrix3(r1, r2, r3) {
-        this.m = [r1, r2, r3];
-    }
-    Matrix3.fromColumns = function (c1, c2, c3) {
-        return new Matrix3([c1[0], c2[0], c3[0]], [c1[1], c2[1], c3[1]], [c1[2], c2[2], c3[2]]);
-    };
-    /**
-     * Multiple to column vector.
-     */
-    Matrix3.prototype.mulVec = function (that) {
-        return [
-            innerProd(this.m[0], that),
-            innerProd(this.m[1], that),
-            innerProd(this.m[2], that)
-        ];
-    };
-    /**
-     * Get nth column vector.
-     */
-    Matrix3.prototype.col = function (n) {
-        return [
-            this.m[0][n],
-            this.m[1][n],
-            this.m[2][n]
-        ];
-    };
-    Matrix3.prototype.mul = function (that) {
-        var c1 = this.mulVec(that.col(0));
-        var c2 = this.mulVec(that.col(1));
-        var c3 = this.mulVec(that.col(2));
-        return Matrix3.fromColumns(c1, c2, c3);
-    };
-    return Matrix3;
-}());
-var Affine = /** @class */ (function (_super) {
-    __extends(Affine, _super);
-    function Affine(r1, r2) {
-        return _super.call(this, r1, r2, [0, 0, 1]) || this;
-    }
-    /**
-     * Transform `p` using this affine transform.
-     */
-    Affine.prototype.transform = function (p) {
-        return utils_1.Point.fromArray(this.mulVec([p.x, p.y, 1]));
-    };
-    Affine.prototype.mulAffine = function (that) {
-        var ret = this.mul(that);
-        return new Affine(ret.m[0], ret.m[1]);
-    };
-    Affine.translate = function (p) {
-        return new Affine([1, 0, p.x], [0, 1, p.y]);
-    };
-    Affine.scale = function (p) {
-        return new Affine([p.x, 0, 0], [0, p.y, 0]);
-    };
-    Affine.rotate = function (a) {
-        return new Affine([Math.cos(a), -Math.sin(a), 0], [Math.sin(a), Math.cos(a), 0]);
-    };
-    Affine.unit = function () {
-        return new Affine([1, 0, 0], [0, 1, 0]);
-    };
-    return Affine;
-}(Matrix3));
-exports.Affine = Affine;
-
-},{"./utils":15}],6:[function(require,module,exports){
 // Common process through any modes.
 Object.defineProperty(exports, "__esModule", { value: true });
-var svgutils_1 = require("./svgutils");
-var handMode_1 = require("./handMode");
-var rectangleMode_1 = require("./rectangleMode");
-var ellipseMode_1 = require("./ellipseMode");
-var polygonMode_1 = require("./polygonMode");
-var textMode_1 = require("./textMode");
+var svgutils_1 = require("./utils/svgutils");
+var handMode_1 = require("./mode/handMode");
+var rectangleMode_1 = require("./mode/rectangleMode");
+var ellipseMode_1 = require("./mode/ellipseMode");
+var polygonMode_1 = require("./mode/polygonMode");
+var textMode_1 = require("./mode/textMode");
 var SVG = require("svgjs");
 var jQuery = require("jquery");
 require("spectrum-colorpicker");
@@ -19548,45 +19466,11 @@ document.documentElement.style.setProperty("--svgeditor-color-bg-light", exports
 document.documentElement.style.setProperty("--svgeditor-color-bg-light2", exports.bgcolor.lighten(20).toHexString());
 document.documentElement.style.setProperty("--svgeditor-color-text", exports.textcolor.toHexString());
 
-},{"./ellipseMode":8,"./handMode":9,"./polygonMode":10,"./rectangleMode":11,"./svgutils":12,"./textMode":13,"jquery":1,"spectrum-colorpicker":2,"svgjs":3,"tinycolor2":4}],7:[function(require,module,exports){
+},{"./mode/ellipseMode":6,"./mode/handMode":7,"./mode/polygonMode":8,"./mode/rectangleMode":9,"./mode/textMode":10,"./utils/svgutils":13,"jquery":1,"spectrum-colorpicker":2,"svgjs":3,"tinycolor2":4}],6:[function(require,module,exports){
 Object.defineProperty(exports, "__esModule", { value: true });
-var utils_1 = require("./utils");
-/**
- * ```
- *    b
- *   /
- *  /
- * o ---> a
- * ```
- * Get the angle between three points with sign
- * @param a base point
- * @param o center
- * @param b relative point
- */
-function angle(a, o, b) {
-    var oa = a.sub(o);
-    var ob = b.sub(o);
-    return Math.atan2(oa.clossProd(ob), oa.innerProd(ob));
-}
-exports.angle = angle;
-/**
- * Get the scale from rectangle or line pallarel with axis, (o, from) to (o, to)
- */
-function scale(o, from, to) {
-    var ret = utils_1.Point.of((to.x - o.x) / (from.x - o.x), (to.y - o.y) / (from.y - o.y));
-    if (Number.isNaN(ret.x))
-        ret.x = 1;
-    if (Number.isNaN(ret.y))
-        ret.y = 1;
-    return ret;
-}
-exports.scale = scale;
-
-},{"./utils":15}],8:[function(require,module,exports){
-Object.defineProperty(exports, "__esModule", { value: true });
-var common_1 = require("./common");
-var utils_1 = require("./utils");
-var svgutils_1 = require("./svgutils");
+var common_1 = require("../common");
+var utils_1 = require("../utils/utils");
+var svgutils_1 = require("../utils/svgutils");
 var jQuery = require("jquery");
 function ellipseMode() {
     var ellipse = undefined;
@@ -19654,15 +19538,15 @@ function ellipseModeDestruct() {
 }
 exports.ellipseModeDestruct = ellipseModeDestruct;
 
-},{"./common":6,"./svgutils":12,"./utils":15,"jquery":1}],9:[function(require,module,exports){
+},{"../common":5,"../utils/svgutils":13,"../utils/utils":15,"jquery":1}],7:[function(require,module,exports){
 Object.defineProperty(exports, "__esModule", { value: true });
-var transformutils_1 = require("./transformutils");
-var coordinateutils_1 = require("./coordinateutils");
-var common_1 = require("./common");
-var svgutils_1 = require("./svgutils");
-var utils_1 = require("./utils");
+var transformutils_1 = require("../utils/transformutils");
+var coordinateutils_1 = require("../utils/coordinateutils");
+var common_1 = require("../common");
+var svgutils_1 = require("../utils/svgutils");
+var utils_1 = require("../utils/utils");
+var affine_1 = require("../utils/affine");
 var jQuery = require("jquery");
-var affine_1 = require("./affine");
 function handMode() {
     var expandVertexesGroup = common_1.editorRoot.group().addClass("svgeditor-expandVertexes");
     var rotateVertex = undefined;
@@ -19952,11 +19836,11 @@ function handModeDestruct() {
 }
 exports.handModeDestruct = handModeDestruct;
 
-},{"./affine":5,"./common":6,"./coordinateutils":7,"./svgutils":12,"./transformutils":14,"./utils":15,"jquery":1}],10:[function(require,module,exports){
+},{"../common":5,"../utils/affine":11,"../utils/coordinateutils":12,"../utils/svgutils":13,"../utils/transformutils":14,"../utils/utils":15,"jquery":1}],8:[function(require,module,exports){
 Object.defineProperty(exports, "__esModule", { value: true });
-var common_1 = require("./common");
-var utils_1 = require("./utils");
-var svgutils_1 = require("./svgutils");
+var common_1 = require("../common");
+var utils_1 = require("../utils/utils");
+var svgutils_1 = require("../utils/svgutils");
 var jQuery = require("jquery");
 function polygonMode() {
     var polyline = undefined;
@@ -20025,11 +19909,11 @@ function polygonModeDestruct() {
 }
 exports.polygonModeDestruct = polygonModeDestruct;
 
-},{"./common":6,"./svgutils":12,"./utils":15,"jquery":1}],11:[function(require,module,exports){
+},{"../common":5,"../utils/svgutils":13,"../utils/utils":15,"jquery":1}],9:[function(require,module,exports){
 Object.defineProperty(exports, "__esModule", { value: true });
-var common_1 = require("./common");
-var utils_1 = require("./utils");
-var svgutils_1 = require("./svgutils");
+var common_1 = require("../common");
+var utils_1 = require("../utils/utils");
+var svgutils_1 = require("../utils/svgutils");
 var jQuery = require("jquery");
 function rectangleMode() {
     var rectangle = undefined;
@@ -20097,7 +19981,171 @@ function rectangleModeDestruct() {
 }
 exports.rectangleModeDestruct = rectangleModeDestruct;
 
-},{"./common":6,"./svgutils":12,"./utils":15,"jquery":1}],12:[function(require,module,exports){
+},{"../common":5,"../utils/svgutils":13,"../utils/utils":15,"jquery":1}],10:[function(require,module,exports){
+Object.defineProperty(exports, "__esModule", { value: true });
+var common_1 = require("../common");
+var svgutils_1 = require("../utils/svgutils");
+// import * as SVG from "svgjs";
+var jQuery = require("jquery");
+function textMode() {
+    var colorSample = common_1.editorRoot.defs().rect().fill("#666666");
+    common_1.refleshStyleAttribues(colorSample);
+    var attributeElems = {
+        text: document.getElementById("svgeditor-typicalproperties-text"),
+        size: document.getElementById("svgeditor-typicalproperties-fontsize")
+    };
+    common_1.svgroot.node.onmousedown = function (ev) {
+        ev.stopPropagation();
+        var x = ev.clientX - common_1.svgroot.node.clientLeft;
+        var y = ev.clientY - common_1.svgroot.node.clientTop;
+        common_1.editorRoot.plain(attributeElems.text.value).move(x, y)
+            .attr("fill", svgutils_1.svgof(colorSample).getColor("fill").toHexString())
+            .attr("stroke", svgutils_1.svgof(colorSample).getColor("stroke").toHexString())
+            .attr("fill-opacity", svgutils_1.svgof(colorSample).getColorWithOpacity("fill").getAlpha())
+            .attr("stroke-opacity", svgutils_1.svgof(colorSample).getColorWithOpacity("stroke").getAlpha())
+            .attr("stroke-width", svgutils_1.svgof(colorSample).getStyleAttr("stroke-width"));
+    };
+    // colorpicker event
+    jQuery(function ($) {
+        $(common_1.colorpickers.fill).off("change.spectrum");
+        $(common_1.colorpickers.fill).on("change.spectrum", function (e, color) {
+            svgutils_1.svgof(colorSample).setColorWithOpacity("fill", color, "indivisual");
+        });
+        $(common_1.colorpickers.stroke).off("change.spectrum");
+        $(common_1.colorpickers.stroke).on("change.spectrum", function (e, color) {
+            svgutils_1.svgof(colorSample).setColorWithOpacity("stroke", color, "indivisual");
+        });
+    });
+    // style attributes event
+    common_1.svgStyleAttrs.strokewidth.oninput = function (e) {
+        svgutils_1.svgof(colorSample).setStyleAttr("stroke-width", common_1.svgStyleAttrs.strokewidth.value, "indivisual");
+    };
+    common_1.displayOn(document.getElementById("svgeditor-typicalproperties-textmode"));
+}
+exports.textMode = textMode;
+function textModeDestruct() {
+    common_1.displayOff(document.getElementById("svgeditor-typicalproperties-textmode"));
+    document.onmousedown = function () { return undefined; };
+}
+exports.textModeDestruct = textModeDestruct;
+
+},{"../common":5,"../utils/svgutils":13,"jquery":1}],11:[function(require,module,exports){
+var __extends = (this && this.__extends) || (function () {
+    var extendStatics = Object.setPrototypeOf ||
+        ({ __proto__: [] } instanceof Array && function (d, b) { d.__proto__ = b; }) ||
+        function (d, b) { for (var p in b) if (b.hasOwnProperty(p)) d[p] = b[p]; };
+    return function (d, b) {
+        extendStatics(d, b);
+        function __() { this.constructor = d; }
+        d.prototype = b === null ? Object.create(b) : (__.prototype = b.prototype, new __());
+    };
+})();
+Object.defineProperty(exports, "__esModule", { value: true });
+var utils_1 = require("./utils");
+function innerProd(v1, v2) {
+    return v1[0] * v2[0] + v1[1] * v2[1] + v1[2] * v2[2];
+}
+var Matrix3 = /** @class */ (function () {
+    function Matrix3(r1, r2, r3) {
+        this.m = [r1, r2, r3];
+    }
+    Matrix3.fromColumns = function (c1, c2, c3) {
+        return new Matrix3([c1[0], c2[0], c3[0]], [c1[1], c2[1], c3[1]], [c1[2], c2[2], c3[2]]);
+    };
+    /**
+     * Multiple to column vector.
+     */
+    Matrix3.prototype.mulVec = function (that) {
+        return [
+            innerProd(this.m[0], that),
+            innerProd(this.m[1], that),
+            innerProd(this.m[2], that)
+        ];
+    };
+    /**
+     * Get nth column vector.
+     */
+    Matrix3.prototype.col = function (n) {
+        return [
+            this.m[0][n],
+            this.m[1][n],
+            this.m[2][n]
+        ];
+    };
+    Matrix3.prototype.mul = function (that) {
+        var c1 = this.mulVec(that.col(0));
+        var c2 = this.mulVec(that.col(1));
+        var c3 = this.mulVec(that.col(2));
+        return Matrix3.fromColumns(c1, c2, c3);
+    };
+    return Matrix3;
+}());
+var Affine = /** @class */ (function (_super) {
+    __extends(Affine, _super);
+    function Affine(r1, r2) {
+        return _super.call(this, r1, r2, [0, 0, 1]) || this;
+    }
+    /**
+     * Transform `p` using this affine transform.
+     */
+    Affine.prototype.transform = function (p) {
+        return utils_1.Point.fromArray(this.mulVec([p.x, p.y, 1]));
+    };
+    Affine.prototype.mulAffine = function (that) {
+        var ret = this.mul(that);
+        return new Affine(ret.m[0], ret.m[1]);
+    };
+    Affine.translate = function (p) {
+        return new Affine([1, 0, p.x], [0, 1, p.y]);
+    };
+    Affine.scale = function (p) {
+        return new Affine([p.x, 0, 0], [0, p.y, 0]);
+    };
+    Affine.rotate = function (a) {
+        return new Affine([Math.cos(a), -Math.sin(a), 0], [Math.sin(a), Math.cos(a), 0]);
+    };
+    Affine.unit = function () {
+        return new Affine([1, 0, 0], [0, 1, 0]);
+    };
+    return Affine;
+}(Matrix3));
+exports.Affine = Affine;
+
+},{"./utils":15}],12:[function(require,module,exports){
+Object.defineProperty(exports, "__esModule", { value: true });
+var utils_1 = require("./utils");
+/**
+ * ```
+ *    b
+ *   /
+ *  /
+ * o ---> a
+ * ```
+ * Get the angle between three points with sign
+ * @param a base point
+ * @param o center
+ * @param b relative point
+ */
+function angle(a, o, b) {
+    var oa = a.sub(o);
+    var ob = b.sub(o);
+    return Math.atan2(oa.clossProd(ob), oa.innerProd(ob));
+}
+exports.angle = angle;
+/**
+ * Get the scale from rectangle or line pallarel with axis, (o, from) to (o, to)
+ */
+function scale(o, from, to) {
+    var ret = utils_1.Point.of((to.x - o.x) / (from.x - o.x), (to.y - o.y) / (from.y - o.y));
+    if (Number.isNaN(ret.x))
+        ret.x = 1;
+    if (Number.isNaN(ret.y))
+        ret.y = 1;
+    return ret;
+}
+exports.scale = scale;
+
+},{"./utils":15}],13:[function(require,module,exports){
 Object.defineProperty(exports, "__esModule", { value: true });
 var utils_1 = require("./utils");
 var transformutils_1 = require("./transformutils");
@@ -20253,55 +20301,7 @@ function svgof(elem) {
 }
 exports.svgof = svgof;
 
-},{"./transformutils":14,"./utils":15,"tinycolor2":4}],13:[function(require,module,exports){
-Object.defineProperty(exports, "__esModule", { value: true });
-var common_1 = require("./common");
-var svgutils_1 = require("./svgutils");
-// import * as SVG from "svgjs";
-var jQuery = require("jquery");
-function textMode() {
-    var colorSample = common_1.editorRoot.defs().rect().fill("#666666");
-    common_1.refleshStyleAttribues(colorSample);
-    var attributeElems = {
-        text: document.getElementById("svgeditor-typicalproperties-text"),
-        size: document.getElementById("svgeditor-typicalproperties-fontsize")
-    };
-    common_1.svgroot.node.onmousedown = function (ev) {
-        ev.stopPropagation();
-        var x = ev.clientX - common_1.svgroot.node.clientLeft;
-        var y = ev.clientY - common_1.svgroot.node.clientTop;
-        common_1.editorRoot.plain(attributeElems.text.value).move(x, y)
-            .attr("fill", svgutils_1.svgof(colorSample).getColor("fill").toHexString())
-            .attr("stroke", svgutils_1.svgof(colorSample).getColor("stroke").toHexString())
-            .attr("fill-opacity", svgutils_1.svgof(colorSample).getColorWithOpacity("fill").getAlpha())
-            .attr("stroke-opacity", svgutils_1.svgof(colorSample).getColorWithOpacity("stroke").getAlpha())
-            .attr("stroke-width", svgutils_1.svgof(colorSample).getStyleAttr("stroke-width"));
-    };
-    // colorpicker event
-    jQuery(function ($) {
-        $(common_1.colorpickers.fill).off("change.spectrum");
-        $(common_1.colorpickers.fill).on("change.spectrum", function (e, color) {
-            svgutils_1.svgof(colorSample).setColorWithOpacity("fill", color, "indivisual");
-        });
-        $(common_1.colorpickers.stroke).off("change.spectrum");
-        $(common_1.colorpickers.stroke).on("change.spectrum", function (e, color) {
-            svgutils_1.svgof(colorSample).setColorWithOpacity("stroke", color, "indivisual");
-        });
-    });
-    // style attributes event
-    common_1.svgStyleAttrs.strokewidth.oninput = function (e) {
-        svgutils_1.svgof(colorSample).setStyleAttr("stroke-width", common_1.svgStyleAttrs.strokewidth.value, "indivisual");
-    };
-    common_1.displayOn(document.getElementById("svgeditor-typicalproperties-textmode"));
-}
-exports.textMode = textMode;
-function textModeDestruct() {
-    common_1.displayOff(document.getElementById("svgeditor-typicalproperties-textmode"));
-    document.onmousedown = function () { return undefined; };
-}
-exports.textModeDestruct = textModeDestruct;
-
-},{"./common":6,"./svgutils":12,"jquery":1}],14:[function(require,module,exports){
+},{"./transformutils":14,"./utils":15,"tinycolor2":4}],14:[function(require,module,exports){
 Object.defineProperty(exports, "__esModule", { value: true });
 var utils_1 = require("./utils");
 var affine_1 = require("./affine");
@@ -20441,7 +20441,7 @@ function getFixed(transformFns) {
 }
 exports.getFixed = getFixed;
 
-},{"./affine":5,"./utils":15}],15:[function(require,module,exports){
+},{"./affine":11,"./utils":15}],15:[function(require,module,exports){
 Object.defineProperty(exports, "__esModule", { value: true });
 var Point = /** @class */ (function () {
     function Point(x, y) {
@@ -20555,4 +20555,4 @@ function zip(a, b) {
 }
 exports.zip = zip;
 
-},{}]},{},[6]);
+},{}]},{},[5]);
