@@ -170,33 +170,6 @@ class SvgDeformer {
       `${attr.map(fn => fn.kind + "(" + fn.args.join(" ") + ")")}})`
     );
   }
-
-  getTransformedCenter(): Point {
-    let center = this.getCenter();
-    let transformFns = (() => {
-      let rawAttr = this.geta("transform");
-      return rawAttr === undefined ? [] : compressCognate(parseTransform(rawAttr));
-    })();
-    return matrixof(makeMatrix(transformFns)).mulvec(center);
-  }
-
-  getTransformedSize(): Point {
-    let size = this.getSize();
-    let transformFns = (() => {
-      let rawAttr = this.geta("transform");
-      return rawAttr === undefined ? [] : compressCognate(parseTransform(rawAttr));
-    })();
-    return matrixof(makeMatrix(transformFns)).mulvec(size);
-  }
-
-  getTransformedLeftUp(): Point {
-    let leftup = this.getLeftUp();
-    let transformFns = (() => {
-      let rawAttr = this.geta("transform");
-      return rawAttr === undefined ? [] : compressCognate(parseTransform(rawAttr));
-    })();
-    return matrixof(makeMatrix(transformFns)).mulvec(leftup);
-  }
 }
 
 export function svgof(elem: SVG.Element): SvgDeformer {

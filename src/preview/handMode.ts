@@ -7,6 +7,7 @@ import { Point, withDefault, reverse, equals } from "./utils";
 
 import * as SVG from "svgjs";
 import * as jQuery from "jquery";
+import { Affine } from "./affine";
 
 export function handMode() {
 
@@ -124,7 +125,7 @@ export function handMode() {
       newFixed.translate = updatedTargetPos;
       svgof(dragTarget.main).setFixedTransformAttr(newFixed);
     } else if (dragTarget.kind === "vertex") {
-      // 拡大（図形を変更）
+      // 拡大
 
       // 頂点の移動の仕方
       let dragMode: DragMode = "free";
@@ -138,17 +139,16 @@ export function handMode() {
       // 拡大の中心点
       let scaleCenterPos = svgof(dragTarget.scaleCenter).getCenter();
       // scale
+      let rotate = dragTarget.initialScheme.fixedTransform.rotate;
       let scaleRatio = scale(scaleCenterPos, dragTarget.initialVertexPos, updatedVertexPos);
       if (dragMode === "vertical") scaleRatio.x = 1;
       if (dragMode === "horizontal") scaleRatio.y = 1;
-      // scaleによる図形の中心と高さ幅
-      let scaledMain = dragTarget.initialScheme.center.sub(scaleCenterPos).mul(scaleRatio).add(scaleCenterPos);
-      let scaledSize = dragTarget.initialScheme.size.mul(scaleRatio.abs2());
       // 更新
-      dragTarget.main.center(scaledMain.x, scaledMain.y);
-      dragTarget.main.size(scaledSize.x, scaledSize.y);
+      let newFixed = Object.assign({}, dragTarget.initialScheme.fixedTransform);
+      newFixed.scale = newFixed.scale.mul(scaleRatio);
+      svgof(dragTarget.main).setFixedTransformAttr(newFixed);
     } else if (dragTarget.kind === "rotate") {
-      // 回転（行列に追加）
+      // 回転
 
       let updatedPos = dragTarget.fromCursor.add(Point.of(ev.clientX, ev.clientY));
       let deltaX = updatedPos.x - dragTarget.initialVertexPos.x;
@@ -210,9 +210,9 @@ export function handMode() {
           points.push(pos);
         }
       }
-      let trattr = svgof(dragTarget.main).getTransformAttr();
-      let matrix = trattr ? makeMatrix(trattr) : unitMatrix();
-      points = points.map(p => matrixof(matrix).mulvec(p));
+      let trattr = svgof(dragTarget.main).getFixedTransformAttr();
+      let matrix = trattr ? makeMatrix(trattr, true) : Affine.unit();
+      points = points.map(p => matrix.transform(p));
 
       let ret: SVG.Element[] = [];
       let k = 0;
@@ -250,9 +250,9 @@ export function handMode() {
           points.push(pos);
         }
       }
-      let trattr = svgof(dragTarget.main).getTransformAttr();
-      let matrix = trattr ? makeMatrix(trattr) : unitMatrix();
-      points = points.map(p => matrixof(matrix).mulvec(p));
+      let trattr = svgof(dragTarget.main).getFixedTransformAttr();
+      let matrix = trattr ? makeMatrix(trattr, true) : Affine.unit();
+      points = points.map(p => matrix.transform(p));
 
       let k = 0;
       for (let i = 0; i <= 2; i++) {
@@ -271,9 +271,9 @@ export function handMode() {
       let width = svgof(dragTarget.main).getWidth();
       let height = svgof(dragTarget.main).getHeight();
       let rotateVertexPos = leftUp.addxy(width / 2, -height / 2);
-      let trattr = svgof(dragTarget.main).getTransformAttr();
-      let matrix = trattr ? makeMatrix(trattr) : unitMatrix();
-      rotateVertexPos = matrixof(matrix).mulvec(rotateVertexPos);
+      let trattr = svgof(dragTarget.main).getFixedTransformAttr();
+      let matrix = trattr ? makeMatrix(trattr, true) : Affine.unit();
+      rotateVertexPos = matrix.transform(rotateVertexPos);
       rotateVertex = svgroot
         .circle(10)
         .center(rotateVertexPos.x, rotateVertexPos.y)
@@ -288,9 +288,9 @@ export function handMode() {
       let width = svgof(dragTarget.main).getWidth();
       let height = svgof(dragTarget.main).getHeight();
       let rotateVertexPos = leftUp.addxy(width / 2, -height / 2);
-      let trattr = svgof(dragTarget.main).getTransformAttr();
-      let matrix = trattr ? makeMatrix(trattr) : unitMatrix();
-      rotateVertexPos = matrixof(matrix).mulvec(rotateVertexPos);
+      let trattr = svgof(dragTarget.main).getFixedTransformAttr();
+      let matrix = trattr ? makeMatrix(trattr, true) : Affine.unit();
+      rotateVertexPos = matrix.transform(rotateVertexPos);
       rotateVertex!.center(rotateVertexPos.x, rotateVertexPos.y);
     }
   }

@@ -19326,6 +19326,88 @@ else {
 })(Math);
 
 },{}],5:[function(require,module,exports){
+var __extends = (this && this.__extends) || (function () {
+    var extendStatics = Object.setPrototypeOf ||
+        ({ __proto__: [] } instanceof Array && function (d, b) { d.__proto__ = b; }) ||
+        function (d, b) { for (var p in b) if (b.hasOwnProperty(p)) d[p] = b[p]; };
+    return function (d, b) {
+        extendStatics(d, b);
+        function __() { this.constructor = d; }
+        d.prototype = b === null ? Object.create(b) : (__.prototype = b.prototype, new __());
+    };
+})();
+Object.defineProperty(exports, "__esModule", { value: true });
+var utils_1 = require("./utils");
+function innerProd(v1, v2) {
+    return v1[0] * v2[0] + v1[1] * v2[1] + v1[2] * v2[2];
+}
+var Matrix3 = /** @class */ (function () {
+    function Matrix3(r1, r2, r3) {
+        this.m = [r1, r2, r3];
+    }
+    Matrix3.fromColumns = function (c1, c2, c3) {
+        return new Matrix3([c1[0], c2[0], c3[0]], [c1[1], c2[1], c3[1]], [c1[2], c2[2], c3[2]]);
+    };
+    /**
+     * Multiple to column vector.
+     */
+    Matrix3.prototype.mulVec = function (that) {
+        return [
+            innerProd(this.m[0], that),
+            innerProd(this.m[1], that),
+            innerProd(this.m[2], that)
+        ];
+    };
+    /**
+     * Get nth column vector.
+     */
+    Matrix3.prototype.col = function (n) {
+        return [
+            this.m[0][n],
+            this.m[1][n],
+            this.m[2][n]
+        ];
+    };
+    Matrix3.prototype.mul = function (that) {
+        var c1 = this.mulVec(that.col(0));
+        var c2 = this.mulVec(that.col(1));
+        var c3 = this.mulVec(that.col(2));
+        return Matrix3.fromColumns(c1, c2, c3);
+    };
+    return Matrix3;
+}());
+var Affine = /** @class */ (function (_super) {
+    __extends(Affine, _super);
+    function Affine(r1, r2) {
+        return _super.call(this, r1, r2, [0, 0, 1]) || this;
+    }
+    /**
+     * Transform `p` using this affine transform.
+     */
+    Affine.prototype.transform = function (p) {
+        return utils_1.Point.fromArray(this.mulVec([p.x, p.y, 1]));
+    };
+    Affine.prototype.mulAffine = function (that) {
+        var ret = this.mul(that);
+        return new Affine(ret.m[0], ret.m[1]);
+    };
+    Affine.translate = function (p) {
+        return new Affine([1, 0, p.x], [0, 1, p.y]);
+    };
+    Affine.scale = function (p) {
+        return new Affine([p.x, 0, 0], [0, p.y, 0]);
+    };
+    Affine.rotate = function (a) {
+        return new Affine([Math.cos(a), -Math.sin(a), 0], [Math.sin(a), Math.cos(a), 0]);
+    };
+    Affine.unit = function () {
+        return new Affine([1, 0, 0], [0, 1, 0]);
+    };
+    return Affine;
+}(Matrix3));
+exports.Affine = Affine;
+
+},{"./utils":15}],6:[function(require,module,exports){
 // Common process through any modes.
 Object.defineProperty(exports, "__esModule", { value: true });
 var svgutils_1 = require("./svgutils");
@@ -19466,7 +19548,7 @@ document.documentElement.style.setProperty("--svgeditor-color-bg-light", exports
 document.documentElement.style.setProperty("--svgeditor-color-bg-light2", exports.bgcolor.lighten(20).toHexString());
 document.documentElement.style.setProperty("--svgeditor-color-text", exports.textcolor.toHexString());
 
-},{"./ellipseMode":7,"./handMode":8,"./polygonMode":10,"./rectangleMode":11,"./svgutils":12,"./textMode":13,"jquery":1,"spectrum-colorpicker":2,"svgjs":3,"tinycolor2":4}],6:[function(require,module,exports){
+},{"./ellipseMode":8,"./handMode":9,"./polygonMode":10,"./rectangleMode":11,"./svgutils":12,"./textMode":13,"jquery":1,"spectrum-colorpicker":2,"svgjs":3,"tinycolor2":4}],7:[function(require,module,exports){
 Object.defineProperty(exports, "__esModule", { value: true });
 var utils_1 = require("./utils");
 /**
@@ -19500,7 +19582,7 @@ function scale(o, from, to) {
 }
 exports.scale = scale;
 
-},{"./utils":15}],7:[function(require,module,exports){
+},{"./utils":15}],8:[function(require,module,exports){
 Object.defineProperty(exports, "__esModule", { value: true });
 var common_1 = require("./common");
 var utils_1 = require("./utils");
@@ -19572,15 +19654,15 @@ function ellipseModeDestruct() {
 }
 exports.ellipseModeDestruct = ellipseModeDestruct;
 
-},{"./common":5,"./svgutils":12,"./utils":15,"jquery":1}],8:[function(require,module,exports){
+},{"./common":6,"./svgutils":12,"./utils":15,"jquery":1}],9:[function(require,module,exports){
 Object.defineProperty(exports, "__esModule", { value: true });
 var transformutils_1 = require("./transformutils");
-var matrixutils_1 = require("./matrixutils");
 var coordinateutils_1 = require("./coordinateutils");
 var common_1 = require("./common");
 var svgutils_1 = require("./svgutils");
 var utils_1 = require("./utils");
 var jQuery = require("jquery");
+var affine_1 = require("./affine");
 function handMode() {
     var expandVertexesGroup = common_1.editorRoot.group().addClass("svgeditor-expandVertexes");
     var rotateVertex = undefined;
@@ -19648,7 +19730,7 @@ function handMode() {
             svgutils_1.svgof(dragTarget.main).setFixedTransformAttr(newFixed);
         }
         else if (dragTarget.kind === "vertex") {
-            // 拡大（図形を変更）
+            // 拡大
             // 頂点の移動の仕方
             var dragMode = "free";
             var dirs = svgutils_1.svgof(dragTarget.vertex).geta("direction").split(" ");
@@ -19663,20 +19745,19 @@ function handMode() {
             // 拡大の中心点
             var scaleCenterPos = svgutils_1.svgof(dragTarget.scaleCenter).getCenter();
             // scale
+            var rotate = dragTarget.initialScheme.fixedTransform.rotate;
             var scaleRatio = coordinateutils_1.scale(scaleCenterPos, dragTarget.initialVertexPos, updatedVertexPos);
             if (dragMode === "vertical")
                 scaleRatio.x = 1;
             if (dragMode === "horizontal")
                 scaleRatio.y = 1;
-            // scaleによる図形の中心と高さ幅
-            var scaledMain = dragTarget.initialScheme.center.sub(scaleCenterPos).mul(scaleRatio).add(scaleCenterPos);
-            var scaledSize = dragTarget.initialScheme.size.mul(scaleRatio.abs2());
             // 更新
-            dragTarget.main.center(scaledMain.x, scaledMain.y);
-            dragTarget.main.size(scaledSize.x, scaledSize.y);
+            var newFixed = Object.assign({}, dragTarget.initialScheme.fixedTransform);
+            newFixed.scale = newFixed.scale.mul(scaleRatio);
+            svgutils_1.svgof(dragTarget.main).setFixedTransformAttr(newFixed);
         }
         else if (dragTarget.kind === "rotate") {
-            // 回転（行列に追加）
+            // 回転
             var updatedPos = dragTarget.fromCursor.add(utils_1.Point.of(ev.clientX, ev.clientY));
             var deltaX = updatedPos.x - dragTarget.initialVertexPos.x;
             // 更新
@@ -19733,9 +19814,9 @@ function handMode() {
                     points.push(pos);
                 }
             }
-            var trattr = svgutils_1.svgof(dragTarget.main).getTransformAttr();
-            var matrix_1 = trattr ? transformutils_1.makeMatrix(trattr) : matrixutils_1.unitMatrix();
-            points = points.map(function (p) { return matrixutils_1.matrixof(matrix_1).mulvec(p); });
+            var trattr = svgutils_1.svgof(dragTarget.main).getFixedTransformAttr();
+            var matrix_1 = trattr ? transformutils_1.makeMatrix(trattr, true) : affine_1.Affine.unit();
+            points = points.map(function (p) { return matrix_1.transform(p); });
             var ret = [];
             var k = 0;
             for (var i = 0; i <= 2; i++) {
@@ -19776,9 +19857,9 @@ function handMode() {
                     points.push(pos);
                 }
             }
-            var trattr = svgutils_1.svgof(dragTarget.main).getTransformAttr();
-            var matrix_2 = trattr ? transformutils_1.makeMatrix(trattr) : matrixutils_1.unitMatrix();
-            points = points.map(function (p) { return matrixutils_1.matrixof(matrix_2).mulvec(p); });
+            var trattr = svgutils_1.svgof(dragTarget.main).getFixedTransformAttr();
+            var matrix_2 = trattr ? transformutils_1.makeMatrix(trattr, true) : affine_1.Affine.unit();
+            points = points.map(function (p) { return matrix_2.transform(p); });
             var k = 0;
             for (var i = 0; i <= 2; i++) {
                 for (var j = 0; j <= 2; j++) {
@@ -19796,9 +19877,9 @@ function handMode() {
             var width = svgutils_1.svgof(dragTarget.main).getWidth();
             var height = svgutils_1.svgof(dragTarget.main).getHeight();
             var rotateVertexPos = leftUp.addxy(width / 2, -height / 2);
-            var trattr = svgutils_1.svgof(dragTarget.main).getTransformAttr();
-            var matrix = trattr ? transformutils_1.makeMatrix(trattr) : matrixutils_1.unitMatrix();
-            rotateVertexPos = matrixutils_1.matrixof(matrix).mulvec(rotateVertexPos);
+            var trattr = svgutils_1.svgof(dragTarget.main).getFixedTransformAttr();
+            var matrix = trattr ? transformutils_1.makeMatrix(trattr, true) : affine_1.Affine.unit();
+            rotateVertexPos = matrix.transform(rotateVertexPos);
             rotateVertex = common_1.svgroot
                 .circle(10)
                 .center(rotateVertexPos.x, rotateVertexPos.y)
@@ -19812,9 +19893,9 @@ function handMode() {
             var width = svgutils_1.svgof(dragTarget.main).getWidth();
             var height = svgutils_1.svgof(dragTarget.main).getHeight();
             var rotateVertexPos = leftUp.addxy(width / 2, -height / 2);
-            var trattr = svgutils_1.svgof(dragTarget.main).getTransformAttr();
-            var matrix = trattr ? transformutils_1.makeMatrix(trattr) : matrixutils_1.unitMatrix();
-            rotateVertexPos = matrixutils_1.matrixof(matrix).mulvec(rotateVertexPos);
+            var trattr = svgutils_1.svgof(dragTarget.main).getFixedTransformAttr();
+            var matrix = trattr ? transformutils_1.makeMatrix(trattr, true) : affine_1.Affine.unit();
+            rotateVertexPos = matrix.transform(rotateVertexPos);
             rotateVertex.center(rotateVertexPos.x, rotateVertexPos.y);
         }
     }
@@ -19857,31 +19938,7 @@ function handModeDestruct() {
 }
 exports.handModeDestruct = handModeDestruct;
 
-},{"./common":5,"./coordinateutils":6,"./matrixutils":9,"./svgutils":12,"./transformutils":14,"./utils":15,"jquery":1}],9:[function(require,module,exports){
-Object.defineProperty(exports, "__esModule", { value: true });
-var utils_1 = require("./utils");
-var SVG = require("svgjs");
-var MatrixUtil = /** @class */ (function () {
-    function MatrixUtil(m) {
-        this.m = m;
-    }
-    MatrixUtil.prototype.mulvec = function (p) {
-        var m = this.m;
-        return utils_1.Point.of(m.a * p.x + m.c * p.y + m.e, m.b * p.x + m.d * p.y + m.f);
-    };
-    return MatrixUtil;
-}());
-exports.MatrixUtil = MatrixUtil;
-function matrixof(mat) {
-    return new MatrixUtil(mat);
-}
-exports.matrixof = matrixof;
-function unitMatrix() {
-    return new SVG.Matrix(1, 0, 0, 1, 0, 0);
-}
-exports.unitMatrix = unitMatrix;
-
-},{"./utils":15,"svgjs":3}],10:[function(require,module,exports){
+},{"./affine":5,"./common":6,"./coordinateutils":7,"./svgutils":12,"./transformutils":14,"./utils":15,"jquery":1}],10:[function(require,module,exports){
 Object.defineProperty(exports, "__esModule", { value: true });
 var common_1 = require("./common");
 var utils_1 = require("./utils");
@@ -19954,7 +20011,7 @@ function polygonModeDestruct() {
 }
 exports.polygonModeDestruct = polygonModeDestruct;
 
-},{"./common":5,"./svgutils":12,"./utils":15,"jquery":1}],11:[function(require,module,exports){
+},{"./common":6,"./svgutils":12,"./utils":15,"jquery":1}],11:[function(require,module,exports){
 Object.defineProperty(exports, "__esModule", { value: true });
 var common_1 = require("./common");
 var utils_1 = require("./utils");
@@ -20026,9 +20083,8 @@ function rectangleModeDestruct() {
 }
 exports.rectangleModeDestruct = rectangleModeDestruct;
 
-},{"./common":5,"./svgutils":12,"./utils":15,"jquery":1}],12:[function(require,module,exports){
+},{"./common":6,"./svgutils":12,"./utils":15,"jquery":1}],12:[function(require,module,exports){
 Object.defineProperty(exports, "__esModule", { value: true });
-var matrixutils_1 = require("./matrixutils");
 var utils_1 = require("./utils");
 var transformutils_1 = require("./transformutils");
 var tinycolor = require("tinycolor2");
@@ -20176,33 +20232,6 @@ var SvgDeformer = /** @class */ (function () {
         attr = transformutils_1.compressCognate(attr);
         this.seta("transform", attr.map(function (fn) { return fn.kind + "(" + fn.args.join(" ") + ")"; }) + "})");
     };
-    SvgDeformer.prototype.getTransformedCenter = function () {
-        var _this = this;
-        var center = this.getCenter();
-        var transformFns = (function () {
-            var rawAttr = _this.geta("transform");
-            return rawAttr === undefined ? [] : transformutils_1.compressCognate(transformutils_1.parseTransform(rawAttr));
-        })();
-        return matrixutils_1.matrixof(transformutils_1.makeMatrix(transformFns)).mulvec(center);
-    };
-    SvgDeformer.prototype.getTransformedSize = function () {
-        var _this = this;
-        var size = this.getSize();
-        var transformFns = (function () {
-            var rawAttr = _this.geta("transform");
-            return rawAttr === undefined ? [] : transformutils_1.compressCognate(transformutils_1.parseTransform(rawAttr));
-        })();
-        return matrixutils_1.matrixof(transformutils_1.makeMatrix(transformFns)).mulvec(size);
-    };
-    SvgDeformer.prototype.getTransformedLeftUp = function () {
-        var _this = this;
-        var leftup = this.getLeftUp();
-        var transformFns = (function () {
-            var rawAttr = _this.geta("transform");
-            return rawAttr === undefined ? [] : transformutils_1.compressCognate(transformutils_1.parseTransform(rawAttr));
-        })();
-        return matrixutils_1.matrixof(transformutils_1.makeMatrix(transformFns)).mulvec(leftup);
-    };
     return SvgDeformer;
 }());
 function svgof(elem) {
@@ -20210,7 +20239,7 @@ function svgof(elem) {
 }
 exports.svgof = svgof;
 
-},{"./matrixutils":9,"./transformutils":14,"./utils":15,"tinycolor2":4}],13:[function(require,module,exports){
+},{"./transformutils":14,"./utils":15,"tinycolor2":4}],13:[function(require,module,exports){
 Object.defineProperty(exports, "__esModule", { value: true });
 var common_1 = require("./common");
 var svgutils_1 = require("./svgutils");
@@ -20258,11 +20287,10 @@ function textModeDestruct() {
 }
 exports.textModeDestruct = textModeDestruct;
 
-},{"./common":5,"./svgutils":12,"jquery":1}],14:[function(require,module,exports){
+},{"./common":6,"./svgutils":12,"jquery":1}],14:[function(require,module,exports){
 Object.defineProperty(exports, "__esModule", { value: true });
-var matrixutils_1 = require("./matrixutils");
 var utils_1 = require("./utils");
-var SVG = require("svgjs");
+var affine_1 = require("./affine");
 /**
  * Parse transform property of SVG
  */
@@ -20369,35 +20397,14 @@ function normalize(transformFns) {
     });
 }
 exports.normalize = normalize;
-/**
- * Make one affine transform matrix from transform function sequence
- */
-function makeMatrix(transformFns) {
-    var matrix = matrixutils_1.unitMatrix();
-    for (var i = transformFns.length - 1; i >= 0; i--) {
-        var fn = transformFns[i];
-        switch (fn.kind) {
-            case "translate":
-                matrix = matrix.translate(fn.args[0], fn.args[1]);
-                break;
-            case "scale":
-                matrix = matrix.scale(fn.args[0], fn.args[1]);
-                break;
-            case "rotate":
-                matrix = matrix.rotate(fn.args[0]);
-                break;
-            case "skewX":
-                matrix = matrix.skewX(fn.args[0]);
-                break;
-            case "skewY":
-                matrix = matrix.skewY(fn.args[0]);
-                break;
-            case "matrix":
-                matrix = matrix.multiply(new SVG.Matrix(fn.args[0], fn.args[1], fn.args[2], fn.args[3], fn.args[4], fn.args[5]));
-                break;
-        }
-    }
-    return matrix;
+function makeMatrix(fixed, ignoreRotate) {
+    var leftTranslate = affine_1.Affine.translate(fixed.translate);
+    var rightTranslate = affine_1.Affine.translate(fixed.translate.mul(utils_1.Point.of(-1, -1)));
+    var rotate = affine_1.Affine.rotate(fixed.rotate);
+    var scale = affine_1.Affine.scale(fixed.scale);
+    if (ignoreRotate === true)
+        rotate = affine_1.Affine.unit();
+    return leftTranslate.mulAffine(rotate).mulAffine(scale).mulAffine(rightTranslate);
 }
 exports.makeMatrix = makeMatrix;
 function getFixed(transformFns) {
@@ -20420,7 +20427,7 @@ function getFixed(transformFns) {
 }
 exports.getFixed = getFixed;
 
-},{"./matrixutils":9,"./utils":15,"svgjs":3}],15:[function(require,module,exports){
+},{"./affine":5,"./utils":15}],15:[function(require,module,exports){
 Object.defineProperty(exports, "__esModule", { value: true });
 var Point = /** @class */ (function () {
     function Point(x, y) {
@@ -20534,4 +20541,4 @@ function zip(a, b) {
 }
 exports.zip = zip;
 
-},{}]},{},[5]);
+},{}]},{},[6]);
