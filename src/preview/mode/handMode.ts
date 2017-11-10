@@ -104,7 +104,7 @@ export function handMode() {
           fromCursor: svgof(moveElem).getCenter().sub(Point.of(ev.clientX, ev.clientY)),
           initialScheme: {
             center: svgof(moveElem).getCenter(),
-            size: svgof(moveElem).getSize(),
+            size: svgof(moveElem).getBBoxSize(),
             fixedTransform: svgof(moveElem).getFixedTransformAttr()
           }
         };
@@ -197,7 +197,7 @@ export function handMode() {
         initialVertexPos: svgof(vertex).getCenter(),
         initialScheme: {
           center: svgof(main).getCenter(),
-          size: svgof(main).getSize(),
+          size: svgof(main).getBBoxSize(),
           fixedTransform: svgof(main).getFixedTransformAttr()
         }
       };
@@ -225,7 +225,7 @@ export function handMode() {
   function setScaleVertexes() {
     if (dragTarget.kind === "main") {
       let leftUp = svgof(dragTarget.main).getLeftUp();
-      let size = svgof(dragTarget.main).getSize();
+      let size = svgof(dragTarget.main).getBBoxSize();
       let points: Point[] = [];
       for (let i = 0; i <= 2; i++) {
         for (let j = 0; j <= 2; j++) {
@@ -265,7 +265,7 @@ export function handMode() {
   function updateScaleVertexes() {
     if (dragTarget.kind !== "none") {
       let leftUp = svgof(dragTarget.main).getLeftUp();
-      let size = svgof(dragTarget.main).getSize();
+      let size = svgof(dragTarget.main).getBBoxSize();
       let points: Point[] = [];
       for (let i = 0; i <= 2; i++) {
         for (let j = 0; j <= 2; j++) {
@@ -292,9 +292,8 @@ export function handMode() {
   function setRotateVertex() {
     if (dragTarget.kind === "main") {
       let leftUp = svgof(dragTarget.main).getLeftUp();
-      let width = svgof(dragTarget.main).getWidth();
-      let height = svgof(dragTarget.main).getHeight();
-      let rotateVertexPos = leftUp.addxy(width / 2, -height / 2);
+      let size = svgof(dragTarget.main).getBBoxSize();
+      let rotateVertexPos = leftUp.addxy(size.x / 2, -size.y / 2);
       let trattr = svgof(dragTarget.main).getFixedTransformAttr();
       let matrix = trattr ? makeMatrix(trattr, true) : Affine.unit();
       rotateVertexPos = matrix.transform(rotateVertexPos);
@@ -310,9 +309,8 @@ export function handMode() {
   function updateRotateVertex() {
     if (dragTarget.kind !== "none") {
       let leftUp = svgof(dragTarget.main).getLeftUp();
-      let width = svgof(dragTarget.main).getWidth();
-      let height = svgof(dragTarget.main).getHeight();
-      let rotateVertexPos = leftUp.addxy(width / 2, -height / 2);
+      let size = svgof(dragTarget.main).getBBoxSize();
+      let rotateVertexPos = leftUp.addxy(size.x / 2, -size.y / 2);
       let trattr = svgof(dragTarget.main).getFixedTransformAttr();
       let matrix = trattr ? makeMatrix(trattr, true) : Affine.unit();
       rotateVertexPos = matrix.transform(rotateVertexPos);

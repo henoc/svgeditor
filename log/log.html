@@ -20258,7 +20258,7 @@ function handMode() {
                     fromCursor: svgutils_1.svgof(moveElem).getCenter().sub(utils_1.Point.of(ev.clientX, ev.clientY)),
                     initialScheme: {
                         center: svgutils_1.svgof(moveElem).getCenter(),
-                        size: svgutils_1.svgof(moveElem).getSize(),
+                        size: svgutils_1.svgof(moveElem).getBBoxSize(),
                         fixedTransform: svgutils_1.svgof(moveElem).getFixedTransformAttr()
                     }
                 };
@@ -20348,7 +20348,7 @@ function handMode() {
                 initialVertexPos: svgutils_1.svgof(vertex).getCenter(),
                 initialScheme: {
                     center: svgutils_1.svgof(main).getCenter(),
-                    size: svgutils_1.svgof(main).getSize(),
+                    size: svgutils_1.svgof(main).getBBoxSize(),
                     fixedTransform: svgutils_1.svgof(main).getFixedTransformAttr()
                 }
             };
@@ -20373,7 +20373,7 @@ function handMode() {
     function setScaleVertexes() {
         if (dragTarget.kind === "main") {
             var leftUp = svgutils_1.svgof(dragTarget.main).getLeftUp();
-            var size = svgutils_1.svgof(dragTarget.main).getSize();
+            var size = svgutils_1.svgof(dragTarget.main).getBBoxSize();
             var points = [];
             for (var i = 0; i <= 2; i++) {
                 for (var j = 0; j <= 2; j++) {
@@ -20416,7 +20416,7 @@ function handMode() {
     function updateScaleVertexes() {
         if (dragTarget.kind !== "none") {
             var leftUp = svgutils_1.svgof(dragTarget.main).getLeftUp();
-            var size = svgutils_1.svgof(dragTarget.main).getSize();
+            var size = svgutils_1.svgof(dragTarget.main).getBBoxSize();
             var points = [];
             for (var i = 0; i <= 2; i++) {
                 for (var j = 0; j <= 2; j++) {
@@ -20443,9 +20443,8 @@ function handMode() {
     function setRotateVertex() {
         if (dragTarget.kind === "main") {
             var leftUp = svgutils_1.svgof(dragTarget.main).getLeftUp();
-            var width = svgutils_1.svgof(dragTarget.main).getWidth();
-            var height = svgutils_1.svgof(dragTarget.main).getHeight();
-            var rotateVertexPos = leftUp.addxy(width / 2, -height / 2);
+            var size = svgutils_1.svgof(dragTarget.main).getBBoxSize();
+            var rotateVertexPos = leftUp.addxy(size.x / 2, -size.y / 2);
             var trattr = svgutils_1.svgof(dragTarget.main).getFixedTransformAttr();
             var matrix = trattr ? transformutils_1.makeMatrix(trattr, true) : affine_1.Affine.unit();
             rotateVertexPos = matrix.transform(rotateVertexPos);
@@ -20460,9 +20459,8 @@ function handMode() {
     function updateRotateVertex() {
         if (dragTarget.kind !== "none") {
             var leftUp = svgutils_1.svgof(dragTarget.main).getLeftUp();
-            var width = svgutils_1.svgof(dragTarget.main).getWidth();
-            var height = svgutils_1.svgof(dragTarget.main).getHeight();
-            var rotateVertexPos = leftUp.addxy(width / 2, -height / 2);
+            var size = svgutils_1.svgof(dragTarget.main).getBBoxSize();
+            var rotateVertexPos = leftUp.addxy(size.x / 2, -size.y / 2);
             var trattr = svgutils_1.svgof(dragTarget.main).getFixedTransformAttr();
             var matrix = trattr ? transformutils_1.makeMatrix(trattr, true) : affine_1.Affine.unit();
             rotateVertexPos = matrix.transform(rotateVertexPos);
@@ -20858,8 +20856,8 @@ var SvgDeformer = /** @class */ (function () {
     SvgDeformer.prototype.getCenter = function () {
         return utils_1.Point.of(this.elem.cx(), this.elem.cy());
     };
-    SvgDeformer.prototype.getSize = function () {
-        return utils_1.Point.of(this.elem.width(), this.elem.height());
+    SvgDeformer.prototype.getBBoxSize = function () {
+        return utils_1.Point.of(this.elem.bbox().width, this.elem.bbox().height);
     };
     SvgDeformer.prototype.expand = function (center, scale) {
         this.elem.scale(scale.x, scale.y, center.x, center.y);
@@ -20916,15 +20914,6 @@ var SvgDeformer = /** @class */ (function () {
                 this.elem.style(name, value);
             }
         }
-    };
-    // なぜかtext要素の幅と高さがSVG.jsで取れないため再定義
-    SvgDeformer.prototype.getWidth = function () {
-        var seed = this.elem.node;
-        return seed.getBBox().width;
-    };
-    SvgDeformer.prototype.getHeight = function () {
-        var seed = this.elem.node;
-        return seed.getBBox().height;
     };
     SvgDeformer.prototype.getTransformAttr = function () {
         var rawAttr = this.geta("transform");

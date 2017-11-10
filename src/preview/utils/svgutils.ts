@@ -46,8 +46,8 @@ class SvgDeformer {
     return Point.of(this.elem.cx(), this.elem.cy());
   }
 
-  getSize(): Point {
-    return Point.of(this.elem.width(), this.elem.height());
+  getBBoxSize(): Point {
+    return Point.of(this.elem.bbox().width, this.elem.bbox().height);
   }
 
   expand(center: Point, scale: Point): void {
@@ -104,17 +104,6 @@ class SvgDeformer {
          this.elem.style(name, value);
        }
      }
-  }
-
-  // なぜかtext要素の幅と高さがSVG.jsで取れないため再定義
-  getWidth(): number {
-    let seed = <SVGGraphicsElement><any>this.elem.node;
-    return seed.getBBox().width;
-  }
-
-  getHeight(): number {
-    let seed = <SVGGraphicsElement><any>this.elem.node;
-    return seed.getBBox().height;
   }
 
   getTransformAttr(): TransformFn[] | undefined {
