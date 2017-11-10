@@ -20163,6 +20163,7 @@ exports.ellipseModeDestruct = ellipseModeDestruct;
 
 },{"./common":5,"./svgutils":12,"./utils":14,"jquery":1}],8:[function(require,module,exports){
 Object.defineProperty(exports, "__esModule", { value: true });
+var matrixutils_1 = require("./matrixutils");
 var coordinateutils_1 = require("./coordinateutils");
 var common_1 = require("./common");
 var svgutils_1 = require("./svgutils");
@@ -20170,6 +20171,7 @@ var utils_1 = require("./utils");
 var jQuery = require("jquery");
 function handMode() {
     var expandVertexesGroup = common_1.editorRoot.group().addClass("svgeditor-expandVertexes");
+    var rotateVertex = undefined;
     var dragTarget = { kind: "none" };
     var handTarget = undefined;
     common_1.svgroot.node.onmouseup = function (ev) {
@@ -20178,6 +20180,7 @@ function handMode() {
             handModeReflection();
         // 関連する頂点を再設置
         updateScaleVertexes();
+        updateRotateVertex();
         dragTarget = { kind: "none" };
     };
     function handModeReflection() {
@@ -20209,6 +20212,10 @@ function handMode() {
                     var reverseVertex = expandVertexesGroup.children().find(function (t) { return utils_1.equals(svgutils_1.deform(t).geta("direction").split(" "), svgutils_1.deform(elem).geta("direction").split(" ").map(function (dir) { return utils_1.reverse(dir); })); });
                     elem.node.onmousedown = function (ev) { return vertexMousedown(ev, moveElem, elem, expandVertexesGroup.children(), reverseVertex); };
                 });
+                if (rotateVertex)
+                    rotateVertex.remove();
+                setRotateVertex();
+                rotateVertex.node.onmousedown = function (ev) { return rotateVertexMousedown(ev, moveElem); };
                 handTarget = dragTarget.main;
                 common_1.refleshStyleAttribues(moveElem);
             }
@@ -20221,7 +20228,7 @@ function handMode() {
             // 更新後の座標
             var updatedTargetPos = dragTarget.fromCursor.add(utils_1.Point.of(ev.clientX, ev.clientY));
             // 移動
-            svgutils_1.deform(dragTarget.main).setInverseAffinedCenter(updatedTargetPos);
+            svgutils_1.deform(dragTarget.main).setCenter(updatedTargetPos);
         }
         else if (dragTarget.kind === "vertex") {
             // 拡大（図形を変更）
@@ -20251,6 +20258,15 @@ function handMode() {
             dragTarget.main.center(scaledMain.x, scaledMain.y);
             dragTarget.main.size(scaledSize.x, scaledSize.y);
         }
+        else if (dragTarget.kind === "rotate") {
+            // 回転（行列に追加）
+            var updatedPos = dragTarget.fromCursor.add(utils_1.Point.of(ev.clientX, ev.clientY));
+            var deltaX = updatedPos.x - dragTarget.initialVertexPos.x;
+            var center = svgutils_1.deform(dragTarget.main).getCenter();
+            var updatedMatrix = dragTarget.initialScheme.matrix.rotate(deltaX * 0.1, center.x, center.y);
+            // 更新
+            dragTarget.main.matrix(updatedMatrix);
+        }
     };
     function vertexMousedown(ev, main, vertex, vertexes, scaleCenter) {
         ev.stopPropagation();
@@ -20266,6 +20282,21 @@ function handMode() {
                 initialScheme: {
                     center: svgutils_1.deform(main).getAffinedCenter(),
                     size: svgutils_1.deform(main).getAffinedSize()
+                }
+            };
+        }
+    }
+    function rotateVertexMousedown(ev, main) {
+        ev.stopPropagation();
+        if (dragTarget.kind === "none") {
+            dragTarget = {
+                kind: "rotate",
+                main: main,
+                vertex: rotateVertex,
+                fromCursor: svgutils_1.deform(rotateVertex).getCenter().sub(utils_1.Point.of(ev.clientX, ev.clientY)),
+                initialVertexPos: svgutils_1.deform(rotateVertex).getCenter(),
+                initialScheme: {
+                    matrix: utils_1.withDefault(main.transform().matrix, matrixutils_1.unitMatrix)
                 }
             };
         }
@@ -20302,7 +20333,7 @@ function handMode() {
         }
     }
     function updateScaleVertexes() {
-        if (dragTarget.kind !== "none") {
+        if (dragTarget.kind !== "none" && dragTarget.kind !== "rotate") {
             var leftUp = svgutils_1.deform(dragTarget.main).getLeftUp();
             var width = svgutils_1.deform(dragTarget.main).getWidth();
             var height = svgutils_1.deform(dragTarget.main).getHeight();
@@ -20317,6 +20348,28 @@ function handMode() {
                     c++;
                 }
             }
+        }
+    }
+    function setRotateVertex() {
+        if (dragTarget.kind === "main") {
+            var leftUp = svgutils_1.deform(dragTarget.main).getLeftUp();
+            var width = svgutils_1.deform(dragTarget.main).getWidth();
+            var height = svgutils_1.deform(dragTarget.main).getHeight();
+            var rotateVertexPos = leftUp.addxy(width / 2, -height / 2);
+            rotateVertex = common_1.svgroot
+                .circle(10)
+                .center(rotateVertexPos.x, rotateVertexPos.y)
+                .stroke({ color: common_1.textcolor.toHexString(), width: 3 })
+                .fill({ color: common_1.bgcolor.toHexString() });
+        }
+    }
+    function updateRotateVertex() {
+        if (dragTarget.kind !== "none") {
+            var leftUp = svgutils_1.deform(dragTarget.main).getLeftUp();
+            var width = svgutils_1.deform(dragTarget.main).getWidth();
+            var height = svgutils_1.deform(dragTarget.main).getHeight();
+            var rotateVertexPos = leftUp.addxy(width / 2, -height / 2);
+            rotateVertex.center(rotateVertexPos.x, rotateVertexPos.y);
         }
     }
     // colorpicker event
@@ -20358,7 +20411,7 @@ function handModeDestruct() {
 }
 exports.handModeDestruct = handModeDestruct;
 
-},{"./common":5,"./coordinateutils":6,"./svgutils":12,"./utils":14,"jquery":1}],9:[function(require,module,exports){
+},{"./common":5,"./coordinateutils":6,"./matrixutils":9,"./svgutils":12,"./utils":14,"jquery":1}],9:[function(require,module,exports){
 Object.defineProperty(exports, "__esModule", { value: true });
 var utils_1 = require("./utils");
 var SVG = require("svgjs");
@@ -20587,11 +20640,6 @@ var SvgDeformer = /** @class */ (function () {
     SvgDeformer.prototype.getAffinedSize = function () {
         return this.getAffinedRightDown().sub(this.getAffinedLeftUp());
     };
-    SvgDeformer.prototype.setInverseAffinedCenter = function (center) {
-        var inverseMatrix = utils_1.withDefault(this.elem.transform().matrix, matrixutils_1.unitMatrix).inverse();
-        var inverseCenter = matrixutils_1.matrixof(inverseMatrix).mulvec(center);
-        this.setCenter(inverseCenter);
-    };
     SvgDeformer.prototype.expand = function (center, scale) {
         this.elem.scale(scale.x, scale.y, center.x, center.y);
     };
@@ -20656,6 +20704,21 @@ var SvgDeformer = /** @class */ (function () {
     SvgDeformer.prototype.getHeight = function () {
         var seed = this.elem.node;
         return seed.getBBox().height;
+    };
+    /**
+     * P^(-1) A P
+     */
+    SvgDeformer.prototype.appendInverseTranslateMatrix = function (delta) {
+        var newMatrix = matrixutils_1.unitMatrix.translate(delta.x, delta.y).inverse()
+            .multiply(utils_1.withDefault(this.elem.transform().matrix, matrixutils_1.unitMatrix))
+            .multiply(matrixutils_1.unitMatrix.translate(delta.x, delta.y));
+        this.elem.matrix(newMatrix);
+    };
+    SvgDeformer.prototype.appendInverseScaleMatrix = function (scaleRatio, center) {
+        var newMatrix = matrixutils_1.unitMatrix.scale(scaleRatio.x, scaleRatio.y, center.x, center.y).inverse()
+            .multiply(utils_1.withDefault(this.elem.transform().matrix, matrixutils_1.unitMatrix))
+            .multiply(matrixutils_1.unitMatrix.scale(scaleRatio.x, scaleRatio.y, center.x, center.y));
+        this.elem.matrix(newMatrix);
     };
     return SvgDeformer;
 }());

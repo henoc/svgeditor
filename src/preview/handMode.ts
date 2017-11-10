@@ -1,4 +1,4 @@
-import { matrixof } from "./matrixutils";
+import { matrixof, unitMatrix } from "./matrixutils";
 import { scale } from "./coordinateutils";
 import { editorRoot, svgroot, reflection, colorpickers, svgStyleAttrs, textcolor, bgcolor, refleshStyleAttribues } from "./common";
 import { deform } from "./svgutils";
@@ -10,6 +10,7 @@ import * as jQuery from "jquery";
 export function handMode() {
 
   let expandVertexesGroup = editorRoot.group().addClass("svgeditor-expandVertexes");
+  let rotateVertex: SVG.Element | undefined = undefined;
 
   type DragMode = "free" | "vertical" | "horizontal";
 
@@ -35,6 +36,15 @@ export function handMode() {
       size: Point
     };
   } | {
+    kind: "rotate";
+    main: SVG.Element;
+    vertex: SVG.Element;
+    fromCursor: Point;
+    initialVertexPos: Point;
+    initialScheme: {
+      matrix: SVG.Matrix
+    }
+  } | {
     kind: "none"
   } = { kind: "none" };
 
@@ -45,6 +55,7 @@ export function handMode() {
     if (dragTarget) handModeReflection();
     // 関連する頂点を再設置
     updateScaleVertexes();
+    updateRotateVertex();
     dragTarget = { kind: "none" };
   };
 
@@ -84,6 +95,9 @@ export function handMode() {
           ))!;
           elem.node.onmousedown = (ev) => vertexMousedown(ev, moveElem, elem, expandVertexesGroup.children(), reverseVertex);
         });
+        if (rotateVertex) rotateVertex.remove();
+        setRotateVertex();
+        rotateVertex!.node.onmousedown = (ev) => rotateVertexMousedown(ev, moveElem);
         handTarget = dragTarget.main;
         refleshStyleAttribues(moveElem);
       }
@@ -99,7 +113,7 @@ export function handMode() {
       // 更新後の座標
       let updatedTargetPos = dragTarget.fromCursor.add(Point.of(ev.clientX, ev.clientY));
       // 移動
-      deform(dragTarget.main).setInverseAffinedCenter(updatedTargetPos);
+      deform(dragTarget.main).setCenter(updatedTargetPos);
     } else if (dragTarget.kind === "vertex") {
       // 拡大（図形を変更）
 
@@ -124,6 +138,15 @@ export function handMode() {
       // 更新
       dragTarget.main.center(scaledMain.x, scaledMain.y);
       dragTarget.main.size(scaledSize.x, scaledSize.y);
+    } else if (dragTarget.kind === "rotate") {
+      // 回転（行列に追加）
+
+      let updatedPos = dragTarget.fromCursor.add(Point.of(ev.clientX, ev.clientY));
+      let deltaX = updatedPos.x - dragTarget.initialVertexPos.x;
+      let center = deform(dragTarget.main).getCenter();
+      let updatedMatrix = dragTarget.initialScheme.matrix.rotate(deltaX * 0.1, center.x, center.y);
+      // 更新
+      dragTarget.main.matrix(updatedMatrix);
     }
   };
 
@@ -142,6 +165,23 @@ export function handMode() {
         initialScheme: {
           center: deform(main).getAffinedCenter(),
           size: deform(main).getAffinedSize()
+        }
+      };
+    }
+  }
+
+  function rotateVertexMousedown(ev: MouseEvent, main: SVG.Element) {
+    ev.stopPropagation();
+
+    if (dragTarget.kind === "none") {
+      dragTarget = {
+        kind: "rotate",
+        main: main,
+        vertex: rotateVertex!,
+        fromCursor: deform(rotateVertex!).getCenter().sub(Point.of(ev.clientX, ev.clientY)),
+        initialVertexPos: deform(rotateVertex!).getCenter(),
+        initialScheme: {
+          matrix: withDefault(main.transform().matrix, unitMatrix)
         }
       };
     }
@@ -176,7 +216,7 @@ export function handMode() {
   }
 
   function updateScaleVertexes() {
-    if (dragTarget.kind !== "none") {
+    if (dragTarget.kind !== "none" && dragTarget.kind !== "rotate") {
       let leftUp = deform(dragTarget.main).getLeftUp();
       let width = deform(dragTarget.main).getWidth();
       let height = deform(dragTarget.main).getHeight();
@@ -190,6 +230,30 @@ export function handMode() {
           c++;
         }
       }
+    }
+  }
+
+  function setRotateVertex() {
+    if (dragTarget.kind === "main") {
+      let leftUp = deform(dragTarget.main).getLeftUp();
+      let width = deform(dragTarget.main).getWidth();
+      let height = deform(dragTarget.main).getHeight();
+      let rotateVertexPos = leftUp.addxy(width / 2, -height / 2);
+      rotateVertex = svgroot
+        .circle(10)
+        .center(rotateVertexPos.x, rotateVertexPos.y)
+        .stroke({ color: textcolor.toHexString(), width: 3 })
+        .fill({ color: bgcolor.toHexString() });
+    }
+  }
+
+  function updateRotateVertex() {
+    if (dragTarget.kind !== "none") {
+      let leftUp = deform(dragTarget.main).getLeftUp();
+      let width = deform(dragTarget.main).getWidth();
+      let height = deform(dragTarget.main).getHeight();
+      let rotateVertexPos = leftUp.addxy(width / 2, -height / 2);
+      rotateVertex!.center(rotateVertexPos.x, rotateVertexPos.y);
     }
   }
 

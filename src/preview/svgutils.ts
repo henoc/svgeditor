@@ -75,12 +75,6 @@ class SvgDeformer {
     return this.getAffinedRightDown().sub(this.getAffinedLeftUp());
   }
 
-  setInverseAffinedCenter(center: Point): void {
-    let inverseMatrix = withDefault(this.elem.transform().matrix, unitMatrix).inverse();
-    let inverseCenter = matrixof(inverseMatrix).mulvec(center);
-    this.setCenter(inverseCenter);
-  }
-
   expand(center: Point, scale: Point): void {
     this.elem.scale(scale.x, scale.y, center.x, center.y);
   }
@@ -146,6 +140,25 @@ class SvgDeformer {
   getHeight(): number {
     let seed = <SVGGraphicsElement><any>this.elem.node;
     return seed.getBBox().height;
+  }
+
+  /**
+   * P^(-1) A P
+   */
+  appendInverseTranslateMatrix(delta: Point): void {
+    let newMatrix =
+      unitMatrix.translate(delta.x, delta.y).inverse()
+      .multiply(withDefault(this.elem.transform().matrix, unitMatrix))
+      .multiply(unitMatrix.translate(delta.x, delta.y));
+    this.elem.matrix(newMatrix);
+  }
+
+  appendInverseScaleMatrix(scaleRatio: Point, center: Point) {
+    let newMatrix =
+      unitMatrix.scale(scaleRatio.x, scaleRatio.y, center.x, center.y).inverse()
+      .multiply(withDefault(this.elem.transform().matrix, unitMatrix))
+      .multiply(unitMatrix.scale(scaleRatio.x, scaleRatio.y, center.x, center.y));
+    this.elem.matrix(newMatrix);
   }
 }
 
