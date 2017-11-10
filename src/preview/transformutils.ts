@@ -1,11 +1,20 @@
 import { unitMatrix } from "./matrixutils";
-import { zip } from "./utils";
+import { zip, Point } from "./utils";
 import * as SVG from "svgjs";
 
 export type TransformKinds = "matrix" | "translate" | "scale" | "rotate" | "skewX" | "skewY";
 export interface TransformFn {
   kind: TransformKinds;
   args: number[];
+}
+
+/**
+ * inverse translate -> rotate -> scale -> translate
+ */
+export interface FixedTransformAttr {
+  translate: Point;
+  rotate: number;
+  scale: Point;
 }
 
 /**
@@ -145,4 +154,22 @@ export function makeMatrix(transformFns: TransformFn[]): SVG.Matrix {
     }
   }
   return matrix;
+}
+
+export function getFixed(transformFns: TransformFn[]): FixedTransformAttr {
+  let ret: FixedTransformAttr;
+  try {
+    ret = {
+      translate: Point.fromArray(transformFns[0].args),
+      rotate: transformFns[1].args[0],
+      scale: Point.fromArray(transformFns[2].args)
+    };
+  } catch (err) {
+    ret = {
+      translate: Point.of(0, 0),
+      rotate: 0,
+      scale: Point.of(1, 1)
+    };
+  }
+  return ret;
 }

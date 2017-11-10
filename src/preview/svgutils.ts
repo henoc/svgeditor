@@ -1,6 +1,6 @@
 import { unitMatrix, matrixof } from "./matrixutils";
 import {Point, withDefault} from "./utils";
-import {TransformFn, compressCognate, parseTransform, makeMatrix } from "./transformutils";
+import {TransformFn, compressCognate, parseTransform, makeMatrix, FixedTransformAttr, getFixed } from "./transformutils";
 import * as SVG from "svgjs";
 let tinycolor: tinycolor = require("tinycolor2");
 
@@ -170,6 +170,20 @@ class SvgDeformer {
   setTransformAttr(transformfns: TransformFn[]): void {
     transformfns = compressCognate(transformfns);
     this.seta("transform", transformfns.map(fn => `${fn.kind} (${fn.args.join(" ")})`).join(" "));
+  }
+
+  getFixedTransformAttr(): FixedTransformAttr {
+    let trattr = withDefault(this.getTransformAttr(), []);
+    return getFixed(trattr);
+  }
+
+  setFixedTransformAttr(fixed: FixedTransformAttr): void {
+    this.setTransformAttr([
+      { kind: "translate", args: fixed.translate.toArray()},
+      { kind: "rotate", args: [fixed.rotate]},
+      { kind: "scale", args: fixed.scale.toArray()},
+      { kind: "translate", args: fixed.translate.toArray().map(k => -k)}
+    ]);
   }
 
   /**

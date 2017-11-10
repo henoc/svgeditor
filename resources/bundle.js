@@ -19612,7 +19612,8 @@ function handMode() {
                     fromCursor: svgutils_1.svgof(moveElem).getCenter().sub(utils_1.Point.of(ev.clientX, ev.clientY)),
                     initialScheme: {
                         center: svgutils_1.svgof(moveElem).getCenter(),
-                        size: svgutils_1.svgof(moveElem).getSize()
+                        size: svgutils_1.svgof(moveElem).getSize(),
+                        fixedTransform: svgutils_1.svgof(moveElem).getFixedTransformAttr()
                     }
                 };
                 expandVertexesGroup.clear();
@@ -19639,6 +19640,10 @@ function handMode() {
             var updatedTargetPos = dragTarget.fromCursor.add(utils_1.Point.of(ev.clientX, ev.clientY));
             // 移動
             svgutils_1.svgof(dragTarget.main).setCenter(updatedTargetPos);
+            // transform
+            var newFixed = Object.assign({}, dragTarget.initialScheme.fixedTransform);
+            newFixed.translate = updatedTargetPos;
+            svgutils_1.svgof(dragTarget.main).setFixedTransformAttr(newFixed);
         }
         else if (dragTarget.kind === "vertex") {
             // 拡大（図形を変更）
@@ -19667,15 +19672,19 @@ function handMode() {
             // 更新
             dragTarget.main.center(scaledMain.x, scaledMain.y);
             dragTarget.main.size(scaledSize.x, scaledSize.y);
+            // transform
+            var newFixed = Object.assign({}, dragTarget.initialScheme.fixedTransform);
+            newFixed.scale = newFixed.scale.mul(scaleRatio);
+            svgutils_1.svgof(dragTarget.main).setFixedTransformAttr(newFixed);
         }
         else if (dragTarget.kind === "rotate") {
             // 回転（行列に追加）
             var updatedPos = dragTarget.fromCursor.add(utils_1.Point.of(ev.clientX, ev.clientY));
             var deltaX = updatedPos.x - dragTarget.initialVertexPos.x;
-            var center = svgutils_1.svgof(dragTarget.main).getCenter();
             // 更新
-            var updatedTransform = utils_1.withDefault(dragTarget.initialScheme.transform, []).concat({ kind: "rotate", args: [deltaX * 0.1] });
-            svgutils_1.svgof(dragTarget.main).setTransformAttr(updatedTransform);
+            var newFixed = Object.assign({}, dragTarget.initialScheme.fixedTransform);
+            newFixed.rotate += deltaX;
+            svgutils_1.svgof(dragTarget.main).setFixedTransformAttr(newFixed);
         }
     };
     function vertexMousedown(ev, main, vertex, vertexes, scaleCenter) {
@@ -19691,7 +19700,8 @@ function handMode() {
                 initialVertexPos: svgutils_1.svgof(vertex).getCenter(),
                 initialScheme: {
                     center: svgutils_1.svgof(main).getCenter(),
-                    size: svgutils_1.svgof(main).getSize()
+                    size: svgutils_1.svgof(main).getSize(),
+                    fixedTransform: svgutils_1.svgof(main).getFixedTransformAttr()
                 }
             };
         }
@@ -19699,7 +19709,6 @@ function handMode() {
     function rotateVertexMousedown(ev, main) {
         ev.stopPropagation();
         if (dragTarget.kind === "none") {
-            var transform = svgutils_1.svgof(main).getTransformAttr();
             dragTarget = {
                 kind: "rotate",
                 main: main,
@@ -19707,7 +19716,7 @@ function handMode() {
                 fromCursor: svgutils_1.svgof(rotateVertex).getCenter().sub(utils_1.Point.of(ev.clientX, ev.clientY)),
                 initialVertexPos: svgutils_1.svgof(rotateVertex).getCenter(),
                 initialScheme: {
-                    transform: transform
+                    fixedTransform: svgutils_1.svgof(main).getFixedTransformAttr()
                 }
             };
         }
@@ -20140,6 +20149,18 @@ var SvgDeformer = /** @class */ (function () {
         transformfns = transformutils_1.compressCognate(transformfns);
         this.seta("transform", transformfns.map(function (fn) { return fn.kind + " (" + fn.args.join(" ") + ")"; }).join(" "));
     };
+    SvgDeformer.prototype.getFixedTransformAttr = function () {
+        var trattr = utils_1.withDefault(this.getTransformAttr(), []);
+        return transformutils_1.getFixed(trattr);
+    };
+    SvgDeformer.prototype.setFixedTransformAttr = function (fixed) {
+        this.setTransformAttr([
+            { kind: "translate", args: fixed.translate.toArray() },
+            { kind: "rotate", args: [fixed.rotate] },
+            { kind: "scale", args: fixed.scale.toArray() },
+            { kind: "translate", args: fixed.translate.toArray().map(function (k) { return -k; }) }
+        ]);
+    };
     /**
      * Add transform function in right
      */
@@ -20369,6 +20390,25 @@ function makeMatrix(transformFns) {
     return matrix;
 }
 exports.makeMatrix = makeMatrix;
+function getFixed(transformFns) {
+    var ret;
+    try {
+        ret = {
+            translate: utils_1.Point.fromArray(transformFns[0].args),
+            rotate: transformFns[1].args[0],
+            scale: utils_1.Point.fromArray(transformFns[2].args)
+        };
+    }
+    catch (err) {
+        ret = {
+            translate: utils_1.Point.of(0, 0),
+            rotate: 0,
+            scale: utils_1.Point.of(1, 1)
+        };
+    }
+    return ret;
+}
+exports.getFixed = getFixed;
 
 },{"./matrixutils":9,"./utils":15,"svgjs":3}],15:[function(require,module,exports){
 Object.defineProperty(exports, "__esModule", { value: true });

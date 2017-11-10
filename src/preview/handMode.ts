@@ -1,4 +1,4 @@
-import { TransformFn } from "./transformutils";
+import { TransformFn, FixedTransformAttr } from "./transformutils";
 import { matrixof, unitMatrix } from "./matrixutils";
 import { scale } from "./coordinateutils";
 import { editorRoot, svgroot, reflection, colorpickers, svgStyleAttrs, textcolor, bgcolor, refleshStyleAttribues } from "./common";
@@ -22,7 +22,8 @@ export function handMode() {
     fromCursor: Point;
     initialScheme: {
       center: Point,
-      size: Point
+      size: Point,
+      fixedTransform: FixedTransformAttr;
     };
   } | {
     kind: "vertex"
@@ -34,7 +35,8 @@ export function handMode() {
     initialVertexPos: Point;
     initialScheme: {
       center: Point,
-      size: Point
+      size: Point,
+      fixedTransform: FixedTransformAttr;
     };
   } | {
     kind: "rotate";
@@ -43,7 +45,7 @@ export function handMode() {
     fromCursor: Point;
     initialVertexPos: Point;
     initialScheme: {
-      transform: TransformFn[] | undefined;
+      fixedTransform: FixedTransformAttr;
     }
   } | {
     kind: "none"
@@ -83,7 +85,8 @@ export function handMode() {
           fromCursor: svgof(moveElem).getCenter().sub(Point.of(ev.clientX, ev.clientY)),
           initialScheme: {
             center: svgof(moveElem).getCenter(),
-            size: svgof(moveElem).getSize()
+            size: svgof(moveElem).getSize(),
+            fixedTransform: svgof(moveElem).getFixedTransformAttr()
           }
         };
         expandVertexesGroup.clear();
@@ -115,6 +118,10 @@ export function handMode() {
       let updatedTargetPos = dragTarget.fromCursor.add(Point.of(ev.clientX, ev.clientY));
       // 移動
       svgof(dragTarget.main).setCenter(updatedTargetPos);
+      // transform
+      let newFixed = Object.assign({}, dragTarget.initialScheme.fixedTransform);
+      newFixed.translate = updatedTargetPos;
+      svgof(dragTarget.main).setFixedTransformAttr(newFixed);
     } else if (dragTarget.kind === "vertex") {
       // 拡大（図形を変更）
 
@@ -139,15 +146,19 @@ export function handMode() {
       // 更新
       dragTarget.main.center(scaledMain.x, scaledMain.y);
       dragTarget.main.size(scaledSize.x, scaledSize.y);
+      // transform
+      let newFixed = Object.assign({}, dragTarget.initialScheme.fixedTransform);
+      newFixed.scale = newFixed.scale.mul(scaleRatio);
+      svgof(dragTarget.main).setFixedTransformAttr(newFixed);
     } else if (dragTarget.kind === "rotate") {
       // 回転（行列に追加）
 
       let updatedPos = dragTarget.fromCursor.add(Point.of(ev.clientX, ev.clientY));
       let deltaX = updatedPos.x - dragTarget.initialVertexPos.x;
-      let center = svgof(dragTarget.main).getCenter();
       // 更新
-      let updatedTransform = withDefault(dragTarget.initialScheme.transform, []).concat({ kind: "rotate", args: [deltaX * 0.1]});
-      svgof(dragTarget.main).setTransformAttr(updatedTransform);
+      let newFixed = Object.assign({}, dragTarget.initialScheme.fixedTransform);
+      newFixed.rotate += deltaX;
+      svgof(dragTarget.main).setFixedTransformAttr(newFixed);
     }
   };
 
@@ -165,7 +176,8 @@ export function handMode() {
         initialVertexPos: svgof(vertex).getCenter(),
         initialScheme: {
           center: svgof(main).getCenter(),
-          size: svgof(main).getSize()
+          size: svgof(main).getSize(),
+          fixedTransform: svgof(main).getFixedTransformAttr()
         }
       };
     }
@@ -175,7 +187,6 @@ export function handMode() {
     ev.stopPropagation();
 
     if (dragTarget.kind === "none") {
-      let transform = svgof(main).getTransformAttr();
       dragTarget = {
         kind: "rotate",
         main: main,
@@ -183,7 +194,7 @@ export function handMode() {
         fromCursor: svgof(rotateVertex!).getCenter().sub(Point.of(ev.clientX, ev.clientY)),
         initialVertexPos: svgof(rotateVertex!).getCenter(),
         initialScheme: {
-          transform: transform
+          fixedTransform: svgof(main).getFixedTransformAttr()
         }
       };
     }
