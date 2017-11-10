@@ -19478,6 +19478,12 @@ document.getElementById("svgeditor-function-forward").onclick = function (ev) {
 document.getElementById("svgeditor-function-backward").onclick = function (ev) {
     functionButtons_1.backwardEvent(exports.svgroot);
 };
+document.getElementById("svgeditor-function-reverse-x").onclick = function (ev) {
+    functionButtons_1.reverseXEvent(exports.svgroot);
+};
+document.getElementById("svgeditor-function-reverse-y").onclick = function (ev) {
+    functionButtons_1.reverseYEvent(exports.svgroot);
+};
 
 },{"./mode/ellipseMode":6,"./mode/functionButtons":7,"./mode/handMode":8,"./mode/polygonMode":9,"./mode/rectangleMode":10,"./mode/textMode":11,"./utils/svgutils":14,"jquery":1,"spectrum-colorpicker":2,"svgjs":3,"tinycolor2":4}],6:[function(require,module,exports){
 Object.defineProperty(exports, "__esModule", { value: true });
@@ -19577,6 +19583,22 @@ function backwardEvent(svgroot) {
     });
 }
 exports.backwardEvent = backwardEvent;
+function reverseXEvent(svgroot) {
+    var targets = svgroot.select(".svgeditor-handtarget");
+    targets.each(function (i, elems) {
+        elems[i].x(elems[i].x() + elems[i].width());
+        elems[i].width(-elems[i].width());
+    });
+}
+exports.reverseXEvent = reverseXEvent;
+function reverseYEvent(svgroot) {
+    var targets = svgroot.select(".svgeditor-handtarget");
+    targets.each(function (i, elems) {
+        elems[i].y(elems[i].y() + elems[i].height());
+        elems[i].height(-elems[i].height());
+    });
+}
+exports.reverseYEvent = reverseYEvent;
 
 },{}],8:[function(require,module,exports){
 Object.defineProperty(exports, "__esModule", { value: true });
