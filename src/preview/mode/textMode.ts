@@ -1,5 +1,5 @@
-import { svgroot, editorRoot, refleshStyleAttribues, colorpickers, svgStyleAttrs, displayOn, displayOff } from "./common";
-import { svgof } from "./svgutils";
+import { svgroot, editorRoot, refleshStyleAttribues, colorpickers, svgStyleAttrs, displayOn, displayOff } from "../common";
+import { svgof } from "../utils/svgutils";
 // import * as SVG from "svgjs";
 import * as jQuery from "jquery";
 
@@ -16,8 +16,8 @@ export function textMode() {
   svgroot.node.onmousedown = (ev: MouseEvent) => {
     ev.stopPropagation();
 
-    let x = ev.clientX - svgroot.node.clientLeft;
-    let y = ev.clientY - svgroot.node.clientTop;
+    let x = ev.clientX - svgroot.node.getBoundingClientRect().left;
+    let y = ev.clientY - svgroot.node.getBoundingClientRect().top;
 
     editorRoot.plain(attributeElems.text.value).move(x, y)
       .attr("fill", svgof(colorSample).getColor("fill").toHexString())

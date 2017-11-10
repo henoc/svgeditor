@@ -43,4 +43,7 @@
 
 #svgeditor-attributes-strokewidth {
   width: 30px;
+  border: solid 1px var(--svgeditor-color-bg-light2);
+  background: none;
+  color: var(--svgeditor-color-text);
 }

@@ -1,5 +1,5 @@
-import { Point } from "./../preview/utils";
-import { scale } from "./../preview/coordinateutils";
+import { Point } from "./../preview/utils/utils";
+import { scale } from "./../preview/utils/coordinateutils";
 import { test } from "ava";
 
 test("scale", t => {

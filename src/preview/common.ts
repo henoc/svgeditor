@@ -1,11 +1,12 @@
 // Common process through any modes.
 
-import {svgof} from "./svgutils";
-import {handMode, handModeDestruct} from "./handMode";
-import {rectangleMode, rectangleModeDestruct} from "./rectangleMode";
-import {ellipseMode, ellipseModeDestruct} from "./ellipseMode";
-import {polygonMode, polygonModeDestruct} from "./polygonMode";
-import {textMode, textModeDestruct} from "./textMode";
+import {svgof} from "./utils/svgutils";
+import {handMode, handModeDestruct} from "./mode/handMode";
+import {rectangleMode, rectangleModeDestruct} from "./mode/rectangleMode";
+import {ellipseMode, ellipseModeDestruct} from "./mode/ellipseMode";
+import {polygonMode, polygonModeDestruct} from "./mode/polygonMode";
+import {textMode, textModeDestruct} from "./mode/textMode";
+import {duplicateEvent, forwardEvent, backwardEvent, reverseXEvent, reverseYEvent} from "./mode/functionButtons";
 
 import * as SVG from "svgjs";
 import * as jQuery from "jquery";
@@ -153,3 +154,26 @@ document.documentElement.style.setProperty("--svgeditor-color-bg", bgcolor.toHex
 document.documentElement.style.setProperty("--svgeditor-color-bg-light", bgcolor.lighten(10).toHexString());
 document.documentElement.style.setProperty("--svgeditor-color-bg-light2", bgcolor.lighten(20).toHexString());
 document.documentElement.style.setProperty("--svgeditor-color-text", textcolor.toHexString());
+
+// function button settings
+document.getElementById("svgeditor-function-duplicate")!.onclick = (ev: MouseEvent) => {
+  duplicateEvent(svgroot);
+  destructions();
+  handMode();
+};
+
+document.getElementById("svgeditor-function-forward")!.onclick = (ev: MouseEvent) => {
+  forwardEvent(svgroot);
+};
+
+document.getElementById("svgeditor-function-backward")!.onclick = (ev: MouseEvent) => {
+  backwardEvent(svgroot);
+};
+
+document.getElementById("svgeditor-function-reverse-x")!.onclick = (ev: MouseEvent) => {
+  reverseXEvent(svgroot);
+};
+
+document.getElementById("svgeditor-function-reverse-y")!.onclick = (ev: MouseEvent) => {
+  reverseYEvent(svgroot);
+};
