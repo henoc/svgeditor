@@ -55,6 +55,15 @@ export function handMode() {
 
   let handTarget: undefined | SVG.Element = undefined;
 
+  svgroot.node.onmousedown = (ev) => {
+    // 選択解除
+    dragTarget = { kind: "none" };
+    handTarget = undefined;
+    expandVertexesGroup.children().forEach(elem => elem.remove());
+    if (rotateVertex) rotateVertex.remove();
+    rotateVertex = undefined;
+  };
+
   svgroot.node.onmouseup = (ev) => {
     // 変更されたHTML（のSVG部分）をエディタに反映させる
     if (dragTarget) handModeReflection();
@@ -112,7 +121,12 @@ export function handMode() {
         if (rotateVertex) rotateVertex.remove();
         setRotateVertex();
         rotateVertex!.node.onmousedown = (ev) => rotateVertexMousedown(ev, moveElem);
+        // handTargetのclassがすでにあったら消す
+        svgroot.select(".svgeditor-handtarget").each((i, elems) => {
+          svgof(elems[i]).removeClass("svgeditor-handtarget");
+        });
         handTarget = dragTarget.main;
+        svgof(handTarget).addClass("svgeditor-handtarget");
         refleshStyleAttribues(moveElem);
       }
     };

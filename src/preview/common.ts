@@ -6,6 +6,7 @@ import {rectangleMode, rectangleModeDestruct} from "./mode/rectangleMode";
 import {ellipseMode, ellipseModeDestruct} from "./mode/ellipseMode";
 import {polygonMode, polygonModeDestruct} from "./mode/polygonMode";
 import {textMode, textModeDestruct} from "./mode/textMode";
+import {duplicateEvent} from "./mode/functionButtons";
 
 import * as SVG from "svgjs";
 import * as jQuery from "jquery";
@@ -153,3 +154,10 @@ document.documentElement.style.setProperty("--svgeditor-color-bg", bgcolor.toHex
 document.documentElement.style.setProperty("--svgeditor-color-bg-light", bgcolor.lighten(10).toHexString());
 document.documentElement.style.setProperty("--svgeditor-color-bg-light2", bgcolor.lighten(20).toHexString());
 document.documentElement.style.setProperty("--svgeditor-color-text", textcolor.toHexString());
+
+// function button settings
+document.getElementById("svgeditor-function-duplicate")!.onclick = (ev: MouseEvent) => {
+  duplicateEvent(svgroot);
+  destructions();
+  handMode();
+};

@@ -19334,6 +19334,7 @@ var rectangleMode_1 = require("./mode/rectangleMode");
 var ellipseMode_1 = require("./mode/ellipseMode");
 var polygonMode_1 = require("./mode/polygonMode");
 var textMode_1 = require("./mode/textMode");
+var functionButtons_1 = require("./mode/functionButtons");
 var SVG = require("svgjs");
 var jQuery = require("jquery");
 require("spectrum-colorpicker");
@@ -19465,8 +19466,14 @@ document.documentElement.style.setProperty("--svgeditor-color-bg", exports.bgcol
 document.documentElement.style.setProperty("--svgeditor-color-bg-light", exports.bgcolor.lighten(10).toHexString());
 document.documentElement.style.setProperty("--svgeditor-color-bg-light2", exports.bgcolor.lighten(20).toHexString());
 document.documentElement.style.setProperty("--svgeditor-color-text", exports.textcolor.toHexString());
+// function button settings
+document.getElementById("svgeditor-function-duplicate").onclick = function (ev) {
+    functionButtons_1.duplicateEvent(exports.svgroot);
+    destructions();
+    handMode_1.handMode();
+};
 
-},{"./mode/ellipseMode":6,"./mode/handMode":7,"./mode/polygonMode":8,"./mode/rectangleMode":9,"./mode/textMode":10,"./utils/svgutils":13,"jquery":1,"spectrum-colorpicker":2,"svgjs":3,"tinycolor2":4}],6:[function(require,module,exports){
+},{"./mode/ellipseMode":6,"./mode/functionButtons":7,"./mode/handMode":8,"./mode/polygonMode":9,"./mode/rectangleMode":10,"./mode/textMode":11,"./utils/svgutils":14,"jquery":1,"spectrum-colorpicker":2,"svgjs":3,"tinycolor2":4}],6:[function(require,module,exports){
 Object.defineProperty(exports, "__esModule", { value: true });
 var common_1 = require("../common");
 var utils_1 = require("../utils/utils");
@@ -19538,7 +19545,20 @@ function ellipseModeDestruct() {
 }
 exports.ellipseModeDestruct = ellipseModeDestruct;
 
-},{"../common":5,"../utils/svgutils":13,"../utils/utils":15,"jquery":1}],7:[function(require,module,exports){
+},{"../common":5,"../utils/svgutils":14,"../utils/utils":16,"jquery":1}],7:[function(require,module,exports){
+Object.defineProperty(exports, "__esModule", { value: true });
+/**
+ * Duplicate button event
+ */
+function duplicateEvent(svgroot) {
+    var targets = svgroot.select(".svgeditor-handtarget");
+    targets.each(function (i, elems) {
+        elems[i].clone();
+    });
+}
+exports.duplicateEvent = duplicateEvent;
+
+},{}],8:[function(require,module,exports){
 Object.defineProperty(exports, "__esModule", { value: true });
 var transformutils_1 = require("../utils/transformutils");
 var coordinateutils_1 = require("../utils/coordinateutils");
@@ -19552,6 +19572,15 @@ function handMode() {
     var rotateVertex = undefined;
     var dragTarget = { kind: "none" };
     var handTarget = undefined;
+    common_1.svgroot.node.onmousedown = function (ev) {
+        // 選択解除
+        dragTarget = { kind: "none" };
+        handTarget = undefined;
+        expandVertexesGroup.children().forEach(function (elem) { return elem.remove(); });
+        if (rotateVertex)
+            rotateVertex.remove();
+        rotateVertex = undefined;
+    };
     common_1.svgroot.node.onmouseup = function (ev) {
         // 変更されたHTML（のSVG部分）をエディタに反映させる
         if (dragTarget)
@@ -19603,7 +19632,12 @@ function handMode() {
                     rotateVertex.remove();
                 setRotateVertex();
                 rotateVertex.node.onmousedown = function (ev) { return rotateVertexMousedown(ev, moveElem); };
+                // handTargetのclassがすでにあったら消す
+                common_1.svgroot.select(".svgeditor-handtarget").each(function (i, elems) {
+                    svgutils_1.svgof(elems[i]).removeClass("svgeditor-handtarget");
+                });
                 handTarget = dragTarget.main;
+                svgutils_1.svgof(handTarget).addClass("svgeditor-handtarget");
                 common_1.refleshStyleAttribues(moveElem);
             }
         };
@@ -19836,7 +19870,7 @@ function handModeDestruct() {
 }
 exports.handModeDestruct = handModeDestruct;
 
-},{"../common":5,"../utils/affine":11,"../utils/coordinateutils":12,"../utils/svgutils":13,"../utils/transformutils":14,"../utils/utils":15,"jquery":1}],8:[function(require,module,exports){
+},{"../common":5,"../utils/affine":12,"../utils/coordinateutils":13,"../utils/svgutils":14,"../utils/transformutils":15,"../utils/utils":16,"jquery":1}],9:[function(require,module,exports){
 Object.defineProperty(exports, "__esModule", { value: true });
 var common_1 = require("../common");
 var utils_1 = require("../utils/utils");
@@ -19909,7 +19943,7 @@ function polygonModeDestruct() {
 }
 exports.polygonModeDestruct = polygonModeDestruct;
 
-},{"../common":5,"../utils/svgutils":13,"../utils/utils":15,"jquery":1}],9:[function(require,module,exports){
+},{"../common":5,"../utils/svgutils":14,"../utils/utils":16,"jquery":1}],10:[function(require,module,exports){
 Object.defineProperty(exports, "__esModule", { value: true });
 var common_1 = require("../common");
 var utils_1 = require("../utils/utils");
@@ -19981,7 +20015,7 @@ function rectangleModeDestruct() {
 }
 exports.rectangleModeDestruct = rectangleModeDestruct;
 
-},{"../common":5,"../utils/svgutils":13,"../utils/utils":15,"jquery":1}],10:[function(require,module,exports){
+},{"../common":5,"../utils/svgutils":14,"../utils/utils":16,"jquery":1}],11:[function(require,module,exports){
 Object.defineProperty(exports, "__esModule", { value: true });
 var common_1 = require("../common");
 var svgutils_1 = require("../utils/svgutils");
@@ -20029,7 +20063,7 @@ function textModeDestruct() {
 }
 exports.textModeDestruct = textModeDestruct;
 
-},{"../common":5,"../utils/svgutils":13,"jquery":1}],11:[function(require,module,exports){
+},{"../common":5,"../utils/svgutils":14,"jquery":1}],12:[function(require,module,exports){
 var __extends = (this && this.__extends) || (function () {
     var extendStatics = Object.setPrototypeOf ||
         ({ __proto__: [] } instanceof Array && function (d, b) { d.__proto__ = b; }) ||
@@ -20111,7 +20145,7 @@ var Affine = /** @class */ (function (_super) {
 }(Matrix3));
 exports.Affine = Affine;
 
-},{"./utils":15}],12:[function(require,module,exports){
+},{"./utils":16}],13:[function(require,module,exports){
 Object.defineProperty(exports, "__esModule", { value: true });
 var utils_1 = require("./utils");
 /**
@@ -20145,7 +20179,7 @@ function scale(o, from, to) {
 }
 exports.scale = scale;
 
-},{"./utils":15}],13:[function(require,module,exports){
+},{"./utils":16}],14:[function(require,module,exports){
 Object.defineProperty(exports, "__esModule", { value: true });
 var utils_1 = require("./utils");
 var transformutils_1 = require("./transformutils");
@@ -20294,6 +20328,12 @@ var SvgDeformer = /** @class */ (function () {
         attr = transformutils_1.compressCognate(attr);
         this.seta("transform", attr.map(function (fn) { return fn.kind + "(" + fn.args.join(" ") + ")"; }) + "})");
     };
+    SvgDeformer.prototype.addClass = function (name) {
+        this.elem.attr("class", utils_1.withDefault(this.geta("class"), "") + " " + name);
+    };
+    SvgDeformer.prototype.removeClass = function (name) {
+        this.elem.attr("class", utils_1.withDefault(this.geta("class"), "").replace(name, ""));
+    };
     return SvgDeformer;
 }());
 function svgof(elem) {
@@ -20301,7 +20341,7 @@ function svgof(elem) {
 }
 exports.svgof = svgof;
 
-},{"./transformutils":14,"./utils":15,"tinycolor2":4}],14:[function(require,module,exports){
+},{"./transformutils":15,"./utils":16,"tinycolor2":4}],15:[function(require,module,exports){
 Object.defineProperty(exports, "__esModule", { value: true });
 var utils_1 = require("./utils");
 var affine_1 = require("./affine");
@@ -20441,7 +20481,7 @@ function getFixed(transformFns) {
 }
 exports.getFixed = getFixed;
 
-},{"./affine":11,"./utils":15}],15:[function(require,module,exports){
+},{"./affine":12,"./utils":16}],16:[function(require,module,exports){
 Object.defineProperty(exports, "__esModule", { value: true });
 var Point = /** @class */ (function () {
     function Point(x, y) {
