@@ -1,6 +1,6 @@
 // Common process through any modes.
 
-import {svgof} from "./utils/svgutils";
+import {svgof} from "./utils/svgjs/svgutils";
 import {handMode, handModeDestruct} from "./mode/handMode";
 import {rectangleMode, rectangleModeDestruct} from "./mode/rectangleMode";
 import {ellipseMode, ellipseModeDestruct} from "./mode/ellipseMode";

@@ -1,6 +1,6 @@
 import { svgroot, reflection, editorRoot, refleshStyleAttribues, colorpickers, svgStyleAttrs, displayOn, displayOff } from "../common";
 import { Point } from "../utils/utils";
-import { svgof } from "../utils/svgutils";
+import { svgof } from "../utils/svgjs/svgutils";
 import * as SVG from "svgjs";
 import * as jQuery from "jquery";
 

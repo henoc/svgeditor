@@ -19491,7 +19491,7 @@ document.getElementById("svgeditor-function-reverse-y").onclick = function (ev) 
     functionButtons_1.reverseYEvent(exports.svgroot);
 };
 
-},{"./gadget/tags":6,"./mode/ellipseMode":7,"./mode/functionButtons":8,"./mode/handMode":9,"./mode/polygonMode":10,"./mode/rectangleMode":11,"./mode/textMode":12,"./utils/svgutils":15,"jquery":1,"spectrum-colorpicker":2,"svgjs":3,"tinycolor2":4}],6:[function(require,module,exports){
+},{"./gadget/tags":6,"./mode/ellipseMode":7,"./mode/functionButtons":8,"./mode/handMode":9,"./mode/polygonMode":10,"./mode/rectangleMode":11,"./mode/textMode":12,"./utils/svgutils":17,"jquery":1,"spectrum-colorpicker":2,"svgjs":3,"tinycolor2":4}],6:[function(require,module,exports){
 Object.defineProperty(exports, "__esModule", { value: true });
 function setTags(input) {
     input.addEventListener("change", function (ev) {
@@ -19599,7 +19599,7 @@ function ellipseModeDestruct() {
 }
 exports.ellipseModeDestruct = ellipseModeDestruct;
 
-},{"../common":5,"../utils/svgutils":15,"../utils/utils":17,"jquery":1}],8:[function(require,module,exports){
+},{"../common":5,"../utils/svgutils":17,"../utils/utils":19,"jquery":1}],8:[function(require,module,exports){
 Object.defineProperty(exports, "__esModule", { value: true });
 /**
  * Duplicate button event
@@ -19649,7 +19649,7 @@ var coordinateutils_1 = require("../utils/coordinateutils");
 var common_1 = require("../common");
 var svgutils_1 = require("../utils/svgutils");
 var utils_1 = require("../utils/utils");
-var affine_1 = require("../utils/affine");
+var affine_1 = require("../utils/affineTransform/affine");
 var jQuery = require("jquery");
 function handMode() {
     var expandVertexesGroup = common_1.editorRoot.group().addClass("svgeditor-expandVertexes");
@@ -19962,7 +19962,7 @@ function handModeDestruct() {
 }
 exports.handModeDestruct = handModeDestruct;
 
-},{"../common":5,"../utils/affine":13,"../utils/coordinateutils":14,"../utils/svgutils":15,"../utils/transformutils":16,"../utils/utils":17,"jquery":1}],10:[function(require,module,exports){
+},{"../common":5,"../utils/affineTransform/affine":13,"../utils/coordinateutils":16,"../utils/svgutils":17,"../utils/transformutils":18,"../utils/utils":19,"jquery":1}],10:[function(require,module,exports){
 Object.defineProperty(exports, "__esModule", { value: true });
 var common_1 = require("../common");
 var utils_1 = require("../utils/utils");
@@ -20035,7 +20035,7 @@ function polygonModeDestruct() {
 }
 exports.polygonModeDestruct = polygonModeDestruct;
 
-},{"../common":5,"../utils/svgutils":15,"../utils/utils":17,"jquery":1}],11:[function(require,module,exports){
+},{"../common":5,"../utils/svgutils":17,"../utils/utils":19,"jquery":1}],11:[function(require,module,exports){
 Object.defineProperty(exports, "__esModule", { value: true });
 var common_1 = require("../common");
 var utils_1 = require("../utils/utils");
@@ -20107,7 +20107,7 @@ function rectangleModeDestruct() {
 }
 exports.rectangleModeDestruct = rectangleModeDestruct;
 
-},{"../common":5,"../utils/svgutils":15,"../utils/utils":17,"jquery":1}],12:[function(require,module,exports){
+},{"../common":5,"../utils/svgutils":17,"../utils/utils":19,"jquery":1}],12:[function(require,module,exports){
 Object.defineProperty(exports, "__esModule", { value: true });
 var common_1 = require("../common");
 var svgutils_1 = require("../utils/svgutils");
@@ -20177,7 +20177,7 @@ function textModeDestruct() {
 }
 exports.textModeDestruct = textModeDestruct;
 
-},{"../common":5,"../gadget/tags":6,"../utils/svgutils":15,"jquery":1}],13:[function(require,module,exports){
+},{"../common":5,"../gadget/tags":6,"../utils/svgutils":17,"jquery":1}],13:[function(require,module,exports){
 var __extends = (this && this.__extends) || (function () {
     var extendStatics = Object.setPrototypeOf ||
         ({ __proto__: [] } instanceof Array && function (d, b) { d.__proto__ = b; }) ||
@@ -20189,45 +20189,8 @@ var __extends = (this && this.__extends) || (function () {
     };
 })();
 Object.defineProperty(exports, "__esModule", { value: true });
-var utils_1 = require("./utils");
-function innerProd(v1, v2) {
-    return v1[0] * v2[0] + v1[1] * v2[1] + v1[2] * v2[2];
-}
-var Matrix3 = /** @class */ (function () {
-    function Matrix3(r1, r2, r3) {
-        this.m = [r1, r2, r3];
-    }
-    Matrix3.fromColumns = function (c1, c2, c3) {
-        return new Matrix3([c1[0], c2[0], c3[0]], [c1[1], c2[1], c3[1]], [c1[2], c2[2], c3[2]]);
-    };
-    /**
-     * Multiple to column vector.
-     */
-    Matrix3.prototype.mulVec = function (that) {
-        return [
-            innerProd(this.m[0], that),
-            innerProd(this.m[1], that),
-            innerProd(this.m[2], that)
-        ];
-    };
-    /**
-     * Get nth column vector.
-     */
-    Matrix3.prototype.col = function (n) {
-        return [
-            this.m[0][n],
-            this.m[1][n],
-            this.m[2][n]
-        ];
-    };
-    Matrix3.prototype.mul = function (that) {
-        var c1 = this.mulVec(that.col(0));
-        var c2 = this.mulVec(that.col(1));
-        var c3 = this.mulVec(that.col(2));
-        return Matrix3.fromColumns(c1, c2, c3);
-    };
-    return Matrix3;
-}());
+var utils_1 = require("../utils");
+var squareMatrix3_1 = require("./squareMatrix3");
 var Affine = /** @class */ (function (_super) {
     __extends(Affine, _super);
     function Affine(r1, r2) {
@@ -20256,10 +20219,57 @@ var Affine = /** @class */ (function (_super) {
         return new Affine([1, 0, 0], [0, 1, 0]);
     };
     return Affine;
-}(Matrix3));
+}(squareMatrix3_1.Matrix3));
 exports.Affine = Affine;
 
-},{"./utils":17}],14:[function(require,module,exports){
+},{"../utils":19,"./squareMatrix3":14}],14:[function(require,module,exports){
+Object.defineProperty(exports, "__esModule", { value: true });
+var vec3_1 = require("./vec3");
+var Matrix3 = /** @class */ (function () {
+    function Matrix3(r1, r2, r3) {
+        this.m = [r1, r2, r3];
+    }
+    Matrix3.fromColumns = function (c1, c2, c3) {
+        return new Matrix3([c1[0], c2[0], c3[0]], [c1[1], c2[1], c3[1]], [c1[2], c2[2], c3[2]]);
+    };
+    /**
+     * Multiple to column vector.
+     */
+    Matrix3.prototype.mulVec = function (that) {
+        return [
+            vec3_1.innerProd(this.m[0], that),
+            vec3_1.innerProd(this.m[1], that),
+            vec3_1.innerProd(this.m[2], that)
+        ];
+    };
+    /**
+     * Get nth column vector.
+     */
+    Matrix3.prototype.col = function (n) {
+        return [
+            this.m[0][n],
+            this.m[1][n],
+            this.m[2][n]
+        ];
+    };
+    Matrix3.prototype.mul = function (that) {
+        var c1 = this.mulVec(that.col(0));
+        var c2 = this.mulVec(that.col(1));
+        var c3 = this.mulVec(that.col(2));
+        return Matrix3.fromColumns(c1, c2, c3);
+    };
+    return Matrix3;
+}());
+exports.Matrix3 = Matrix3;
+
+},{"./vec3":15}],15:[function(require,module,exports){
+Object.defineProperty(exports, "__esModule", { value: true });
+function innerProd(v1, v2) {
+    return v1[0] * v2[0] + v1[1] * v2[1] + v1[2] * v2[2];
+}
+exports.innerProd = innerProd;
+
+},{}],16:[function(require,module,exports){
 Object.defineProperty(exports, "__esModule", { value: true });
 var utils_1 = require("./utils");
 /**
@@ -20293,7 +20303,7 @@ function scale(o, from, to) {
 }
 exports.scale = scale;
 
-},{"./utils":17}],15:[function(require,module,exports){
+},{"./utils":19}],17:[function(require,module,exports){
 Object.defineProperty(exports, "__esModule", { value: true });
 var utils_1 = require("./utils");
 var transformutils_1 = require("./transformutils");
@@ -20446,10 +20456,10 @@ function svgof(elem) {
 }
 exports.svgof = svgof;
 
-},{"./transformutils":16,"./utils":17,"tinycolor2":4}],16:[function(require,module,exports){
+},{"./transformutils":18,"./utils":19,"tinycolor2":4}],18:[function(require,module,exports){
 Object.defineProperty(exports, "__esModule", { value: true });
 var utils_1 = require("./utils");
-var affine_1 = require("./affine");
+var affine_1 = require("./affineTransform/affine");
 /**
  * Parse transform property of SVG
  */
@@ -20568,7 +20578,12 @@ function makeMatrix(fixed, ignoreRotate) {
 exports.makeMatrix = makeMatrix;
 function getFixed(transformFns, target) {
     var ret;
+    var expectKinds = ["translate", "rotate", "scale", "translate"];
     try {
+        expectKinds.forEach(function (k, i) {
+            if (transformFns[i].kind !== k)
+                throw new Error("expect " + k + ", but " + transformFns[i].kind + " in index " + i + ".");
+        });
         ret = {
             translate: utils_1.Point.fromArray(transformFns[0].args),
             rotate: transformFns[1].args[0],
@@ -20586,7 +20601,7 @@ function getFixed(transformFns, target) {
 }
 exports.getFixed = getFixed;
 
-},{"./affine":13,"./utils":17}],17:[function(require,module,exports){
+},{"./affineTransform/affine":13,"./utils":19}],19:[function(require,module,exports){
 Object.defineProperty(exports, "__esModule", { value: true });
 var Point = /** @class */ (function () {
     function Point(x, y) {

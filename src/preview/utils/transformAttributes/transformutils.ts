@@ -1,21 +1,12 @@
-import { unitMatrix } from "./matrixutils";
-import { zip, Point } from "./utils";
+import { unitMatrix } from "../svgjs/matrixutils";
+import { zip, Point } from "../utils";
 import * as SVG from "svgjs";
-import { Affine } from "./affine";
+import { Affine } from "../affineTransform/affine";
 
 export type TransformKinds = "matrix" | "translate" | "scale" | "rotate" | "skewX" | "skewY";
 export interface TransformFn {
   kind: TransformKinds;
   args: number[];
-}
-
-/**
- * inverse translate -> rotate -> scale -> translate
- */
-export interface FixedTransformAttr {
-  translate: Point;
-  rotate: number;
-  scale: Point;
 }
 
 /**
@@ -126,29 +117,3 @@ export function normalize(transformFns: TransformFn[]): void {
   });
 }
 
-export function makeMatrix(fixed: FixedTransformAttr, ignoreRotate?: boolean): Affine {
-  let leftTranslate = Affine.translate(fixed.translate);
-  let rightTranslate = Affine.translate(fixed.translate.mul(Point.of(-1, -1)));
-  let rotate = Affine.rotate(fixed.rotate);
-  let scale = Affine.scale(fixed.scale);
-  if (ignoreRotate === true) rotate = Affine.unit();
-  return leftTranslate.mulAffine(rotate).mulAffine(scale).mulAffine(rightTranslate);
-}
-
-export function getFixed(transformFns: TransformFn[], target: SVG.Element): FixedTransformAttr {
-  let ret: FixedTransformAttr;
-  try {
-    ret = {
-      translate: Point.fromArray(transformFns[0].args),
-      rotate: transformFns[1].args[0],
-      scale: Point.fromArray(transformFns[2].args)
-    };
-  } catch (err) {
-    ret = {
-      translate: Point.of(target.cx(), target.cy()),
-      rotate: 0,
-      scale: Point.of(1, 1)
-    };
-  }
-  return ret;
-}

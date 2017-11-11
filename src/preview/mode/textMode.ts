@@ -1,5 +1,5 @@
 import { svgroot, editorRoot, refleshStyleAttribues, colorpickers, svgStyleAttrs, displayOn, displayOff } from "../common";
-import { svgof } from "../utils/svgutils";
+import { svgof } from "../utils/svgjs/svgutils";
 import * as SVG from "svgjs";
 import * as jQuery from "jquery";
 import { getValueOfTags, addValueOfTags } from "../gadget/tags";

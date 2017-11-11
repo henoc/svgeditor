@@ -1,5 +1,5 @@
 import { test } from "ava";
-import { parseTransform, normalize, compressCognate } from "../preview/utils/transformutils";
+import { parseTransform, normalize, compressCognate } from "../preview/utils/transformAttributes/transformutils";
 
 test("parseTransform", t => {
   let transform1 = "translate(1, 2)";

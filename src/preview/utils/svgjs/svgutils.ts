@@ -1,7 +1,8 @@
 import { unitMatrix, matrixof } from "./matrixutils";
-import {Point, withDefault} from "./utils";
-import {TransformFn, compressCognate, parseTransform, makeMatrix, FixedTransformAttr, getFixed } from "./transformutils";
+import {Point, withDefault} from "../utils";
+import {TransformFn, compressCognate, parseTransform} from "../transformAttributes/transformutils";
 import * as SVG from "svgjs";
+import { FixedTransformAttr, getFixed } from "../transformAttributes/fixdedTransformAttributes";
 let tinycolor: tinycolor = require("tinycolor2");
 
 export interface ElementScheme {
