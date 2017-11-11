@@ -1,4 +1,4 @@
 out
 node_modules
 log
-resources/*_bundle.js
+resources/bundle*
