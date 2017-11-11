@@ -41,8 +41,22 @@
   stroke-width: 2px;
 }
 
-#svgeditor-attributes-strokewidth {
+.svgeditor-input {
   width: 30px;
+  border: solid 1px var(--svgeditor-color-bg-light2);
+  background: none;
+  color: var(--svgeditor-color-text);
+}
+
+.svgeditor-input-middle {
+  width: 50px;
+  border: solid 1px var(--svgeditor-color-bg-light2);
+  background: none;
+  color: var(--svgeditor-color-text);
+}
+
+.svgeditor-input-long {
+  width: 70px;
   border: solid 1px var(--svgeditor-color-bg-light2);
   background: none;
   color: var(--svgeditor-color-text);

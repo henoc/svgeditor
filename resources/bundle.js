@@ -19337,6 +19337,7 @@ var textMode_1 = require("./mode/textMode");
 var functionButtons_1 = require("./mode/functionButtons");
 var SVG = require("svgjs");
 var jQuery = require("jquery");
+var tags_1 = require("./gadget/tags");
 require("spectrum-colorpicker");
 var tinycolor = require("tinycolor2");
 var erootNative = document.getElementById("svgeditor-root");
@@ -19427,6 +19428,11 @@ jQuery(function ($) {
         allowEmpty: true
     });
 });
+var elems = document.getElementsByClassName("svgeditor-tags");
+for (var i = 0; i < elems.length; i++) {
+    var elem = elems[i];
+    tags_1.setTags(elem);
+}
 // set initial mode
 handMode_1.handMode();
 // button events
@@ -19485,7 +19491,43 @@ document.getElementById("svgeditor-function-reverse-y").onclick = function (ev) 
     functionButtons_1.reverseYEvent(exports.svgroot);
 };
 
-},{"./mode/ellipseMode":6,"./mode/functionButtons":7,"./mode/handMode":8,"./mode/polygonMode":9,"./mode/rectangleMode":10,"./mode/textMode":11,"./utils/svgutils":14,"jquery":1,"spectrum-colorpicker":2,"svgjs":3,"tinycolor2":4}],6:[function(require,module,exports){
+},{"./gadget/tags":6,"./mode/ellipseMode":7,"./mode/functionButtons":8,"./mode/handMode":9,"./mode/polygonMode":10,"./mode/rectangleMode":11,"./mode/textMode":12,"./utils/svgutils":15,"jquery":1,"spectrum-colorpicker":2,"svgjs":3,"tinycolor2":4}],6:[function(require,module,exports){
+Object.defineProperty(exports, "__esModule", { value: true });
+function setTags(input) {
+    input.addEventListener("change", function (ev) {
+        input.insertAdjacentHTML("beforebegin", "<span class=\"svgeditor-tags-item\">" + input.value + " </span>");
+        input.value = "";
+    });
+    input.addEventListener("keydown", function (ev) {
+        var keycode = ev.keyCode;
+        if (keycode === 8 && input.value === "") {
+            var tags = document.getElementsByClassName("svgeditor-tags-item");
+            tags.item(tags.length - 1).remove();
+        }
+    });
+}
+exports.setTags = setTags;
+function getValueOfTags(input) {
+    var tags = document.getElementsByClassName("svgeditor-tags-item");
+    var ret = [];
+    for (var i = 0; i < tags.length; i++) {
+        ret.push(tags.item(i).textContent.trim());
+    }
+    return ret;
+}
+exports.getValueOfTags = getValueOfTags;
+function addValueOfTags(input) {
+    var values = [];
+    for (var _i = 1; _i < arguments.length; _i++) {
+        values[_i - 1] = arguments[_i];
+    }
+    values.forEach(function (value) {
+        input.insertAdjacentHTML("beforebegin", "<span class=\"svgeditor-tags-item\">" + value + " </span>");
+    });
+}
+exports.addValueOfTags = addValueOfTags;
+
+},{}],7:[function(require,module,exports){
 Object.defineProperty(exports, "__esModule", { value: true });
 var common_1 = require("../common");
 var utils_1 = require("../utils/utils");
@@ -19557,7 +19599,7 @@ function ellipseModeDestruct() {
 }
 exports.ellipseModeDestruct = ellipseModeDestruct;
 
-},{"../common":5,"../utils/svgutils":14,"../utils/utils":16,"jquery":1}],7:[function(require,module,exports){
+},{"../common":5,"../utils/svgutils":15,"../utils/utils":17,"jquery":1}],8:[function(require,module,exports){
 Object.defineProperty(exports, "__esModule", { value: true });
 /**
  * Duplicate button event
@@ -19600,7 +19642,7 @@ function reverseYEvent(svgroot) {
 }
 exports.reverseYEvent = reverseYEvent;
 
-},{}],8:[function(require,module,exports){
+},{}],9:[function(require,module,exports){
 Object.defineProperty(exports, "__esModule", { value: true });
 var transformutils_1 = require("../utils/transformutils");
 var coordinateutils_1 = require("../utils/coordinateutils");
@@ -19920,7 +19962,7 @@ function handModeDestruct() {
 }
 exports.handModeDestruct = handModeDestruct;
 
-},{"../common":5,"../utils/affine":12,"../utils/coordinateutils":13,"../utils/svgutils":14,"../utils/transformutils":15,"../utils/utils":16,"jquery":1}],9:[function(require,module,exports){
+},{"../common":5,"../utils/affine":13,"../utils/coordinateutils":14,"../utils/svgutils":15,"../utils/transformutils":16,"../utils/utils":17,"jquery":1}],10:[function(require,module,exports){
 Object.defineProperty(exports, "__esModule", { value: true });
 var common_1 = require("../common");
 var utils_1 = require("../utils/utils");
@@ -19993,7 +20035,7 @@ function polygonModeDestruct() {
 }
 exports.polygonModeDestruct = polygonModeDestruct;
 
-},{"../common":5,"../utils/svgutils":14,"../utils/utils":16,"jquery":1}],10:[function(require,module,exports){
+},{"../common":5,"../utils/svgutils":15,"../utils/utils":17,"jquery":1}],11:[function(require,module,exports){
 Object.defineProperty(exports, "__esModule", { value: true });
 var common_1 = require("../common");
 var utils_1 = require("../utils/utils");
@@ -20065,55 +20107,77 @@ function rectangleModeDestruct() {
 }
 exports.rectangleModeDestruct = rectangleModeDestruct;
 
-},{"../common":5,"../utils/svgutils":14,"../utils/utils":16,"jquery":1}],11:[function(require,module,exports){
+},{"../common":5,"../utils/svgutils":15,"../utils/utils":17,"jquery":1}],12:[function(require,module,exports){
 Object.defineProperty(exports, "__esModule", { value: true });
 var common_1 = require("../common");
 var svgutils_1 = require("../utils/svgutils");
-// import * as SVG from "svgjs";
 var jQuery = require("jquery");
+var tags_1 = require("../gadget/tags");
 function textMode() {
-    var colorSample = common_1.editorRoot.defs().rect().fill("#666666");
-    common_1.refleshStyleAttribues(colorSample);
     var attributeElems = {
         text: document.getElementById("svgeditor-typicalproperties-text"),
+        font: document.getElementById("svgeditor-typicalproperties-fontfamily"),
         size: document.getElementById("svgeditor-typicalproperties-fontsize")
     };
+    tags_1.addValueOfTags(attributeElems.font, "Helvetica", "Arial", "sans-serif");
+    var sampleText = makeSampleText();
+    common_1.refleshStyleAttribues(sampleText);
     common_1.svgroot.node.onmousedown = function (ev) {
         ev.stopPropagation();
         var x = ev.clientX - common_1.svgroot.node.getBoundingClientRect().left;
         var y = ev.clientY - common_1.svgroot.node.getBoundingClientRect().top;
-        common_1.editorRoot.plain(attributeElems.text.value).move(x, y)
-            .attr("fill", svgutils_1.svgof(colorSample).getColor("fill").toHexString())
-            .attr("stroke", svgutils_1.svgof(colorSample).getColor("stroke").toHexString())
-            .attr("fill-opacity", svgutils_1.svgof(colorSample).getColorWithOpacity("fill").getAlpha())
-            .attr("stroke-opacity", svgutils_1.svgof(colorSample).getColorWithOpacity("stroke").getAlpha())
-            .attr("stroke-width", svgutils_1.svgof(colorSample).getStyleAttr("stroke-width"));
+        sampleText.clone().attr("id", undefined);
+    };
+    common_1.svgroot.node.onmousemove = function (ev) {
+        ev.stopPropagation();
+        var x = ev.clientX - common_1.svgroot.node.getBoundingClientRect().left;
+        var y = ev.clientY - common_1.svgroot.node.getBoundingClientRect().top;
+        sampleText.move(x, y);
     };
     // colorpicker event
     jQuery(function ($) {
         $(common_1.colorpickers.fill).off("change.spectrum");
         $(common_1.colorpickers.fill).on("change.spectrum", function (e, color) {
-            svgutils_1.svgof(colorSample).setColorWithOpacity("fill", color, "indivisual");
+            svgutils_1.svgof(sampleText).setColorWithOpacity("fill", color, "indivisual");
         });
         $(common_1.colorpickers.stroke).off("change.spectrum");
         $(common_1.colorpickers.stroke).on("change.spectrum", function (e, color) {
-            svgutils_1.svgof(colorSample).setColorWithOpacity("stroke", color, "indivisual");
+            svgutils_1.svgof(sampleText).setColorWithOpacity("stroke", color, "indivisual");
         });
     });
     // style attributes event
     common_1.svgStyleAttrs.strokewidth.oninput = function (e) {
-        svgutils_1.svgof(colorSample).setStyleAttr("stroke-width", common_1.svgStyleAttrs.strokewidth.value, "indivisual");
+        svgutils_1.svgof(sampleText).setStyleAttr("stroke-width", common_1.svgStyleAttrs.strokewidth.value, "indivisual");
+    };
+    attributeElems.text.onchange = function (ev) {
+        sampleText.plain(attributeElems.text.value);
+    };
+    attributeElems.font.onchange = function (ev) {
+        sampleText.attr("font-family", tags_1.getValueOfTags(attributeElems.font).map(function (t) { return "'" + t + "'"; }).join(" "));
+    };
+    attributeElems.size.onchange = function (ev) {
+        sampleText.attr("font-size", attributeElems.size.value);
     };
     common_1.displayOn(document.getElementById("svgeditor-typicalproperties-textmode"));
+    function makeSampleText() {
+        return common_1.editorRoot.plain(attributeElems.text.value)
+            .attr("font-family", tags_1.getValueOfTags(attributeElems.font).map(function (t) { return "'" + t + "'"; }).join(" "))
+            .attr("fill", "#663300")
+            .attr("font-size", 12)
+            .id("svgeditor-sampletext");
+    }
 }
 exports.textMode = textMode;
 function textModeDestruct() {
+    var sampleText = document.getElementById("svgeditor-sampletext");
+    if (sampleText)
+        sampleText.remove();
     common_1.displayOff(document.getElementById("svgeditor-typicalproperties-textmode"));
     document.onmousedown = function () { return undefined; };
 }
 exports.textModeDestruct = textModeDestruct;
 
-},{"../common":5,"../utils/svgutils":14,"jquery":1}],12:[function(require,module,exports){
+},{"../common":5,"../gadget/tags":6,"../utils/svgutils":15,"jquery":1}],13:[function(require,module,exports){
 var __extends = (this && this.__extends) || (function () {
     var extendStatics = Object.setPrototypeOf ||
         ({ __proto__: [] } instanceof Array && function (d, b) { d.__proto__ = b; }) ||
@@ -20195,7 +20259,7 @@ var Affine = /** @class */ (function (_super) {
 }(Matrix3));
 exports.Affine = Affine;
 
-},{"./utils":16}],13:[function(require,module,exports){
+},{"./utils":17}],14:[function(require,module,exports){
 Object.defineProperty(exports, "__esModule", { value: true });
 var utils_1 = require("./utils");
 /**
@@ -20229,7 +20293,7 @@ function scale(o, from, to) {
 }
 exports.scale = scale;
 
-},{"./utils":16}],14:[function(require,module,exports){
+},{"./utils":17}],15:[function(require,module,exports){
 Object.defineProperty(exports, "__esModule", { value: true });
 var utils_1 = require("./utils");
 var transformutils_1 = require("./transformutils");
@@ -20382,7 +20446,7 @@ function svgof(elem) {
 }
 exports.svgof = svgof;
 
-},{"./transformutils":15,"./utils":16,"tinycolor2":4}],15:[function(require,module,exports){
+},{"./transformutils":16,"./utils":17,"tinycolor2":4}],16:[function(require,module,exports){
 Object.defineProperty(exports, "__esModule", { value: true });
 var utils_1 = require("./utils");
 var affine_1 = require("./affine");
@@ -20522,7 +20586,7 @@ function getFixed(transformFns, target) {
 }
 exports.getFixed = getFixed;
 
-},{"./affine":12,"./utils":16}],16:[function(require,module,exports){
+},{"./affine":13,"./utils":17}],17:[function(require,module,exports){
 Object.defineProperty(exports, "__esModule", { value: true });
 var Point = /** @class */ (function () {
     function Point(x, y) {
