@@ -568,3 +568,9 @@ See http://bgrins.github.io/spectrum/themes/ for instructions.
   background: none;
   color: var(--svgeditor-color-text);
 }
+
+.svgeditor-tags-item {
+  width: 50px;
+  background: var(--svgeditor-color-bg-light2);
+  color: var(--svgeditor-color-text);
+}
