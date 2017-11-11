@@ -91,10 +91,13 @@ export let svgStyleAttrs = {
  */
 export function refleshStyleAttribues(target: SVG.Element): void {
   jQuery($ => {
-    (<any>$(colorpickers.fill)).spectrum("set", svgof(target).getColorWithOpacity("fill").toRgbString());
-    (<any>$(colorpickers.stroke)).spectrum("set", svgof(target).getColorWithOpacity("stroke").toRgbString());
+    let fill = svgof(target).getColorWithOpacity("fill");
+    let stroke = svgof(target).getColorWithOpacity("stroke");
+    (<any>$(colorpickers.fill)).spectrum("set", fill ? fill.toRgbString() : undefined);
+    (<any>$(colorpickers.stroke)).spectrum("set", stroke ? stroke.toRgbString() : undefined);
   });
-  svgStyleAttrs.strokewidth.value = svgof(target).getStyleAttr("stroke-width");
+  let strokewidth = svgof(target).getStyleAttr("stroke-width");
+  if (strokewidth) svgStyleAttrs.strokewidth.value = strokewidth;
 }
 
 // create color-pickers (not event)

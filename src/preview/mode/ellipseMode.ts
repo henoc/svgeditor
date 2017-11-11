@@ -1,6 +1,7 @@
 import { svgroot, editorRoot, reflection, refleshStyleAttribues, colorpickers, svgStyleAttrs } from "../common";
-import { Point } from "../utils/utils";
+import { Point, withDefault } from "../utils/utils";
 import { svgof } from "../utils/svgjs/svgutils";
+import { noneColor } from "../utils/tinycolorutils";
 import * as SVG from "svgjs";
 import * as jQuery from "jquery";
 
@@ -25,10 +26,10 @@ export function ellipseMode() {
     let y = ev.clientY - svgroot.node.getBoundingClientRect().top;
     ellipse = {
       elem: editorRoot.ellipse(0, 0).center(x, y)
-        .attr("fill", svgof(colorSample).getColor("fill").toHexString())
-        .attr("stroke", svgof(colorSample).getColor("stroke").toHexString())
-        .attr("fill-opacity", svgof(colorSample).getColorWithOpacity("fill").getAlpha())
-        .attr("stroke-opacity", svgof(colorSample).getColorWithOpacity("stroke").getAlpha())
+        .attr("fill", withDefault(svgof(colorSample).getColor("fill"), noneColor).toHexString())
+        .attr("stroke", withDefault(svgof(colorSample).getColor("stroke"), noneColor).toHexString())
+        .attr("fill-opacity", withDefault(svgof(colorSample).getColorWithOpacity("fill"), noneColor).getAlpha())
+        .attr("stroke-opacity", withDefault(svgof(colorSample).getColorWithOpacity("stroke"), noneColor).getAlpha())
         .attr("stroke-width", svgof(colorSample).getStyleAttr("stroke-width")),
       start: Point.of(x, y),
       end: Point.of(x, y)
