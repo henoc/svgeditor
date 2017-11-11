@@ -10,6 +10,7 @@ import {duplicateEvent, forwardEvent, backwardEvent, reverseXEvent, reverseYEven
 
 import * as SVG from "svgjs";
 import * as jQuery from "jquery";
+import { setTags } from "./gadget/tags";
 require("spectrum-colorpicker");
 let tinycolor: tinycolor = require("tinycolor2");
 
@@ -107,6 +108,12 @@ jQuery($ => {
     allowEmpty: true
   });
 });
+
+let elems = document.getElementsByClassName("svgeditor-tags");
+for (let i = 0; i < elems.length; i++) {
+  let elem = elems[i];
+  setTags(<HTMLInputElement>elem);
+}
 
 // set initial mode
 handMode();
