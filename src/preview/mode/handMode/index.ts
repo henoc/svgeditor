@@ -1,59 +1,26 @@
-import { TransformFn } from "../utils/transformAttributes/transformutils";
-import { matrixof, unitMatrix } from "../utils/svgjs/matrixutils";
-import { scale } from "../utils/coordinateutils";
-import { editorRoot, svgroot, reflection, colorpickers, svgStyleAttrs, textcolor, bgcolor, refleshStyleAttribues } from "../common";
-import { svgof } from "../utils/svgjs/svgutils";
-import { Point, withDefault, reverse, equals } from "../utils/utils";
-import { Affine } from "../utils/affineTransform/affine";
-
+import { TransformFn } from "../../utils/transformAttributes/transformutils";
+import { matrixof, unitMatrix } from "../../utils/svgjs/matrixutils";
+import { scale } from "../../utils/coordinateutils";
+import { editorRoot, svgroot, reflection, colorpickers, svgStyleAttrs, textcolor, bgcolor, refleshStyleAttribues } from "../../common";
+import { svgof } from "../../utils/svgjs/svgutils";
+import { Point, withDefault, reverse, equals } from "../../utils/utils";
+import { Affine } from "../../utils/affineTransform/affine";
 import * as SVG from "svgjs";
 import * as jQuery from "jquery";
-import { FixedTransformAttr, makeMatrix } from "../utils/transformAttributes/fixdedTransformAttributes";
+import { FixedTransformAttr, makeMatrix } from "../../utils/transformAttributes/fixdedTransformAttributes";
+import { DragTarget, TargetRotate } from "./dragTargetTypes";
+import { setScaleVertexes, setRotateVertex, updateScaleVertexes, updateRotateVertex } from "./setVertexes";
+
+export type RotateVertex = { vertex: SVG.Element | undefined };
 
 export function handMode() {
 
   let expandVertexesGroup = editorRoot.group().addClass("svgeditor-expandVertexes");
-  let rotateVertex: SVG.Element | undefined = undefined;
+  let rotateVertex: RotateVertex = { vertex: undefined };
 
   type DragMode = "free" | "vertical" | "horizontal";
 
-  let dragTarget: {
-    kind: "main"
-    main: SVG.Element;
-    vertexes: SVG.Element[];
-    fromCursor: Point;
-    initialScheme: {
-      center: Point,
-      size: Point,
-      fixedTransform: FixedTransformAttr;
-    };
-  } | {
-    kind: "vertex"
-    main: SVG.Element;
-    vertex: SVG.Element;
-    vertexes: SVG.Element[];
-    fromCursor: Point;
-    scaleCenter: SVG.Element;
-    initialVertexPos: Point;
-    initialScheme: {
-      center: Point,
-      size: Point,
-      fixedTransform: FixedTransformAttr;
-      fontSize?: number;
-    };
-  } | {
-    kind: "rotate";
-    main: SVG.Element;
-    vertex: SVG.Element;
-    vertexes: SVG.Element[];
-    fromCursor: Point;
-    initialVertexPos: Point;
-    initialScheme: {
-      fixedTransform: FixedTransformAttr;
-    }
-  } | {
-    kind: "none"
-  } = { kind: "none" };
+  let dragTarget: DragTarget = { kind: "none" };
 
   let handTarget: undefined | SVG.Element = undefined;
 
@@ -62,30 +29,18 @@ export function handMode() {
     dragTarget = { kind: "none" };
     handTarget = undefined;
     expandVertexesGroup.children().forEach(elem => elem.remove());
-    if (rotateVertex) rotateVertex.remove();
-    rotateVertex = undefined;
+    if (rotateVertex.vertex) rotateVertex.vertex.remove();
+    rotateVertex = { vertex: undefined };
   };
 
   svgroot.node.onmouseup = (ev) => {
     // 変更されたHTML（のSVG部分）をエディタに反映させる
-    if (dragTarget) handModeReflection();
+    if (dragTarget) handModeReflection(expandVertexesGroup, rotateVertex);
     // 関連する頂点を再設置
-    updateScaleVertexes();
-    updateRotateVertex();
+    updateScaleVertexes(dragTarget);
+    updateRotateVertex(dragTarget, rotateVertex);
     dragTarget = { kind: "none" };
   };
-
-  function handModeReflection() {
-    reflection(
-      () => {
-        expandVertexesGroup.remove();
-        if (rotateVertex) rotateVertex.remove();
-      },
-      () => {
-        svgroot.add(expandVertexesGroup);
-        if (rotateVertex) svgroot.add(rotateVertex);
-      });
-  }
 
   const moveElems: SVG.Element[] = [];
 
@@ -111,7 +66,7 @@ export function handMode() {
           }
         };
         expandVertexesGroup.clear();
-        setScaleVertexes();
+        setScaleVertexes(dragTarget, expandVertexesGroup);
         // 頂点が設定されたのでイベントを追加する
         expandVertexesGroup.children().forEach(elem => {
           let reverseVertex = expandVertexesGroup.children().find(t => equals(
@@ -120,9 +75,9 @@ export function handMode() {
           ))!;
           elem.node.onmousedown = (ev) => vertexMousedown(ev, moveElem, elem, expandVertexesGroup.children(), reverseVertex);
         });
-        if (rotateVertex) rotateVertex.remove();
-        setRotateVertex();
-        rotateVertex!.node.onmousedown = (ev) => rotateVertexMousedown(ev, moveElem);
+        if (rotateVertex.vertex) rotateVertex.vertex.remove();
+        setRotateVertex(dragTarget, rotateVertex, svgroot);
+        rotateVertex.vertex!.node.onmousedown = (ev) => rotateVertexMousedown(ev, moveElem);
         // handTargetのclassがすでにあったら消す
         svgroot.select(".svgeditor-handtarget").each((i, elems) => {
           svgof(elems[i]).removeClass("svgeditor-handtarget");
@@ -219,113 +174,17 @@ export function handMode() {
     ev.stopPropagation();
 
     if (dragTarget.kind === "none") {
-      dragTarget = {
+      dragTarget = <TargetRotate>{
         kind: "rotate",
         main: main,
-        vertex: rotateVertex!,
+        vertex: rotateVertex.vertex!,
         vertexes: expandVertexesGroup.children(),
-        fromCursor: svgof(rotateVertex!).getCenter().sub(Point.of(ev.clientX, ev.clientY)),
-        initialVertexPos: svgof(rotateVertex!).getCenter(),
+        fromCursor: svgof(rotateVertex.vertex!).getCenter().sub(Point.of(ev.clientX, ev.clientY)),
+        initialVertexPos: svgof(rotateVertex.vertex!).getCenter(),
         initialScheme: {
           fixedTransform: svgof(main).getFixedTransformAttr()
         }
       };
-    }
-  }
-
-  function setScaleVertexes() {
-    if (dragTarget.kind === "main") {
-      let leftUp = svgof(dragTarget.main).getLeftUp();
-      let size = svgof(dragTarget.main).getBBoxSize();
-      let points: Point[] = [];
-      for (let i = 0; i <= 2; i++) {
-        for (let j = 0; j <= 2; j++) {
-          if (i === 1 && j === 1) continue;
-          let pos = Point.of(leftUp.x + size.x * j / 2, leftUp.y + size.y * i / 2);
-          points.push(pos);
-        }
-      }
-      let trattr = svgof(dragTarget.main).getFixedTransformAttr();
-      let matrix = trattr ? makeMatrix(trattr, true) : Affine.unit();
-      points = points.map(p => matrix.transform(p));
-
-      let ret: SVG.Element[] = [];
-      let k = 0;
-      for (let i = 0; i <= 2; i++) {
-        for (let j = 0; j <= 2; j++) {
-          if (i === 1 && j === 1) continue;
-          let dirs: string[] = [];
-          if (j === 0) dirs.push("left");
-          if (j === 2) dirs.push("right");
-          if (i === 0) dirs.push("up");
-          if (i === 2) dirs.push("down");
-          ret.push(expandVertexesGroup
-            .circle(10)
-            .center(points[k].x, points[k].y)
-            .stroke({ color: textcolor.toHexString(), width: 3 })
-            .fill({ color: bgcolor.toHexString() })
-            .attr("direction", dirs.join(" "))
-          );
-          k++;
-        }
-      }
-      dragTarget.vertexes = ret;
-    }
-  }
-
-  function updateScaleVertexes() {
-    if (dragTarget.kind !== "none") {
-      let leftUp = svgof(dragTarget.main).getLeftUp();
-      let size = svgof(dragTarget.main).getBBoxSize();
-      let points: Point[] = [];
-      for (let i = 0; i <= 2; i++) {
-        for (let j = 0; j <= 2; j++) {
-          if (i === 1 && j === 1) continue;
-          let pos = Point.of(leftUp.x + size.x * j / 2, leftUp.y + size.y * i / 2);
-          points.push(pos);
-        }
-      }
-      let trattr = svgof(dragTarget.main).getFixedTransformAttr();
-      let matrix = trattr ? makeMatrix(trattr, true) : Affine.unit();
-      points = points.map(p => matrix.transform(p));
-
-      let k = 0;
-      for (let i = 0; i <= 2; i++) {
-        for (let j = 0; j <= 2; j++) {
-          if (i === 1 && j === 1) continue;
-          dragTarget.vertexes[k].center(points[k].x, points[k].y);
-          k++;
-        }
-      }
-    }
-  }
-
-  function setRotateVertex() {
-    if (dragTarget.kind === "main") {
-      let leftUp = svgof(dragTarget.main).getLeftUp();
-      let size = svgof(dragTarget.main).getBBoxSize();
-      let rotateVertexPos = leftUp.addxy(size.x / 2, -size.y / 2);
-      let trattr = svgof(dragTarget.main).getFixedTransformAttr();
-      let matrix = trattr ? makeMatrix(trattr, true) : Affine.unit();
-      rotateVertexPos = matrix.transform(rotateVertexPos);
-      rotateVertex = svgroot
-        .circle(10)
-        .center(rotateVertexPos.x, rotateVertexPos.y)
-        .stroke({ color: textcolor.toHexString(), width: 3 })
-        .fill({ color: bgcolor.toHexString() })
-        .id("svgeditor-vertex-rotate");
-    }
-  }
-
-  function updateRotateVertex() {
-    if (dragTarget.kind !== "none") {
-      let leftUp = svgof(dragTarget.main).getLeftUp();
-      let size = svgof(dragTarget.main).getBBoxSize();
-      let rotateVertexPos = leftUp.addxy(size.x / 2, -size.y / 2);
-      let trattr = svgof(dragTarget.main).getFixedTransformAttr();
-      let matrix = trattr ? makeMatrix(trattr, true) : Affine.unit();
-      rotateVertexPos = matrix.transform(rotateVertexPos);
-      rotateVertex!.center(rotateVertexPos.x, rotateVertexPos.y);
     }
   }
 
@@ -335,14 +194,14 @@ export function handMode() {
     $(colorpickers.fill).on("change.spectrum", (e, color) => {
       if (handTarget) {
         svgof(handTarget).setColorWithOpacity("fill", color, "indivisual");
-        handModeReflection();
+        handModeReflection(expandVertexesGroup, rotateVertex);
       }
     });
     $(colorpickers.stroke).off("change.spectrum");
     $(colorpickers.stroke).on("change.spectrum", (e, color) => {
       if (handTarget) {
         svgof(handTarget).setColorWithOpacity("stroke", color, "indivisual");
-        handModeReflection();
+        handModeReflection(expandVertexesGroup, rotateVertex);
       }
     });
   });
@@ -350,8 +209,20 @@ export function handMode() {
   svgStyleAttrs.strokewidth.oninput = e => {
     let v = withDefault<string>(svgStyleAttrs.strokewidth.value, "0");
     if (handTarget) svgof(handTarget).setStyleAttr("stroke-width", String(v), "indivisual");
-    handModeReflection();
+    handModeReflection(expandVertexesGroup, rotateVertex);
   };
+}
+
+export function handModeReflection(expandVertexesGroup: SVG.G, rotateVertex: { vertex: SVG.Element | undefined }) {
+  reflection(
+    () => {
+      expandVertexesGroup.remove();
+      if (rotateVertex.vertex) rotateVertex.vertex.remove();
+    },
+    () => {
+      svgroot.add(expandVertexesGroup);
+      if (rotateVertex.vertex) svgroot.add(rotateVertex.vertex);
+    });
 }
 
 export function handModeDestruct() {
