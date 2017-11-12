@@ -4,7 +4,8 @@ import { svgof } from "../../utils/svgjs/svgutils";
 import * as SVG from "svgjs";
 import * as jQuery from "jquery";
 import { noneColor } from "../../utils/tinycolorutils";
-import { Path } from "./pathTypes";
+import { Path, C } from "./pathTypes";
+import { symmetryPoint } from "../../utils/coordinateutils";
 
 export function bezierMode() {
 
@@ -12,7 +13,7 @@ export function bezierMode() {
     elem: SVG.Path
     points: Path;
     sBegin: Point;
-    sLast: Point;
+    sEnd: Point;
   } = undefined;
 
   // about color-picker
@@ -21,8 +22,16 @@ export function bezierMode() {
 
   let enclosureCheckbox = <HTMLInputElement>document.getElementById("svgeditor-typicalproperties-pathz")!;
 
+  let rightClicked = false;
+
+  // 終点
   svgroot.node.onmousedown = (ev: MouseEvent) => {
     ev.stopPropagation();
+
+    if (rightClicked) {
+      rightClicked = false;
+      return;
+    }
 
     let x = ev.clientX - svgroot.node.getBoundingClientRect().left;
     let y = ev.clientY - svgroot.node.getBoundingClientRect().top;
@@ -37,11 +46,12 @@ export function bezierMode() {
         }),
         points: [["M", x, y]],
         sBegin: Point.of(x, y),
-        sLast: Point.of(x, y)
+        sEnd: Point.of(x, y)
       };
+    } else {
+      path.points.push(["C", path.sBegin.x, path.sBegin.y, x, y, x, y]);
     }
     path.elem.plot(path.points);
-    path.sBegin = Point.of(x, y);
 
     svgroot.node.onmousemove = mouseDownMoveEvent;
   };
@@ -53,8 +63,9 @@ export function bezierMode() {
       let x = ev.clientX - svgroot.node.getBoundingClientRect().left;
       let y = ev.clientY - svgroot.node.getBoundingClientRect().top;
 
-      let currentPath = path.points.concat(["S", path.sBegin.x, path.sBegin.y, x, y]);
-      path.sLast = Point.of(x, y);
+      path.sBegin = Point.of(x, y);
+      updateLastC();
+      let currentPath = path.points.concat(["C", path.sBegin.x, path.sBegin.y, x, y, x, y]);
       path.elem.plot(currentPath);
     }
   }
@@ -66,11 +77,12 @@ export function bezierMode() {
       let x = ev.clientX - svgroot.node.getBoundingClientRect().left;
       let y = ev.clientY - svgroot.node.getBoundingClientRect().top;
 
-      let currentPath = path.points.concat(["S", x, y, x, y]);
+      let currentPath = path.points.concat(["C", path.sBegin.x, path.sBegin.y, x, y, x, y]);
       path.elem.plot(currentPath);
     }
   }
 
+  // 始点
   svgroot.node.onmouseup = (ev: MouseEvent) => {
     ev.stopPropagation();
 
@@ -78,23 +90,43 @@ export function bezierMode() {
       let x = ev.clientX - svgroot.node.getBoundingClientRect().left;
       let y = ev.clientY - svgroot.node.getBoundingClientRect().top;
 
-      path.points.push(["S", path.sBegin.x, path.sBegin.y, x, y]);
+      path.sBegin = Point.of(x, y);
+      updateLastC();
       path.elem.plot(path.points);
     }
 
     svgroot.node.onmousemove = mouseUpMoveEvent;
   };
 
+  // 現在の始点の制御点に対して、始点に点対称な点を一つ前のCの終点の制御点とし、再代入する。
+  function updateLastC() {
+    if (path !== undefined) {
+      let last = path.points[path.points.length - 1];
+      if (last[0] === "C") {
+        let lastC = <C>path.points.pop()!;
+        let lastPoint = Point.of(lastC[5], lastC[6]);
+        path.sEnd = symmetryPoint(lastPoint, path.sBegin);
+        lastC[3] = path.sEnd.x;
+        lastC[4] = path.sEnd.y;
+        path.points.push(lastC);
+      }
+    }
+  }
+
   svgroot.node.oncontextmenu = (ev: MouseEvent) => {
     ev.stopPropagation();
 
     if (path) {
-      if (enclosureCheckbox.checked) {
-        path.elem.plot(path.points.concat(["Z"]));
+      path.points.pop();
+      if (enclosureCheckbox.checked && path.points.length > 1) {
+        path.points.push(["Z"]);
       }
+      path.elem.plot(path.points);
+      if (path.points.length === 1) path.elem.remove();     // 1ならMだけなので削除
       reflection();
     }
     path = undefined;
+    rightClicked = true;
   };
 
   // colorpicker event
