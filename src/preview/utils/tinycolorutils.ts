@@ -1,3 +1,5 @@
+let tinycolor: tinycolor = require("tinycolor2");
+
 interface AnyColor {
   toHexString: () => string;
   getAlpha: () => number | undefined;

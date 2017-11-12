@@ -31,3 +31,6 @@ export function scale(o: Point, from: Point, to: Point): Point {
   return ret;
 }
 
+export function symmetryPoint(center: Point, one: Point): Point {
+  return center.mul(Point.of(2, 2)).sub(one);
+}
