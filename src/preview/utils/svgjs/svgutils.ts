@@ -36,6 +36,11 @@ class SvgDeformer {
     this.elem.center(point.x, point.y);
   }
 
+  setCenterDelta(point: Point): void {
+    let old = this.getCenter();
+    this.setCenter(old.add(point));
+  }
+
   getLeftUp(): Point {
     return Point.of(this.elem.x(), this.elem.y());
   }
