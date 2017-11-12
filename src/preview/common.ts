@@ -158,11 +158,12 @@ function destructions() {
 // color settings
 let sampleTextElem = document.getElementById("svgeditor-styleattributes")!;
 let sampleStyle = window.getComputedStyle(sampleTextElem);
-export let bgcolor = tinycolor(sampleStyle.backgroundColor!);
 export let textcolor = tinycolor(sampleStyle.color!);
-document.documentElement.style.setProperty("--svgeditor-color-bg", bgcolor.toHexString());
-document.documentElement.style.setProperty("--svgeditor-color-bg-light", bgcolor.lighten(10).toHexString());
-document.documentElement.style.setProperty("--svgeditor-color-bg-light2", bgcolor.lighten(20).toHexString());
+export let bgcolor = textcolor.clone().setAlpha(0);  // 背景色が取れないので透明で代用
+document.documentElement.style.setProperty("--svgeditor-color-bg", bgcolor.toRgbString());
+document.documentElement.style.setProperty("--svgeditor-color-bg-light", bgcolor.clone().setAlpha(0.05).toRgbString());
+document.documentElement.style.setProperty("--svgeditor-color-bg-light2", bgcolor.clone().setAlpha(0.1).toRgbString());
+document.documentElement.style.setProperty("--svgeditor-color-bg-light3", bgcolor.clone().setAlpha(0.15).toRgbString());
 document.documentElement.style.setProperty("--svgeditor-color-text", textcolor.toHexString());
 
 // function button settings
