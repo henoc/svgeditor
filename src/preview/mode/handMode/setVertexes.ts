@@ -9,12 +9,8 @@ import { RotateVertex } from "./index";
 
 export function setRotateVertex(dragTarget: DragTarget, rotateVertex: RotateVertex, svgroot: SVG.Doc) {
   if (dragTarget.kind === "main") {
-    let leftUp = svgof(dragTarget.main).getLeftUp();
-    let size = svgof(dragTarget.main).getBBoxSize();
-    let rotateVertexPos = leftUp.addxy(size.x / 2, -size.y / 2);
-    let trattr = svgof(dragTarget.main).getFixedTransformAttr();
-    let matrix = trattr ? makeMatrix(trattr, true) : Affine.unit();
-    rotateVertexPos = matrix.transform(rotateVertexPos);
+    let rbox = dragTarget.main.rbox();
+    let rotateVertexPos = Point.of(rbox.x, rbox.y).addxy(rbox.w / 2, -rbox.h / 2);
     rotateVertex.vertex = svgroot
       .circle(10)
       .center(rotateVertexPos.x, rotateVertexPos.y)
@@ -26,19 +22,15 @@ export function setRotateVertex(dragTarget: DragTarget, rotateVertex: RotateVert
 
 export function setScaleVertexes(dragTarget: DragTarget, expandVertexesGroup: SVG.G) {
   if (dragTarget.kind === "main") {
-    let leftUp = svgof(dragTarget.main).getLeftUp();
-    let size = svgof(dragTarget.main).getBBoxSize();
+    let rbox = dragTarget.main.rbox();
     let points: Point[] = [];
     for (let i = 0; i <= 2; i++) {
       for (let j = 0; j <= 2; j++) {
         if (i === 1 && j === 1) continue;
-        let pos = Point.of(leftUp.x + size.x * j / 2, leftUp.y + size.y * i / 2);
+        let pos = Point.of(rbox.x + rbox.w * j / 2, rbox.y + rbox.h * i / 2);
         points.push(pos);
       }
     }
-    let trattr = svgof(dragTarget.main).getFixedTransformAttr();
-    let matrix = trattr ? makeMatrix(trattr, true) : Affine.unit();
-    points = points.map(p => matrix.transform(p));
 
     let ret: SVG.Element[] = [];
     let k = 0;
@@ -66,19 +58,15 @@ export function setScaleVertexes(dragTarget: DragTarget, expandVertexesGroup: SV
 
 export function updateScaleVertexes(dragTarget: DragTarget) {
   if (dragTarget.kind !== "none") {
-    let leftUp = svgof(dragTarget.main).getLeftUp();
-    let size = svgof(dragTarget.main).getBBoxSize();
+    let rbox = dragTarget.main.rbox();
     let points: Point[] = [];
     for (let i = 0; i <= 2; i++) {
       for (let j = 0; j <= 2; j++) {
         if (i === 1 && j === 1) continue;
-        let pos = Point.of(leftUp.x + size.x * j / 2, leftUp.y + size.y * i / 2);
+        let pos = Point.of(rbox.x + rbox.w * j / 2, rbox.y + rbox.h * i / 2);
         points.push(pos);
       }
     }
-    let trattr = svgof(dragTarget.main).getFixedTransformAttr();
-    let matrix = trattr ? makeMatrix(trattr, true) : Affine.unit();
-    points = points.map(p => matrix.transform(p));
 
     let k = 0;
     for (let i = 0; i <= 2; i++) {
@@ -93,12 +81,8 @@ export function updateScaleVertexes(dragTarget: DragTarget) {
 
 export function updateRotateVertex(dragTarget: DragTarget, rotateVertex: RotateVertex) {
   if (dragTarget.kind !== "none") {
-    let leftUp = svgof(dragTarget.main).getLeftUp();
-    let size = svgof(dragTarget.main).getBBoxSize();
-    let rotateVertexPos = leftUp.addxy(size.x / 2, -size.y / 2);
-    let trattr = svgof(dragTarget.main).getFixedTransformAttr();
-    let matrix = trattr ? makeMatrix(trattr, true) : Affine.unit();
-    rotateVertexPos = matrix.transform(rotateVertexPos);
+    let rbox = dragTarget.main.rbox();
+    let rotateVertexPos = Point.of(rbox.x, rbox.y).addxy(rbox.w / 2, -rbox.h / 2);
     rotateVertex.vertex!.center(rotateVertexPos.x, rotateVertexPos.y);
   }
 }
