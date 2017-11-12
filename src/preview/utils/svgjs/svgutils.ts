@@ -59,7 +59,7 @@ class SvgDeformer {
 
   getColor(fillOrStroke: "fill" | "stroke"): tinycolorInstance | undefined {
     let styleAttr = this.getStyleAttr(fillOrStroke);
-    return styleAttr ? tinycolor(styleAttr) : undefined;
+    return (styleAttr !== undefined && styleAttr !== "none") ? tinycolor(styleAttr) : undefined;
   }
 
   getColorWithOpacity(fillOrStroke: "fill" | "stroke"): tinycolorInstance | undefined {

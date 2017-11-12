@@ -7,6 +7,7 @@ import {ellipseMode, ellipseModeDestruct} from "./mode/ellipseMode";
 import {polygonMode, polygonModeDestruct} from "./mode/polygonMode";
 import {textMode, textModeDestruct} from "./mode/textMode";
 import {duplicateEvent, forwardEvent, backwardEvent, reverseXEvent, reverseYEvent} from "./mode/functionButtons";
+import {bezierModeDestruct, bezierMode} from "./mode/bezierMode/bezierMode";
 
 import * as SVG from "svgjs";
 import * as jQuery from "jquery";
@@ -147,12 +148,18 @@ document.getElementById("svgeditor-mode-text")!.onclick = (ev: MouseEvent) => {
   textMode();
 };
 
+document.getElementById("svgeditor-mode-bezier")!.onclick = (ev: MouseEvent) => {
+  destructions();
+  bezierMode();
+};
+
 function destructions() {
   handModeDestruct();
   polygonModeDestruct();
   textModeDestruct();
   rectangleModeDestruct();
   ellipseModeDestruct();
+  bezierModeDestruct();
 }
 
 // color settings
