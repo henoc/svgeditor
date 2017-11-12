@@ -6,19 +6,19 @@ export type DragTarget = TargetMain | TargetVertex | TargetRotate | TargetNone;
 
 export interface TargetMain  {
   kind: "main";
-  main: SVG.Element;
+  main: SVG.Element[];
   vertexes: SVG.Element[];
   fromCursor: Point;
   initialScheme: {
     center: Point,
     size: Point,
-    fixedTransform: FixedTransformAttr;
+    fixedTransform: FixedTransformAttr[];
   };
 }
 
 export interface TargetVertex {
   kind: "vertex";
-  main: SVG.Element;
+  main: SVG.Element[];
   vertex: SVG.Element;
   vertexes: SVG.Element[];
   fromCursor: Point;
@@ -27,20 +27,20 @@ export interface TargetVertex {
   initialScheme: {
     center: Point,
     size: Point,
-    fixedTransform: FixedTransformAttr;
+    fixedTransform: FixedTransformAttr[];
     fontSize?: number;
   };
 }
 
 export interface TargetRotate {
   kind: "rotate";
-  main: SVG.Element;
+  main: SVG.Element[];
   vertex: SVG.Element;
   vertexes: SVG.Element[];
   fromCursor: Point;
   initialVertexPos: Point;
   initialScheme: {
-    fixedTransform: FixedTransformAttr;
+    fixedTransform: FixedTransformAttr[];
   };
 }
 

@@ -53,10 +53,6 @@ class SvgDeformer {
     return Point.of(this.elem.cx(), this.elem.cy());
   }
 
-  getBBoxSize(): Point {
-    return Point.of(this.elem.bbox().width, this.elem.bbox().height);
-  }
-
   expand(center: Point, scale: Point): void {
     this.elem.scale(scale.x, scale.y, center.x, center.y);
   }

@@ -6,10 +6,11 @@ import { Affine } from "../../utils/affineTransform/affine";
 import * as SVG from "svgjs";
 import { DragTarget } from "./dragTargetTypes";
 import { RotateVertex } from "./index";
+import { gplikeof } from "../../utils/svgjs/grouplikeutils";
 
 export function setRotateVertex(dragTarget: DragTarget, rotateVertex: RotateVertex, svgroot: SVG.Doc) {
   if (dragTarget.kind === "main") {
-    let rbox = dragTarget.main.rbox();
+    let rbox = gplikeof(dragTarget.main).getBox();
     let rotateVertexPos = Point.of(rbox.x, rbox.y).addxy(rbox.w / 2, -rbox.h / 2);
     rotateVertex.vertex = svgroot
       .circle(10)
@@ -22,7 +23,7 @@ export function setRotateVertex(dragTarget: DragTarget, rotateVertex: RotateVert
 
 export function setScaleVertexes(dragTarget: DragTarget, expandVertexesGroup: SVG.G) {
   if (dragTarget.kind === "main") {
-    let rbox = dragTarget.main.rbox();
+    let rbox = gplikeof(dragTarget.main).getBox();
     let points: Point[] = [];
     for (let i = 0; i <= 2; i++) {
       for (let j = 0; j <= 2; j++) {
@@ -58,7 +59,7 @@ export function setScaleVertexes(dragTarget: DragTarget, expandVertexesGroup: SV
 
 export function updateScaleVertexes(dragTarget: DragTarget) {
   if (dragTarget.kind !== "none") {
-    let rbox = dragTarget.main.rbox();
+    let rbox = gplikeof(dragTarget.main).getBox();
     let points: Point[] = [];
     for (let i = 0; i <= 2; i++) {
       for (let j = 0; j <= 2; j++) {
@@ -81,7 +82,7 @@ export function updateScaleVertexes(dragTarget: DragTarget) {
 
 export function updateRotateVertex(dragTarget: DragTarget, rotateVertex: RotateVertex) {
   if (dragTarget.kind !== "none") {
-    let rbox = dragTarget.main.rbox();
+    let rbox = gplikeof(dragTarget.main).getBox();
     let rotateVertexPos = Point.of(rbox.x, rbox.y).addxy(rbox.w / 2, -rbox.h / 2);
     rotateVertex.vertex!.center(rotateVertexPos.x, rotateVertexPos.y);
   }

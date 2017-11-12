@@ -1,6 +1,7 @@
 import * as SVG from "svgjs";
-import { Point } from "../utils";
+import { Point, withDefault } from "../utils";
 import { svgof } from "./svgutils";
+import { FixedTransformAttr, getFixed } from "../transformAttributes/fixdedTransformAttributes";
 
 /**
  * Not a group, but behave as a group and have utility functions
@@ -11,9 +12,9 @@ class GroupLike {
   }
 
   private makeBox(): SVG.Box {
-    let box: SVG.Box = this.svgs[0].rbox();
+    let box: SVG.Box = this.svgs[0].bbox();
     for (let i = 1; i < this.svgs.length; i++) {
-      box = box.merge(this.svgs[i].rbox());
+      box = box.merge(this.svgs[i].bbox());
     }
     return box;
   }
@@ -43,8 +44,20 @@ class GroupLike {
       svg.height(svg.height() * ratio.y);
     });
   }
+
+  getBox(): SVG.Box {
+    return this.makeBox();
+  }
+
+  getFixedTransformAttr(): FixedTransformAttr[] {
+    return this.svgs.map(svg => svgof(svg).getFixedTransformAttr());
+  }
+
+  setFixedTransformAttr(attr: FixedTransformAttr[]) {
+    this.svgs.forEach((svg, i) => svgof(svg).setFixedTransformAttr(attr[i]));
+  }
 }
 
-export function gplikeof(...svgs: SVG.Element[]): GroupLike {
+export function gplikeof(svgs: SVG.Element[]): GroupLike {
   return new GroupLike(svgs);
 }
