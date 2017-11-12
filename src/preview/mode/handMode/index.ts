@@ -141,10 +141,13 @@ export function handMode() {
         if (dragMode === "horizontal") scaleRatio.y = 1;
         // scaleによる図形の中心と高さ幅
         let scaledMain = dragTarget.initialScheme.center.sub(scaleCenterPos).mul(scaleRatio).add(scaleCenterPos);
-        let scaledSize = dragTarget.initialScheme.size.mul(scaleRatio.abs2());
-        // 更新
-        gplikeof(dragTarget.main).setCenter(scaledMain);
-        gplikeof(dragTarget.main).setSize(scaledSize);
+        let scaledSize = dragTarget.initialScheme.size.mul(scaleRatio);
+        // 潰れるのを防ぐ
+        if (scaledSize.x > 0.5 && scaledSize.y > 0.5) {
+          // 更新
+          gplikeof(dragTarget.main).setCenter(scaledMain);
+          gplikeof(dragTarget.main).setSize(scaledSize);
+        }
       }
     } else if (dragTarget.kind === "rotate") {
       // 回転
