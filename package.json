@@ -70,7 +70,8 @@
     "jquery": "^3.2.1",
     "spectrum-colorpicker": "^1.8.0",
     "svgjs": "^2.6.2",
-    "tinycolor2": "^1.4.1"
+    "tinycolor2": "^1.4.1",
+    "yaparsec": "^1.0.5"
   },
   "style": [
     "./node_modules/spectrum-colorpicker/spectrum.css",

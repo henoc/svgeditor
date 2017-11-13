@@ -8,6 +8,7 @@ import {polygonMode, polygonModeDestruct} from "./mode/polygonMode";
 import {textMode, textModeDestruct} from "./mode/textMode";
 import {duplicateEvent, forwardEvent, backwardEvent, reverseXEvent, reverseYEvent, deleteEvent} from "./mode/functionButtons";
 import {bezierModeDestruct, bezierMode} from "./mode/bezierMode/bezierMode";
+import {nodeModeDestruct, nodeMode} from "./mode/nodeMode";
 
 import * as SVG from "svgjs";
 import * as jQuery from "jquery";
@@ -132,6 +133,11 @@ document.getElementById("svgeditor-mode-hand")!.onclick = (ev: MouseEvent) => {
   handMode();
 };
 
+document.getElementById("svgeditor-mode-node")!.onclick = (ev: MouseEvent) => {
+  destructions();
+  nodeMode();
+};
+
 document.getElementById("svgeditor-mode-rectangle")!.onclick = (ev: MouseEvent) => {
   destructions();
   rectangleMode();
@@ -164,6 +170,7 @@ function destructions() {
   rectangleModeDestruct();
   ellipseModeDestruct();
   bezierModeDestruct();
+  nodeModeDestruct();
 }
 
 // color settings
@@ -171,6 +178,7 @@ let sampleTextElem = document.getElementById("svgeditor-styleattributes")!;
 let sampleStyle = window.getComputedStyle(sampleTextElem);
 export let textcolor = tinycolor(sampleStyle.color!);
 export let bgcolor = textcolor.clone().setAlpha(0);  // 背景色が取れないので透明で代用
+export let textcolorDarken = textcolor.isDark() ? textcolor.clone().brighten(30) : textcolor.clone().darken(30);
 document.documentElement.style.setProperty("--svgeditor-color-bg", bgcolor.toRgbString());
 document.documentElement.style.setProperty("--svgeditor-color-bg-light", bgcolor.clone().setAlpha(0.05).toRgbString());
 document.documentElement.style.setProperty("--svgeditor-color-bg-light2", bgcolor.clone().setAlpha(0.1).toRgbString());
