@@ -11,6 +11,13 @@ export function duplicateEvent(svgroot: SVG.Doc) {
   });
 }
 
+export function deleteEvent(svgroot: SVG.Doc) {
+  let targets = svgroot.select(".svgeditor-handtarget");
+  targets.each((i, elems) => {
+    elems[i].remove();
+  });
+}
+
 export function forwardEvent(svgroot: SVG.Doc) {
   let targets = svgroot.select(".svgeditor-handtarget");
   targets.each((i, elems) => {

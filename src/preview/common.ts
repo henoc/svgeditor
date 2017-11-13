@@ -6,7 +6,7 @@ import {rectangleMode, rectangleModeDestruct} from "./mode/rectangleMode";
 import {ellipseMode, ellipseModeDestruct} from "./mode/ellipseMode";
 import {polygonMode, polygonModeDestruct} from "./mode/polygonMode";
 import {textMode, textModeDestruct} from "./mode/textMode";
-import {duplicateEvent, forwardEvent, backwardEvent, reverseXEvent, reverseYEvent} from "./mode/functionButtons";
+import {duplicateEvent, forwardEvent, backwardEvent, reverseXEvent, reverseYEvent, deleteEvent} from "./mode/functionButtons";
 import {bezierModeDestruct, bezierMode} from "./mode/bezierMode/bezierMode";
 
 import * as SVG from "svgjs";
@@ -176,6 +176,12 @@ document.documentElement.style.setProperty("--svgeditor-color-text", textcolor.t
 // function button settings
 document.getElementById("svgeditor-function-duplicate")!.onclick = (ev: MouseEvent) => {
   duplicateEvent(svgroot);
+  destructions();
+  handMode();
+};
+
+document.getElementById("svgeditor-function-delete")!.onclick = (ev: MouseEvent) => {
+  deleteEvent(svgroot);
   destructions();
   handMode();
 };

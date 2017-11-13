@@ -13,6 +13,7 @@
     </p>
     <p>
       <button type="button" name="duplicate" id="svgeditor-function-duplicate" class="svgeditor-button">duplicate</button>
+      <button type="button" name="delete" id="svgeditor-function-delete" class="svgeditor-button">delete</button>      
       <button type="button" name="forward" id="svgeditor-function-forward" class="svgeditor-button">forward</button>
       <button type="button" name="backward" id="svgeditor-function-backward" class="svgeditor-button">backward</button>
       <button type="button" name="reverse-x" id="svgeditor-function-reverse-x" class="svgeditor-button">reverse-x</button>
@@ -37,6 +38,9 @@
         text: <input type="text" id="svgeditor-typicalproperties-text" value="text" class="svgeditor-input-long"> font-family: <input type="text" id="svgeditor-typicalproperties-fontfamily" class="svgeditor-tags svgeditor-input-middle"> font-size: <input type="number" id="svgeditor-typicalproperties-fontsize" value="12" class="svgeditor-input">
       </div>
     </div>
+  </div>
+  <div id="svgeditor-contextmenu" style="display: none">
+    delete
   </div>
   <script type="text/javascript">
     <%- js %>

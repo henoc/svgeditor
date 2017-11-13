@@ -11,6 +11,7 @@ import { FixedTransformAttr, makeMatrix } from "../../utils/transformAttributes/
 import { DragTarget, TargetRotate } from "./dragTargetTypes";
 import { setScaleVertexes, setRotateVertex, updateScaleVertexes, updateRotateVertex } from "./setVertexes";
 import { gplikeof } from "../../utils/svgjs/grouplikeutils";
+import { displayContextmenu } from "./contextmenu";
 
 export type RotateVertex = { vertex: SVG.Element | undefined };
 
@@ -25,6 +26,8 @@ export function handMode() {
 
   let handTarget: undefined | SVG.Element[] = undefined;
 
+  let rightClicked = false;
+
   svgroot.node.onmousedown = (ev) => {
     // 選択解除
     dragTarget = { kind: "none" };
@@ -32,6 +35,7 @@ export function handMode() {
     expandVertexesGroup.children().forEach(elem => elem.remove());
     if (rotateVertex.vertex) rotateVertex.vertex.remove();
     rotateVertex = { vertex: undefined };
+    displayContextmenu(ev, false);
   };
 
   svgroot.node.onmouseup = (ev) => {
@@ -54,46 +58,51 @@ export function handMode() {
     moveElem.node.onmousedown = (ev: MouseEvent) => {
       ev.stopPropagation();
 
-      if (dragTarget.kind === "none") {
-        let main: SVG.Element[] = [moveElem];
-        let hands = withDefault(handTarget, []);
-        if (ev.shiftKey || (hands.indexOf(moveElem) !== -1)) {
-          for (let h of hands) {
-            if (h === moveElem) continue;
-            main.push(h);
+      if (ev.button === 0) {
+        displayContextmenu(ev, false);
+        if (dragTarget.kind === "none") {
+          let main: SVG.Element[] = [moveElem];
+          let hands = withDefault(handTarget, []);
+          if (ev.shiftKey || (hands.indexOf(moveElem) !== -1)) {
+            for (let h of hands) {
+              if (h === moveElem) continue;
+              main.push(h);
+            }
           }
+          dragTarget = {
+            kind: "main",
+            main: main,
+            vertexes: [],
+            fromCursor: gplikeof(main).getCenter().sub(Point.of(ev.clientX, ev.clientY)),
+            initialScheme: {
+              center: gplikeof(main).getCenter(),
+              size: gplikeof(main).getSize(),
+              fixedTransform: gplikeof(main).getFixedTransformAttr()
+            }
+          };
+          expandVertexesGroup.clear();
+          setScaleVertexes(dragTarget, expandVertexesGroup);
+          // 頂点が設定されたのでイベントを追加する
+          expandVertexesGroup.children().forEach(elem => {
+            let reverseVertex = expandVertexesGroup.children().find(t => equals(
+              svgof(t).geta("direction")!.split(" "),
+              svgof(elem).geta("direction")!.split(" ").map(dir => reverse(<any>dir))
+            ))!;
+            elem.node.onmousedown = (ev) => vertexMousedown(ev, main, elem, expandVertexesGroup.children(), reverseVertex);
+          });
+          if (rotateVertex.vertex) rotateVertex.vertex.remove();
+          setRotateVertex(dragTarget, rotateVertex, svgroot);
+          rotateVertex.vertex!.node.onmousedown = (ev) => rotateVertexMousedown(ev, main);
+          // handTargetのclassがすでにあったら消す
+          svgroot.select(".svgeditor-handtarget").each((i, elems) => {
+            svgof(elems[i]).removeClass("svgeditor-handtarget");
+          });
+          handTarget = main;
+          handTarget.forEach(target => target.addClass("svgeditor-handtarget"));
+          refleshStyleAttribues(main[0]);
         }
-        dragTarget = {
-          kind: "main",
-          main: main,
-          vertexes: [],
-          fromCursor: gplikeof(main).getCenter().sub(Point.of(ev.clientX, ev.clientY)),
-          initialScheme: {
-            center: gplikeof(main).getCenter(),
-            size: gplikeof(main).getSize(),
-            fixedTransform: gplikeof(main).getFixedTransformAttr()
-          }
-        };
-        expandVertexesGroup.clear();
-        setScaleVertexes(dragTarget, expandVertexesGroup);
-        // 頂点が設定されたのでイベントを追加する
-        expandVertexesGroup.children().forEach(elem => {
-          let reverseVertex = expandVertexesGroup.children().find(t => equals(
-            svgof(t).geta("direction")!.split(" "),
-            svgof(elem).geta("direction")!.split(" ").map(dir => reverse(<any>dir))
-          ))!;
-          elem.node.onmousedown = (ev) => vertexMousedown(ev, main, elem, expandVertexesGroup.children(), reverseVertex);
-        });
-        if (rotateVertex.vertex) rotateVertex.vertex.remove();
-        setRotateVertex(dragTarget, rotateVertex, svgroot);
-        rotateVertex.vertex!.node.onmousedown = (ev) => rotateVertexMousedown(ev, main);
-        // handTargetのclassがすでにあったら消す
-        svgroot.select(".svgeditor-handtarget").each((i, elems) => {
-          svgof(elems[i]).removeClass("svgeditor-handtarget");
-        });
-        handTarget = main;
-        handTarget.forEach(target => target.addClass("svgeditor-handtarget"));
-        refleshStyleAttribues(main[0]);
+      } else if (ev.button === 2) {
+        displayContextmenu(ev, true);
       }
     };
   });
@@ -203,8 +212,8 @@ export function handMode() {
     }
   }
 
-  // colorpicker event
   jQuery($ => {
+    // colorpicker event
     $(colorpickers.fill).off("change.spectrum");
     $(colorpickers.fill).on("change.spectrum", (e, color) => {
       if (handTarget) {
