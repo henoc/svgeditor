@@ -41,6 +41,10 @@ export function activate(context: vscode.ExtensionContext) {
         js: js,
         css: css
       });
+      let logDir = path.join(__dirname, "..", "log");
+      if (!fs.existsSync(logDir)) {
+        fs.mkdirSync(logDir);
+      }
       fs.writeFileSync(path.join(__dirname, "..", "log", "log.html"), html);
       return html;
     }
