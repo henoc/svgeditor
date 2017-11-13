@@ -14,6 +14,7 @@ export function activate(context: vscode.ExtensionContext) {
   let insertJs = readResource("bundle.js");
   let insertCss = readResource("bundle.css");
   let viewer = readResource("viewer.ejs");
+  let templateSvg = readResource("template.svg");
 
   class TextDocumentContentProvider implements vscode.TextDocumentContentProvider {
     public editor: vscode.TextEditor | undefined;
@@ -68,6 +69,24 @@ export function activate(context: vscode.ExtensionContext) {
     });
   }));
 
+  disposables.push(vscode.commands.registerCommand("extension.newSvgEditor", () => {
+    return vscode.commands.executeCommand("workbench.action.files.newUntitledFile").then(
+      (success) => {
+        vscode.window.activeTextEditor.edit(editbuilder => {
+          editbuilder.insert(new vscode.Position(0, 0), templateSvg);
+        }).then(
+          (success) => {
+            vscode.commands.executeCommand("vscode.previewHtml", previewUri, vscode.ViewColumn.Two, "SVG Editor").then(
+            (success) => {
+              provider.update(previewUri);
+            },
+            showError);
+          },
+          showError);
+      },
+      showError);
+  }));
+
   context.subscriptions.push(...disposables);
 
   /**
@@ -88,4 +107,8 @@ function allRange(textEditor: vscode.TextEditor): vscode.Range {
                                    textEditor.document.lineCount - 1,
                                    lastLine.range.end.character);
   return textRange;
+}
+
+function showError(reason: any) {
+  vscode.window.showErrorMessage(reason);
 }

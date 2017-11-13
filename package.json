@@ -24,7 +24,8 @@
     "vscode": "^0.10.7"
   },
   "activationEvents": [
-    "onCommand:extension.openSvgEditor"
+    "onCommand:extension.openSvgEditor",
+    "onCommand:extension.newSvgEditor"
   ],
   "main": "./out/extension",
   "contributes": {
@@ -32,6 +33,10 @@
       {
         "command": "extension.openSvgEditor",
         "title": "Open SVG Editor"
+      },
+      {
+        "command": "extension.newSvgEditor",
+        "title": "New File with SVG Editor"
       }
     ],
     "menus": {

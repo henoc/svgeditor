@@ -27,7 +27,7 @@
     box-shadow: 0 0 2px var(--svgeditor-color-bg);
 }
 
-.svgeditor-property, #svgeditor-root {
+.svgeditor-property, svg {
   padding: 0.5em 1em;
   margin: 2em 0;
   border: dashed 2px var(--svgeditor-color-bg-light2);
