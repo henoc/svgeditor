@@ -12,6 +12,7 @@ import {bezierModeDestruct, bezierMode} from "./mode/bezierMode/bezierMode";
 import * as SVG from "svgjs";
 import * as jQuery from "jquery";
 import { setTags } from "./gadget/tags";
+import { ContextMenu } from "./gadget/contextmenu";
 require("spectrum-colorpicker");
 let tinycolor: tinycolor = require("tinycolor2");
 
@@ -118,6 +119,9 @@ for (let i = 0; i < elems.length; i++) {
   let elem = elems[i];
   setTags(<HTMLInputElement>elem);
 }
+
+// create contextmenu
+export let contextMenu = new ContextMenu(document.body);
 
 // set initial mode
 handMode();

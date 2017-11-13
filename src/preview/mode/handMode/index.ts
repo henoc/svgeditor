@@ -1,7 +1,7 @@
 import { TransformFn } from "../../utils/transformAttributes/transformutils";
 import { matrixof, unitMatrix } from "../../utils/svgjs/matrixutils";
 import { scale } from "../../utils/coordinateutils";
-import { editorRoot, svgroot, reflection, colorpickers, svgStyleAttrs, textcolor, bgcolor, refleshStyleAttribues } from "../../common";
+import { editorRoot, svgroot, reflection, colorpickers, svgStyleAttrs, textcolor, bgcolor, refleshStyleAttribues, contextMenu } from "../../common";
 import { svgof } from "../../utils/svgjs/svgutils";
 import { Point, withDefault, reverse, equals, zip } from "../../utils/utils";
 import { Affine } from "../../utils/affineTransform/affine";
@@ -11,7 +11,7 @@ import { FixedTransformAttr, makeMatrix } from "../../utils/transformAttributes/
 import { DragTarget, TargetRotate } from "./dragTargetTypes";
 import { setScaleVertexes, setRotateVertex, updateScaleVertexes, updateRotateVertex } from "./setVertexes";
 import { gplikeof } from "../../utils/svgjs/grouplikeutils";
-import { displayContextmenu } from "./contextmenu";
+import { deleteEvent } from "../functionButtons";
 
 export type RotateVertex = { vertex: SVG.Element | undefined };
 
@@ -35,7 +35,7 @@ export function handMode() {
     expandVertexesGroup.children().forEach(elem => elem.remove());
     if (rotateVertex.vertex) rotateVertex.vertex.remove();
     rotateVertex = { vertex: undefined };
-    displayContextmenu(ev, false);
+    contextMenu.display(ev, false);
   };
 
   svgroot.node.onmouseup = (ev) => {
@@ -59,7 +59,7 @@ export function handMode() {
       ev.stopPropagation();
 
       if (ev.button === 0) {
-        displayContextmenu(ev, false);
+        contextMenu.display(ev, false);
         if (dragTarget.kind === "none") {
           let main: SVG.Element[] = [moveElem];
           let hands = withDefault(handTarget, []);
@@ -102,7 +102,7 @@ export function handMode() {
           refleshStyleAttribues(main[0]);
         }
       } else if (ev.button === 2) {
-        displayContextmenu(ev, true);
+        contextMenu.display(ev, true);
       }
     };
   });
@@ -237,6 +237,15 @@ export function handMode() {
     }
     handModeReflection(expandVertexesGroup, rotateVertex);
   };
+
+  // 右クリックメニューの設定
+  contextMenu.addMenuOperators({
+    name: "delete",
+    callback: (ev) => {
+      deleteEvent(svgroot);
+      handModeReflection(expandVertexesGroup, rotateVertex);
+    }
+  });
 }
 
 export function handModeReflection(expandVertexesGroup: SVG.G, rotateVertex: { vertex: SVG.Element | undefined }) {
@@ -265,4 +274,5 @@ export function handModeDestruct() {
   });
   svgroot.node.onmouseup = () => undefined;
   svgroot.node.onmousemove = () => undefined;
+  contextMenu.clear();
 }
