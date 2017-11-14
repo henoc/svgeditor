@@ -14,17 +14,24 @@ import * as SVG from "svgjs";
 import * as jQuery from "jquery";
 import { setTags } from "./gadget/tags";
 import { ContextMenu } from "./gadget/contextmenu";
-import { withDefault } from "./utils/utils";
+import { withDefault, withDefault2 } from "./utils/utils";
 require("spectrum-colorpicker");
 let tinycolor: tinycolor = require("tinycolor2");
 
 let erootNative = document.getElementById("svgeditor-root")!;
 let svgContentText = "";
-if (erootNative.firstElementChild) {
-  svgContentText = erootNative.firstElementChild.innerHTML;
-  erootNative.firstElementChild.remove();
+let svgrootNative = erootNative.firstElementChild;
+let svgWidth = 400;
+let svgHeight = 400;
+let svgViewBox: null | string = null;
+if (svgrootNative) {
+  svgContentText = svgrootNative.innerHTML;
+  svgWidth = +withDefault2(svgrootNative.getAttribute("width"), <string>"400");
+  svgHeight = +withDefault2(svgrootNative.getAttribute("height"), <string>"400");
+  svgViewBox = svgrootNative.getAttribute("viewBox");
+  svgrootNative.remove();
 }
-export let editorRoot = SVG("svgeditor-root").size(400, 400);
+export let editorRoot = SVG("svgeditor-root").size(svgWidth, svgHeight).attr("viewBox", svgViewBox);
 // 自動生成されるdefsを削除
 editorRoot.select("defs").each((i, elems) => elems[i].remove());
 export let svgroot = editorRoot.svg(svgContentText);

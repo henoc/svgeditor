@@ -107,6 +107,11 @@ export function withDefault<T>(value: T | undefined, defaultValue: T): T {
   else return value;
 }
 
+export function withDefault2<T>(value: T | null, defaultValue: T): T {
+  if (value === null) return defaultValue;
+  else return value;
+}
+
 export function zip<T, U>(a: T[], b: U[]): [T, U][] {
   let ret: [T, U][] = [];
   for (let i = 0; i < Math.min(a.length, b.length); i++) {

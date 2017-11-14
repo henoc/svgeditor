@@ -1,30 +1,37 @@
-# svgeditor
+# SVG Editor
 
-## 問題
+Now your VSCode mutate to interactive visual & literal SVG editor 😎
 
-## TODO
+You can draw shapes in SVG Editor **visually** and also write the SVG **literally**.
 
-- [x] 色選択の反映
-- [ ] 色設定の際に元の書式を維持する(SVG.js の style 関数はrgb関数形式で出力する)
-- [x] polygon or polyline オプション
-- [ ] 色の style or attribute 出力形式選択オプション（vscodeオプションが良さそう）
-- [ ] 色の出力書式選択オプション (Hexなど)（vscodeオプション）
-- [ ] svg内のcss対応
-- [x] ベジェ曲線モード
-- [x] delete
-- [ ] shift 押しで縦横比を維持した拡大
-- [x] グループ選択
-- [ ] グループ化
-- [x] transformモード？
-- [ ] defsのちゃんとした管理
-- [x] パス編集モード
-- [x] opacity
-- [x] 前面、背面移動
-- [x] テキストモード
-- [ ] use
-- [ ] marker
+## Commands
 
-## むり
+- New File with SVG Editor
+- Open SVG Editor
 
-- [ ] グラデーション
-- [ ] Ctrl+C, Ctrl+X
+## Kinds of operation
+
+- Hand mode
+  - Scale and rotate.
+    - Rotation uses the transform attribute. Transform property order is now fixed, `translate, rotate, scale, translate`. If shape doesn't follow it, the property is ignored.
+- Node mode
+  - Edit node of line, polyline, polygon and path object.
+- Rectangle, ellipse, polygon, path, text mode
+  - Make new object.
+
+## Future plans
+
+- [ ] Reflect embedded CSS in SVG
+- [ ] Attributes output style options
+- [ ] Line cap, marker
+- [ ] Scale objects with fixed aspect ratio mode
+- [ ] `g` tag
+- [ ] Gradation colors
+- [ ] No fixed transform attribute
+- [ ] Zoom
+- [ ] Handle `defs`, `use`
+- [ ] Handle images
+
+## License
+
+MIT

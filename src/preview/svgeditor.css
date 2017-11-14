@@ -30,7 +30,7 @@
     color: var(--svgeditor-color-text-dark);
 }
 
-.svgeditor-property, svg {
+.svgeditor-property, #svgeditor-root > svg {
   padding: 0.5em 1em;
   margin: 2em 0;
   border: dashed 2px var(--svgeditor-color-bg-light2);
