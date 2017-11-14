@@ -14,6 +14,7 @@ import * as SVG from "svgjs";
 import * as jQuery from "jquery";
 import { setTags } from "./gadget/tags";
 import { ContextMenu } from "./gadget/contextmenu";
+import { withDefault } from "./utils/utils";
 require("spectrum-colorpicker");
 let tinycolor: tinycolor = require("tinycolor2");
 
@@ -112,6 +113,29 @@ jQuery($ => {
   });
 });
 
+// color-pickers and style attributes event setter
+export function setStyleAttrEvent(targetsGetter: () => SVG.Element[], reflectionFn?: () => void) {
+  jQuery($ => {
+    // colorpicker event
+    $(colorpickers.fill).off("change.spectrum");
+    $(colorpickers.fill).on("change.spectrum", (e, color) => {
+        targetsGetter().forEach(h => svgof(h).setColorWithOpacity("fill", color, "indivisual"));
+        if (reflectionFn) reflectionFn();
+    });
+    $(colorpickers.stroke).off("change.spectrum");
+    $(colorpickers.stroke).on("change.spectrum", (e, color) => {
+        targetsGetter().forEach(h => svgof(h).setColorWithOpacity("stroke", color, "indivisual"));
+        if (reflectionFn) reflectionFn();
+    });
+  });
+
+  svgStyleAttrs.strokewidth.oninput = e => {
+    let v = withDefault<string>(svgStyleAttrs.strokewidth.value, "0");
+    targetsGetter().forEach(h => svgof(h).setStyleAttr("stroke-width", String(v), "indivisual"));
+    if (reflectionFn) reflectionFn();
+  };
+}
+
 let elems = document.getElementsByClassName("svgeditor-tags");
 for (let i = 0; i < elems.length; i++) {
   let elem = elems[i];
@@ -203,7 +227,8 @@ document.documentElement.style.setProperty("--svgeditor-color-bg", bgcolor.toRgb
 document.documentElement.style.setProperty("--svgeditor-color-bg-light", bgcolor.clone().setAlpha(0.05).toRgbString());
 document.documentElement.style.setProperty("--svgeditor-color-bg-light2", bgcolor.clone().setAlpha(0.1).toRgbString());
 document.documentElement.style.setProperty("--svgeditor-color-bg-light3", bgcolor.clone().setAlpha(0.15).toRgbString());
-document.documentElement.style.setProperty("--svgeditor-color-text", textcolor.toHexString());
+document.documentElement.style.setProperty("--svgeditor-color-text", textcolor.toRgbString());
+document.documentElement.style.setProperty("--svgeditor-color-text-dark", textcolorDarken.toRgbString());
 
 // function button settings
 document.getElementById("svgeditor-function-duplicate")!.onclick = (ev: MouseEvent) => {

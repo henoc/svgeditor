@@ -1,4 +1,4 @@
-import { svgroot, editorRoot, reflection, refleshStyleAttribues, colorpickers, svgStyleAttrs } from "../common";
+import { svgroot, editorRoot, reflection, refleshStyleAttribues, colorpickers, svgStyleAttrs, setStyleAttrEvent } from "../common";
 import { Point, withDefault } from "../utils/utils";
 import { svgof } from "../utils/svgjs/svgutils";
 import { noneColor } from "../utils/tinycolorutils";
@@ -61,22 +61,7 @@ export function rectangleMode() {
     rectangle = undefined;
   };
 
-  // colorpicker event
-  jQuery($ => {
-    $(colorpickers.fill).off("change.spectrum");
-    $(colorpickers.fill).on("change.spectrum", (e, color) => {
-      svgof(colorSample).setColorWithOpacity("fill", color, "indivisual");
-    });
-    $(colorpickers.stroke).off("change.spectrum");
-    $(colorpickers.stroke).on("change.spectrum", (e, color) => {
-      svgof(colorSample).setColorWithOpacity("stroke", color, "indivisual");
-    });
-  });
-
-  // style attributes event
-  svgStyleAttrs.strokewidth.oninput = e => {
-    svgof(colorSample).setStyleAttr("stroke-width", svgStyleAttrs.strokewidth.value, "indivisual");
-  };
+  setStyleAttrEvent(() => [colorSample]);
 
 }
 

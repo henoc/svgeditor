@@ -1,4 +1,4 @@
-import { svgroot, reflection, editorRoot, refleshStyleAttribues, colorpickers, svgStyleAttrs, displayOn, displayOff } from "../common";
+import { svgroot, reflection, editorRoot, refleshStyleAttribues, colorpickers, svgStyleAttrs, displayOn, displayOff, setStyleAttrEvent } from "../common";
 import { Point, withDefault } from "../utils/utils";
 import { svgof } from "../utils/svgjs/svgutils";
 import * as SVG from "svgjs";
@@ -70,22 +70,7 @@ export function polygonMode() {
     rightClicked = true;
   };
 
-  // colorpicker event
-  jQuery($ => {
-    $(colorpickers.fill).off("change.spectrum");
-    $(colorpickers.fill).on("change.spectrum", (e, color) => {
-      svgof(colorSample).setColorWithOpacity("fill", color, "indivisual");
-    });
-    $(colorpickers.stroke).off("change.spectrum");
-    $(colorpickers.stroke).on("change.spectrum", (e, color) => {
-      svgof(colorSample).setColorWithOpacity("stroke", color, "indivisual");
-    });
-  });
-
-  // style attributes event
-  svgStyleAttrs.strokewidth.oninput = e => {
-    svgof(colorSample).setStyleAttr("stroke-width", svgStyleAttrs.strokewidth.value, "indivisual");
-  };
+  setStyleAttrEvent(() => [colorSample]);
 
   displayOn(document.getElementById("svgeditor-typicalproperties-enclosure-div")!);
 }

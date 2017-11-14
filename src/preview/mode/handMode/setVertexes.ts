@@ -1,6 +1,6 @@
 import { svgof } from "../../utils/svgjs/svgutils";
 import { makeMatrix } from "../../utils/transformAttributes/fixdedTransformAttributes";
-import { textcolor, bgcolor } from "../../common";
+import { textcolor, bgcolor, textcolorDarken } from "../../common";
 import { Point } from "../../utils/utils";
 import { Affine } from "../../utils/affineTransform/affine";
 import * as SVG from "svgjs";
@@ -16,7 +16,7 @@ export function setRotateVertex(dragTarget: DragTarget, rotateVertex: RotateVert
       .circle(10)
       .center(rotateVertexPos.x, rotateVertexPos.y)
       .stroke({ color: textcolor.toHexString(), width: 3 })
-      .fill({ color: bgcolor.toHexString() })
+      .fill({ color: textcolorDarken.toHexString() })
       .id("svgeditor-vertex-rotate");
   }
 }
@@ -47,7 +47,7 @@ export function setScaleVertexes(dragTarget: DragTarget, expandVertexesGroup: SV
           .circle(10)
           .center(points[k].x, points[k].y)
           .stroke({ color: textcolor.toHexString(), width: 3 })
-          .fill({ color: bgcolor.toHexString() })
+          .fill({ color: textcolorDarken.toHexString() })
           .attr("direction", dirs.join(" "))
         );
         k++;

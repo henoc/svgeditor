@@ -1,8 +1,9 @@
-import {editorRoot, svgroot, textcolor, reflection, textcolorDarken} from "../common";
+import {editorRoot, svgroot, textcolor, reflection, textcolorDarken, colorpickers, svgStyleAttrs, setStyleAttrEvent} from "../common";
 import * as SVG from "svgjs";
+import * as jQuery from "jquery";
 import { svgof } from "../utils/svgjs/svgutils";
 import { pathlikeof, PathLike } from "../utils/svgjs/pathlikeutils";
-import { Point } from "../utils/utils";
+import { Point, withDefault } from "../utils/utils";
 
 export function nodeMode() {
   let handTarget: PathLike | undefined = undefined;
@@ -85,6 +86,8 @@ export function nodeMode() {
     handTarget = undefined;
     pathVertexes.clear();
   };
+
+  setStyleAttrEvent(() => handTarget ? [handTarget] : [], () => nodeModeReflection());
 }
 
 export function nodeModeDestruct() {

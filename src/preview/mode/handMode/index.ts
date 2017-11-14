@@ -1,7 +1,7 @@
 import { TransformFn } from "../../utils/transformAttributes/transformutils";
 import { matrixof, unitMatrix } from "../../utils/svgjs/matrixutils";
 import { scale } from "../../utils/coordinateutils";
-import { editorRoot, svgroot, reflection, colorpickers, svgStyleAttrs, textcolor, bgcolor, refleshStyleAttribues, contextMenu } from "../../common";
+import { editorRoot, svgroot, reflection, colorpickers, svgStyleAttrs, textcolor, bgcolor, refleshStyleAttribues, contextMenu, setStyleAttrEvent } from "../../common";
 import { svgof } from "../../utils/svgjs/svgutils";
 import { Point, withDefault, reverse, equals, zip } from "../../utils/utils";
 import { Affine } from "../../utils/affineTransform/affine";
@@ -212,31 +212,7 @@ export function handMode() {
     }
   }
 
-  jQuery($ => {
-    // colorpicker event
-    $(colorpickers.fill).off("change.spectrum");
-    $(colorpickers.fill).on("change.spectrum", (e, color) => {
-      if (handTarget) {
-        handTarget.forEach(h => svgof(h).setColorWithOpacity("fill", color, "indivisual"));
-        handModeReflection(expandVertexesGroup, rotateVertex);
-      }
-    });
-    $(colorpickers.stroke).off("change.spectrum");
-    $(colorpickers.stroke).on("change.spectrum", (e, color) => {
-      if (handTarget) {
-        handTarget.forEach(h => svgof(h).setColorWithOpacity("stroke", color, "indivisual"));
-        handModeReflection(expandVertexesGroup, rotateVertex);
-      }
-    });
-  });
-
-  svgStyleAttrs.strokewidth.oninput = e => {
-    let v = withDefault<string>(svgStyleAttrs.strokewidth.value, "0");
-    if (handTarget) {
-      handTarget.forEach(h => svgof(h).setStyleAttr("stroke-width", String(v), "indivisual"));
-    }
-    handModeReflection(expandVertexesGroup, rotateVertex);
-  };
+  setStyleAttrEvent(() => handTarget ? handTarget : [], () => handModeReflection(expandVertexesGroup, rotateVertex));
 
   // 右クリックメニューの設定
   contextMenu.addMenuOperators({

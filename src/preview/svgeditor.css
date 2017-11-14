@@ -6,6 +6,7 @@
   --svgeditor-color-bg-light2: #444444;
   --svgeditor-color-bg-light3: #666666;
   --svgeditor-color-text: white;
+  --svgeditor-color-text-dark: #aaaaaa;
 }
 
 .svgeditor-button {
@@ -26,6 +27,7 @@
     border: solid 2px var(--svgeditor-color-bg-light);
     border-bottom: solid 2px var(--svgeditor-color-light2);
     box-shadow: 0 0 2px var(--svgeditor-color-bg);
+    color: var(--svgeditor-color-text-dark);
 }
 
 .svgeditor-property, svg {
