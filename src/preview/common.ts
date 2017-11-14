@@ -66,14 +66,11 @@ export function reflection(preprocess?: () => void, postprocess?: () => void): v
 }
 
 export function displayOn(target: HTMLElement): void {
-  let classes = target.getAttribute("class")!.split(" ");
-  target.setAttribute("class", classes.filter(clazz => clazz !== "svgeditor-displaynone").join(" "));
+  target.style.display = null;
 }
 
 export function displayOff(target: HTMLElement): void {
-  let classes = target.getAttribute("class")!.split(" ");
-  if (classes.indexOf("svgeditor-displaynone") === -1) classes.push("svgeditor-displaynone");
-  target.setAttribute("class", classes.join(" "));
+  target.style.display = "none";
 }
 
 /**
@@ -124,43 +121,62 @@ for (let i = 0; i < elems.length; i++) {
 // create contextmenu
 export let contextMenu = new ContextMenu(document.body);
 
+
+let buttons: {[key: string]: HTMLElement} = {
+  hand: document.getElementById("svgeditor-mode-hand")!,
+  node: document.getElementById("svgeditor-mode-node")!,
+  rectangle: document.getElementById("svgeditor-mode-rectangle")!,
+  ellipse: document.getElementById("svgeditor-mode-ellipse")!,
+  polygon: document.getElementById("svgeditor-mode-polygon")!,
+  text: document.getElementById("svgeditor-mode-text")!,
+  bezier: document.getElementById("svgeditor-mode-bezier")!
+};
+
 // set initial mode
 handMode();
+buttons.hand.classList.add("svgeditor-button-selected");
 
 // button events
-document.getElementById("svgeditor-mode-hand")!.onclick = (ev: MouseEvent) => {
+buttons.hand.onclick = (ev: MouseEvent) => {
   destructions();
   handMode();
+  buttons.hand.classList.add("svgeditor-button-selected");
 };
 
-document.getElementById("svgeditor-mode-node")!.onclick = (ev: MouseEvent) => {
+buttons.node.onclick = (ev: MouseEvent) => {
   destructions();
   nodeMode();
+  buttons.node.classList.add("svgeditor-button-selected");
 };
 
-document.getElementById("svgeditor-mode-rectangle")!.onclick = (ev: MouseEvent) => {
+buttons.rectangle.onclick = (ev: MouseEvent) => {
   destructions();
   rectangleMode();
+  buttons.rectangle.classList.add("svgeditor-button-selected");
 };
 
-document.getElementById("svgeditor-mode-ellipse")!.onclick = (ev: MouseEvent) => {
+buttons.ellipse.onclick = (ev: MouseEvent) => {
   destructions();
   ellipseMode();
+  buttons.ellipse.classList.add("svgeditor-button-selected");
 };
 
-document.getElementById("svgeditor-mode-polygon")!.onclick = (ev: MouseEvent) => {
+buttons.polygon.onclick = (ev: MouseEvent) => {
   destructions();
   polygonMode();
+  buttons.polygon.classList.add("svgeditor-button-selected");
 };
 
-document.getElementById("svgeditor-mode-text")!.onclick = (ev: MouseEvent) => {
+buttons.text.onclick = (ev: MouseEvent) => {
   destructions();
   textMode();
+  buttons.text.classList.add("svgeditor-button-selected");
 };
 
-document.getElementById("svgeditor-mode-bezier")!.onclick = (ev: MouseEvent) => {
+buttons.bezier.onclick = (ev: MouseEvent) => {
   destructions();
   bezierMode();
+  buttons.bezier.classList.add("svgeditor-button-selected");
 };
 
 function destructions() {
@@ -171,6 +187,10 @@ function destructions() {
   ellipseModeDestruct();
   bezierModeDestruct();
   nodeModeDestruct();
+
+  Object.keys(buttons).forEach(key => {
+    buttons[key].classList.remove("svgeditor-button-selected");
+  });
 }
 
 // color settings

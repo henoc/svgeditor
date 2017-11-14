@@ -162,14 +162,6 @@ class SvgDeformer {
       `${attr.map(fn => fn.kind + "(" + fn.args.join(" ") + ")")}})`
     );
   }
-
-  addClass(name: string): void {
-    this.elem.attr("class", (withDefault(this.geta("class"), "") + " " + name).trim());
-  }
-
-  removeClass(name: string): void {
-    this.elem.attr("class", (withDefault(this.geta("class"), "").replace(name, "")).trim());
-  }
 }
 
 export function svgof(elem: SVG.Element): SvgDeformer {

@@ -95,7 +95,7 @@ export function handMode() {
           rotateVertex.vertex!.node.onmousedown = (ev) => rotateVertexMousedown(ev, main);
           // handTargetのclassがすでにあったら消す
           svgroot.select(".svgeditor-handtarget").each((i, elems) => {
-            svgof(elems[i]).removeClass("svgeditor-handtarget");
+            elems[i].removeClass("svgeditor-handtarget");
           });
           handTarget = main;
           handTarget.forEach(target => target.addClass("svgeditor-handtarget"));

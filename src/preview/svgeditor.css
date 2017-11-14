@@ -22,8 +22,9 @@
   font-weight: bold;
 }
 
-.svgeditor-button:active {
-    border-bottom: solid 2px var(--svgeditor-color-bg-light);
+.svgeditor-button:active, .svgeditor-button-selected {
+    border: solid 2px var(--svgeditor-color-bg-light);
+    border-bottom: solid 2px var(--svgeditor-color-light2);
     box-shadow: 0 0 2px var(--svgeditor-color-bg);
 }
 
@@ -31,10 +32,6 @@
   padding: 0.5em 1em;
   margin: 2em 0;
   border: dashed 2px var(--svgeditor-color-bg-light2);
-}
-
-.svgeditor-displaynone {
-  display: none;
 }
 
 .svgeditor-vertex {
