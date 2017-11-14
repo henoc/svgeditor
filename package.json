@@ -1,22 +1,21 @@
 {
-  "name": "vscode-css-properties",
-  "displayName": "Preview CSS Properties Sample",
-  "description": "A sample illustrating the use of TextContentProviders and the `vscode.previewHtml` command, introduce in 0.10.7",
-  "version": "0.0.10",
-  "publisher": "eg2",
+  "name": "svgeditor",
+  "displayName": "SVG Editor",
+  "description": "Visual and literal SVG editor for VSCode.",
+  "version": "0.1.0",
+  "publisher": "henoc",
   "galleryBanner": {
     "color": "#5c2d91",
     "theme": "dark"
   },
   "bugs": {
-    "url": "https://github.com/Microsoft/vscode-extension-samples/issues",
-    "email": "egamma@microsoft.com"
+    "url": "https://github.com/Henoc/svgeditor/issues",
+    "email": "agekutar@gmail.com"
   },
   "repository": {
     "type": "git",
-    "url": "https://github.com/Microsoft/vscode-extension-samples.git"
+    "url": "https://github.com/Henoc/svgeditor"
   },
-  "homepage": "https://github.com/Microsoft/vscode-extension-samples/tree/master/textdocumentprovider-sample/README.md",
   "categories": [
     "Other"
   ],
