@@ -18,7 +18,7 @@ export function activate(context: vscode.ExtensionContext) {
   let icons = readResource("icons.svg");
 
   class TextDocumentContentProvider implements vscode.TextDocumentContentProvider {
-    public editor: vscode.TextEditor | undefined;
+    public editor: vscode.TextEditor;
     private _onDidChange: vscode.EventEmitter<vscode.Uri> = new vscode.EventEmitter<vscode.Uri>();
 
     public provideTextDocumentContent(uri: vscode.Uri): string {
@@ -34,7 +34,6 @@ export function activate(context: vscode.ExtensionContext) {
     }
 
     private createCssSnippet(): string {
-      if (this.editor === undefined) this.editor = vscode.window.activeTextEditor;
       const svg = this.editor.document.getText();
       const js = insertJs;
       const css = insertCss;
@@ -66,6 +65,7 @@ export function activate(context: vscode.ExtensionContext) {
   });
 
   disposables.push(vscode.commands.registerCommand("extension.openSvgEditor", () => {
+    provider.editor = vscode.window.activeTextEditor;
     return vscode.commands.executeCommand("vscode.previewHtml", previewUri, vscode.ViewColumn.Two, "SVG Editor").then((success) => undefined, (reason) => {
       vscode.window.showErrorMessage(reason);
     });
@@ -74,6 +74,7 @@ export function activate(context: vscode.ExtensionContext) {
   disposables.push(vscode.commands.registerCommand("extension.newSvgEditor", () => {
     return vscode.commands.executeCommand("workbench.action.files.newUntitledFile").then(
       (success) => {
+        provider.editor = vscode.window.activeTextEditor;
         vscode.window.activeTextEditor.edit(editbuilder => {
           editbuilder.insert(new vscode.Position(0, 0), templateSvg);
         }).then(
