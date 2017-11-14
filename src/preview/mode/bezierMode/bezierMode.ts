@@ -1,4 +1,4 @@
-import { svgroot, reflection, editorRoot, refleshStyleAttribues, colorpickers, svgStyleAttrs, displayOn, displayOff, setStyleAttrEvent } from "../../common";
+import { svgroot, reflection, editorRoot, refleshStyleAttribues, colorpickers, svgStyleAttrs, displayOn, displayOff, setStyleAttrEvent, buttons } from "../../common";
 import { Point, withDefault } from "../../utils/utils";
 import { svgof } from "../../utils/svgjs/svgutils";
 import * as SVG from "svgjs";
@@ -124,6 +124,7 @@ export function bezierMode() {
       path.elem.plot(path.points);
       if (path.points.length === 1) path.elem.remove();     // 1ならMだけなので削除
       reflection();
+      buttons.hand.click();
     }
     path = undefined;
     rightClicked = true;

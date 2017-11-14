@@ -1,9 +1,10 @@
-import { svgroot, editorRoot, reflection, refleshStyleAttribues, colorpickers, svgStyleAttrs, setStyleAttrEvent } from "../common";
+import { svgroot, editorRoot, reflection, refleshStyleAttribues, colorpickers, svgStyleAttrs, setStyleAttrEvent, buttons } from "../common";
 import { Point, withDefault } from "../utils/utils";
 import { svgof } from "../utils/svgjs/svgutils";
 import { noneColor } from "../utils/tinycolorutils";
 import * as SVG from "svgjs";
 import * as jQuery from "jquery";
+import { handMode } from "./handMode/index";
 
 export function rectangleMode() {
 
@@ -56,6 +57,7 @@ export function rectangleMode() {
         rectangle.elem.remove();
       } else {
         reflection();
+        buttons.hand.click();
       }
     }
     rectangle = undefined;

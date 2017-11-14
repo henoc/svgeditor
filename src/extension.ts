@@ -15,6 +15,7 @@ export function activate(context: vscode.ExtensionContext) {
   let insertCss = readResource("bundle.css");
   let viewer = readResource("viewer.ejs");
   let templateSvg = readResource("template.svg");
+  let icons = readResource("icons.svg");
 
   class TextDocumentContentProvider implements vscode.TextDocumentContentProvider {
     public editor: vscode.TextEditor | undefined;
@@ -40,7 +41,8 @@ export function activate(context: vscode.ExtensionContext) {
       const html = render(viewer, {
         svg: svg,
         js: js,
-        css: css
+        css: css,
+        icons: icons
       });
       let logDir = path.join(__dirname, "..", "log");
       if (!fs.existsSync(logDir)) {

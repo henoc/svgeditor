@@ -146,7 +146,7 @@ for (let i = 0; i < elems.length; i++) {
 export let contextMenu = new ContextMenu(document.body);
 
 
-let buttons: {[key: string]: HTMLElement} = {
+export let buttons: {[key: string]: HTMLElement} = {
   hand: document.getElementById("svgeditor-mode-hand")!,
   node: document.getElementById("svgeditor-mode-node")!,
   rectangle: document.getElementById("svgeditor-mode-rectangle")!,
