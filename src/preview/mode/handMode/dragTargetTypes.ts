@@ -28,7 +28,7 @@ export interface TargetVertex {
     center: Point,
     size: Point,
     fixedTransform: FixedTransformAttr[];
-    fontSize?: number;
+    fontSize: (number | undefined)[];
   };
 }
 

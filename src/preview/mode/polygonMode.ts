@@ -1,4 +1,4 @@
-import { svgroot, reflection, editorRoot, refleshStyleAttribues, colorpickers, svgStyleAttrs, displayOn, displayOff, setStyleAttrEvent } from "../common";
+import { svgroot, reflection, editorRoot, refleshStyleAttribues, colorpickers, svgStyleAttrs, displayOn, displayOff, setStyleAttrEvent, buttons } from "../common";
 import { Point, withDefault } from "../utils/utils";
 import { svgof } from "../utils/svgjs/svgutils";
 import * as SVG from "svgjs";
@@ -65,6 +65,7 @@ export function polygonMode() {
     if (polyline) {
       polyline.elem.plot(<any>polyline.points.map(p => [p.x, p.y]));
       reflection();
+      buttons.hand.click();
     }
     polyline = undefined;
     rightClicked = true;

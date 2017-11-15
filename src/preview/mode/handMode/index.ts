@@ -127,36 +127,37 @@ export function handMode() {
       // 拡大
 
       // テキストはfont-sizeを変える
-      if (dragTarget.initialScheme.fontSize) {
-        let updatedPos = dragTarget.fromCursor.add(Point.of(ev.clientX, ev.clientY));
-        let deltaX = updatedPos.x - dragTarget.initialVertexPos.x;
-        let newFontSize = dragTarget.initialScheme.fontSize + deltaX * 0.2;
-        dragTarget.main.forEach(main => main.attr("font-size", newFontSize));
-      } else {
-        // 頂点の移動の仕方
-        let dragMode: DragMode = "free";
-        let dirs = svgof(dragTarget.vertex).geta("direction")!.split(" ");
-        if (dirs.length === 1) {
-          if (dirs[0] === "left" || dirs[0] === "right") dragMode = "horizontal";
-          else dragMode = "vertical";
+      let updatedVertexPos = dragTarget.fromCursor.add(Point.of(ev.clientX, ev.clientY));
+      let deltaX = updatedVertexPos.x - dragTarget.initialVertexPos.x;
+      for (let i = 0; i < dragTarget.main.length; i++) {
+        let fontSize = dragTarget.initialScheme.fontSize[i];
+        if (fontSize) {
+          let newFontSize = fontSize + deltaX * 0.2;
+          dragTarget.main[i].attr("font-size", newFontSize);
         }
-        // 更新後の選択中の頂点
-        let updatedVertexPos = dragTarget.fromCursor.add(Point.of(ev.clientX, ev.clientY));
-        // 拡大の中心点
-        let scaleCenterPos = svgof(dragTarget.scaleCenter).getCenter();
-        // scale
-        let scaleRatio = scale(scaleCenterPos, dragTarget.initialVertexPos, updatedVertexPos);
-        if (dragMode === "vertical") scaleRatio.x = 1;
-        if (dragMode === "horizontal") scaleRatio.y = 1;
-        // scaleによる図形の中心と高さ幅
-        let scaledMain = dragTarget.initialScheme.center.sub(scaleCenterPos).mul(scaleRatio).add(scaleCenterPos);
-        let scaledSize = dragTarget.initialScheme.size.mul(scaleRatio);
-        // 潰れるのを防ぐ
-        if (scaledSize.x > 0.5 && scaledSize.y > 0.5) {
-          // 更新
-          gplikeof(dragTarget.main).setCenter(scaledMain);
-          gplikeof(dragTarget.main).setSize(scaledSize);
-        }
+      }
+
+      // 頂点の移動の仕方
+      let dragMode: DragMode = "free";
+      let dirs = svgof(dragTarget.vertex).geta("direction")!.split(" ");
+      if (dirs.length === 1) {
+        if (dirs[0] === "left" || dirs[0] === "right") dragMode = "horizontal";
+        else dragMode = "vertical";
+      }
+      // 拡大の中心点
+      let scaleCenterPos = svgof(dragTarget.scaleCenter).getCenter();
+      // scale
+      let scaleRatio = scale(scaleCenterPos, dragTarget.initialVertexPos, updatedVertexPos);
+      if (dragMode === "vertical") scaleRatio.x = 1;
+      if (dragMode === "horizontal") scaleRatio.y = 1;
+      // scaleによる図形の中心と高さ幅
+      let scaledMain = dragTarget.initialScheme.center.sub(scaleCenterPos).mul(scaleRatio).add(scaleCenterPos);
+      let scaledSize = dragTarget.initialScheme.size.mul(scaleRatio);
+      // 潰れるのを防ぐ
+      if (scaledSize.x > 0.5 && scaledSize.y > 0.5) {
+        // 更新
+        gplikeof(dragTarget.main.filter(e => e.node.tagName !== "text")).setCenter(scaledMain);
+        gplikeof(dragTarget.main.filter(e => e.node.tagName !== "text")).setSize(scaledSize);
       }
     } else if (dragTarget.kind === "rotate") {
       // 回転
@@ -188,7 +189,7 @@ export function handMode() {
           center: gplikeof(main).getCenter(),
           size: gplikeof(main).getSize(),
           fixedTransform: gplikeof(main).getFixedTransformAttr(),
-          fontSize: undefined // main.find() .node.tagName === "text" ? +withDefault(svgof(main).geta("font-size"), "12") : undefined
+          fontSize: main.map(m => m.node.tagName === "text" ? +withDefault(m.attr("font-size"), "12") : undefined)
         }
       };
     }
