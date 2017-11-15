@@ -4,6 +4,7 @@
   "description": "Visual and literal SVG editor for VSCode.",
   "version": "0.1.0",
   "publisher": "henoc",
+  "icon": "images/SVG_logo.png",
   "galleryBanner": {
     "color": "#5c2d91",
     "theme": "dark"

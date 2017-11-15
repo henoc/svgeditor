@@ -43,11 +43,11 @@ export function activate(context: vscode.ExtensionContext) {
         css: css,
         icons: icons
       });
-      let logDir = path.join(__dirname, "..", "log");
-      if (!fs.existsSync(logDir)) {
-        fs.mkdirSync(logDir);
-      }
-      fs.writeFileSync(path.join(__dirname, "..", "log", "log.html"), html);
+      // let logDir = path.join(__dirname, "..", "log");
+      // if (!fs.existsSync(logDir)) {
+      //   fs.mkdirSync(logDir);
+      // }
+      // fs.writeFileSync(path.join(__dirname, "..", "log", "log.html"), html);
       return html;
     }
   }
