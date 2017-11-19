@@ -99,12 +99,12 @@ export let svgStyleAttrs = {
  */
 export function refleshStyleAttribues(target: SVG.Element): void {
   jQuery($ => {
-    let fill = svgof(target).getColorWithOpacity("fill");
-    let stroke = svgof(target).getColorWithOpacity("stroke");
+    let fill = svgof(target).color("fill");
+    let stroke = svgof(target).color("stroke");
     (<any>$(colorpickers.fill)).spectrum("set", fill ? fill.toRgbString() : undefined);
     (<any>$(colorpickers.stroke)).spectrum("set", stroke ? stroke.toRgbString() : undefined);
   });
-  let strokewidth = svgof(target).getStyleAttr("stroke-width");
+  let strokewidth = svgof(target).style("stroke-width");
   if (strokewidth) svgStyleAttrs.strokewidth.value = strokewidth;
 }
 
@@ -126,19 +126,19 @@ export function setStyleAttrEvent(targetsGetter: () => SVG.Element[], reflection
     // colorpicker event
     $(colorpickers.fill).off("change.spectrum");
     $(colorpickers.fill).on("change.spectrum", (e, color) => {
-        targetsGetter().forEach(h => svgof(h).setColorWithOpacity("fill", color, "indivisual"));
+        targetsGetter().forEach(h => svgof(h).color("fill", color));
         if (reflectionFn) reflectionFn();
     });
     $(colorpickers.stroke).off("change.spectrum");
     $(colorpickers.stroke).on("change.spectrum", (e, color) => {
-        targetsGetter().forEach(h => svgof(h).setColorWithOpacity("stroke", color, "indivisual"));
+        targetsGetter().forEach(h => svgof(h).color("stroke", color));
         if (reflectionFn) reflectionFn();
     });
   });
 
   svgStyleAttrs.strokewidth.oninput = e => {
     let v = withDefault<string>(svgStyleAttrs.strokewidth.value, "0");
-    targetsGetter().forEach(h => svgof(h).setStyleAttr("stroke-width", String(v), "indivisual"));
+    targetsGetter().forEach(h => svgof(h).style("stroke-width", String(v)));
     if (reflectionFn) reflectionFn();
   };
 }

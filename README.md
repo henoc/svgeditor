@@ -25,7 +25,7 @@ You can draw shapes in SVG Editor **visually** and also write the SVG **literall
 
 ## Future plans
 
-- [ ] Reflect embedded CSS in SVG
+- [x] Reflect embedded CSS in SVG
 - [ ] Attributes output style options
 - [ ] Line cap, marker
 - [ ] Scale objects with fixed aspect ratio mode

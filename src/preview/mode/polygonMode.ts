@@ -13,7 +13,7 @@ export function polygonMode() {
   } = undefined;
 
   // about color-picker
-  let colorSample = editorRoot.defs().rect().fill("none").stroke({ width: 10, color: "#999999" });
+  let colorSample = editorRoot.rect().style({ fill: "none", "stroke-width": 10, stroke: "#999999" }).size(0, 0);
   refleshStyleAttribues(colorSample);
 
   let polygonCheckbox = <HTMLInputElement>document.getElementById("svgeditor-typicalproperties-enclosure")!;
@@ -32,14 +32,13 @@ export function polygonMode() {
     if (polyline === undefined) {
       let seed = polygonCheckbox.checked ? svgroot.polygon([]) : svgroot.polyline([]);
       polyline = {
-        elem: seed.attr({
-          "fill": withDefault(svgof(colorSample).getColor("fill"), noneColor).toHexString(),
-          "stroke": withDefault(svgof(colorSample).getColor("stroke"), noneColor).toHexString(),
-          "fill-opacity": withDefault(svgof(colorSample).getColorWithOpacity("fill"), noneColor).getAlpha(),
-          "stroke-opacity": withDefault(svgof(colorSample).getColorWithOpacity("stroke"), noneColor).getAlpha(),
-          "stroke-width": svgof(colorSample).getStyleAttr("stroke-width"),
-          "id": null
-        }),
+        elem: seed.style({
+          "fill": withDefault(svgof(colorSample).color("fill"), noneColor).toHexString(),
+          "stroke": withDefault(svgof(colorSample).color("stroke"), noneColor).toHexString(),
+          "fill-opacity": withDefault(svgof(colorSample).color("fill"), noneColor).getAlpha(),
+          "stroke-opacity": withDefault(svgof(colorSample).color("stroke"), noneColor).getAlpha(),
+          "stroke-width": svgof(colorSample).style("stroke-width")
+        }).attr("id", null),
         points: []
       };
     }
@@ -65,6 +64,7 @@ export function polygonMode() {
 
     if (polyline) {
       polyline.elem.plot(<any>polyline.points.map(p => [p.x, p.y]));
+      colorSample.remove();
       reflection();
       buttons.hand.click();
     }

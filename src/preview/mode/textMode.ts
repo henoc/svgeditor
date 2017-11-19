@@ -36,17 +36,17 @@ export function textMode() {
   jQuery($ => {
     $(colorpickers.fill).off("change.spectrum");
     $(colorpickers.fill).on("change.spectrum", (e, color) => {
-      svgof(sampleText).setColorWithOpacity("fill", color, "indivisual");
+      svgof(sampleText).color("fill", color);
     });
     $(colorpickers.stroke).off("change.spectrum");
     $(colorpickers.stroke).on("change.spectrum", (e, color) => {
-      svgof(sampleText).setColorWithOpacity("stroke", color, "indivisual");
+      svgof(sampleText).color("stroke", color);
     });
   });
 
   // style attributes event
   svgStyleAttrs.strokewidth.oninput = e => {
-    svgof(sampleText).setStyleAttr("stroke-width", svgStyleAttrs.strokewidth.value, "indivisual");
+    svgof(sampleText).style("stroke-width", svgStyleAttrs.strokewidth.value);
   };
 
   attributeElems.text.onchange = (ev) => {
@@ -54,20 +54,20 @@ export function textMode() {
   };
 
   attributeElems.font.onchange = (ev) => {
-    sampleText.attr("font-family", getValueOfTags(attributeElems.font).map(t => `'${t}'`).join(" "));
+    sampleText.style("font-family", getValueOfTags(attributeElems.font).map(t => `'${t}'`).join(" "));
   };
 
   attributeElems.size.onchange = (ev) => {
-    sampleText.attr("font-size", attributeElems.size.value);
+    sampleText.style("font-size", attributeElems.size.value);
   };
 
   displayOn(document.getElementById("svgeditor-typicalproperties-textmode")!);
 
   function makeSampleText(): SVG.Text {
     return editorRoot.plain(attributeElems.text.value)
-    .attr("font-family", getValueOfTags(attributeElems.font).map(t => `'${t}'`).join(" "))
-    .attr("fill", "#663300")
-    .attr("font-size", 12)
+    .style("font-family", getValueOfTags(attributeElems.font).map(t => `'${t}'`).join(" "))
+    .style("fill", "#663300")
+    .style("font-size", 12)
     .id("svgeditor-sampletext");
   }
 }

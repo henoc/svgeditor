@@ -16,7 +16,7 @@ export function ellipseMode() {
   let ellipse: undefined | Ellipse = undefined;
 
   // about color-picker
-  let colorSample = editorRoot.defs().rect().fill("#666666").stroke({ width: 10, color: "#999999" });
+  let colorSample = editorRoot.rect().style({fill: "#666666",  "stroke-width": 10, stroke: "#999999" }).size(0, 0);
   refleshStyleAttribues(colorSample);
 
   svgroot.node.onmousedown = (ev: MouseEvent) => {
@@ -26,11 +26,11 @@ export function ellipseMode() {
     let y = ev.clientY - svgroot.node.getBoundingClientRect().top;
     ellipse = {
       elem: editorRoot.ellipse(0, 0).center(x, y)
-        .attr("fill", withDefault(svgof(colorSample).getColor("fill"), noneColor).toHexString())
-        .attr("stroke", withDefault(svgof(colorSample).getColor("stroke"), noneColor).toHexString())
-        .attr("fill-opacity", withDefault(svgof(colorSample).getColorWithOpacity("fill"), noneColor).getAlpha())
-        .attr("stroke-opacity", withDefault(svgof(colorSample).getColorWithOpacity("stroke"), noneColor).getAlpha())
-        .attr("stroke-width", svgof(colorSample).getStyleAttr("stroke-width"))
+        .style("fill", withDefault(svgof(colorSample).color("fill"), noneColor).toHexString())
+        .style("stroke", withDefault(svgof(colorSample).color("stroke"), noneColor).toHexString())
+        .style("fill-opacity", withDefault(svgof(colorSample).color("fill"), noneColor).getAlpha())
+        .style("stroke-opacity", withDefault(svgof(colorSample).color("stroke"), noneColor).getAlpha())
+        .style("stroke-width", svgof(colorSample).style("stroke-width"))
         .attr("id", null),
       start: Point.of(x, y),
       end: Point.of(x, y)
@@ -56,6 +56,7 @@ export function ellipseMode() {
       if (ellipse.elem.width() === 0 && ellipse.elem.height() === 0) {
         ellipse.elem.remove();
       } else {
+        colorSample.remove();
         reflection();
         buttons.hand.click();
       }

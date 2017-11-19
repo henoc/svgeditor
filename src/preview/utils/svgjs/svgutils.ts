@@ -57,56 +57,92 @@ class SvgDeformer {
     this.elem.scale(scale.x, scale.y, center.x, center.y);
   }
 
-  getColor(fillOrStroke: "fill" | "stroke"): tinycolorInstance | undefined {
-    let styleAttr = this.getStyleAttr(fillOrStroke);
-    return (styleAttr !== undefined && styleAttr !== "none") ? tinycolor(styleAttr) : undefined;
-  }
-
-  getColorWithOpacity(fillOrStroke: "fill" | "stroke"): tinycolorInstance | undefined {
-    let styleAttr = this.getStyleAttr(fillOrStroke);
-    if (styleAttr === undefined || styleAttr === "none") return undefined;
-    let rgb = tinycolor(styleAttr);
-    let alpha = this.getStyleAttr(fillOrStroke === "fill" ? "fill-opacity" : "stroke-opacity");
-    if (alpha === undefined) return rgb;
-    return rgb.setAlpha(+alpha);
+  /**
+   * Get or set color of fill/stroke with opacity. In getter, source function is `getComputedStyle`. Return undefined if there is `none` color.
+   */
+  color(fillstroke: "fill" | "stroke", colorInstance?: tinycolorInstance): tinycolorInstance | undefined {
+    if (fillstroke === "fill") {
+      if (colorInstance === undefined) {
+        let style = window.getComputedStyle(this.elem.node);
+        if (style.fill === null || style.fill === "none" || style.fill === "") return undefined;
+        let tcolor = tinycolor(style.fill);
+        let opacity = style.fillOpacity;
+        if (opacity) tcolor.setAlpha(+opacity);
+        return tcolor;
+      } else {
+        (<HTMLElement>this.elem.node).style.fill = colorInstance.toHexString();
+        (<HTMLElement>this.elem.node).style.fillOpacity = colorInstance.getAlpha() + "";
+        return colorInstance;
+      }
+    } else {
+      if (colorInstance === undefined) {
+        let style = window.getComputedStyle(this.elem.node);
+        if (style.stroke === null || style.stroke === "none" || style.stroke === "") return undefined;
+        let tcolor = tinycolor(style.stroke);
+        let opacity = style.strokeOpacity;
+        if (opacity) tcolor.setAlpha(+opacity);
+        return tcolor;
+      } else {
+        (<HTMLElement>this.elem.node).style.stroke = colorInstance.toHexString();
+        (<HTMLElement>this.elem.node).style.strokeOpacity = colorInstance.getAlpha() + "";
+        return colorInstance;
+      }
+    }
   }
 
   /**
-   * Get attributes kinds of style in order to validation
+   * Get computed style (undefined if value is undefined or "none") or set `value` to the style attribute
    */
-  getStyleAttr(name: string): string | undefined {
-    if (<any>this.elem.style(name) !== "") return <any>this.elem.style(name);
-    else return this.geta(name);
+  style(name: string, value?: string): string | undefined {
+    if (value === undefined) {
+      let st = window.getComputedStyle(this.elem.node);
+      if (st[name] === undefined || st[name] === "none" || st[name] === "") return undefined;
+      else return st[name];
+    } else {
+      (<HTMLElement>this.elem.node).style[name] = value;
+      return value;
+    }
   }
 
-  setColorWithOpacity(fillOrStroke: "fill" | "stroke", color: tinycolorInstance | null, prior: "indivisual" | "style"): void {
-    this.setStyleAttr(fillOrStroke, (color ? color : noneColor).toHexString(), prior);
-    this.setStyleAttr(fillOrStroke === "fill" ? "fill-opacity" : "stroke-opacity", color ? String(color.getAlpha()) : undefined, prior);
+  idealColor(fillstroke: "fill" | "stroke", colorInstance?: tinycolorInstance): tinycolorInstance | undefined {
+    if (fillstroke === "fill") {
+      if (colorInstance === undefined) {
+        let style = this.elem.node.style;
+        if (style.fill === null || style.fill === "none" || style.fill === "") return undefined;
+        let tcolor = tinycolor(style.fill);
+        let opacity = style.fillOpacity;
+        if (opacity) tcolor.setAlpha(+opacity);
+        return tcolor;
+      } else {
+        (<HTMLElement>this.elem.node).style.fill = colorInstance.toHexString();
+        (<HTMLElement>this.elem.node).style.fillOpacity = colorInstance.getAlpha() + "";
+        return colorInstance;
+      }
+    } else {
+      if (colorInstance === undefined) {
+        let style = this.elem.node.style;
+        if (style.stroke === null || style.stroke === "none" || style.stroke === "") return undefined;
+        let tcolor = tinycolor(style.stroke);
+        let opacity = style.strokeOpacity;
+        if (opacity) tcolor.setAlpha(+opacity);
+        return tcolor;
+      } else {
+        (<HTMLElement>this.elem.node).style.stroke = colorInstance.toHexString();
+        (<HTMLElement>this.elem.node).style.strokeOpacity = colorInstance.getAlpha() + "";
+        return colorInstance;
+      }
+    }
   }
 
-  /**
-   * Set attributes kinds of style with priority. If already defined and required to update the value, follow the way of writing.
-   */
-  setStyleAttr(name: string, value: string | undefined, prior: "indivisual" | "style"): void {
-     let style: string | undefined = <any>this.elem.style(name) === "" ? undefined : <any>this.elem.style(name);
-     let indivisual = this.geta(name);
-     if (style !== undefined && indivisual !== undefined) {
-       if (prior === "indivisual") {
-         this.elem.attr(name, value);
-       } else {
-         this.elem.style(name, value);
-       }
-     } else if (style !== undefined) {
-       this.elem.style(name, value);
-     } else if (indivisual !== undefined) {
-       this.elem.attr(name, value);
-     } else {
-       if (prior === "indivisual") {
-         this.elem.attr(name, value);
-       } else {
-         this.elem.style(name, value);
-       }
-     }
+  idealStyle(name: string, value?: string): string | undefined {
+    if (value === undefined) {
+      let st = this.elem.node.style;
+      if (st[name] === undefined || st[name] === "none" || st[name] === "") return undefined;
+      else return st[name];
+    } else {
+      (<HTMLElement>this.elem.node).style[name] = value;
+      return value;
+    }
   }
 
   getTransformAttr(): TransformFn[] | undefined {

@@ -17,7 +17,7 @@ export function bezierMode() {
   } = undefined;
 
   // about color-picker
-  let colorSample = editorRoot.defs().rect().fill("none").stroke({ width: 10, color: "#999999" });
+  let colorSample = editorRoot.rect().style({fill: "#666666",  "stroke-width": 10, stroke: "#999999" }).size(0, 0);
   refleshStyleAttribues(colorSample);
 
   let enclosureCheckbox = <HTMLInputElement>document.getElementById("svgeditor-typicalproperties-pathz")!;
@@ -37,14 +37,13 @@ export function bezierMode() {
     let y = ev.clientY - svgroot.node.getBoundingClientRect().top;
     if (path === undefined) {
       path = {
-        elem: svgroot.path(["M", x, y]).attr({
-          "fill": withDefault(svgof(colorSample).getColor("fill"), noneColor).toHexString(),
-          "stroke": withDefault(svgof(colorSample).getColor("stroke"), noneColor).toHexString(),
-          "fill-opacity": withDefault(svgof(colorSample).getColorWithOpacity("fill"), noneColor).getAlpha(),
-          "stroke-opacity": withDefault(svgof(colorSample).getColorWithOpacity("stroke"), noneColor).getAlpha(),
-          "stroke-width": svgof(colorSample).getStyleAttr("stroke-width"),
-          "id": null
-        }),
+        elem: svgroot.path(["M", x, y]).style({
+          "fill": withDefault(svgof(colorSample).color("fill"), noneColor).toHexString(),
+          "stroke": withDefault(svgof(colorSample).color("stroke"), noneColor).toHexString(),
+          "fill-opacity": withDefault(svgof(colorSample).color("fill"), noneColor).getAlpha(),
+          "stroke-opacity": withDefault(svgof(colorSample).color("stroke"), noneColor).getAlpha(),
+          "stroke-width": svgof(colorSample).style("stroke-width")
+        }).attr("id", null),
         points: [["M", x, y]],
         sBegin: Point.of(x, y),
         sEnd: Point.of(x, y)
@@ -124,6 +123,7 @@ export function bezierMode() {
       }
       path.elem.plot(path.points);
       if (path.points.length === 1) path.elem.remove();     // 1ならMだけなので削除
+      colorSample.remove();
       reflection();
       buttons.hand.click();
     }

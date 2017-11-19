@@ -3,7 +3,7 @@ import { matrixof, unitMatrix } from "../../utils/svgjs/matrixutils";
 import { scale } from "../../utils/coordinateutils";
 import { editorRoot, svgroot, reflection, colorpickers, svgStyleAttrs, textcolor, bgcolor, refleshStyleAttribues, contextMenu, setStyleAttrEvent } from "../../common";
 import { svgof } from "../../utils/svgjs/svgutils";
-import { Point, withDefault, reverse, equals, zip } from "../../utils/utils";
+import { Point, withDefault, reverse, equals, zip, trimPx, optional } from "../../utils/utils";
 import { Affine } from "../../utils/affineTransform/affine";
 import * as SVG from "svgjs";
 import * as jQuery from "jquery";
@@ -136,7 +136,7 @@ export function handMode() {
         let fontSize = dragTarget.initialScheme.fontSize[i];
         if (fontSize) {
           let newFontSize = fontSize + deltaX * 0.2;
-          dragTarget.main[i].attr("font-size", newFontSize);
+          dragTarget.main[i].style("font-size", newFontSize);
         }
       }
 
@@ -192,7 +192,7 @@ export function handMode() {
           center: gplikeof(main).getCenter(),
           size: gplikeof(main).getSize(),
           fixedTransform: gplikeof(main).getFixedTransformAttr(),
-          fontSize: main.map(m => m.node.tagName === "text" ? +withDefault(m.attr("font-size"), "12") : undefined)
+          fontSize: main.map(m => m.node.tagName === "text" ? withDefault(optional(svgof(m).style("font-size")).map(s => trimPx(s)).content , 12) : undefined)
         }
       };
     }
