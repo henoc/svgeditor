@@ -1,11 +1,13 @@
 let tinycolor: tinycolor = require("tinycolor2");
 
-interface AnyColor {
+export interface AnyColor {
   toHexString: () => string;
   getAlpha: () => number | undefined;
+  toRgbString: () => undefined;
 }
 
 export const noneColor: AnyColor = {
   toHexString: () => "none",
-  getAlpha: () => undefined
+  getAlpha: () => undefined,
+  toRgbString: () => undefined
 };

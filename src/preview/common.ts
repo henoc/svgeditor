@@ -15,6 +15,7 @@ import * as jQuery from "jquery";
 import { setTags } from "./gadget/tags";
 import { ContextMenu } from "./gadget/contextmenu";
 import { withDefault, withDefault2 } from "./utils/utils";
+import { noneColor } from "./utils/tinycolorutils";
 require("spectrum-colorpicker");
 let tinycolor: tinycolor = require("tinycolor2");
 
@@ -131,12 +132,12 @@ export function setStyleAttrEvent(targetsGetter: () => SVG.Element[], reflection
     // colorpicker event
     $(colorpickers.fill).off("change.spectrum");
     $(colorpickers.fill).on("change.spectrum", (e, color) => {
-        targetsGetter().forEach(h => svgof(h).color("fill", color));
+        targetsGetter().forEach(h => svgof(h).color("fill", color == null ? noneColor : color));
         if (reflectionFn) reflectionFn();
     });
     $(colorpickers.stroke).off("change.spectrum");
     $(colorpickers.stroke).on("change.spectrum", (e, color) => {
-        targetsGetter().forEach(h => svgof(h).color("stroke", color));
+        targetsGetter().forEach(h => svgof(h).color("stroke", color == null ? noneColor : color));
         if (reflectionFn) reflectionFn();
     });
   });

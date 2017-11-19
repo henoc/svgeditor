@@ -38,10 +38,10 @@ export function bezierMode() {
     if (path === undefined) {
       path = {
         elem: svgroot.path(["M", x, y]).style({
-          "fill": withDefault(svgof(colorSample).color("fill"), noneColor).toHexString(),
-          "stroke": withDefault(svgof(colorSample).color("stroke"), noneColor).toHexString(),
-          "fill-opacity": withDefault(svgof(colorSample).color("fill"), noneColor).getAlpha(),
-          "stroke-opacity": withDefault(svgof(colorSample).color("stroke"), noneColor).getAlpha(),
+          "fill": svgof(colorSample).color("fill").toHexString(),
+          "stroke": svgof(colorSample).color("stroke").toHexString(),
+          "fill-opacity": svgof(colorSample).color("fill").getAlpha(),
+          "stroke-opacity": svgof(colorSample).color("stroke").getAlpha(),
           "stroke-width": svgof(colorSample).style("stroke-width")
         }).attr("id", null),
         points: [["M", x, y]],

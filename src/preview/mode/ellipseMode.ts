@@ -26,10 +26,10 @@ export function ellipseMode() {
     let y = ev.clientY - svgroot.node.getBoundingClientRect().top;
     ellipse = {
       elem: editorRoot.ellipse(0, 0).center(x, y)
-        .style("fill", withDefault(svgof(colorSample).color("fill"), noneColor).toHexString())
-        .style("stroke", withDefault(svgof(colorSample).color("stroke"), noneColor).toHexString())
-        .style("fill-opacity", withDefault(svgof(colorSample).color("fill"), noneColor).getAlpha())
-        .style("stroke-opacity", withDefault(svgof(colorSample).color("stroke"), noneColor).getAlpha())
+        .style("fill", svgof(colorSample).color("fill").toHexString())
+        .style("stroke", svgof(colorSample).color("stroke").toHexString())
+        .style("fill-opacity", svgof(colorSample).color("fill").getAlpha())
+        .style("stroke-opacity", svgof(colorSample).color("stroke").getAlpha())
         .style("stroke-width", svgof(colorSample).style("stroke-width"))
         .attr("id", null),
       start: Point.of(x, y),

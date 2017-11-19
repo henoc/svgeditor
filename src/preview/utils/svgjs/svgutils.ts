@@ -3,7 +3,7 @@ import {Point, withDefault} from "../utils";
 import {TransformFn, compressCognate, parseTransform} from "../transformAttributes/transformutils";
 import * as SVG from "svgjs";
 import { FixedTransformAttr, getFixed } from "../transformAttributes/fixdedTransformAttributes";
-import { noneColor } from "../tinycolorutils";
+import { noneColor, AnyColor } from "../tinycolorutils";
 let tinycolor: tinycolor = require("tinycolor2");
 
 export interface ElementScheme {
@@ -60,11 +60,11 @@ class SvgDeformer {
   /**
    * Get or set color of fill/stroke with opacity. In getter, source function is `getComputedStyle`. Return undefined if there is `none` color.
    */
-  color(fillstroke: "fill" | "stroke", colorInstance?: tinycolorInstance): tinycolorInstance | undefined {
+  color(fillstroke: "fill" | "stroke", colorInstance?: tinycolorInstance | AnyColor): tinycolorInstance | AnyColor {
     if (fillstroke === "fill") {
       if (colorInstance === undefined) {
         let style = window.getComputedStyle(this.elem.node);
-        if (style.fill === null || style.fill === "none" || style.fill === "") return undefined;
+        if (style.fill === null || style.fill === "none" || style.fill === "") return noneColor;
         let tcolor = tinycolor(style.fill);
         let opacity = style.fillOpacity;
         if (opacity) tcolor.setAlpha(+opacity);
@@ -77,7 +77,7 @@ class SvgDeformer {
     } else {
       if (colorInstance === undefined) {
         let style = window.getComputedStyle(this.elem.node);
-        if (style.stroke === null || style.stroke === "none" || style.stroke === "") return undefined;
+        if (style.stroke === null || style.stroke === "none" || style.stroke === "") return noneColor;
         let tcolor = tinycolor(style.stroke);
         let opacity = style.strokeOpacity;
         if (opacity) tcolor.setAlpha(+opacity);
