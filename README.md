@@ -2,9 +2,9 @@
 
 ![sample](images/out.gif)
 
-Now your VSCode mutate to interactive visual & literal SVG editor 😎
+Now your VSCode can mutate to an interactive visual & literal SVG editor 😎
 
-You can draw shapes in SVG Editor **visually** and also write the SVG **literally**.
+You can create shapes using the SVG's coder or directly creating shapes with the shaping tool. 
 
 ## Commands
 
@@ -17,7 +17,7 @@ You can draw shapes in SVG Editor **visually** and also write the SVG **literall
 
 - Hand mode
   - Scale and rotate.
-    - Note: Rotation uses the transform attribute. Transform property order is now fixed, `translate, rotate, scale, translate`. If shape doesn't follow it, the property is ignored.
+    - Note: Rotation uses the transform attribute. Transform property order is now `translate, rotate, scale, translate`. If this transform property order is not followed correctly, the shape will not be effected.
 - Node mode
   - Edit node of line, polyline, polygon and path object.
 - Rectangle, ellipse, polygon, path, text mode
