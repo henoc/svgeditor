@@ -17,7 +17,11 @@ export class ContextMenu {
   addMenuOperators(...ops: ContextMenuOperator[]) {
     for (let op of ops) {
       let operatorElement = document.createElement("div");
-      operatorElement.addEventListener("click", op.callback);
+      operatorElement.addEventListener("click", ev => {
+        op.callback(ev);
+        this.display(ev, false);
+      });
+      operatorElement.classList.add("svgeditor-contextmenu-item");
       operatorElement.textContent = op.name;
       this._contextMenu.insertAdjacentElement("beforeend", operatorElement);
     }
