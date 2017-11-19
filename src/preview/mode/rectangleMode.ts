@@ -17,7 +17,7 @@ export function rectangleMode() {
   let rectangle: undefined | Rectangle = undefined;
 
   // about color-picker
-  let colorSample = editorRoot.rect().style({fill: "#666666",  "stroke-width": 10, stroke: "#999999" }).size(0, 0);
+  let colorSample = editorRoot.group().id("svgeditor-temporals").rect().style({fill: "#666666",  "stroke-width": 10, stroke: "#999999" }).size(0, 0);
   refleshStyleAttribues(colorSample);
 
   svgroot.node.onmousedown = (ev: MouseEvent) => {
@@ -57,7 +57,6 @@ export function rectangleMode() {
       if (rectangle.elem.width() === 0 && rectangle.elem.height() === 0) {
         rectangle.elem.remove();
       } else {
-        colorSample.remove();
         reflection();
         buttons.hand.click();
       }

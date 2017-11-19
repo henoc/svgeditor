@@ -37,6 +37,11 @@ You can draw shapes in SVG Editor **visually** and also write the SVG **literall
 - [ ] Zoom
 - [ ] Handle images
 
+## ChangeLog
+
+- 0.2.0 Affected embedded CSS in SVG
+- 0.1.0 Released
+
 ## License
 
 MIT

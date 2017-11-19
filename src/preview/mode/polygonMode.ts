@@ -13,7 +13,7 @@ export function polygonMode() {
   } = undefined;
 
   // about color-picker
-  let colorSample = editorRoot.rect().style({ fill: "none", "stroke-width": 10, stroke: "#999999" }).size(0, 0);
+  let colorSample = editorRoot.group().id("svgeditor-temporals").rect().style({ fill: "none", "stroke-width": 10, stroke: "#999999" }).size(0, 0);
   refleshStyleAttribues(colorSample);
 
   let polygonCheckbox = <HTMLInputElement>document.getElementById("svgeditor-typicalproperties-enclosure")!;

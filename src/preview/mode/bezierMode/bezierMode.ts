@@ -17,7 +17,7 @@ export function bezierMode() {
   } = undefined;
 
   // about color-picker
-  let colorSample = editorRoot.rect().style({fill: "#666666",  "stroke-width": 10, stroke: "#999999" }).size(0, 0);
+  let colorSample = editorRoot.group().id("svgeditor-temporals").rect().style({fill: "#666666",  "stroke-width": 10, stroke: "#999999" }).size(0, 0);
   refleshStyleAttribues(colorSample);
 
   let enclosureCheckbox = <HTMLInputElement>document.getElementById("svgeditor-typicalproperties-pathz")!;

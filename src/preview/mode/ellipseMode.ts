@@ -16,7 +16,7 @@ export function ellipseMode() {
   let ellipse: undefined | Ellipse = undefined;
 
   // about color-picker
-  let colorSample = editorRoot.rect().style({fill: "#666666",  "stroke-width": 10, stroke: "#999999" }).size(0, 0);
+  let colorSample = editorRoot.group().id("svgeditor-temporals").rect().style({fill: "#666666",  "stroke-width": 10, stroke: "#999999" }).size(0, 0);
   refleshStyleAttribues(colorSample);
 
   svgroot.node.onmousedown = (ev: MouseEvent) => {

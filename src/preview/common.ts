@@ -35,6 +35,7 @@ export let editorRoot = SVG("svgeditor-root").size(svgWidth, svgHeight).attr("vi
 // 自動生成されるdefsを削除
 editorRoot.select("defs").each((i, elems) => elems[i].remove());
 export let svgroot = editorRoot.svg(svgContentText);
+svgroot.attr("id", null);
 
 // 前処理として circle をすべて ellipse にする
 
@@ -69,6 +70,10 @@ export function command(name: string, args?: string[]): void {
 
 export function reflection(preprocess?: () => void, postprocess?: () => void): void {
   if (preprocess) preprocess();
+  // remove temporal group
+  editorRoot.select("#svgeditor-temporals").each((i, elems) => {
+    elems[i].remove();
+  });
   command("extension.reflectToEditor", [svgroot.node.outerHTML]);
   if (postprocess) postprocess();
 }
