@@ -69,7 +69,6 @@
     "@types/ejs": "^2.3.33",
     "@types/jquery": "^3.2.16",
     "@types/tinycolor2": "^1.4.0",
-    "clipboard": "^1.7.1",
     "ejs": "^2.5.7",
     "html": "^1.0.0",
     "jquery": "^3.2.1",
