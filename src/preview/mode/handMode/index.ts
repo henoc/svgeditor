@@ -31,6 +31,9 @@ export function handMode() {
   svgroot.node.onmousedown = (ev) => {
     // 選択解除
     dragTarget = { kind: "none" };
+    if (handTarget) handTarget.forEach(t => {
+      svgof(t).removeClass("svgeditor-handtarget");
+    });
     handTarget = undefined;
     expandVertexesGroup.children().forEach(elem => elem.remove());
     if (rotateVertex.vertex) rotateVertex.vertex.remove();
@@ -40,7 +43,7 @@ export function handMode() {
 
   svgroot.node.onmouseup = (ev) => {
     // 変更されたHTML（のSVG部分）をエディタに反映させる
-    if (dragTarget) handModeReflection(expandVertexesGroup, rotateVertex);
+    if (dragTarget) handModeReflection(expandVertexesGroup, rotateVertex, handTarget);
     // 関連する頂点を再設置
     updateScaleVertexes(dragTarget);
     updateRotateVertex(dragTarget, rotateVertex);
@@ -95,7 +98,7 @@ export function handMode() {
           rotateVertex.vertex!.node.onmousedown = (ev) => rotateVertexMousedown(ev, main);
           // handTargetのclassがすでにあったら消す
           svgroot.select(".svgeditor-handtarget").each((i, elems) => {
-            elems[i].removeClass("svgeditor-handtarget");
+            svgof(elems[i]).removeClass("svgeditor-handtarget");
           });
           handTarget = main;
           handTarget.forEach(target => target.addClass("svgeditor-handtarget"));
@@ -213,27 +216,37 @@ export function handMode() {
     }
   }
 
-  setStyleAttrEvent(() => handTarget ? handTarget : [], () => handModeReflection(expandVertexesGroup, rotateVertex));
+  setStyleAttrEvent(() => handTarget ? handTarget : [], () => handModeReflection(expandVertexesGroup, rotateVertex, handTarget));
 
   // 右クリックメニューの設定
   contextMenu.addMenuOperators({
     name: "delete",
     callback: (ev) => {
       deleteEvent(svgroot);
-      handModeReflection(expandVertexesGroup, rotateVertex);
+      handModeReflection(expandVertexesGroup, rotateVertex, handTarget);
     }
   });
 }
 
-export function handModeReflection(expandVertexesGroup: SVG.G, rotateVertex: { vertex: SVG.Element | undefined }) {
+export function handModeReflection(expandVertexesGroup: SVG.G, rotateVertex: { vertex: SVG.Element | undefined }, handTarget: SVG.Element[] | undefined) {
   reflection(
     () => {
       expandVertexesGroup.remove();
       if (rotateVertex.vertex) rotateVertex.vertex.remove();
+      if (handTarget) {
+        handTarget.forEach(t => {
+          svgof(t).removeClass("svgeditor-handtarget");
+        });
+      }
     },
     () => {
       svgroot.add(expandVertexesGroup);
       if (rotateVertex.vertex) svgroot.add(rotateVertex.vertex);
+      if (handTarget) {
+        handTarget.forEach(t => {
+          t.addClass("svgeditor-handtarget");
+        });
+      }
     });
 }
 

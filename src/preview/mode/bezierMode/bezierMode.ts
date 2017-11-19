@@ -42,7 +42,8 @@ export function bezierMode() {
           "stroke": withDefault(svgof(colorSample).getColor("stroke"), noneColor).toHexString(),
           "fill-opacity": withDefault(svgof(colorSample).getColorWithOpacity("fill"), noneColor).getAlpha(),
           "stroke-opacity": withDefault(svgof(colorSample).getColorWithOpacity("stroke"), noneColor).getAlpha(),
-          "stroke-width": svgof(colorSample).getStyleAttr("stroke-width")
+          "stroke-width": svgof(colorSample).getStyleAttr("stroke-width"),
+          "id": null
         }),
         points: [["M", x, y]],
         sBegin: Point.of(x, y),

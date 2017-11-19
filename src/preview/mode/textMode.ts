@@ -21,7 +21,7 @@ export function textMode() {
     let x = ev.clientX - svgroot.node.getBoundingClientRect().left;
     let y = ev.clientY - svgroot.node.getBoundingClientRect().top;
 
-    sampleText.clone().attr("id", undefined);
+    sampleText.clone().attr("id", null);
   };
 
   svgroot.node.onmousemove = (ev: MouseEvent) => {

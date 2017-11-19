@@ -31,7 +31,8 @@ export function rectangleMode() {
         .attr("stroke", withDefault(svgof(colorSample).getColor("stroke"), noneColor).toHexString())
         .attr("fill-opacity", withDefault(svgof(colorSample).getColorWithOpacity("fill"), noneColor).getAlpha())
         .attr("stroke-opacity", withDefault(svgof(colorSample).getColorWithOpacity("stroke"), noneColor).getAlpha())
-        .attr("stroke-width", svgof(colorSample).getStyleAttr("stroke-width")),
+        .attr("stroke-width", svgof(colorSample).getStyleAttr("stroke-width"))
+        .attr("id", null),
       start: Point.of(x, y),
       end: Point.of(x, y)
     };
