@@ -11,7 +11,7 @@ import { FixedTransformAttr, makeMatrix } from "../../utils/transformAttributes/
 import { DragTarget, TargetRotate } from "./dragTargetTypes";
 import { setScaleVertexes, setRotateVertex, updateScaleVertexes, updateRotateVertex } from "./setVertexes";
 import { gplikeof } from "../../utils/svgjs/grouplikeutils";
-import { deleteEvent } from "../functionButtons";
+import { deleteEvent, duplicateEvent, forwardEvent, backwardEvent, reverseXEvent, reverseYEvent } from "../functionButtons";
 
 export type RotateVertex = { vertex: SVG.Element | undefined };
 
@@ -61,51 +61,51 @@ export function handMode() {
     moveElem.node.onmousedown = (ev: MouseEvent) => {
       ev.stopPropagation();
 
-      if (ev.button === 0) {
-        contextMenu.display(ev, false);
-        if (dragTarget.kind === "none") {
-          let main: SVG.Element[] = [moveElem];
-          let hands = withDefault(handTarget, []);
-          if (ev.shiftKey || (hands.indexOf(moveElem) !== -1)) {
-            for (let h of hands) {
-              if (h === moveElem) continue;
-              main.push(h);
-            }
+      contextMenu.display(ev, false);
+      if (dragTarget.kind === "none") {
+        let main: SVG.Element[] = [moveElem];
+        let hands = withDefault(handTarget, []);
+        if (ev.shiftKey || (hands.indexOf(moveElem) !== -1)) {
+          for (let h of hands) {
+            if (h === moveElem) continue;
+            main.push(h);
           }
-          dragTarget = {
-            kind: "main",
-            main: main,
-            vertexes: [],
-            fromCursor: gplikeof(main).getCenter().sub(Point.of(ev.clientX, ev.clientY)),
-            initialScheme: {
-              center: gplikeof(main).getCenter(),
-              size: gplikeof(main).getSize(),
-              fixedTransform: gplikeof(main).getFixedTransformAttr()
-            }
-          };
-          expandVertexesGroup.clear();
-          setScaleVertexes(dragTarget, expandVertexesGroup);
-          // 頂点が設定されたのでイベントを追加する
-          expandVertexesGroup.children().forEach(elem => {
-            let reverseVertex = expandVertexesGroup.children().find(t => equals(
-              svgof(t).geta("direction")!.split(" "),
-              svgof(elem).geta("direction")!.split(" ").map(dir => reverse(<any>dir))
-            ))!;
-            elem.node.onmousedown = (ev) => vertexMousedown(ev, main, elem, expandVertexesGroup.children(), reverseVertex);
-          });
-          if (rotateVertex.vertex) rotateVertex.vertex.remove();
-          setRotateVertex(dragTarget, rotateVertex, svgroot);
-          rotateVertex.vertex!.node.onmousedown = (ev) => rotateVertexMousedown(ev, main);
-          // handTargetのclassがすでにあったら消す
-          svgroot.select(".svgeditor-handtarget").each((i, elems) => {
-            svgof(elems[i]).removeClass("svgeditor-handtarget");
-          });
-          handTarget = main;
-          handTarget.forEach(target => target.addClass("svgeditor-handtarget"));
-          refleshStyleAttribues(main[0]);
         }
-      } else if (ev.button === 2) {
+        dragTarget = {
+          kind: "main",
+          main: main,
+          vertexes: [],
+          fromCursor: gplikeof(main).getCenter().sub(Point.of(ev.clientX, ev.clientY)),
+          initialScheme: {
+            center: gplikeof(main).getCenter(),
+            size: gplikeof(main).getSize(),
+            fixedTransform: gplikeof(main).getFixedTransformAttr()
+          }
+        };
+        expandVertexesGroup.clear();
+        setScaleVertexes(dragTarget, expandVertexesGroup);
+        // 頂点が設定されたのでイベントを追加する
+        expandVertexesGroup.children().forEach(elem => {
+          let reverseVertex = expandVertexesGroup.children().find(t => equals(
+            svgof(t).geta("direction")!.split(" "),
+            svgof(elem).geta("direction")!.split(" ").map(dir => reverse(<any>dir))
+          ))!;
+          elem.node.onmousedown = (ev) => vertexMousedown(ev, main, elem, expandVertexesGroup.children(), reverseVertex);
+        });
+        if (rotateVertex.vertex) rotateVertex.vertex.remove();
+        setRotateVertex(dragTarget, rotateVertex, svgroot);
+        rotateVertex.vertex!.node.onmousedown = (ev) => rotateVertexMousedown(ev, main);
+        // handTargetのclassがすでにあったら消す
+        svgroot.select(".svgeditor-handtarget").each((i, elems) => {
+          svgof(elems[i]).removeClass("svgeditor-handtarget");
+        });
+        handTarget = main;
+        handTarget.forEach(target => target.addClass("svgeditor-handtarget"));
+        refleshStyleAttribues(main[0]);
+      }
+      if (ev.button === 2) {    // 右クリック
         contextMenu.display(ev, true);
+        dragTarget = { kind: "none" };
       }
     };
   });
@@ -219,13 +219,54 @@ export function handMode() {
   setStyleAttrEvent(() => handTarget ? handTarget : [], () => handModeReflection(expandVertexesGroup, rotateVertex, handTarget));
 
   // 右クリックメニューの設定
-  contextMenu.addMenuOperators({
-    name: "delete",
-    callback: (ev) => {
-      deleteEvent(svgroot);
-      handModeReflection(expandVertexesGroup, rotateVertex, handTarget);
+  contextMenu.addMenuOperators(
+    {
+      name: "duplicate",
+      callback: (ev) => {
+        duplicateEvent(svgroot);
+        handModeReflection(expandVertexesGroup, rotateVertex, handTarget);
+        handModeDestruct();
+        handMode();
+      }
+    },
+    {
+      name: "delete",
+      callback: (ev) => {
+        deleteEvent(svgroot);
+        handModeReflection(expandVertexesGroup, rotateVertex, handTarget);
+        handModeDestruct();
+        handMode();
+      }
+    },
+    {
+      name: "forward",
+      callback: (ev) => {
+        forwardEvent(svgroot);
+        handModeReflection(expandVertexesGroup, rotateVertex, handTarget);
+      }
+    },
+    {
+      name: "backward",
+      callback: (ev) => {
+        backwardEvent(svgroot);
+        handModeReflection(expandVertexesGroup, rotateVertex, handTarget);
+      }
+    },
+    {
+      name: "reverse-x",
+      callback: (ev) => {
+        reverseXEvent(svgroot);
+        handModeReflection(expandVertexesGroup, rotateVertex, handTarget);
+      }
+    },
+    {
+      name: "reverse-y",
+      callback: (ev) => {
+        reverseYEvent(svgroot);
+        handModeReflection(expandVertexesGroup, rotateVertex, handTarget);
+      }
     }
-  });
+  );
 }
 
 export function handModeReflection(expandVertexesGroup: SVG.G, rotateVertex: { vertex: SVG.Element | undefined }, handTarget: SVG.Element[] | undefined) {
