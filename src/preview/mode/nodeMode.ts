@@ -4,7 +4,7 @@ import * as jQuery from "jquery";
 import { svgof } from "../utils/svgjs/svgutils";
 import { pathlikeof, PathLike } from "../utils/svgjs/pathlikeutils";
 import { Point, withDefault } from "../utils/utils";
-import { deleteEvent, deleteVertexEvent } from "./functionButtons";
+import { deleteEvent, deleteVertexEvent, duplicateVertexEvent } from "./functionButtons";
 
 export function nodeMode() {
   let handTarget: PathLike | undefined = undefined;
@@ -106,7 +106,16 @@ export function nodeMode() {
 
   contextMenu.addMenuOperators(
     {
-      name: "delete",
+      name: "duplicate vertex",
+      callback: (ev) => {
+        if (selectedVertexNumber) duplicateVertexEvent(svgroot, selectedVertexNumber);
+        nodeModeReflection();
+        nodeModeDestruct();
+        nodeMode();
+      }
+    },
+    {
+      name: "delete vertex",
       callback: (ev) => {
         if (selectedVertexNumber) deleteVertexEvent(svgroot, selectedVertexNumber);
         nodeModeReflection();

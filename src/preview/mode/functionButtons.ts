@@ -55,3 +55,10 @@ export function deleteVertexEvent(svgroot: SVG.Doc, vertexNumber: number) {
     pathlikeof(<any>elems[i]).removeAt(vertexNumber);
   });
 }
+
+export function duplicateVertexEvent(svgroot: SVG.Doc, vertexNumber: number) {
+  let targets = svgroot.select(".svgeditor-handtarget");
+  targets.each((i, elems) => {
+    pathlikeof(<any>elems[i]).duplicateAt(vertexNumber);
+  });
+}
