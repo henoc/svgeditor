@@ -1,13 +1,15 @@
-import {editorRoot, svgroot, textcolor, reflection, textcolorDarken, colorpickers, svgStyleAttrs, setStyleAttrEvent} from "../common";
+import {editorRoot, svgroot, textcolor, reflection, textcolorDarken, colorpickers, svgStyleAttrs, setStyleAttrEvent, contextMenu} from "../common";
 import * as SVG from "svgjs";
 import * as jQuery from "jquery";
 import { svgof } from "../utils/svgjs/svgutils";
 import { pathlikeof, PathLike } from "../utils/svgjs/pathlikeutils";
 import { Point, withDefault } from "../utils/utils";
+import { deleteEvent, deleteVertexEvent } from "./functionButtons";
 
 export function nodeMode() {
   let handTarget: PathLike | undefined = undefined;
   let moveVertexNumber: number | undefined = undefined;
+  let selectedVertexNumber: number | undefined = undefined;
   let pathVertexes = svgroot.group().id("svgeditor-pathVertexes");
 
   let pathElems: PathLike[] = [];
@@ -30,20 +32,27 @@ export function nodeMode() {
 
   function setPathVertexes(target: PathLike) {
     handTarget = target;
+    handTarget.addClass("svgeditor-handtarget");
     pathVertexes.clear();
     let points = pathlikeof(target).getPathVertexes();
     for (let i = 0; i < points.length; i++) {
       let v = svgroot.circle(10)
         .stroke({ color: textcolor.toRgbString(), width: 3 })
         .fill(textcolorDarken.toRgbString()).center(points[i].x, points[i].y);
+      if (selectedVertexNumber === i) v.addClass("svgeditor-vertex-selected");
       pathVertexes.add(v);
-      v.node.onmousedown = (ev: MouseEvent) => moveVertexRegister(ev, i);
+      v.node.onmousedown = (ev: MouseEvent) => moveVertexRegister(ev, i, v);
     }
   }
 
-  function moveVertexRegister(ev: MouseEvent, i: number) {
+  function moveVertexRegister(ev: MouseEvent, i: number, target: SVG.Element) {
     ev.stopPropagation();
-    moveVertexNumber = i;
+    if (ev.button === 0) moveVertexNumber = i;
+    selectedVertexNumber = i;
+    target.addClass("svgeditor-vertex-selected");
+    if (ev.button === 2) {
+      contextMenu.display(ev, true);
+    }
   }
 
   function moveVertexEvent(ev: MouseEvent, i: number, target: PathLike) {
@@ -58,6 +67,9 @@ export function nodeMode() {
     reflection(
       () => {
         pathVertexes.remove();
+        if (handTarget) {
+          handTarget.removeClass("svgeditor-handtarget");
+        }
       },
       () => {
         svgroot.add(pathVertexes);
@@ -83,11 +95,26 @@ export function nodeMode() {
   svgroot.node.onmousedown = (ev: MouseEvent) => {
     ev.stopPropagation();
 
+    if (handTarget) handTarget.removeClass("svgeditor-handtarget");
     handTarget = undefined;
+    selectedVertexNumber = undefined;
     pathVertexes.clear();
+    contextMenu.display(ev, false);
   };
 
   setStyleAttrEvent(() => handTarget ? [handTarget] : [], () => nodeModeReflection());
+
+  contextMenu.addMenuOperators(
+    {
+      name: "delete",
+      callback: (ev) => {
+        if (selectedVertexNumber) deleteVertexEvent(svgroot, selectedVertexNumber);
+        nodeModeReflection();
+        nodeModeDestruct();
+        nodeMode();
+      }
+    },
+  );
 }
 
 export function nodeModeDestruct() {
@@ -101,4 +128,5 @@ export function nodeModeDestruct() {
   svgroot.node.onmousedown = () => undefined;
   svgroot.node.onmouseup = () => undefined;
   svgroot.node.onmousemove = () => undefined;
+  contextMenu.clear();
 }

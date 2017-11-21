@@ -1,4 +1,5 @@
 import * as SVG from "svgjs";
+import { pathlikeof } from "../utils/svgjs/pathlikeutils";
 
 
 /**
@@ -45,5 +46,12 @@ export function reverseYEvent(svgroot: SVG.Doc) {
   targets.each((i, elems) => {
     elems[i].y(elems[i].y() + elems[i].height());
     elems[i].height(-elems[i].height());
+  });
+}
+
+export function deleteVertexEvent(svgroot: SVG.Doc, vertexNumber: number) {
+  let targets = svgroot.select(".svgeditor-handtarget");
+  targets.each((i, elems) => {
+    pathlikeof(<any>elems[i]).removeAt(vertexNumber);
   });
 }

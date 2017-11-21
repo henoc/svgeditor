@@ -64,6 +64,12 @@ class PathLikeUtils {
     points.splice(i, 1, point);
     this.setPathVertexes(points);
   }
+
+  removeAt(i: number) {
+    let points = this.getPathVertexes();
+    points.splice(i, 1);
+    this.setPathVertexes(points);
+  }
 }
 
 export function pathlikeof(elem: PathLike) {

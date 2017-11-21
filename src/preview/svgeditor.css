@@ -42,6 +42,10 @@
   stroke-width: 2px;
 }
 
+.svgeditor-vertex-selected {
+  stroke: var(--svgeditor-color-text-dark);
+}
+
 .svgeditor-input {
   width: 30px;
   border: solid 1px var(--svgeditor-color-bg-light2);

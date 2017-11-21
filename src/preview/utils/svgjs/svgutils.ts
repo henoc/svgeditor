@@ -18,7 +18,6 @@ class SvgDeformer {
   constructor(public elem: SVG.Element) {
   }
 
-  // SVG.jsのattrは未定義のときデフォルト値を返す？ようなのでelementから直接とる関数を定義
   geta(name: string): string | undefined {
     let attr = this.elem.node.getAttribute(name);
     if (attr === null) return undefined;
