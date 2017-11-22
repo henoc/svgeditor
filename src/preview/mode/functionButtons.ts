@@ -1,5 +1,6 @@
 import * as SVG from "svgjs";
 import { pathlikeof } from "../utils/svgjs/pathlikeutils";
+import { extract } from "../utils/svgjs/grouplikeutils";
 
 
 /**
@@ -68,5 +69,18 @@ export function groupEvent(svgroot: SVG.Doc) {
   let newGroup = svgroot.group();
   targets.each((i, elems) => {
     newGroup.add(elems[i]);
+  });
+}
+
+export function ungroupEvent(svgroot: SVG.Doc) {
+  let targets = svgroot.select(".svgeditor-handtarget");
+  let targetsArray: SVG.Element[] = [];
+  targets.each((i, elems) => {
+    targetsArray.push(elems[i]);
+  });
+  let extracted = extract(targetsArray);
+  svgroot.clear();
+  extracted.forEach(elem => {
+    svgroot.add(elem);
   });
 }
