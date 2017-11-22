@@ -59,5 +59,24 @@ class GroupLike {
 }
 
 export function gplikeof(svgs: SVG.Element[]): GroupLike {
-  return new GroupLike(svgs);
+  return new GroupLike(extract(svgs));
+}
+
+/**
+ * Extract all groups recursively
+ */
+export function extract(svgs: SVG.Element[] | SVG.G): SVG.Element[] {
+  let ret: SVG.Element[] = [];
+  if (Array.isArray(svgs)) {
+    svgs.forEach(elem => {
+      let tmp = elem.node.tagName === "g" ? extract(<SVG.G>elem) : [elem];
+      ret.push(...tmp);
+    });
+  } else {
+    svgs.each((i, elems) => {
+      let tmp = elems[i].node.tagName === "g" ? extract(<SVG.G>elems[i]) : [elems[i]];
+      ret.push(...tmp);
+    });
+  }
+  return ret;
 }

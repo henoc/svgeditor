@@ -6,7 +6,7 @@ import {rectangleMode, rectangleModeDestruct} from "./mode/rectangleMode";
 import {ellipseMode, ellipseModeDestruct} from "./mode/ellipseMode";
 import {polygonMode, polygonModeDestruct} from "./mode/polygonMode";
 import {textMode, textModeDestruct} from "./mode/textMode";
-import {duplicateEvent, forwardEvent, backwardEvent, reverseXEvent, reverseYEvent, deleteEvent} from "./mode/functionButtons";
+import {duplicateEvent, forwardEvent, backwardEvent, reverseXEvent, reverseYEvent, deleteEvent, groupEvent} from "./mode/functionButtons";
 import {bezierModeDestruct, bezierMode} from "./mode/bezierMode/bezierMode";
 import {nodeModeDestruct, nodeMode} from "./mode/nodeMode";
 
@@ -270,4 +270,10 @@ document.getElementById("svgeditor-function-reverse-x")!.onclick = (ev: MouseEve
 
 document.getElementById("svgeditor-function-reverse-y")!.onclick = (ev: MouseEvent) => {
   reverseYEvent(svgroot);
+};
+
+document.getElementById("svgeditor-function-group")!.onclick = (ev: MouseEvent) => {
+  groupEvent(svgroot);
+  destructions();
+  handMode();
 };

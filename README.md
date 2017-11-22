@@ -4,7 +4,7 @@
 
 Now your VSCode can mutate to an interactive visual & literal SVG editor 😎
 
-You can create shapes using the SVG's coder or directly creating shapes with the shaping tool. 
+You can create shapes using the SVG's coder or directly creating shapes with the shaping tool.
 
 ## Commands
 
@@ -29,7 +29,7 @@ You can create shapes using the SVG's coder or directly creating shapes with the
 - [ ] Attributes output style options
 - [ ] Line cap, marker
 - [ ] Scale objects with fixed aspect ratio mode
-- [ ] `g` tag
+- [x] `g` tag
 - [ ] `defs` tag
 - [ ] `use` tag
 - [ ] Gradation colors

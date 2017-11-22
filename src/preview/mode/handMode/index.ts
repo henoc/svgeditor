@@ -10,7 +10,7 @@ import * as jQuery from "jquery";
 import { FixedTransformAttr, makeMatrix } from "../../utils/transformAttributes/fixdedTransformAttributes";
 import { DragTarget, TargetRotate } from "./dragTargetTypes";
 import { setScaleVertexes, setRotateVertex, updateScaleVertexes, updateRotateVertex } from "./setVertexes";
-import { gplikeof } from "../../utils/svgjs/grouplikeutils";
+import { gplikeof, extract } from "../../utils/svgjs/grouplikeutils";
 import { deleteEvent, duplicateEvent, forwardEvent, backwardEvent, reverseXEvent, reverseYEvent } from "../functionButtons";
 
 export type RotateVertex = { vertex: SVG.Element | undefined };
@@ -50,12 +50,7 @@ export function handMode() {
     dragTarget = { kind: "none" };
   };
 
-  const moveElems: SVG.Element[] = [];
-
-  editorRoot.each((i, elems) => {
-    let elem = elems[i];
-    moveElems.push(elem);
-  });
+  const moveElems: SVG.Element[] = extract(svgroot.children());
 
   moveElems.forEach((moveElem, i) => {
     moveElem.node.onmousedown = (ev: MouseEvent) => {
@@ -64,11 +59,15 @@ export function handMode() {
       contextMenu.display(ev, false);
       if (dragTarget.kind === "none") {
         let main: SVG.Element[] = [moveElem];
-        let hands = withDefault(handTarget, []);
-        if (ev.shiftKey || (hands.indexOf(moveElem) !== -1)) {
-          for (let h of hands) {
-            if (h === moveElem) continue;
-            main.push(h);
+        if (moveElem.node.parentElement!.tagName === "g") {
+          main = moveElem.siblings();
+        } else {
+          let hands = withDefault(handTarget, []);
+          if (ev.shiftKey || (hands.indexOf(moveElem) !== -1)) {
+            for (let h of hands) {
+              if (h === moveElem) continue;
+              main.push(h);
+            }
           }
         }
         dragTarget = {

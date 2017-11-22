@@ -62,3 +62,11 @@ export function duplicateVertexEvent(svgroot: SVG.Doc, vertexNumber: number) {
     pathlikeof(<any>elems[i]).duplicateAt(vertexNumber);
   });
 }
+
+export function groupEvent(svgroot: SVG.Doc) {
+  let targets = svgroot.select(".svgeditor-handtarget");
+  let newGroup = svgroot.group();
+  targets.each((i, elems) => {
+    newGroup.add(elems[i]);
+  });
+}
