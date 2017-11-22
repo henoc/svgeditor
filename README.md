@@ -39,6 +39,7 @@ You can create shapes using the SVG's coder or directly creating shapes with the
 
 ## ChangeLog
 
+- 0.3.0 Added group and ungroup button, improved right click menu
 - 0.2.0 Affected embedded CSS in SVG
 - 0.1.0 Released
 
