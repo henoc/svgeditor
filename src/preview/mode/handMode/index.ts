@@ -32,7 +32,7 @@ export function handMode() {
     // 選択解除
     dragTarget = { kind: "none" };
     if (handTarget) handTarget.forEach(t => {
-      t.removeClass("svgeditor-handtarget");
+      svgof(t).removeClass("svgeditor-handtarget");
     });
     handTarget = undefined;
     expandVertexesGroup.children().forEach(elem => elem.remove());
@@ -96,7 +96,7 @@ export function handMode() {
         rotateVertex.vertex!.node.onmousedown = (ev) => rotateVertexMousedown(ev, main);
         // handTargetのclassがすでにあったら消す
         svgroot.select(".svgeditor-handtarget").each((i, elems) => {
-          elems[i].removeClass("svgeditor-handtarget");
+          svgof(elems[i]).removeClass("svgeditor-handtarget");
         });
         handTarget = main;
         handTarget.forEach(target => target.addClass("svgeditor-handtarget"));
@@ -275,7 +275,7 @@ export function handModeReflection(expandVertexesGroup: SVG.G, rotateVertex: { v
       if (rotateVertex.vertex) rotateVertex.vertex.remove();
       if (handTarget) {
         handTarget.forEach(t => {
-          t.removeClass("svgeditor-handtarget");
+          svgof(t).removeClass("svgeditor-handtarget");
         });
       }
     },

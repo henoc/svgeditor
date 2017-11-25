@@ -6,10 +6,6 @@ import { FixedTransformAttr, getFixed } from "../transformAttributes/fixdedTrans
 import { noneColor, AnyColor } from "../tinycolorutils";
 let tinycolor: tinycolor = require("tinycolor2");
 
-export interface ElementScheme {
-  tagName: string;
-  attributes: {[name: string]: string};
-}
 
 /**
  * Completion functions of SVG.js
@@ -196,6 +192,11 @@ class SvgDeformer {
       "transform",
       `${attr.map(fn => fn.kind + "(" + fn.args.join(" ") + ")")}})`
     );
+  }
+
+  removeClass(name: string): void {
+    this.elem.removeClass(name);
+    if (this.geta("class") === "") this.elem.attr("class", null);
   }
 }
 
