@@ -14,7 +14,7 @@ import * as SVG from "svgjs";
 import * as jQuery from "jquery";
 import { setTags } from "./gadget/tags";
 import { ContextMenu } from "./gadget/contextmenu";
-import { withDefault, withDefault2 } from "./utils/utils";
+import { withDefault } from "./utils/utils";
 import { noneColor } from "./utils/tinycolorutils";
 require("spectrum-colorpicker");
 let tinycolor: tinycolor = require("tinycolor2");
@@ -27,8 +27,8 @@ let svgHeight = 400;
 let svgViewBox: null | string = null;
 if (svgrootNative) {
   svgContentText = svgrootNative.innerHTML;
-  svgWidth = +withDefault2(svgrootNative.getAttribute("width"), <string>"400");
-  svgHeight = +withDefault2(svgrootNative.getAttribute("height"), <string>"400");
+  svgWidth = +withDefault(svgrootNative.getAttribute("width"), <string>"400");
+  svgHeight = +withDefault(svgrootNative.getAttribute("height"), <string>"400");
   svgViewBox = svgrootNative.getAttribute("viewBox");
   svgrootNative.remove();
 }

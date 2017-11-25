@@ -62,7 +62,7 @@ export function handMode() {
         if (moveElem.node.parentElement!.tagName === "g") {
           main = moveElem.siblings();
         } else {
-          let hands = withDefault(handTarget, []);
+          let hands = withDefault<SVG.Element[]>(handTarget, []);
           if (ev.shiftKey || (hands.indexOf(moveElem) !== -1)) {
             for (let h of hands) {
               if (h === moveElem) continue;
@@ -191,7 +191,7 @@ export function handMode() {
           center: gplikeof(main).getCenter(),
           size: gplikeof(main).getSize(),
           fixedTransform: gplikeof(main).getFixedTransformAttr(),
-          fontSize: main.map(m => m.node.tagName === "text" ? withDefault(optional(svgof(m).style("font-size")).map(s => trimPx(s)).content , 12) : undefined)
+          fontSize: main.map(m => m.node.tagName === "text" ? withDefault<number>(optional(svgof(m).style("font-size")).map(s => trimPx(s)).content , 12) : undefined)
         }
       };
     }

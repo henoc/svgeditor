@@ -35,7 +35,7 @@ export function bezierMode() {
 
     let x = ev.clientX - svgroot.node.getBoundingClientRect().left;
     let y = ev.clientY - svgroot.node.getBoundingClientRect().top;
-    if (path === undefined) {
+    if (path == null) {
       path = {
         elem: svgroot.path(["M", x, y]).style({
           "fill": svgof(colorSample).color("fill").toHexString(),

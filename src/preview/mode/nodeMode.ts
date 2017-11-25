@@ -24,7 +24,7 @@ export function nodeMode() {
     elem.node.onmousedown = (ev: MouseEvent) => {
       ev.stopPropagation();
 
-      if (handTarget === undefined) {
+      if (handTarget == null) {
         setPathVertexes(elem);
       }
     };

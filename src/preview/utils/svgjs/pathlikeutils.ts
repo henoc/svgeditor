@@ -47,7 +47,7 @@ class PathLikeUtils {
         return;
       case "path":
         let dAttr = svgof(this.elem).geta("d");
-        if (dAttr === undefined) return;
+        if (dAttr == null) return;
         let pathOps = parseD(dAttr);
         let c = 0;
         for (let op of pathOps) {

@@ -29,7 +29,7 @@ export function polygonMode() {
 
     let x = ev.clientX - svgroot.node.getBoundingClientRect().left;
     let y = ev.clientY - svgroot.node.getBoundingClientRect().top;
-    if (polyline === undefined) {
+    if (polyline == null) {
       let seed = polygonCheckbox.checked ? svgroot.polygon([]) : svgroot.polyline([]);
       polyline = {
         elem: seed.style({
