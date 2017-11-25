@@ -24,7 +24,7 @@ export function nodeMode() {
     elem.node.onmousedown = (ev: MouseEvent) => {
       ev.stopPropagation();
 
-      if (handTarget === undefined) {
+      if (handTarget == null) {
         setPathVertexes(elem);
       }
     };
@@ -68,7 +68,7 @@ export function nodeMode() {
       () => {
         pathVertexes.remove();
         if (handTarget) {
-          handTarget.removeClass("svgeditor-handtarget");
+          svgof(handTarget).removeClass("svgeditor-handtarget");
         }
       },
       () => {
@@ -95,7 +95,7 @@ export function nodeMode() {
   svgroot.node.onmousedown = (ev: MouseEvent) => {
     ev.stopPropagation();
 
-    if (handTarget) handTarget.removeClass("svgeditor-handtarget");
+    if (handTarget) svgof(handTarget).removeClass("svgeditor-handtarget");
     handTarget = undefined;
     selectedVertexNumber = undefined;
     pathVertexes.clear();

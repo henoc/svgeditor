@@ -67,6 +67,7 @@ export function duplicateVertexEvent(svgroot: SVG.Doc, vertexNumber: number) {
 export function groupEvent(svgroot: SVG.Doc) {
   let targets = svgroot.select(".svgeditor-handtarget");
   let newGroup = svgroot.group();
+  newGroup.attr("id", null);
   targets.each((i, elems) => {
     newGroup.add(elems[i]);
   });

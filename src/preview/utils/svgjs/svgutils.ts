@@ -6,10 +6,6 @@ import { FixedTransformAttr, getFixed } from "../transformAttributes/fixdedTrans
 import { noneColor, AnyColor } from "../tinycolorutils";
 let tinycolor: tinycolor = require("tinycolor2");
 
-export interface ElementScheme {
-  tagName: string;
-  attributes: {[name: string]: string};
-}
 
 /**
  * Completion functions of SVG.js
@@ -61,9 +57,9 @@ class SvgDeformer {
    */
   color(fillstroke: "fill" | "stroke", colorInstance?: tinycolorInstance | AnyColor): tinycolorInstance | AnyColor {
     if (fillstroke === "fill") {
-      if (colorInstance === undefined) {
+      if (colorInstance == null) {
         let style = window.getComputedStyle(this.elem.node);
-        if (style.fill === null || style.fill === "none" || style.fill === "") return noneColor;
+        if (style.fill == null || style.fill === "none" || style.fill === "") return noneColor;
         let tcolor = tinycolor(style.fill);
         let opacity = style.fillOpacity;
         if (opacity) tcolor.setAlpha(+opacity);
@@ -74,9 +70,9 @@ class SvgDeformer {
         return colorInstance;
       }
     } else {
-      if (colorInstance === undefined) {
+      if (colorInstance == null) {
         let style = window.getComputedStyle(this.elem.node);
-        if (style.stroke === null || style.stroke === "none" || style.stroke === "") return noneColor;
+        if (style.stroke == null || style.stroke === "none" || style.stroke === "") return noneColor;
         let tcolor = tinycolor(style.stroke);
         let opacity = style.strokeOpacity;
         if (opacity) tcolor.setAlpha(+opacity);
@@ -93,9 +89,9 @@ class SvgDeformer {
    * Get computed style (undefined if value is undefined or "none") or set `value` to the style attribute
    */
   style(name: string, value?: string): string | undefined {
-    if (value === undefined) {
+    if (value == null) {
       let st = window.getComputedStyle(this.elem.node);
-      if (st[name] === undefined || st[name] === "none" || st[name] === "") return undefined;
+      if (st[name] == null || st[name] === "none" || st[name] === "") return undefined;
       else return st[name];
     } else {
       (<HTMLElement>this.elem.node).style[name] = value;
@@ -105,9 +101,9 @@ class SvgDeformer {
 
   idealColor(fillstroke: "fill" | "stroke", colorInstance?: tinycolorInstance): tinycolorInstance | undefined {
     if (fillstroke === "fill") {
-      if (colorInstance === undefined) {
+      if (colorInstance == null) {
         let style = this.elem.node.style;
-        if (style.fill === null || style.fill === "none" || style.fill === "") return undefined;
+        if (style.fill == null || style.fill === "none" || style.fill === "") return undefined;
         let tcolor = tinycolor(style.fill);
         let opacity = style.fillOpacity;
         if (opacity) tcolor.setAlpha(+opacity);
@@ -118,9 +114,9 @@ class SvgDeformer {
         return colorInstance;
       }
     } else {
-      if (colorInstance === undefined) {
+      if (colorInstance == null) {
         let style = this.elem.node.style;
-        if (style.stroke === null || style.stroke === "none" || style.stroke === "") return undefined;
+        if (style.stroke == null || style.stroke === "none" || style.stroke === "") return undefined;
         let tcolor = tinycolor(style.stroke);
         let opacity = style.strokeOpacity;
         if (opacity) tcolor.setAlpha(+opacity);
@@ -134,9 +130,9 @@ class SvgDeformer {
   }
 
   idealStyle(name: string, value?: string): string | undefined {
-    if (value === undefined) {
+    if (value == null) {
       let st = this.elem.node.style;
-      if (st[name] === undefined || st[name] === "none" || st[name] === "") return undefined;
+      if (st[name] == null || st[name] === "none" || st[name] === "") return undefined;
       else return st[name];
     } else {
       (<HTMLElement>this.elem.node).style[name] = value;
@@ -146,7 +142,7 @@ class SvgDeformer {
 
   getTransformAttr(): TransformFn[] | undefined {
     let rawAttr = this.geta("transform");
-    return rawAttr === undefined ? undefined : parseTransform(rawAttr);
+    return rawAttr == null ? undefined : parseTransform(rawAttr);
   }
 
   setTransformAttr(transformfns: TransformFn[]): void {
@@ -155,7 +151,7 @@ class SvgDeformer {
   }
 
   getFixedTransformAttr(): FixedTransformAttr {
-    let trattr = withDefault(this.getTransformAttr(), []);
+    let trattr = withDefault<TransformFn[]>(this.getTransformAttr(), []);
     return getFixed(trattr, this.elem);
   }
 
@@ -173,7 +169,7 @@ class SvgDeformer {
    */
   addTransformFnRight(transformFn: TransformFn): void {
     let rawAttr = this.geta("transform");
-    let attr = rawAttr === undefined ? [] : parseTransform(rawAttr);
+    let attr = rawAttr == null ? [] : parseTransform(rawAttr);
     attr.push(transformFn);
     attr = compressCognate(attr);
     this.seta(
@@ -188,7 +184,7 @@ class SvgDeformer {
   addTransformFnLeft(transformFn: TransformFn): void {
     let attr = (() => {
       let rawAttr = this.geta("transform");
-      return rawAttr === undefined ? [] : parseTransform(rawAttr);
+      return rawAttr == null ? [] : parseTransform(rawAttr);
     })();
     attr.unshift(transformFn);
     attr = compressCognate(attr);
@@ -200,9 +196,7 @@ class SvgDeformer {
 
   removeClass(name: string): void {
     this.elem.removeClass(name);
-    if (this.elem.attr("class") === "") {
-      this.elem.attr("class", null);
-    }
+    if (this.geta("class") === "") this.elem.attr("class", null);
   }
 }
 
