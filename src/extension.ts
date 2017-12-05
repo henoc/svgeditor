@@ -11,11 +11,8 @@ export function activate(context: vscode.ExtensionContext) {
   let previewUri = vscode.Uri.parse("svgeditor://authority/svgeditor");
   let readResource =
     (filename: string) => fs.readFileSync(path.join(__dirname, "..", "resources", filename), "UTF-8");
-  let insertJs = readResource("bundle.js");
-  let insertCss = readResource("bundle.css");
-  let viewer = readResource("viewer.ejs");
+  let viewer = readResource("bundle.html");
   let templateSvg = readResource("template.svg");
-  let icons = readResource("icons.svg");
 
   class TextDocumentContentProvider implements vscode.TextDocumentContentProvider {
     public editor: vscode.TextEditor;
@@ -35,13 +32,8 @@ export function activate(context: vscode.ExtensionContext) {
 
     private createCssSnippet(): string {
       const svg = this.editor.document.getText();
-      const js = insertJs;
-      const css = insertCss;
       const html = render(viewer, {
-        svg: svg,
-        js: js,
-        css: css,
-        icons: icons
+        svg: svg
       });
       let logDir = path.join(__dirname, "..", "log");
       if (!fs.existsSync(logDir)) {

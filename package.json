@@ -50,8 +50,8 @@
   },
   "scripts": {
     "vscode:prepublish": "tsc -p ./",
-    "compile": "tsc -p ./ && npm run bundle",
-    "bundle": "browserify out/preview/common.js -o resources/bundle.js -p [ parcelify -o resources/bundle.css ]",
+    "compile": "tsc -p ./ && npm run elm",
+    "elm": "elm make src/Main.elm --output resources/bundle.html",
     "postinstall": "node ./node_modules/vscode/bin/install",
     "test": "npm run compile && ava out/test --verbose"
   },
@@ -76,9 +76,5 @@
     "svgjs": "^2.6.2",
     "tinycolor2": "^1.4.1",
     "yaparsec": "^1.0.5"
-  },
-  "style": [
-    "./node_modules/spectrum-colorpicker/spectrum.css",
-    "./src/preview/svgeditor.css"
-  ]
+  }
 }
