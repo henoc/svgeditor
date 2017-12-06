@@ -3,9 +3,11 @@ module Types exposing (..)
 import Mouse
 import Vec2 exposing (Vec2)
 import Set exposing (Set)
+import Dict exposing (Dict)
 
 type Mode = HandMode | RectMode | EllipseMode
 type alias ColorInfo = {fill: String, stroke: String}
+type alias AnyStyleInfo = Dict String String
 
 -- モデルが所有するSVGの形
 type SVGElement = Rectangle { leftTop: Vec2, size: Vec2 } | Ellipse { center: Vec2, size: Vec2 }

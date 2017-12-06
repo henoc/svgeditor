@@ -51,7 +51,7 @@
   "scripts": {
     "vscode:prepublish": "tsc -p ./",
     "compile": "tsc -p ./ && npm run elm",
-    "elm": "elm make src/Main.elm --output resources/bundle.html",
+    "elm": "elm make src/Main.elm --output resources/main.js",
     "postinstall": "node ./node_modules/vscode/bin/install",
     "test": "npm run compile && ava out/test --verbose"
   },
