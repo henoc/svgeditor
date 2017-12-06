@@ -8,6 +8,7 @@ getBBox : StyledSVGElement -> Box
 getBBox elem = case elem.shape of
   Rectangle {leftTop, size} -> {leftTop = leftTop, rightBottom = leftTop +# size}
   Ellipse {center, size} -> {leftTop = center -# size /# (2, 2), rightBottom = center +# size /# (2, 2)}
+  others -> {leftTop = (0, 0), rightBottom = (0, 0)}
 
 -- 平行移動
 translate : Vec2 -> StyledSVGElement -> StyledSVGElement
@@ -15,6 +16,7 @@ translate delta elem = {elem| shape =
   (case elem.shape of
     Rectangle {leftTop, size} -> Rectangle {leftTop = leftTop +# delta, size = size}
     Ellipse {center, size} -> Ellipse {center = center +# delta, size = size}
+    others -> others
   )}
 
 -- 中心
@@ -22,6 +24,7 @@ getCenter : StyledSVGElement -> Vec2
 getCenter elem = case elem.shape of
   Rectangle {leftTop, size} -> leftTop +# size /# (2, 2)
   Ellipse {center, size} -> center
+  others -> (0, 0)
 
 setCenter : Vec2 -> StyledSVGElement -> StyledSVGElement
 setCenter cent elem = 
@@ -53,6 +56,7 @@ scale ratio elem =
       case elem.shape of
         Rectangle {leftTop , size} -> Rectangle {leftTop = leftTop, size = size *# ratio}
         Ellipse {center, size} -> Ellipse {center = center, size = size *# ratio}
+        others -> others
     )}
   in
   setCenter center scaled

@@ -24,6 +24,11 @@ flatten lst = case lst of
   Nothing :: tl -> flatten tl
   [] -> []
 
+getElems: Model -> List StyledSVGElement
+getElems model = case model.svg.shape of
+  SVG {elems} -> elems
+  _ -> []
+
 getById : Int -> Model -> Maybe StyledSVGElement
 getById ident model =
   let
@@ -34,7 +39,7 @@ getById ident model =
         else loop tl
       [] -> Nothing
   in
-  loop model.svg.elems
+  loop <| getElems model
 
 shiftKey: Json.Decoder Bool
 shiftKey = Json.field "shiftKey" Json.bool
@@ -81,3 +86,8 @@ ratio next previous =
       )
   in
   r3
+
+changeContains : (List StyledSVGElement) -> StyledSVGElement -> StyledSVGElement
+changeContains elems svgroot = case svgroot.shape of
+  SVG props -> {svgroot| shape = SVG {props | elems = elems } }
+  others -> svgroot

@@ -6,25 +6,22 @@ import Set exposing (Set)
 import Dict exposing (Dict)
 
 type Mode = HandMode | RectMode | EllipseMode
-type alias ColorInfo = {fill: String, stroke: String}
-type alias AnyStyleInfo = Dict String String
+type alias ColorInfo = {fill: Maybe String, stroke: Maybe String}
+type alias AnyAttribute = Dict String String
 
 -- モデルが所有するSVGの形
-type SVGElement = Rectangle { leftTop: Vec2, size: Vec2 } | Ellipse { center: Vec2, size: Vec2 }
+type SVGElement = Rectangle { leftTop: Vec2, size: Vec2 } | Ellipse { center: Vec2, size: Vec2 } | SVG {elems: List StyledSVGElement} | Unknown { elems: List StyledSVGElement }
 type alias StyledSVGElement = {
-  style: ColorInfo,
+  style: ColorInfo,     -- color以外もいれる予定
+  -- anyAttr: AnyAttribute,
   id: Int,
   shape: SVGElement
-}
-type alias SVGSVGElement = {
-  size: Vec2,
-  elems: List StyledSVGElement
 }
 
 type alias Model = {
   mode: Mode,
   dragBegin: Maybe Vec2,
-  svg: SVGSVGElement,
+  svg: StyledSVGElement,
   colorInfo: ColorInfo,
   idGen: Int,
   selected: Set Int,

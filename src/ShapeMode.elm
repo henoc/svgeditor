@@ -10,12 +10,13 @@ update msg model = case msg of
           let modelSvg = model.svg in
           ({ model |
             dragBegin = Just <| toVec2 position,
-            svg = {
-              modelSvg |elems = case model.mode of
-                  HandMode -> model.svg.elems
-                  RectMode -> model.svg.elems ++ { shape = Rectangle {leftTop = toVec2 position, size = (0, 0)}, style = model.colorInfo, id = model.idGen } :: []
-                  EllipseMode -> model.svg.elems ++ { shape = Ellipse {center = toVec2 position, size = (0, 0)}, style = model.colorInfo, id = model.idGen } :: []
-            },
+            svg = Utils.changeContains (
+                    case model.mode of
+                      HandMode -> Utils.getElems model
+                      RectMode -> (Utils.getElems model) ++ { shape = Rectangle {leftTop = toVec2 position, size = (0, 0)}, style = model.colorInfo, id = model.idGen } :: []
+                      EllipseMode -> (Utils.getElems model) ++ { shape = Ellipse {center = toVec2 position, size = (0, 0)}, style = model.colorInfo, id = model.idGen } :: []
+                  ) modelSvg
+            ,
             idGen = model.idGen + 1
           }, Cmd.none)
     
@@ -24,21 +25,22 @@ update msg model = case msg of
     
     MouseMove position -> case model.dragBegin of
       Nothing -> (model, Cmd.none)
-      Just (x, y) -> if model.mode == HandMode then (model, Cmd.none) else case Utils.last model.svg.elems of
+      Just (x, y) -> if model.mode == HandMode then (model, Cmd.none) else case Utils.last (Utils.getElems model) of
         Nothing -> (model, Cmd.none)
         Just last -> 
-          let init = Utils.init model.svg.elems in
+          let init = Utils.init (Utils.getElems model) in
           -- dragBeginが存在する間は最終要素をdrag
           case last.shape of
             Rectangle {leftTop, size} ->
               let modelSvg = model.svg in
               (
-                {model | svg = {modelSvg | elems = init ++ {shape = Rectangle {leftTop = leftTop, size = (toVec2 position) -# (x, y) }, style = last.style, id = last.id} :: [] } },
+                {model | svg = Utils.changeContains (init ++ {shape = Rectangle {leftTop = leftTop, size = (toVec2 position) -# (x, y) }, style = last.style, id = last.id} :: []) model.svg },
                 Cmd.none
               )
             Ellipse {center, size} ->
               let modelSvg = model.svg in
               (
-                {model | svg = {modelSvg | elems = init ++ {shape = Ellipse {center = ((x, y) +# (toVec2 position)) /# (2, 2), size = (toVec2 position) -# (x, y)}, style = last.style, id = last.id } :: [] } },
+                {model | svg = Utils.changeContains (init ++ {shape = Ellipse {center = ((x, y) +# (toVec2 position)) /# (2, 2), size = (toVec2 position) -# (x, y)}, style = last.style, id = last.id } :: []) model.svg },
                 Cmd.none
               )
+            others -> (model, Cmd.none)

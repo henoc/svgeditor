@@ -13,6 +13,7 @@ import Utils
 import ShapeMode
 import HandMode
 import ViewBuilder
+import Parsers
 
 main : Program Never Model Msg
 main =
@@ -28,8 +29,8 @@ init =
       {
         mode = HandMode,
         dragBegin = Nothing,
-        svg = { size = (400, 400) , elems = [] },
-        colorInfo = {fill = "#883333", stroke = "#223366" },
+        svg = {style = {fill = Nothing, stroke = Nothing}, id = -1, shape = SVG {elems = []}},
+        colorInfo = {fill = Just "#883333", stroke = Just "#223366" },
         idGen = 0,
         selected = Set.empty,
         fixedPoint = Nothing,
@@ -87,13 +88,13 @@ view model =
         button [ onClick <| OnProperty <| SwichMode EllipseMode ] [text "ellispe mode"]
       ],
       svg [
-        width (toString <| Tuple.first model.svg.size),
-        height (toString <| Tuple.second model.svg.size),
+        width (toString <| 400),
+        height (toString <| 400),
         onMouseDown NoSelect
       ]
-      ((List.map ViewBuilder.build model.svg.elems ) ++ (ViewBuilder.buildVertexes model)),
-      Html.input [ type_ "color", onInput <| \c -> OnProperty <| Color {colorInfo | fill = c} ] [],
-      Html.input [ type_ "color", onInput <| \c -> OnProperty <| Color {colorInfo | stroke = c} ] []    
+      ((List.map ViewBuilder.build (Utils.getElems model) ) ++ (ViewBuilder.buildVertexes model)),
+      Html.input [ type_ "color", onInput <| \c -> OnProperty <| Color {colorInfo | fill = Just c} ] [],
+      Html.input [ type_ "color", onInput <| \c -> OnProperty <| Color {colorInfo | stroke = Just c} ] []    
     ]
 
 

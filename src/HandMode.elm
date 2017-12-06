@@ -24,11 +24,11 @@ update msg model = case msg of
           newElems = Utils.replace
             (\elem -> Set.member elem.id model.selected)
             moved
-            model.svg.elems
+            (Utils.getElems model)
         in
         (
           {model |
-            svg = {modelsvg | elems = newElems}
+            svg = Utils.changeContains newElems modelsvg
           },
           Cmd.none
         )
@@ -46,20 +46,19 @@ update msg model = case msg of
           newElems = Utils.replace
             (\elem -> Set.member elem.id model.selected)
             newSelectedElems
-            model.svg.elems
+            (Utils.getElems model)
           modelsvg = model.svg
         in
-        let _ = Debug.log "???" ratio in
         (
           {model|
-            svg = {modelsvg | elems = newElems}
+            svg = Utils.changeContains newElems modelsvg
           },
           Cmd.none
         )
 
   MouseUp _ ->
     let
-      selectedRef = List.filter (\e -> Set.member e.id model.selected) model.svg.elems
+      selectedRef = List.filter (\e -> Set.member e.id model.selected) (Utils.getElems model)
     in
     ({model |
       dragBegin = Nothing,
@@ -78,7 +77,7 @@ select ident isAdd pos model =
   else if isAdd then
     let
       selected = Set.insert ident model.selected
-      selectedRef = List.filter (\e -> Set.member e.id selected) model.svg.elems
+      selectedRef = List.filter (\e -> Set.member e.id selected) (Utils.getElems model)
     in
     ({model | selected = selected, dragBegin = Just pos, selectedRef = selectedRef}, Cmd.none)
 
@@ -86,7 +85,7 @@ select ident isAdd pos model =
   else
     let
       selected = Set.singleton ident
-      selectedRef = List.filter (\e -> Set.member e.id selected) model.svg.elems
+      selectedRef = List.filter (\e -> Set.member e.id selected) (Utils.getElems model)
     in
     ({ model | selected = Set.singleton ident, dragBegin = Just pos, selectedRef = selectedRef }, Cmd.none)
 

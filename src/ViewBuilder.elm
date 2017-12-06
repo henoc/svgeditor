@@ -20,7 +20,7 @@ build svg = case svg.shape of
       y (toString <| Tuple.second leftTop),
       width (toString <| Tuple.first size),
       height (toString <| Tuple.second size),
-      style ("fill:" ++ svg.style.fill ++ ";stroke:" ++ svg.style.stroke),
+      style <| buildStyle svg.style,
       Utils.onItemMouseDown <| \(shift, pos) -> OnSelect svg.id shift pos
     ] []
   Ellipse {center, size} ->
@@ -33,9 +33,19 @@ build svg = case svg.shape of
       cy (toString centy),
       rx (toString (sizex / 2)),
       ry (toString (sizey / 2)),
-      style ("fill:" ++ svg.style.fill ++ ";stroke:" ++ svg.style.stroke),
+      style  <| buildStyle svg.style,
       Utils.onItemMouseDown <| \(shift, pos) -> OnSelect svg.id shift pos
     ] []
+  others -> rect [] []
+
+buildStyle : ColorInfo -> String
+buildStyle style =
+  let
+    pat name maybeVal = case maybeVal of
+      Just x -> name ++ ":" ++ x
+      Nothing -> ""
+  in
+  (pat "fill" style.fill) ++ (pat "stroke" style.stroke)
 
 -- handModeでの選択頂点などを与える
 buildVertexes : Model -> List (Html Msg)
