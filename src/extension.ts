@@ -34,9 +34,7 @@ export function activate(context: vscode.ExtensionContext) {
 
     private createCssSnippet(): string {
       const svg = this.editor.document.getText();
-      const external2 = render(externalJs, {
-        svg: svg
-      });
+      const external2 = externalJs.replace("{{svg}}", svg.replace(/`/g, "\\`"));
       const html = render(viewer, {
         main: mainJs,
         externals: external2
