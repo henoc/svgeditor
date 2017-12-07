@@ -6,14 +6,14 @@ import Set exposing (Set)
 import Dict exposing (Dict)
 
 type Mode = HandMode | RectMode | EllipseMode
-type alias ColorInfo = {fill: Maybe String, stroke: Maybe String}
-type alias AnyAttribute = Dict String String
+type alias StyleInfo = Dict String String
+type alias AttributeInfo = Dict String String
 
 -- モデルが所有するSVGの形
 type SVGElement = Rectangle { leftTop: Vec2, size: Vec2 } | Ellipse { center: Vec2, size: Vec2 } | SVG {elems: List StyledSVGElement} | Unknown { elems: List StyledSVGElement }
 type alias StyledSVGElement = {
-  style: ColorInfo,     -- color以外もいれる予定
-  -- anyAttr: AnyAttribute,
+  style: StyleInfo,     -- color以外もいれる予定
+  attr: AttributeInfo,
   id: Int,
   shape: SVGElement
 }
@@ -22,7 +22,7 @@ type alias Model = {
   mode: Mode,
   dragBegin: Maybe Vec2,
   svg: StyledSVGElement,
-  colorInfo: ColorInfo,
+  styleInfo: StyleInfo,
   idGen: Int,
   selected: Set Int,
   fixedPoint: Maybe Vec2,
@@ -30,7 +30,7 @@ type alias Model = {
 }
 
 type Msg = OnProperty ChangePropertyMsg | OnMouse MouseMsg | OnSelect Int Bool Vec2 | NoSelect | OnVertex Vec2 Vec2 | SvgData String
-type ChangePropertyMsg = SwichMode Mode | Color ColorInfo
+type ChangePropertyMsg = SwichMode Mode | Style StyleInfo
 type MouseMsg = MouseDown Mouse.Position | MouseUp Mouse.Position | MouseMove Mouse.Position
 
 type alias Box = {

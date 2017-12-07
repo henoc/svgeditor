@@ -14,6 +14,7 @@ import ShapeMode
 import HandMode
 import ViewBuilder
 import Parsers
+import Dict exposing (Dict)
 
 main : Program Never Model Msg
 main =
@@ -28,8 +29,8 @@ init =
     {
       mode = HandMode,
       dragBegin = Nothing,
-      svg = {style = {fill = Nothing, stroke = Nothing}, id = -1, shape = SVG {elems = []}},
-      colorInfo = {fill = Just "#883333", stroke = Just "#223366" },
+      svg = {style = Dict.empty, id = -1, attr = Dict.empty, shape = SVG {elems = []}},
+      styleInfo = Dict.fromList [("fill", "#883333"), ("stroke", "#223366")],
       idGen = 0,
       selected = Set.empty,
       fixedPoint = Nothing,
@@ -52,8 +53,8 @@ update msg model =
       SwichMode EllipseMode ->
         ({model | mode = EllipseMode}, Cmd.none)
 
-      Color colorInfo ->
-        ({model | colorInfo = colorInfo}, Cmd.none)
+      Style styleInfo ->
+        ({model | styleInfo = styleInfo}, Cmd.none)
 
     OnMouse onMouseMsg -> case model.mode of
       HandMode -> HandMode.update onMouseMsg model
@@ -82,7 +83,7 @@ update msg model =
 
 view : Model -> Html Msg
 view model =
-  let colorInfo = model.colorInfo in
+  let styleInfo = model.styleInfo in
   div []
     [ div [] [
         button [ onClick <| OnProperty <| SwichMode HandMode ] [text "hand mode"],
@@ -95,8 +96,8 @@ view model =
         onMouseDown NoSelect
       ]
       ((List.map ViewBuilder.build (Utils.getElems model) ) ++ (ViewBuilder.buildVertexes model)),
-      Html.input [ type_ "color", onInput <| \c -> OnProperty <| Color {colorInfo | fill = Just c} ] [],
-      Html.input [ type_ "color", onInput <| \c -> OnProperty <| Color {colorInfo | stroke = Just c} ] []    
+      Html.input [ type_ "color", onInput <| \c -> OnProperty <| Style (Dict.insert "fill" c styleInfo) ] [],
+      Html.input [ type_ "color", onInput <| \c -> OnProperty <| Style (Dict.insert "stroke" c styleInfo) ] []    
     ]
 
 

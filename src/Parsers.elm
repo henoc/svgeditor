@@ -27,6 +27,13 @@ getStyleAttr name attrs = case getAttr "style" attrs of
     ParseSuccess d i -> Dict.get name d
     _ -> Nothing
 
+getStyle: List XmlParser.Attribute -> StyleInfo
+getStyle attrs = case getAttr "style" attrs of
+  Nothing -> Dict.empty
+  Just style -> case styleParser <| input style "[\\s:;]+" of
+    ParseSuccess dict i -> dict
+    _ -> Dict.empty
+
 floatAttr: Maybe String -> Float
 floatAttr maybeAttr = case maybeAttr of
   Nothing -> 0
@@ -40,6 +47,8 @@ convertNode id node = case node of
   XmlParser.Text text -> Nothing
   XmlParser.Element name attrs subNodes ->
     let
+      styleMap = getStyle attrs
+      attrMap = Dict.fromList <| List.map (\a -> (a.name, a.value)) attrs
       loop id subNodes acc = case subNodes of
         [] -> (id, List.reverse acc)
         hd :: tl ->
@@ -52,7 +61,12 @@ convertNode id node = case node of
         let
           (nextId, subElems) = loop id subNodes []
         in
-        (nextId+1, {style = {fill = Nothing, stroke = Nothing}, id = nextId, shape = SVG {elems = subElems}})
+        (nextId+1, {
+          style = styleMap,
+          id = nextId,
+          attr = attrMap,
+          shape = SVG {elems = subElems}
+        })
       "rect" ->
         let
           x = getFloatAttr "x" attrs
@@ -61,8 +75,9 @@ convertNode id node = case node of
           h = getFloatAttr "height" attrs     
         in
         (id+1, {
-          style = {fill = getStyleAttr "fill" attrs, stroke = getStyleAttr "stroke" attrs},
+          style = styleMap,
           id = id,
+          attr = attrMap,
           shape = Rectangle {leftTop = (x, y), size = (w, h)}
         })
       "ellipse" ->
@@ -73,15 +88,21 @@ convertNode id node = case node of
           cy = getFloatAttr "cy" attrs
         in
         (id+1, {
-          style = {fill = getStyleAttr "fill" attrs, stroke = getStyleAttr "stroke" attrs},
+          style = styleMap,
           id = id,
+          attr = attrMap,
           shape = Ellipse {center = (cx, cy), size = (rx * 2, ry * 2)}
         })
       others ->
         let
           (nextId, subElems) = loop id subNodes []
         in
-        (nextId+1, {style = {fill = Nothing, stroke = Nothing}, id = nextId, shape = Unknown {elems = subElems}})
+        (nextId+1, {
+          style = styleMap,
+          id = nextId,
+          attr = attrMap,
+          shape = Unknown {elems = subElems}
+        })
 
 parseSvg: String -> Maybe StyledSVGElement
 parseSvg text =

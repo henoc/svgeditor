@@ -11856,17 +11856,13 @@ _user$project$Vec2_ops['+#'] = F2(
 		return {ctor: '_Tuple2', _0: _p14._0 + _p15._0, _1: _p14._1 + _p15._1};
 	});
 
-var _user$project$Types$ColorInfo = F2(
-	function (a, b) {
-		return {fill: a, stroke: b};
-	});
-var _user$project$Types$StyledSVGElement = F3(
-	function (a, b, c) {
-		return {style: a, id: b, shape: c};
+var _user$project$Types$StyledSVGElement = F4(
+	function (a, b, c, d) {
+		return {style: a, attr: b, id: c, shape: d};
 	});
 var _user$project$Types$Model = F8(
 	function (a, b, c, d, e, f, g, h) {
-		return {mode: a, dragBegin: b, svg: c, colorInfo: d, idGen: e, selected: f, fixedPoint: g, selectedRef: h};
+		return {mode: a, dragBegin: b, svg: c, styleInfo: d, idGen: e, selected: f, fixedPoint: g, selectedRef: h};
 	});
 var _user$project$Types$Box = F2(
 	function (a, b) {
@@ -11905,8 +11901,8 @@ var _user$project$Types$OnMouse = function (a) {
 var _user$project$Types$OnProperty = function (a) {
 	return {ctor: 'OnProperty', _0: a};
 };
-var _user$project$Types$Color = function (a) {
-	return {ctor: 'Color', _0: a};
+var _user$project$Types$Style = function (a) {
+	return {ctor: 'Style', _0: a};
 };
 var _user$project$Types$SwichMode = function (a) {
 	return {ctor: 'SwichMode', _0: a};
@@ -12551,7 +12547,8 @@ var _user$project$ShapeMode$update = F2(
 																leftTop: _user$project$Vec2$toVec2(_p2),
 																size: {ctor: '_Tuple2', _0: 0, _1: 0}
 															}),
-														style: model.colorInfo,
+														style: model.styleInfo,
+														attr: _elm_lang$core$Dict$empty,
 														id: model.idGen
 													},
 													_1: {ctor: '[]'}
@@ -12568,7 +12565,8 @@ var _user$project$ShapeMode$update = F2(
 																center: _user$project$Vec2$toVec2(_p2),
 																size: {ctor: '_Tuple2', _0: 0, _1: 0}
 															}),
-														style: model.colorInfo,
+														style: model.styleInfo,
+														attr: _elm_lang$core$Dict$empty,
 														id: model.idGen
 													},
 													_1: {ctor: '[]'}
@@ -12623,18 +12621,18 @@ var _user$project$ShapeMode$update = F2(
 														init,
 														{
 															ctor: '::',
-															_0: {
-																shape: _user$project$Types$Rectangle(
-																	{
-																		leftTop: _p5._0.leftTop,
-																		size: A2(
-																			_user$project$Vec2_ops['-#'],
-																			_user$project$Vec2$toVec2(_p9),
-																			{ctor: '_Tuple2', _0: _p7, _1: _p8})
-																	}),
-																style: _p6.style,
-																id: _p6.id
-															},
+															_0: _elm_lang$core$Native_Utils.update(
+																_p6,
+																{
+																	shape: _user$project$Types$Rectangle(
+																		{
+																			leftTop: _p5._0.leftTop,
+																			size: A2(
+																				_user$project$Vec2_ops['-#'],
+																				_user$project$Vec2$toVec2(_p9),
+																				{ctor: '_Tuple2', _0: _p7, _1: _p8})
+																		})
+																}),
 															_1: {ctor: '[]'}
 														}),
 													model.svg)
@@ -12655,24 +12653,24 @@ var _user$project$ShapeMode$update = F2(
 														init,
 														{
 															ctor: '::',
-															_0: {
-																shape: _user$project$Types$Ellipse(
-																	{
-																		center: A2(
-																			_user$project$Vec2_ops['/#'],
-																			A2(
-																				_user$project$Vec2_ops['+#'],
-																				{ctor: '_Tuple2', _0: _p7, _1: _p8},
-																				_user$project$Vec2$toVec2(_p9)),
-																			{ctor: '_Tuple2', _0: 2, _1: 2}),
-																		size: A2(
-																			_user$project$Vec2_ops['-#'],
-																			_user$project$Vec2$toVec2(_p9),
-																			{ctor: '_Tuple2', _0: _p7, _1: _p8})
-																	}),
-																style: _p6.style,
-																id: _p6.id
-															},
+															_0: _elm_lang$core$Native_Utils.update(
+																_p6,
+																{
+																	shape: _user$project$Types$Ellipse(
+																		{
+																			center: A2(
+																				_user$project$Vec2_ops['/#'],
+																				A2(
+																					_user$project$Vec2_ops['+#'],
+																					{ctor: '_Tuple2', _0: _p7, _1: _p8},
+																					_user$project$Vec2$toVec2(_p9)),
+																				{ctor: '_Tuple2', _0: 2, _1: 2}),
+																			size: A2(
+																				_user$project$Vec2_ops['-#'],
+																				_user$project$Vec2$toVec2(_p9),
+																				{ctor: '_Tuple2', _0: _p7, _1: _p8})
+																		})
+																}),
 															_1: {ctor: '[]'}
 														}),
 													model.svg)
@@ -12795,8 +12793,17 @@ var _user$project$ViewBuilder$buildStyle = function (style) {
 		});
 	return A2(
 		_elm_lang$core$Basics_ops['++'],
-		A2(pat, 'fill', style.fill),
-		A2(pat, 'stroke', style.stroke));
+		A2(
+			pat,
+			'fill',
+			A2(_elm_lang$core$Dict$get, 'fill', style)),
+		A2(
+			_elm_lang$core$Basics_ops['++'],
+			';',
+			A2(
+				pat,
+				'stroke',
+				A2(_elm_lang$core$Dict$get, 'stroke', style))));
 };
 var _user$project$ViewBuilder$build = function (svg) {
 	var _p3 = svg.shape;
@@ -12954,84 +12961,105 @@ var _user$project$Parsers$getStyleAttr = F2(
 			}
 		}
 	});
+var _user$project$Parsers$getStyle = function (attrs) {
+	var _p3 = A2(_user$project$Parsers$getAttr, 'style', attrs);
+	if (_p3.ctor === 'Nothing') {
+		return _elm_lang$core$Dict$empty;
+	} else {
+		var _p4 = _user$project$Parsers$styleParser(
+			A2(_user$project$Combinators$input, _p3._0, '[\\s:;]+'));
+		if (_p4.ctor === 'ParseSuccess') {
+			return _p4._0;
+		} else {
+			return _elm_lang$core$Dict$empty;
+		}
+	}
+};
 var _user$project$Parsers$convertNode = F2(
 	function (id, node) {
-		var _p3 = node;
-		if (_p3.ctor === 'Text') {
+		var _p5 = node;
+		if (_p5.ctor === 'Text') {
 			return _elm_lang$core$Maybe$Nothing;
 		} else {
-			var _p11 = _p3._2;
-			var _p10 = _p3._1;
+			var _p13 = _p5._2;
+			var _p12 = _p5._1;
 			var loop = F3(
 				function (id, subNodes, acc) {
 					loop:
 					while (true) {
-						var _p4 = subNodes;
-						if (_p4.ctor === '[]') {
+						var _p6 = subNodes;
+						if (_p6.ctor === '[]') {
 							return {
 								ctor: '_Tuple2',
 								_0: id,
 								_1: _elm_lang$core$List$reverse(acc)
 							};
 						} else {
-							var _p6 = _p4._1;
-							var _p5 = A2(_user$project$Parsers$convertNode, id, _p4._0);
-							if (_p5.ctor === 'Nothing') {
-								var _v6 = id,
-									_v7 = _p6,
-									_v8 = acc;
-								id = _v6;
-								subNodes = _v7;
-								acc = _v8;
+							var _p8 = _p6._1;
+							var _p7 = A2(_user$project$Parsers$convertNode, id, _p6._0);
+							if (_p7.ctor === 'Nothing') {
+								var _v8 = id,
+									_v9 = _p8,
+									_v10 = acc;
+								id = _v8;
+								subNodes = _v9;
+								acc = _v10;
 								continue loop;
 							} else {
-								var _v9 = _p5._0._0,
-									_v10 = _p6,
-									_v11 = {ctor: '::', _0: _p5._0._1, _1: acc};
-								id = _v9;
-								subNodes = _v10;
-								acc = _v11;
+								var _v11 = _p7._0._0,
+									_v12 = _p8,
+									_v13 = {ctor: '::', _0: _p7._0._1, _1: acc};
+								id = _v11;
+								subNodes = _v12;
+								acc = _v13;
 								continue loop;
 							}
 						}
 					}
 				});
+			var attrMap = _elm_lang$core$Dict$fromList(
+				A2(
+					_elm_lang$core$List$map,
+					function (a) {
+						return {ctor: '_Tuple2', _0: a.name, _1: a.value};
+					},
+					_p12));
+			var styleMap = _user$project$Parsers$getStyle(_p12);
 			return _elm_lang$core$Maybe$Just(
 				function () {
-					var _p7 = _p3._0;
-					switch (_p7) {
+					var _p9 = _p5._0;
+					switch (_p9) {
 						case 'svg':
-							var _p8 = A3(
+							var _p10 = A3(
 								loop,
 								id,
-								_p11,
+								_p13,
 								{ctor: '[]'});
-							var nextId = _p8._0;
-							var subElems = _p8._1;
+							var nextId = _p10._0;
+							var subElems = _p10._1;
 							return {
 								ctor: '_Tuple2',
 								_0: nextId + 1,
 								_1: {
-									style: {fill: _elm_lang$core$Maybe$Nothing, stroke: _elm_lang$core$Maybe$Nothing},
+									style: styleMap,
 									id: nextId,
+									attr: attrMap,
 									shape: _user$project$Types$SVG(
 										{elems: subElems})
 								}
 							};
 						case 'rect':
-							var h = A2(_user$project$Parsers$getFloatAttr, 'height', _p10);
-							var w = A2(_user$project$Parsers$getFloatAttr, 'width', _p10);
-							var y = A2(_user$project$Parsers$getFloatAttr, 'y', _p10);
-							var x = A2(_user$project$Parsers$getFloatAttr, 'x', _p10);
+							var h = A2(_user$project$Parsers$getFloatAttr, 'height', _p12);
+							var w = A2(_user$project$Parsers$getFloatAttr, 'width', _p12);
+							var y = A2(_user$project$Parsers$getFloatAttr, 'y', _p12);
+							var x = A2(_user$project$Parsers$getFloatAttr, 'x', _p12);
 							return {
 								ctor: '_Tuple2',
 								_0: id + 1,
 								_1: {
-									style: {
-										fill: A2(_user$project$Parsers$getStyleAttr, 'fill', _p10),
-										stroke: A2(_user$project$Parsers$getStyleAttr, 'stroke', _p10)
-									},
+									style: styleMap,
 									id: id,
+									attr: attrMap,
 									shape: _user$project$Types$Rectangle(
 										{
 											leftTop: {ctor: '_Tuple2', _0: x, _1: y},
@@ -13040,19 +13068,17 @@ var _user$project$Parsers$convertNode = F2(
 								}
 							};
 						case 'ellipse':
-							var cy = A2(_user$project$Parsers$getFloatAttr, 'cy', _p10);
-							var cx = A2(_user$project$Parsers$getFloatAttr, 'cx', _p10);
-							var ry = A2(_user$project$Parsers$getFloatAttr, 'ry', _p10);
-							var rx = A2(_user$project$Parsers$getFloatAttr, 'rx', _p10);
+							var cy = A2(_user$project$Parsers$getFloatAttr, 'cy', _p12);
+							var cx = A2(_user$project$Parsers$getFloatAttr, 'cx', _p12);
+							var ry = A2(_user$project$Parsers$getFloatAttr, 'ry', _p12);
+							var rx = A2(_user$project$Parsers$getFloatAttr, 'rx', _p12);
 							return {
 								ctor: '_Tuple2',
 								_0: id + 1,
 								_1: {
-									style: {
-										fill: A2(_user$project$Parsers$getStyleAttr, 'fill', _p10),
-										stroke: A2(_user$project$Parsers$getStyleAttr, 'stroke', _p10)
-									},
+									style: styleMap,
 									id: id,
+									attr: attrMap,
 									shape: _user$project$Types$Ellipse(
 										{
 											center: {ctor: '_Tuple2', _0: cx, _1: cy},
@@ -13061,19 +13087,20 @@ var _user$project$Parsers$convertNode = F2(
 								}
 							};
 						default:
-							var _p9 = A3(
+							var _p11 = A3(
 								loop,
 								id,
-								_p11,
+								_p13,
 								{ctor: '[]'});
-							var nextId = _p9._0;
-							var subElems = _p9._1;
+							var nextId = _p11._0;
+							var subElems = _p11._1;
 							return {
 								ctor: '_Tuple2',
 								_0: nextId + 1,
 								_1: {
-									style: {fill: _elm_lang$core$Maybe$Nothing, stroke: _elm_lang$core$Maybe$Nothing},
+									style: styleMap,
 									id: nextId,
+									attr: attrMap,
 									shape: _user$project$Types$Unknown(
 										{elems: subElems})
 								}
@@ -13084,17 +13111,17 @@ var _user$project$Parsers$convertNode = F2(
 	});
 var _user$project$Parsers$parseSvg = function (text) {
 	var node = function () {
-		var _p12 = _jinjor$elm_xml_parser$XmlParser$parse(text);
-		if (_p12.ctor === 'Ok') {
+		var _p14 = _jinjor$elm_xml_parser$XmlParser$parse(text);
+		if (_p14.ctor === 'Ok') {
 			return A2(
 				_elm_lang$core$Maybe$map,
 				_elm_lang$core$Tuple$second,
-				A2(_user$project$Parsers$convertNode, 0, _p12._0.root));
+				A2(_user$project$Parsers$convertNode, 0, _p14._0.root));
 		} else {
 			return _elm_lang$core$Maybe$Nothing;
 		}
 	}();
-	var _p13 = A2(_elm_lang$core$Debug$log, 'nodes', node);
+	var _p15 = A2(_elm_lang$core$Debug$log, 'nodes', node);
 	return node;
 };
 
@@ -13131,7 +13158,7 @@ var _user$project$Main$subscriptions = function (model) {
 		});
 };
 var _user$project$Main$view = function (model) {
-	var colorInfo = model.colorInfo;
+	var styleInfo = model.styleInfo;
 	return A2(
 		_elm_lang$html$Html$div,
 		{ctor: '[]'},
@@ -13230,12 +13257,8 @@ var _user$project$Main$view = function (model) {
 								_0: _elm_lang$html$Html_Events$onInput(
 									function (c) {
 										return _user$project$Types$OnProperty(
-											_user$project$Types$Color(
-												_elm_lang$core$Native_Utils.update(
-													colorInfo,
-													{
-														fill: _elm_lang$core$Maybe$Just(c)
-													})));
+											_user$project$Types$Style(
+												A3(_elm_lang$core$Dict$insert, 'fill', c, styleInfo)));
 									}),
 								_1: {ctor: '[]'}
 							}
@@ -13253,12 +13276,8 @@ var _user$project$Main$view = function (model) {
 									_0: _elm_lang$html$Html_Events$onInput(
 										function (c) {
 											return _user$project$Types$OnProperty(
-												_user$project$Types$Color(
-													_elm_lang$core$Native_Utils.update(
-														colorInfo,
-														{
-															stroke: _elm_lang$core$Maybe$Just(c)
-														})));
+												_user$project$Types$Style(
+													A3(_elm_lang$core$Dict$insert, 'stroke', c, styleInfo)));
 										}),
 									_1: {ctor: '[]'}
 								}
@@ -13308,7 +13327,7 @@ var _user$project$Main$update = F2(
 						ctor: '_Tuple2',
 						_0: _elm_lang$core$Native_Utils.update(
 							model,
-							{colorInfo: _p4._0}),
+							{styleInfo: _p4._0}),
 						_1: _elm_lang$core$Platform_Cmd$none
 					};
 				}
@@ -13361,17 +13380,24 @@ var _user$project$Main$init = A2(
 		mode: _user$project$Types$HandMode,
 		dragBegin: _elm_lang$core$Maybe$Nothing,
 		svg: {
-			style: {fill: _elm_lang$core$Maybe$Nothing, stroke: _elm_lang$core$Maybe$Nothing},
+			style: _elm_lang$core$Dict$empty,
 			id: -1,
+			attr: _elm_lang$core$Dict$empty,
 			shape: _user$project$Types$SVG(
 				{
 					elems: {ctor: '[]'}
 				})
 		},
-		colorInfo: {
-			fill: _elm_lang$core$Maybe$Just('#883333'),
-			stroke: _elm_lang$core$Maybe$Just('#223366')
-		},
+		styleInfo: _elm_lang$core$Dict$fromList(
+			{
+				ctor: '::',
+				_0: {ctor: '_Tuple2', _0: 'fill', _1: '#883333'},
+				_1: {
+					ctor: '::',
+					_0: {ctor: '_Tuple2', _0: 'stroke', _1: '#223366'},
+					_1: {ctor: '[]'}
+				}
+			}),
 		idGen: 0,
 		selected: _elm_lang$core$Set$empty,
 		fixedPoint: _elm_lang$core$Maybe$Nothing,

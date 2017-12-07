@@ -9,6 +9,7 @@ import Utils
 import Set exposing (Set)
 import ShapeList exposing (..)
 import Tuple exposing (first, second)
+import Dict exposing (Dict)
 
 -- モデル所有のSVGモデルのDOMを構築する
 build : StyledSVGElement -> Html Msg
@@ -38,14 +39,14 @@ build svg = case svg.shape of
     ] []
   others -> rect [] []
 
-buildStyle : ColorInfo -> String
+buildStyle : StyleInfo -> String
 buildStyle style =
   let
     pat name maybeVal = case maybeVal of
       Just x -> name ++ ":" ++ x
       Nothing -> ""
   in
-  (pat "fill" style.fill) ++ (pat "stroke" style.stroke)
+  (pat "fill" <| Dict.get "fill" style) ++ ";" ++ (pat "stroke" <| Dict.get "stroke" style)
 
 -- handModeでの選択頂点などを与える
 buildVertexes : Model -> List (Html Msg)
