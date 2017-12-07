@@ -29,7 +29,7 @@ type alias Model = {
   selectedRef: List StyledSVGElement
 }
 
-type Msg = OnProperty ChangePropertyMsg | OnMouse MouseMsg | OnSelect Int Bool Vec2 | NoSelect | OnVertex Vec2 Vec2
+type Msg = OnProperty ChangePropertyMsg | OnMouse MouseMsg | OnSelect Int Bool Vec2 | NoSelect | OnVertex Vec2 Vec2 | SvgData String
 type ChangePropertyMsg = SwichMode Mode | Color ColorInfo
 type MouseMsg = MouseDown Mouse.Position | MouseUp Mouse.Position | MouseMove Mouse.Position
 

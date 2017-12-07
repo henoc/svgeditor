@@ -59,7 +59,9 @@ convertNode node = case node of
 parseSvg: String -> Maybe StyledSVGElement
 parseSvg text =
   let
+    _ = Debug.log "parseReached" text
     nodes = HtmlParser.parse text
+    _ = Debug.log "nodes" nodes
   in
   case List.map convertNode nodes |> Utils.flatten of
     hd :: tl -> Just hd

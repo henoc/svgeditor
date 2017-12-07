@@ -1,4 +1,4 @@
-module Utils exposing (..)
+port module Utils exposing (..)
 import Types exposing (..)
 import Html exposing (Attribute)
 import Html.Events exposing (onWithOptions, keyCode)
@@ -91,3 +91,6 @@ changeContains : (List StyledSVGElement) -> StyledSVGElement -> StyledSVGElement
 changeContains elems svgroot = case svgroot.shape of
   SVG props -> {svgroot| shape = SVG {props | elems = elems } }
   others -> svgroot
+
+port getSvgData: () -> Cmd msg
+port getSvgDataFromJs: (String -> msg) -> Sub msg

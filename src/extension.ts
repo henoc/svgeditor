@@ -34,10 +34,12 @@ export function activate(context: vscode.ExtensionContext) {
 
     private createCssSnippet(): string {
       const svg = this.editor.document.getText();
+      const external2 = render(externalJs, {
+        svg: svg
+      });
       const html = render(viewer, {
-        svg: svg,
         main: mainJs,
-        externals: externalJs
+        externals: external2
       });
       let logDir = path.join(__dirname, "..", "log");
       if (!fs.existsSync(logDir)) {

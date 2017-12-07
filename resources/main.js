@@ -19893,6 +19893,9 @@ var _user$project$Types$Ellipse = function (a) {
 var _user$project$Types$Rectangle = function (a) {
 	return {ctor: 'Rectangle', _0: a};
 };
+var _user$project$Types$SvgData = function (a) {
+	return {ctor: 'SvgData', _0: a};
+};
 var _user$project$Types$OnVertex = F2(
 	function (a, b) {
 		return {ctor: 'OnVertex', _0: a, _1: b};
@@ -20091,6 +20094,12 @@ var _user$project$Utils$last = function (lst) {
 		return _elm_lang$core$Maybe$Nothing;
 	}
 };
+var _user$project$Utils$getSvgData = _elm_lang$core$Native_Platform.outgoingPort(
+	'getSvgData',
+	function (v) {
+		return null;
+	});
+var _user$project$Utils$getSvgDataFromJs = _elm_lang$core$Native_Platform.incomingPort('getSvgDataFromJs', _elm_lang$core$Json_Decode$string);
 
 var _user$project$Shape$getCenter = function (elem) {
 	var _p0 = elem.shape;
@@ -20418,23 +20427,23 @@ var _user$project$HandMode$update = F2(
 		var _p0 = msg;
 		switch (_p0.ctor) {
 			case 'MouseMove':
-				var _p6 = _p0._0;
+				var _p5 = _p0._0;
 				var _p1 = model.dragBegin;
 				if (_p1.ctor === 'Nothing') {
 					return {ctor: '_Tuple2', _0: model, _1: _elm_lang$core$Platform_Cmd$none};
 				} else {
-					var _p5 = _p1._0;
+					var _p4 = _p1._0;
 					var _p2 = model.fixedPoint;
 					if (_p2.ctor === 'Nothing') {
 						var modelsvg = model.svg;
 						var selected = model.selected;
-						var pos = _user$project$Vec2$toVec2(_p6);
+						var pos = _user$project$Vec2$toVec2(_p5);
 						var moved = A2(
 							_elm_lang$core$List$map,
 							function (e) {
 								return A2(
 									_user$project$Shape$translate,
-									A2(_user$project$Vec2_ops['-#'], pos, _p5),
+									A2(_user$project$Vec2_ops['-#'], pos, _p4),
 									e);
 							},
 							model.selectedRef);
@@ -20455,7 +20464,7 @@ var _user$project$HandMode$update = F2(
 							_1: _elm_lang$core$Platform_Cmd$none
 						};
 					} else {
-						var _p4 = _p2._0;
+						var _p3 = _p2._0;
 						var modelsvg = model.svg;
 						var selectedElems = model.selectedRef;
 						var cent = _user$project$ShapeList$getCenter(selectedElems);
@@ -20465,17 +20474,17 @@ var _user$project$HandMode$update = F2(
 								_user$project$Vec2_ops['*#'],
 								cent,
 								{ctor: '_Tuple2', _0: 2, _1: 2}),
-							_p4);
-						var pos = _user$project$Vec2$toVec2(_p6);
-						var delta = A2(_user$project$Vec2_ops['-#'], pos, _p5);
+							_p3);
+						var pos = _user$project$Vec2$toVec2(_p5);
+						var delta = A2(_user$project$Vec2_ops['-#'], pos, _p4);
 						var newAntiFixed = A2(_user$project$Vec2_ops['+#'], antiFixed, delta);
 						var ratio = A2(
 							_user$project$Utils$ratio,
-							A2(_user$project$Vec2_ops['-#'], newAntiFixed, _p4),
-							A2(_user$project$Vec2_ops['-#'], antiFixed, _p4));
+							A2(_user$project$Vec2_ops['-#'], newAntiFixed, _p3),
+							A2(_user$project$Vec2_ops['-#'], antiFixed, _p3));
 						var newSelectedElems = A3(
 							_user$project$ShapeList$scale2,
-							A2(_user$project$Vec2_ops['-#'], _p4, cent),
+							A2(_user$project$Vec2_ops['-#'], _p3, cent),
 							ratio,
 							selectedElems);
 						var newElems = A3(
@@ -20485,7 +20494,6 @@ var _user$project$HandMode$update = F2(
 							},
 							newSelectedElems,
 							_user$project$Utils$getElems(model));
-						var _p3 = A2(_elm_lang$core$Debug$log, '???', ratio);
 						return {
 							ctor: '_Tuple2',
 							_0: _elm_lang$core$Native_Utils.update(
@@ -21012,12 +21020,13 @@ var _user$project$Parsers$convertNode = function (node) {
 	}
 };
 var _user$project$Parsers$parseSvg = function (text) {
-	var _p6 = _elm_lang$core$Debug$log(text);
 	var nodes = _jinjor$elm_html_parser$HtmlParser$parse(text);
-	var _p7 = _user$project$Utils$flatten(
+	var _p6 = A2(_elm_lang$core$Debug$log, 'nodes', nodes);
+	var _p7 = A2(_elm_lang$core$Debug$log, 'parseReached', text);
+	var _p8 = _user$project$Utils$flatten(
 		A2(_elm_lang$core$List$map, _user$project$Parsers$convertNode, nodes));
-	if (_p7.ctor === '::') {
-		return _elm_lang$core$Maybe$Just(_p7._0);
+	if (_p8.ctor === '::') {
+		return _elm_lang$core$Maybe$Just(_p8._0);
 	} else {
 		return _elm_lang$core$Maybe$Nothing;
 	}
@@ -21046,7 +21055,11 @@ var _user$project$Main$subscriptions = function (model) {
 							return _user$project$Types$OnMouse(
 								_user$project$Types$MouseMove(_p2));
 						}),
-					_1: {ctor: '[]'}
+					_1: {
+						ctor: '::',
+						_0: _user$project$Utils$getSvgDataFromJs(_user$project$Types$SvgData),
+						_1: {ctor: '[]'}
+					}
 				}
 			}
 		});
@@ -21255,31 +21268,40 @@ var _user$project$Main$update = F2(
 				} else {
 					return {ctor: '_Tuple2', _0: model, _1: _elm_lang$core$Platform_Cmd$none};
 				}
-			default:
+			case 'OnVertex':
 				var _p9 = model.mode;
 				if (_p9.ctor === 'HandMode') {
 					return A3(_user$project$HandMode$scale, _p3._0, _p3._1, model);
 				} else {
 					return {ctor: '_Tuple2', _0: model, _1: _elm_lang$core$Platform_Cmd$none};
 				}
+			default:
+				var _p10 = _user$project$Parsers$parseSvg(_p3._0);
+				if (_p10.ctor === 'Just') {
+					return A2(
+						_elm_lang$core$Platform_Cmd_ops['!'],
+						_elm_lang$core$Native_Utils.update(
+							model,
+							{svg: _p10._0}),
+						{ctor: '[]'});
+				} else {
+					return {ctor: '_Tuple2', _0: model, _1: _elm_lang$core$Platform_Cmd$none};
+				}
 		}
 	});
-var _user$project$Main$init = {
-	ctor: '_Tuple2',
-	_0: {
+var _user$project$Main$init = A2(
+	_elm_lang$core$Platform_Cmd_ops['!'],
+	{
 		mode: _user$project$Types$HandMode,
 		dragBegin: _elm_lang$core$Maybe$Nothing,
-		svg: A2(
-			_elm_lang$core$Maybe$withDefault,
-			{
-				style: {fill: _elm_lang$core$Maybe$Nothing, stroke: _elm_lang$core$Maybe$Nothing},
-				id: -1,
-				shape: _user$project$Types$SVG(
-					{
-						elems: {ctor: '[]'}
-					})
-			},
-			_user$project$Parsers$parseSvg('<%- svg %>')),
+		svg: {
+			style: {fill: _elm_lang$core$Maybe$Nothing, stroke: _elm_lang$core$Maybe$Nothing},
+			id: -1,
+			shape: _user$project$Types$SVG(
+				{
+					elems: {ctor: '[]'}
+				})
+		},
 		colorInfo: {
 			fill: _elm_lang$core$Maybe$Just('#883333'),
 			stroke: _elm_lang$core$Maybe$Just('#223366')
@@ -21289,8 +21311,12 @@ var _user$project$Main$init = {
 		fixedPoint: _elm_lang$core$Maybe$Nothing,
 		selectedRef: {ctor: '[]'}
 	},
-	_1: _elm_lang$core$Platform_Cmd$none
-};
+	{
+		ctor: '::',
+		_0: _user$project$Utils$getSvgData(
+			{ctor: '_Tuple0'}),
+		_1: {ctor: '[]'}
+	});
 var _user$project$Main$main = _elm_lang$html$Html$program(
 	{init: _user$project$Main$init, view: _user$project$Main$view, update: _user$project$Main$update, subscriptions: _user$project$Main$subscriptions})();
 

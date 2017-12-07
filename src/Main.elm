@@ -25,19 +25,16 @@ main =
 
 init : ( Model, Cmd Msg )
 init =
-    (
-      {
-        mode = HandMode,
-        dragBegin = Nothing,
-        svg = {style = {fill = Nothing, stroke = Nothing}, id = -1, shape = SVG {elems = []}},
-        colorInfo = {fill = Just "#883333", stroke = Just "#223366" },
-        idGen = 0,
-        selected = Set.empty,
-        fixedPoint = Nothing,
-        selectedRef = []
-      },
-      Cmd.none
-    )
+    {
+      mode = HandMode,
+      dragBegin = Nothing,
+      svg = {style = {fill = Nothing, stroke = Nothing}, id = -1, shape = SVG {elems = []}},
+      colorInfo = {fill = Just "#883333", stroke = Just "#223366" },
+      idGen = 0,
+      selected = Set.empty,
+      fixedPoint = Nothing,
+      selectedRef = []
+    } ! [Utils.getSvgData ()]
 
 
 -- UPDATE
@@ -73,6 +70,11 @@ update msg model =
     OnVertex fixed mpos -> case model.mode of
       HandMode -> HandMode.scale fixed mpos model
       _ -> (model, Cmd.none)
+    
+    SvgData svgData ->
+      case Parsers.parseSvg svgData of
+        Just data -> {model| svg = data} ! []
+        Nothing -> (model, Cmd.none)
 
 
 -- VIEW
@@ -104,4 +106,4 @@ view model =
 subscriptions : Model -> Sub Msg
 subscriptions model =
     Sub.batch
-        [ Mouse.downs <| OnMouse << MouseDown, Mouse.ups <| OnMouse << MouseUp, Mouse.moves <| OnMouse << MouseMove ]
+        [ Mouse.downs <| OnMouse << MouseDown, Mouse.ups <| OnMouse << MouseUp, Mouse.moves <| OnMouse << MouseMove, Utils.getSvgDataFromJs SvgData ]
