@@ -2,10 +2,13 @@ module Combinators exposing (..)
 
 import Regex exposing (..)
 
-type alias Input = { data: String, position: Int, whitespace: List Char }
+type alias Input = { data: String, position: Int, whitespace: String }
 
 normalInput: String -> Input
-normalInput data = { data = data, position = 0, whitespace = ' ' :: '\n' :: [] }
+normalInput data = { data = data, position = 0, whitespace = "\\s+" }
+
+input: String -> String -> Input
+input data whitespace = { data = data, position = 0, whitespace = whitespace }
 
 type ParseResult result = ParseSuccess result Input | ParseFailure String Input
 
@@ -19,12 +22,14 @@ type alias Parser result = Input -> ParseResult result
 skipwhitespace: Input -> Input
 skipwhitespace input =
   let
-    spaces: List String
-    spaces = List.map String.fromChar input.whitespace
-    firstStr = String.left 1 input.data
+    reg = regex input.whitespace
+    result = find (AtMost 1) reg <| String.dropLeft input.position input.data
   in
-  if List.any (\x -> x == firstStr) spaces then skipwhitespace {input | position = input.position + 1}
-  else input
+  case result of
+  [] -> input
+  hd :: tl ->
+    if hd.index /= 0 then input
+    else {input | position = input.position + (String.length hd.match)}
 
 stringParser: String -> Parser String
 stringParser str = \rawInput ->
@@ -38,14 +43,14 @@ regexParser: String -> Parser String
 regexParser str = \rawInput ->
   let
     input = skipwhitespace rawInput
-    regex = Regex.regex str
-    result = find (AtMost 1) regex <| String.dropLeft input.position input.data
+    reg = Regex.regex str
+    result = find (AtMost 1) reg <| String.dropLeft input.position input.data
   in
   case result of
   [] -> ParseFailure ("input doesn't match with " ++ str) input
   hd :: tl ->
     if hd.index /= 0 then ParseFailure ("input doesn't match with " ++ str) input
-    else ParseSuccess hd.match {input | position = input.position + hd.index}
+    else ParseSuccess hd.match {input | position = input.position + (String.length hd.match)}
 
 andThen: Parser a -> Parser b -> Parser (a, b)
 andThen p q = \input ->

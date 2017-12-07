@@ -1,6 +1,6 @@
 module Parsers exposing (..)
 
-import HtmlParser
+import XmlParser
 import Types exposing (..)
 import Combinators exposing (..)
 import Dict exposing (Dict)
@@ -13,56 +13,82 @@ stylePairParser = andThen (regexParser "[^\\s:]+") (regexParser "[^\\s;]+")
 styleParser: Parser (Dict String String)
 styleParser = Combinators.map Dict.fromList <| rep stylePairParser
 
-getAttr: String -> HtmlParser.Attributes -> Maybe String
+getAttr: String -> List XmlParser.Attribute -> Maybe String
 getAttr name attrs =
   let
-      attrMap = Dict.fromList attrs
+      attrMap = Dict.fromList <| List.map (\a -> (a.name, a.value)) attrs
   in
   Dict.get name attrMap
 
-getStyleAttr: String -> HtmlParser.Attributes -> Maybe String
+getStyleAttr: String -> List XmlParser.Attribute -> Maybe String
 getStyleAttr name attrs = case getAttr "style" attrs of
   Nothing -> Nothing
-  Just style -> case styleParser <| normalInput style of
+  Just style -> case styleParser <| input style "[\\s:;]+" of
     ParseSuccess d i -> Dict.get name d
     _ -> Nothing
 
-convertNode: HtmlParser.Node -> Maybe StyledSVGElement
-convertNode node = case node of
-  HtmlParser.Text text -> Nothing
-  HtmlParser.Comment text -> Nothing
-  HtmlParser.Element name attrs subNodes ->
-    case name of
+floatAttr: Maybe String -> Float
+floatAttr maybeAttr = case maybeAttr of
+  Nothing -> 0
+  Just x -> Result.withDefault 0 (String.toFloat x)
+
+getFloatAttr: String -> List XmlParser.Attribute -> Float
+getFloatAttr name attrs = floatAttr <| getAttr name attrs
+
+convertNode: Int -> XmlParser.Node -> Maybe (Int, StyledSVGElement)
+convertNode id node = case node of
+  XmlParser.Text text -> Nothing
+  XmlParser.Element name attrs subNodes ->
+    let
+      loop id subNodes acc = case subNodes of
+        [] -> (id, List.reverse acc)
+        hd :: tl ->
+          case convertNode id hd of
+            Nothing -> loop id tl acc
+            Just (nextId, e) -> loop nextId tl (e::acc)
+    in
+    Just <| case name of
       "svg" ->
-        let subElems = List.map convertNode subNodes |> Utils.flatten in
-        Just {style = {fill = Nothing, stroke = Nothing}, id = 0, shape = SVG {elems = subElems}}
+        let
+          (nextId, subElems) = loop id subNodes []
+        in
+        (nextId+1, {style = {fill = Nothing, stroke = Nothing}, id = nextId, shape = SVG {elems = subElems}})
       "rect" ->
         let
-          xStr = Maybe.withDefault "0" <| getAttr "x" attrs
-          yStr = Maybe.withDefault "0" <| getAttr "y" attrs
-          wStr = Maybe.withDefault "0" <| getAttr "width" attrs
-          hStr = Maybe.withDefault "0" <| getAttr "height" attrs
-          x = Result.withDefault 0 (String.toFloat xStr)
-          y = Result.withDefault 0 (String.toFloat yStr)
-          w = Result.withDefault 0 (String.toFloat wStr)
-          h = Result.withDefault 0 (String.toFloat hStr)          
+          x = getFloatAttr "x" attrs
+          y = getFloatAttr "y" attrs
+          w = getFloatAttr "width" attrs
+          h = getFloatAttr "height" attrs     
         in
-        Just {
+        (id+1, {
           style = {fill = getStyleAttr "fill" attrs, stroke = getStyleAttr "stroke" attrs},
-          id = 0,
+          id = id,
           shape = Rectangle {leftTop = (x, y), size = (w, h)}
-        }
+        })
+      "ellipse" ->
+        let
+          rx = getFloatAttr "rx" attrs
+          ry = getFloatAttr "ry" attrs
+          cx = getFloatAttr "cx" attrs
+          cy = getFloatAttr "cy" attrs
+        in
+        (id+1, {
+          style = {fill = getStyleAttr "fill" attrs, stroke = getStyleAttr "stroke" attrs},
+          id = id,
+          shape = Ellipse {center = (cx, cy), size = (rx * 2, ry * 2)}
+        })
       others ->
-        let subElems = List.map convertNode subNodes |> Utils.flatten in
-        Just {style = {fill = Nothing, stroke = Nothing}, id = 0, shape = Unknown {elems = subElems}}
+        let
+          (nextId, subElems) = loop id subNodes []
+        in
+        (nextId+1, {style = {fill = Nothing, stroke = Nothing}, id = nextId, shape = Unknown {elems = subElems}})
 
 parseSvg: String -> Maybe StyledSVGElement
 parseSvg text =
   let
-    _ = Debug.log "parseReached" text
-    nodes = HtmlParser.parse text
-    _ = Debug.log "nodes" nodes
+    node = case XmlParser.parse text of
+      Ok {processingInstructions, docType, root} -> Maybe.map Tuple.second <| convertNode 0 root
+      Err _ -> Nothing
+    _ = Debug.log "nodes" node
   in
-  case List.map convertNode nodes |> Utils.flatten of
-    hd :: tl -> Just hd
-    _ -> Nothing
+  node
