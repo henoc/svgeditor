@@ -10,7 +10,7 @@ type alias StyleInfo = Dict String String
 type alias AttributeInfo = Dict String String
 
 -- モデルが所有するSVGの形
-type SVGElement = Rectangle { leftTop: Vec2, size: Vec2 } | Ellipse { center: Vec2, size: Vec2 } | SVG {elems: List StyledSVGElement} | Unknown { elems: List StyledSVGElement }
+type SVGElement = Rectangle { leftTop: Vec2, size: Vec2 } | Ellipse { center: Vec2, size: Vec2 } | SVG {elems: List StyledSVGElement, size: Vec2} | Unknown { name: String, elems: List StyledSVGElement }
 type alias StyledSVGElement = {
   style: StyleInfo,     -- color以外もいれる予定
   attr: AttributeInfo,

@@ -8,10 +8,10 @@ import Shape
 import ShapeList
 import Debug
 
-update : MouseMsg -> Model -> (Model, Cmd Msg)
+update : MouseMsg -> Model -> Model
 update msg model = case msg of
   MouseMove position -> case model.dragBegin of
-    Nothing -> (model, Cmd.none)
+    Nothing -> model
 
     Just dragBegin -> case model.fixedPoint of
       Nothing ->
@@ -26,12 +26,9 @@ update msg model = case msg of
             moved
             (Utils.getElems model)
         in
-        (
           {model |
             svg = Utils.changeContains newElems modelsvg
-          },
-          Cmd.none
-        )
+          }
       Just fixed ->
         -- posとの差分だけ縮尺を変更
         let
@@ -49,29 +46,26 @@ update msg model = case msg of
             (Utils.getElems model)
           modelsvg = model.svg
         in
-        (
           {model|
             svg = Utils.changeContains newElems modelsvg
-          },
-          Cmd.none
-        )
+          }
 
   MouseUp _ ->
     let
       selectedRef = List.filter (\e -> Set.member e.id model.selected) (Utils.getElems model)
     in
-    ({model |
+    {model |
       dragBegin = Nothing,
       fixedPoint = Nothing,
       selectedRef = selectedRef
-    }, Cmd.none)
-  _ -> (model, Cmd.none)
+    }
+  _ -> model
 
-select : Int -> Bool -> Vec2 -> Model -> (Model, Cmd Msg)
+select : Int -> Bool -> Vec2 -> Model -> Model
 select ident isAdd pos model =
   -- 選択中のものを選択
   if Set.member ident model.selected then
-    ({model | dragBegin = Just pos}, Cmd.none)
+    {model | dragBegin = Just pos}
   
   -- 追加選択
   else if isAdd then
@@ -79,7 +73,7 @@ select ident isAdd pos model =
       selected = Set.insert ident model.selected
       selectedRef = List.filter (\e -> Set.member e.id selected) (Utils.getElems model)
     in
-    ({model | selected = selected, dragBegin = Just pos, selectedRef = selectedRef}, Cmd.none)
+    {model | selected = selected, dragBegin = Just pos, selectedRef = selectedRef}
 
   -- 新規選択
   else
@@ -87,13 +81,13 @@ select ident isAdd pos model =
       selected = Set.singleton ident
       selectedRef = List.filter (\e -> Set.member e.id selected) (Utils.getElems model)
     in
-    ({ model | selected = Set.singleton ident, dragBegin = Just pos, selectedRef = selectedRef }, Cmd.none)
+    { model | selected = Set.singleton ident, dragBegin = Just pos, selectedRef = selectedRef }
 
-noSelect : Model -> (Model, Cmd Msg)
+noSelect : Model -> Model
 noSelect model =
-  ({model | selected = Set.empty, dragBegin = Nothing }, Cmd.none)
+  {model | selected = Set.empty, dragBegin = Nothing }
 
-scale: Vec2 -> Vec2 -> Model -> (Model, Cmd Msg)
+scale: Vec2 -> Vec2 -> Model -> Model
 scale fixed mpos model =
-  ({model | fixedPoint = Just fixed, dragBegin = Just mpos}, Cmd.none)
+  {model | fixedPoint = Just fixed, dragBegin = Just mpos}
 

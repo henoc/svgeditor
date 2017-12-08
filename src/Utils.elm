@@ -5,6 +5,7 @@ import Html.Events exposing (onWithOptions, keyCode)
 import Json.Decode as Json
 import Vec2 exposing (..)
 import Tuple exposing (first, second)
+import Generator
 
 last : List a -> Maybe a
 last lst =
@@ -94,3 +95,12 @@ changeContains elems svgroot = case svgroot.shape of
 
 port getSvgData: () -> Cmd msg
 port getSvgDataFromJs: (String -> msg) -> Sub msg
+
+port sendSvgData: String -> Cmd msg
+
+reflectSvgData: Model -> Cmd msg
+reflectSvgData model =
+  let
+    svgData = Generator.generateXml model.svg
+  in
+  sendSvgData svgData

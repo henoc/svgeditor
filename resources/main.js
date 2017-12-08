@@ -11917,6 +11917,53 @@ var _user$project$Types$MouseDown = function (a) {
 	return {ctor: 'MouseDown', _0: a};
 };
 
+var _user$project$Generator$generateNode = function (elem) {
+	var attrs = A2(
+		_elm_lang$core$List$map,
+		function (_p0) {
+			var _p1 = _p0;
+			return {name: _p1._0, value: _p1._1};
+		},
+		_elm_lang$core$Dict$toList(elem.attr));
+	var _p2 = elem.shape;
+	switch (_p2.ctor) {
+		case 'SVG':
+			var xmlSubNodes = A2(_elm_lang$core$List$map, _user$project$Generator$generateNode, _p2._0.elems);
+			var xmlElem = A3(_jinjor$elm_xml_parser$XmlParser$Element, 'svg', attrs, xmlSubNodes);
+			return xmlElem;
+		case 'Unknown':
+			var xmlSubNodes = A2(_elm_lang$core$List$map, _user$project$Generator$generateNode, _p2._0.elems);
+			var xmlElem = A3(_jinjor$elm_xml_parser$XmlParser$Element, _p2._0.name, attrs, xmlSubNodes);
+			return xmlElem;
+		case 'Rectangle':
+			return A3(
+				_jinjor$elm_xml_parser$XmlParser$Element,
+				'rect',
+				attrs,
+				{ctor: '[]'});
+		default:
+			return A3(
+				_jinjor$elm_xml_parser$XmlParser$Element,
+				'ellipse',
+				attrs,
+				{ctor: '[]'});
+	}
+};
+var _user$project$Generator$generateXml = function (elem) {
+	var xmlElem = _user$project$Generator$generateNode(elem);
+	var xmlRoot = {
+		processingInstructions: {
+			ctor: '::',
+			_0: {name: 'xml', value: 'version=\"1.0\"'},
+			_1: {ctor: '[]'}
+		},
+		docType: _elm_lang$core$Maybe$Nothing,
+		root: xmlElem
+	};
+	var data = _jinjor$elm_xml_parser$XmlParser$format(xmlRoot);
+	return data;
+};
+
 var _user$project$Utils$changeContains = F2(
 	function (elems, svgroot) {
 		var _p0 = svgroot.shape;
@@ -12090,6 +12137,15 @@ var _user$project$Utils$getSvgData = _elm_lang$core$Native_Platform.outgoingPort
 		return null;
 	});
 var _user$project$Utils$getSvgDataFromJs = _elm_lang$core$Native_Platform.incomingPort('getSvgDataFromJs', _elm_lang$core$Json_Decode$string);
+var _user$project$Utils$sendSvgData = _elm_lang$core$Native_Platform.outgoingPort(
+	'sendSvgData',
+	function (v) {
+		return v;
+	});
+var _user$project$Utils$reflectSvgData = function (model) {
+	var svgData = _user$project$Generator$generateXml(model.svg);
+	return _user$project$Utils$sendSvgData(svgData);
+};
 
 var _user$project$Shape$getCenter = function (elem) {
 	var _p0 = elem.shape;
@@ -12338,38 +12394,26 @@ var _user$project$ShapeList$scale = F2(
 
 var _user$project$HandMode$scale = F3(
 	function (fixed, mpos, model) {
-		return {
-			ctor: '_Tuple2',
-			_0: _elm_lang$core$Native_Utils.update(
-				model,
-				{
-					fixedPoint: _elm_lang$core$Maybe$Just(fixed),
-					dragBegin: _elm_lang$core$Maybe$Just(mpos)
-				}),
-			_1: _elm_lang$core$Platform_Cmd$none
-		};
+		return _elm_lang$core$Native_Utils.update(
+			model,
+			{
+				fixedPoint: _elm_lang$core$Maybe$Just(fixed),
+				dragBegin: _elm_lang$core$Maybe$Just(mpos)
+			});
 	});
 var _user$project$HandMode$noSelect = function (model) {
-	return {
-		ctor: '_Tuple2',
-		_0: _elm_lang$core$Native_Utils.update(
-			model,
-			{selected: _elm_lang$core$Set$empty, dragBegin: _elm_lang$core$Maybe$Nothing}),
-		_1: _elm_lang$core$Platform_Cmd$none
-	};
+	return _elm_lang$core$Native_Utils.update(
+		model,
+		{selected: _elm_lang$core$Set$empty, dragBegin: _elm_lang$core$Maybe$Nothing});
 };
 var _user$project$HandMode$select = F4(
 	function (ident, isAdd, pos, model) {
 		if (A2(_elm_lang$core$Set$member, ident, model.selected)) {
-			return {
-				ctor: '_Tuple2',
-				_0: _elm_lang$core$Native_Utils.update(
-					model,
-					{
-						dragBegin: _elm_lang$core$Maybe$Just(pos)
-					}),
-				_1: _elm_lang$core$Platform_Cmd$none
-			};
+			return _elm_lang$core$Native_Utils.update(
+				model,
+				{
+					dragBegin: _elm_lang$core$Maybe$Just(pos)
+				});
 		} else {
 			if (isAdd) {
 				var selected = A2(_elm_lang$core$Set$insert, ident, model.selected);
@@ -12379,17 +12423,13 @@ var _user$project$HandMode$select = F4(
 						return A2(_elm_lang$core$Set$member, e.id, selected);
 					},
 					_user$project$Utils$getElems(model));
-				return {
-					ctor: '_Tuple2',
-					_0: _elm_lang$core$Native_Utils.update(
-						model,
-						{
-							selected: selected,
-							dragBegin: _elm_lang$core$Maybe$Just(pos),
-							selectedRef: selectedRef
-						}),
-					_1: _elm_lang$core$Platform_Cmd$none
-				};
+				return _elm_lang$core$Native_Utils.update(
+					model,
+					{
+						selected: selected,
+						dragBegin: _elm_lang$core$Maybe$Just(pos),
+						selectedRef: selectedRef
+					});
 			} else {
 				var selected = _elm_lang$core$Set$singleton(ident);
 				var selectedRef = A2(
@@ -12398,17 +12438,13 @@ var _user$project$HandMode$select = F4(
 						return A2(_elm_lang$core$Set$member, e.id, selected);
 					},
 					_user$project$Utils$getElems(model));
-				return {
-					ctor: '_Tuple2',
-					_0: _elm_lang$core$Native_Utils.update(
-						model,
-						{
-							selected: _elm_lang$core$Set$singleton(ident),
-							dragBegin: _elm_lang$core$Maybe$Just(pos),
-							selectedRef: selectedRef
-						}),
-					_1: _elm_lang$core$Platform_Cmd$none
-				};
+				return _elm_lang$core$Native_Utils.update(
+					model,
+					{
+						selected: _elm_lang$core$Set$singleton(ident),
+						dragBegin: _elm_lang$core$Maybe$Just(pos),
+						selectedRef: selectedRef
+					});
 			}
 		}
 	});
@@ -12420,7 +12456,7 @@ var _user$project$HandMode$update = F2(
 				var _p5 = _p0._0;
 				var _p1 = model.dragBegin;
 				if (_p1.ctor === 'Nothing') {
-					return {ctor: '_Tuple2', _0: model, _1: _elm_lang$core$Platform_Cmd$none};
+					return model;
 				} else {
 					var _p4 = _p1._0;
 					var _p2 = model.fixedPoint;
@@ -12444,15 +12480,11 @@ var _user$project$HandMode$update = F2(
 							},
 							moved,
 							_user$project$Utils$getElems(model));
-						return {
-							ctor: '_Tuple2',
-							_0: _elm_lang$core$Native_Utils.update(
-								model,
-								{
-									svg: A2(_user$project$Utils$changeContains, newElems, modelsvg)
-								}),
-							_1: _elm_lang$core$Platform_Cmd$none
-						};
+						return _elm_lang$core$Native_Utils.update(
+							model,
+							{
+								svg: A2(_user$project$Utils$changeContains, newElems, modelsvg)
+							});
 					} else {
 						var _p3 = _p2._0;
 						var modelsvg = model.svg;
@@ -12484,15 +12516,11 @@ var _user$project$HandMode$update = F2(
 							},
 							newSelectedElems,
 							_user$project$Utils$getElems(model));
-						return {
-							ctor: '_Tuple2',
-							_0: _elm_lang$core$Native_Utils.update(
-								model,
-								{
-									svg: A2(_user$project$Utils$changeContains, newElems, modelsvg)
-								}),
-							_1: _elm_lang$core$Platform_Cmd$none
-						};
+						return _elm_lang$core$Native_Utils.update(
+							model,
+							{
+								svg: A2(_user$project$Utils$changeContains, newElems, modelsvg)
+							});
 					}
 				}
 			case 'MouseUp':
@@ -12502,15 +12530,11 @@ var _user$project$HandMode$update = F2(
 						return A2(_elm_lang$core$Set$member, e.id, model.selected);
 					},
 					_user$project$Utils$getElems(model));
-				return {
-					ctor: '_Tuple2',
-					_0: _elm_lang$core$Native_Utils.update(
-						model,
-						{dragBegin: _elm_lang$core$Maybe$Nothing, fixedPoint: _elm_lang$core$Maybe$Nothing, selectedRef: selectedRef}),
-					_1: _elm_lang$core$Platform_Cmd$none
-				};
+				return _elm_lang$core$Native_Utils.update(
+					model,
+					{dragBegin: _elm_lang$core$Maybe$Nothing, fixedPoint: _elm_lang$core$Maybe$Nothing, selectedRef: selectedRef});
 			default:
-				return {ctor: '_Tuple2', _0: model, _1: _elm_lang$core$Platform_Cmd$none};
+				return model;
 		}
 	});
 
@@ -12521,86 +12545,78 @@ var _user$project$ShapeMode$update = F2(
 			case 'MouseDown':
 				var _p2 = _p0._0;
 				var modelSvg = model.svg;
-				return {
-					ctor: '_Tuple2',
-					_0: _elm_lang$core$Native_Utils.update(
-						model,
-						{
-							dragBegin: _elm_lang$core$Maybe$Just(
-								_user$project$Vec2$toVec2(_p2)),
-							svg: A2(
-								_user$project$Utils$changeContains,
-								function () {
-									var _p1 = model.mode;
-									switch (_p1.ctor) {
-										case 'HandMode':
-											return _user$project$Utils$getElems(model);
-										case 'RectMode':
-											return A2(
-												_elm_lang$core$Basics_ops['++'],
-												_user$project$Utils$getElems(model),
-												{
-													ctor: '::',
-													_0: {
-														shape: _user$project$Types$Rectangle(
-															{
-																leftTop: _user$project$Vec2$toVec2(_p2),
-																size: {ctor: '_Tuple2', _0: 0, _1: 0}
-															}),
-														style: model.styleInfo,
-														attr: _elm_lang$core$Dict$empty,
-														id: model.idGen
-													},
-													_1: {ctor: '[]'}
-												});
-										default:
-											return A2(
-												_elm_lang$core$Basics_ops['++'],
-												_user$project$Utils$getElems(model),
-												{
-													ctor: '::',
-													_0: {
-														shape: _user$project$Types$Ellipse(
-															{
-																center: _user$project$Vec2$toVec2(_p2),
-																size: {ctor: '_Tuple2', _0: 0, _1: 0}
-															}),
-														style: model.styleInfo,
-														attr: _elm_lang$core$Dict$empty,
-														id: model.idGen
-													},
-													_1: {ctor: '[]'}
-												});
-									}
-								}(),
-								modelSvg),
-							idGen: model.idGen + 1
-						}),
-					_1: _elm_lang$core$Platform_Cmd$none
-				};
+				return _elm_lang$core$Native_Utils.update(
+					model,
+					{
+						dragBegin: _elm_lang$core$Maybe$Just(
+							_user$project$Vec2$toVec2(_p2)),
+						svg: A2(
+							_user$project$Utils$changeContains,
+							function () {
+								var _p1 = model.mode;
+								switch (_p1.ctor) {
+									case 'HandMode':
+										return _user$project$Utils$getElems(model);
+									case 'RectMode':
+										return A2(
+											_elm_lang$core$Basics_ops['++'],
+											_user$project$Utils$getElems(model),
+											{
+												ctor: '::',
+												_0: {
+													shape: _user$project$Types$Rectangle(
+														{
+															leftTop: _user$project$Vec2$toVec2(_p2),
+															size: {ctor: '_Tuple2', _0: 0, _1: 0}
+														}),
+													style: model.styleInfo,
+													attr: _elm_lang$core$Dict$empty,
+													id: model.idGen
+												},
+												_1: {ctor: '[]'}
+											});
+									default:
+										return A2(
+											_elm_lang$core$Basics_ops['++'],
+											_user$project$Utils$getElems(model),
+											{
+												ctor: '::',
+												_0: {
+													shape: _user$project$Types$Ellipse(
+														{
+															center: _user$project$Vec2$toVec2(_p2),
+															size: {ctor: '_Tuple2', _0: 0, _1: 0}
+														}),
+													style: model.styleInfo,
+													attr: _elm_lang$core$Dict$empty,
+													id: model.idGen
+												},
+												_1: {ctor: '[]'}
+											});
+								}
+							}(),
+							modelSvg),
+						idGen: model.idGen + 1
+					});
 			case 'MouseUp':
-				return {
-					ctor: '_Tuple2',
-					_0: _elm_lang$core$Native_Utils.update(
-						model,
-						{dragBegin: _elm_lang$core$Maybe$Nothing}),
-					_1: _elm_lang$core$Platform_Cmd$none
-				};
+				return _elm_lang$core$Native_Utils.update(
+					model,
+					{dragBegin: _elm_lang$core$Maybe$Nothing});
 			default:
 				var _p9 = _p0._0;
 				var _p3 = model.dragBegin;
 				if (_p3.ctor === 'Nothing') {
-					return {ctor: '_Tuple2', _0: model, _1: _elm_lang$core$Platform_Cmd$none};
+					return model;
 				} else {
 					var _p8 = _p3._0._1;
 					var _p7 = _p3._0._0;
 					if (_elm_lang$core$Native_Utils.eq(model.mode, _user$project$Types$HandMode)) {
-						return {ctor: '_Tuple2', _0: model, _1: _elm_lang$core$Platform_Cmd$none};
+						return model;
 					} else {
 						var _p4 = _user$project$Utils$last(
 							_user$project$Utils$getElems(model));
 						if (_p4.ctor === 'Nothing') {
-							return {ctor: '_Tuple2', _0: model, _1: _elm_lang$core$Platform_Cmd$none};
+							return model;
 						} else {
 							var _p6 = _p4._0;
 							var init = _user$project$Utils$init(
@@ -12609,76 +12625,68 @@ var _user$project$ShapeMode$update = F2(
 							switch (_p5.ctor) {
 								case 'Rectangle':
 									var modelSvg = model.svg;
-									return {
-										ctor: '_Tuple2',
-										_0: _elm_lang$core$Native_Utils.update(
-											model,
-											{
-												svg: A2(
-													_user$project$Utils$changeContains,
-													A2(
-														_elm_lang$core$Basics_ops['++'],
-														init,
-														{
-															ctor: '::',
-															_0: _elm_lang$core$Native_Utils.update(
-																_p6,
-																{
-																	shape: _user$project$Types$Rectangle(
-																		{
-																			leftTop: _p5._0.leftTop,
-																			size: A2(
-																				_user$project$Vec2_ops['-#'],
-																				_user$project$Vec2$toVec2(_p9),
-																				{ctor: '_Tuple2', _0: _p7, _1: _p8})
-																		})
-																}),
-															_1: {ctor: '[]'}
-														}),
-													model.svg)
-											}),
-										_1: _elm_lang$core$Platform_Cmd$none
-									};
+									return _elm_lang$core$Native_Utils.update(
+										model,
+										{
+											svg: A2(
+												_user$project$Utils$changeContains,
+												A2(
+													_elm_lang$core$Basics_ops['++'],
+													init,
+													{
+														ctor: '::',
+														_0: _elm_lang$core$Native_Utils.update(
+															_p6,
+															{
+																shape: _user$project$Types$Rectangle(
+																	{
+																		leftTop: _p5._0.leftTop,
+																		size: A2(
+																			_user$project$Vec2_ops['-#'],
+																			_user$project$Vec2$toVec2(_p9),
+																			{ctor: '_Tuple2', _0: _p7, _1: _p8})
+																	})
+															}),
+														_1: {ctor: '[]'}
+													}),
+												model.svg)
+										});
 								case 'Ellipse':
 									var modelSvg = model.svg;
-									return {
-										ctor: '_Tuple2',
-										_0: _elm_lang$core$Native_Utils.update(
-											model,
-											{
-												svg: A2(
-													_user$project$Utils$changeContains,
-													A2(
-														_elm_lang$core$Basics_ops['++'],
-														init,
-														{
-															ctor: '::',
-															_0: _elm_lang$core$Native_Utils.update(
-																_p6,
-																{
-																	shape: _user$project$Types$Ellipse(
-																		{
-																			center: A2(
-																				_user$project$Vec2_ops['/#'],
-																				A2(
-																					_user$project$Vec2_ops['+#'],
-																					{ctor: '_Tuple2', _0: _p7, _1: _p8},
-																					_user$project$Vec2$toVec2(_p9)),
-																				{ctor: '_Tuple2', _0: 2, _1: 2}),
-																			size: A2(
-																				_user$project$Vec2_ops['-#'],
-																				_user$project$Vec2$toVec2(_p9),
-																				{ctor: '_Tuple2', _0: _p7, _1: _p8})
-																		})
-																}),
-															_1: {ctor: '[]'}
-														}),
-													model.svg)
-											}),
-										_1: _elm_lang$core$Platform_Cmd$none
-									};
+									return _elm_lang$core$Native_Utils.update(
+										model,
+										{
+											svg: A2(
+												_user$project$Utils$changeContains,
+												A2(
+													_elm_lang$core$Basics_ops['++'],
+													init,
+													{
+														ctor: '::',
+														_0: _elm_lang$core$Native_Utils.update(
+															_p6,
+															{
+																shape: _user$project$Types$Ellipse(
+																	{
+																		center: A2(
+																			_user$project$Vec2_ops['/#'],
+																			A2(
+																				_user$project$Vec2_ops['+#'],
+																				{ctor: '_Tuple2', _0: _p7, _1: _p8},
+																				_user$project$Vec2$toVec2(_p9)),
+																			{ctor: '_Tuple2', _0: 2, _1: 2}),
+																		size: A2(
+																			_user$project$Vec2_ops['-#'],
+																			_user$project$Vec2$toVec2(_p9),
+																			{ctor: '_Tuple2', _0: _p7, _1: _p8})
+																	})
+															}),
+														_1: {ctor: '[]'}
+													}),
+												model.svg)
+										});
 								default:
-									return {ctor: '_Tuple2', _0: model, _1: _elm_lang$core$Platform_Cmd$none};
+									return model;
 							}
 						}
 					}
@@ -12981,7 +12989,8 @@ var _user$project$Parsers$convertNode = F2(
 		if (_p5.ctor === 'Text') {
 			return _elm_lang$core$Maybe$Nothing;
 		} else {
-			var _p13 = _p5._2;
+			var _p14 = _p5._2;
+			var _p13 = _p5._0;
 			var _p12 = _p5._1;
 			var loop = F3(
 				function (id, subNodes, acc) {
@@ -13027,13 +13036,15 @@ var _user$project$Parsers$convertNode = F2(
 			var styleMap = _user$project$Parsers$getStyle(_p12);
 			return _elm_lang$core$Maybe$Just(
 				function () {
-					var _p9 = _p5._0;
+					var _p9 = _p13;
 					switch (_p9) {
 						case 'svg':
+							var h = A2(_user$project$Parsers$getFloatAttr, 'height', _p12);
+							var w = A2(_user$project$Parsers$getFloatAttr, 'width', _p12);
 							var _p10 = A3(
 								loop,
 								id,
-								_p13,
+								_p14,
 								{ctor: '[]'});
 							var nextId = _p10._0;
 							var subElems = _p10._1;
@@ -13045,7 +13056,10 @@ var _user$project$Parsers$convertNode = F2(
 									id: nextId,
 									attr: attrMap,
 									shape: _user$project$Types$SVG(
-										{elems: subElems})
+										{
+											elems: subElems,
+											size: {ctor: '_Tuple2', _0: w, _1: h}
+										})
 								}
 							};
 						case 'rect':
@@ -13090,7 +13104,7 @@ var _user$project$Parsers$convertNode = F2(
 							var _p11 = A3(
 								loop,
 								id,
-								_p13,
+								_p14,
 								{ctor: '[]'});
 							var nextId = _p11._0;
 							var subElems = _p11._1;
@@ -13102,7 +13116,7 @@ var _user$project$Parsers$convertNode = F2(
 									id: nextId,
 									attr: attrMap,
 									shape: _user$project$Types$Unknown(
-										{elems: subElems})
+										{name: _p13, elems: subElems})
 								}
 							};
 					}
@@ -13111,17 +13125,17 @@ var _user$project$Parsers$convertNode = F2(
 	});
 var _user$project$Parsers$parseSvg = function (text) {
 	var node = function () {
-		var _p14 = _jinjor$elm_xml_parser$XmlParser$parse(text);
-		if (_p14.ctor === 'Ok') {
+		var _p15 = _jinjor$elm_xml_parser$XmlParser$parse(text);
+		if (_p15.ctor === 'Ok') {
 			return A2(
 				_elm_lang$core$Maybe$map,
 				_elm_lang$core$Tuple$second,
-				A2(_user$project$Parsers$convertNode, 0, _p14._0.root));
+				A2(_user$project$Parsers$convertNode, 0, _p15._0.root));
 		} else {
 			return _elm_lang$core$Maybe$Nothing;
 		}
 	}();
-	var _p15 = A2(_elm_lang$core$Debug$log, 'nodes', node);
+	var _p16 = A2(_elm_lang$core$Debug$log, 'nodes', node);
 	return node;
 };
 
@@ -13291,88 +13305,78 @@ var _user$project$Main$view = function (model) {
 };
 var _user$project$Main$update = F2(
 	function (msg, model) {
-		var _p3 = msg;
-		switch (_p3.ctor) {
-			case 'OnProperty':
-				var _p4 = _p3._0;
-				if (_p4.ctor === 'SwichMode') {
-					switch (_p4._0.ctor) {
-						case 'HandMode':
-							return {
-								ctor: '_Tuple2',
-								_0: _elm_lang$core$Native_Utils.update(
-									model,
-									{mode: _user$project$Types$HandMode}),
-								_1: _elm_lang$core$Platform_Cmd$none
-							};
-						case 'RectMode':
-							return {
-								ctor: '_Tuple2',
-								_0: _elm_lang$core$Native_Utils.update(
-									model,
-									{mode: _user$project$Types$RectMode}),
-								_1: _elm_lang$core$Platform_Cmd$none
-							};
-						default:
-							return {
-								ctor: '_Tuple2',
-								_0: _elm_lang$core$Native_Utils.update(
-									model,
-									{mode: _user$project$Types$EllipseMode}),
-								_1: _elm_lang$core$Platform_Cmd$none
-							};
-					}
-				} else {
-					return {
-						ctor: '_Tuple2',
-						_0: _elm_lang$core$Native_Utils.update(
-							model,
-							{styleInfo: _p4._0}),
-						_1: _elm_lang$core$Platform_Cmd$none
-					};
+		return A2(
+			_elm_lang$core$Platform_Cmd_ops['!'],
+			function () {
+				var _p3 = msg;
+				switch (_p3.ctor) {
+					case 'OnProperty':
+						var _p4 = _p3._0;
+						if (_p4.ctor === 'SwichMode') {
+							switch (_p4._0.ctor) {
+								case 'HandMode':
+									return _elm_lang$core$Native_Utils.update(
+										model,
+										{mode: _user$project$Types$HandMode});
+								case 'RectMode':
+									return _elm_lang$core$Native_Utils.update(
+										model,
+										{mode: _user$project$Types$RectMode});
+								default:
+									return _elm_lang$core$Native_Utils.update(
+										model,
+										{mode: _user$project$Types$EllipseMode});
+							}
+						} else {
+							return _elm_lang$core$Native_Utils.update(
+								model,
+								{styleInfo: _p4._0});
+						}
+					case 'OnMouse':
+						var _p6 = _p3._0;
+						var _p5 = model.mode;
+						if (_p5.ctor === 'HandMode') {
+							return A2(_user$project$HandMode$update, _p6, model);
+						} else {
+							return A2(_user$project$ShapeMode$update, _p6, model);
+						}
+					case 'OnSelect':
+						var _p7 = model.mode;
+						if (_p7.ctor === 'HandMode') {
+							return A4(_user$project$HandMode$select, _p3._0, _p3._1, _p3._2, model);
+						} else {
+							return model;
+						}
+					case 'NoSelect':
+						var _p8 = model.mode;
+						if (_p8.ctor === 'HandMode') {
+							return _user$project$HandMode$noSelect(model);
+						} else {
+							return model;
+						}
+					case 'OnVertex':
+						var _p9 = model.mode;
+						if (_p9.ctor === 'HandMode') {
+							return A3(_user$project$HandMode$scale, _p3._0, _p3._1, model);
+						} else {
+							return model;
+						}
+					default:
+						var _p10 = _user$project$Parsers$parseSvg(_p3._0);
+						if (_p10.ctor === 'Just') {
+							return _elm_lang$core$Native_Utils.update(
+								model,
+								{svg: _p10._0});
+						} else {
+							return model;
+						}
 				}
-			case 'OnMouse':
-				var _p6 = _p3._0;
-				var _p5 = model.mode;
-				if (_p5.ctor === 'HandMode') {
-					return A2(_user$project$HandMode$update, _p6, model);
-				} else {
-					return A2(_user$project$ShapeMode$update, _p6, model);
-				}
-			case 'OnSelect':
-				var _p7 = model.mode;
-				if (_p7.ctor === 'HandMode') {
-					return A4(_user$project$HandMode$select, _p3._0, _p3._1, _p3._2, model);
-				} else {
-					return {ctor: '_Tuple2', _0: model, _1: _elm_lang$core$Platform_Cmd$none};
-				}
-			case 'NoSelect':
-				var _p8 = model.mode;
-				if (_p8.ctor === 'HandMode') {
-					return _user$project$HandMode$noSelect(model);
-				} else {
-					return {ctor: '_Tuple2', _0: model, _1: _elm_lang$core$Platform_Cmd$none};
-				}
-			case 'OnVertex':
-				var _p9 = model.mode;
-				if (_p9.ctor === 'HandMode') {
-					return A3(_user$project$HandMode$scale, _p3._0, _p3._1, model);
-				} else {
-					return {ctor: '_Tuple2', _0: model, _1: _elm_lang$core$Platform_Cmd$none};
-				}
-			default:
-				var _p10 = _user$project$Parsers$parseSvg(_p3._0);
-				if (_p10.ctor === 'Just') {
-					return A2(
-						_elm_lang$core$Platform_Cmd_ops['!'],
-						_elm_lang$core$Native_Utils.update(
-							model,
-							{svg: _p10._0}),
-						{ctor: '[]'});
-				} else {
-					return {ctor: '_Tuple2', _0: model, _1: _elm_lang$core$Platform_Cmd$none};
-				}
-		}
+			}(),
+			{
+				ctor: '::',
+				_0: _user$project$Utils$reflectSvgData(model),
+				_1: {ctor: '[]'}
+			});
 	});
 var _user$project$Main$init = A2(
 	_elm_lang$core$Platform_Cmd_ops['!'],
@@ -13385,7 +13389,8 @@ var _user$project$Main$init = A2(
 			attr: _elm_lang$core$Dict$empty,
 			shape: _user$project$Types$SVG(
 				{
-					elems: {ctor: '[]'}
+					elems: {ctor: '[]'},
+					size: {ctor: '_Tuple2', _0: 400, _1: 400}
 				})
 		},
 		styleInfo: _elm_lang$core$Dict$fromList(

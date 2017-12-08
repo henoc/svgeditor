@@ -60,12 +60,14 @@ convertNode id node = case node of
       "svg" ->
         let
           (nextId, subElems) = loop id subNodes []
+          w = getFloatAttr "width" attrs
+          h = getFloatAttr "height" attrs
         in
         (nextId+1, {
           style = styleMap,
           id = nextId,
           attr = attrMap,
-          shape = SVG {elems = subElems}
+          shape = SVG {elems = subElems, size = (w, h)}
         })
       "rect" ->
         let
@@ -101,7 +103,7 @@ convertNode id node = case node of
           style = styleMap,
           id = nextId,
           attr = attrMap,
-          shape = Unknown {elems = subElems}
+          shape = Unknown {name = name, elems = subElems}
         })
 
 parseSvg: String -> Maybe StyledSVGElement

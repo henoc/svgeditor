@@ -29,7 +29,7 @@ init =
     {
       mode = HandMode,
       dragBegin = Nothing,
-      svg = {style = Dict.empty, id = -1, attr = Dict.empty, shape = SVG {elems = []}},
+      svg = {style = Dict.empty, id = -1, attr = Dict.empty, shape = SVG {elems = [], size = (400, 400)}},
       styleInfo = Dict.fromList [("fill", "#883333"), ("stroke", "#223366")],
       idGen = 0,
       selected = Set.empty,
@@ -42,19 +42,19 @@ init =
 
 update : Msg -> Model -> (Model, Cmd Msg)
 update msg model =
-  case msg of
+  (case msg of
     OnProperty changePropertyMsg -> case changePropertyMsg of
       SwichMode HandMode ->
-        ({model | mode = HandMode}, Cmd.none)
+        {model | mode = HandMode}
 
       SwichMode RectMode ->
-        ({model | mode = RectMode}, Cmd.none)
+        {model | mode = RectMode}
 
       SwichMode EllipseMode ->
-        ({model | mode = EllipseMode}, Cmd.none)
+        {model | mode = EllipseMode}
 
       Style styleInfo ->
-        ({model | styleInfo = styleInfo}, Cmd.none)
+        {model | styleInfo = styleInfo}
 
     OnMouse onMouseMsg -> case model.mode of
       HandMode -> HandMode.update onMouseMsg model
@@ -62,20 +62,21 @@ update msg model =
     
     OnSelect ident isAdd pos -> case model.mode of
       HandMode -> HandMode.select ident isAdd pos model
-      _ -> (model, Cmd.none)
+      _ -> model
     
     NoSelect -> case model.mode of
       HandMode -> HandMode.noSelect model
-      _ -> (model, Cmd.none)
+      _ -> model
     
     OnVertex fixed mpos -> case model.mode of
       HandMode -> HandMode.scale fixed mpos model
-      _ -> (model, Cmd.none)
+      _ -> model
     
     SvgData svgData ->
       case Parsers.parseSvg svgData of
-        Just data -> {model| svg = data} ! []
-        Nothing -> (model, Cmd.none)
+        Just data -> {model| svg = data}
+        Nothing -> model
+  ) ! [Utils.reflectSvgData model]
 
 
 -- VIEW
