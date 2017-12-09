@@ -11918,20 +11918,22 @@ var _user$project$Types$MouseDown = function (a) {
 };
 
 var _user$project$Generator$generateNode = function (elem) {
-	var _p0 = elem.shape;
-	switch (_p0.ctor) {
+	var styleAttr = A2(
+		_elm_lang$core$String$join,
+		';',
+		A2(
+			_elm_lang$core$List$map,
+			function (_p0) {
+				var _p1 = _p0;
+				return A2(
+					_elm_lang$core$Basics_ops['++'],
+					_p1._0,
+					A2(_elm_lang$core$Basics_ops['++'], ':', _p1._1));
+			},
+			_elm_lang$core$Dict$toList(elem.style)));
+	var _p2 = elem.shape;
+	switch (_p2.ctor) {
 		case 'SVG':
-			var attrs = A2(
-				_elm_lang$core$List$map,
-				function (_p1) {
-					var _p2 = _p1;
-					return {name: _p2._0, value: _p2._1};
-				},
-				_elm_lang$core$Dict$toList(elem.attr));
-			var xmlSubNodes = A2(_elm_lang$core$List$map, _user$project$Generator$generateNode, _p0._0.elems);
-			var xmlElem = A3(_jinjor$elm_xml_parser$XmlParser$Element, 'svg', attrs, xmlSubNodes);
-			return xmlElem;
-		case 'Unknown':
 			var attrs = A2(
 				_elm_lang$core$List$map,
 				function (_p3) {
@@ -11939,80 +11941,92 @@ var _user$project$Generator$generateNode = function (elem) {
 					return {name: _p4._0, value: _p4._1};
 				},
 				_elm_lang$core$Dict$toList(elem.attr));
-			var xmlSubNodes = A2(_elm_lang$core$List$map, _user$project$Generator$generateNode, _p0._0.elems);
-			var xmlElem = A3(_jinjor$elm_xml_parser$XmlParser$Element, _p0._0.name, attrs, xmlSubNodes);
+			var xmlSubNodes = A2(_elm_lang$core$List$map, _user$project$Generator$generateNode, _p2._0.elems);
+			var xmlElem = A3(_jinjor$elm_xml_parser$XmlParser$Element, 'svg', attrs, xmlSubNodes);
+			return xmlElem;
+		case 'Unknown':
+			var newAttr = A3(_elm_lang$core$Dict$insert, 'style', styleAttr, elem.attr);
+			var attrs = A2(
+				_elm_lang$core$List$map,
+				function (_p5) {
+					var _p6 = _p5;
+					return {name: _p6._0, value: _p6._1};
+				},
+				_elm_lang$core$Dict$toList(newAttr));
+			var xmlSubNodes = A2(_elm_lang$core$List$map, _user$project$Generator$generateNode, _p2._0.elems);
+			var xmlElem = A3(_jinjor$elm_xml_parser$XmlParser$Element, _p2._0.name, attrs, xmlSubNodes);
 			return xmlElem;
 		case 'Rectangle':
-			var _p9 = _p0._0.size;
-			var _p8 = _p0._0.leftTop;
-			var newAttrs = function (_p5) {
+			var _p11 = _p2._0.size;
+			var _p10 = _p2._0.leftTop;
+			var newAttr = function (_p7) {
 				return A3(
 					_elm_lang$core$Dict$insert,
 					'x',
 					_elm_lang$core$Basics$toString(
-						_elm_lang$core$Tuple$first(_p8)),
+						_elm_lang$core$Tuple$first(_p10)),
 					A3(
 						_elm_lang$core$Dict$insert,
 						'y',
 						_elm_lang$core$Basics$toString(
-							_elm_lang$core$Tuple$second(_p8)),
+							_elm_lang$core$Tuple$second(_p10)),
 						A3(
 							_elm_lang$core$Dict$insert,
 							'width',
 							_elm_lang$core$Basics$toString(
-								_elm_lang$core$Tuple$first(_p9)),
+								_elm_lang$core$Tuple$first(_p11)),
 							A3(
 								_elm_lang$core$Dict$insert,
 								'height',
 								_elm_lang$core$Basics$toString(
-									_elm_lang$core$Tuple$second(_p9)),
-								_p5))));
+									_elm_lang$core$Tuple$second(_p11)),
+								A3(_elm_lang$core$Dict$insert, 'style', styleAttr, _p7)))));
 			}(elem.attr);
 			var attrs = A2(
 				_elm_lang$core$List$map,
-				function (_p6) {
-					var _p7 = _p6;
-					return {name: _p7._0, value: _p7._1};
+				function (_p8) {
+					var _p9 = _p8;
+					return {name: _p9._0, value: _p9._1};
 				},
-				_elm_lang$core$Dict$toList(newAttrs));
+				_elm_lang$core$Dict$toList(newAttr));
 			return A3(
 				_jinjor$elm_xml_parser$XmlParser$Element,
 				'rect',
 				attrs,
 				{ctor: '[]'});
 		default:
-			var _p14 = _p0._0.size;
-			var _p13 = _p0._0.center;
-			var newAttrs = function (_p10) {
+			var _p16 = _p2._0.size;
+			var _p15 = _p2._0.center;
+			var newAttr = function (_p12) {
 				return A3(
 					_elm_lang$core$Dict$insert,
 					'cx',
 					_elm_lang$core$Basics$toString(
-						_elm_lang$core$Tuple$first(_p13)),
+						_elm_lang$core$Tuple$first(_p15)),
 					A3(
 						_elm_lang$core$Dict$insert,
 						'cy',
 						_elm_lang$core$Basics$toString(
-							_elm_lang$core$Tuple$second(_p13)),
+							_elm_lang$core$Tuple$second(_p15)),
 						A3(
 							_elm_lang$core$Dict$insert,
 							'rx',
 							_elm_lang$core$Basics$toString(
-								_elm_lang$core$Tuple$first(_p14) / 2),
+								_elm_lang$core$Tuple$first(_p16) / 2),
 							A3(
 								_elm_lang$core$Dict$insert,
 								'ry',
 								_elm_lang$core$Basics$toString(
-									_elm_lang$core$Tuple$second(_p14) / 2),
-								_p10))));
+									_elm_lang$core$Tuple$second(_p16) / 2),
+								A3(_elm_lang$core$Dict$insert, 'style', styleAttr, _p12)))));
 			}(elem.attr);
 			var attrs = A2(
 				_elm_lang$core$List$map,
-				function (_p11) {
-					var _p12 = _p11;
-					return {name: _p12._0, value: _p12._1};
+				function (_p13) {
+					var _p14 = _p13;
+					return {name: _p14._0, value: _p14._1};
 				},
-				_elm_lang$core$Dict$toList(newAttrs));
+				_elm_lang$core$Dict$toList(newAttr));
 			return A3(
 				_jinjor$elm_xml_parser$XmlParser$Element,
 				'ellipse',

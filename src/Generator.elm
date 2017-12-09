@@ -8,6 +8,9 @@ import Tuple exposing (first, second)
 
 generateNode: StyledSVGElement -> XmlParser.Node
 generateNode elem =
+  let
+    styleAttr = String.join ";" (List.map (\(x,y) -> x ++ ":" ++ y) <| Dict.toList elem.style)
+  in
   case elem.shape of
   SVG {elems, size} ->
     let
@@ -19,28 +22,31 @@ generateNode elem =
   Unknown {name, elems} ->
     let
       xmlSubNodes = List.map generateNode elems
-      attrs = Dict.toList elem.attr |> List.map (\(x, y) -> {name = x, value = y}) 
+      newAttr = Dict.insert "style" styleAttr elem.attr
+      attrs = Dict.toList newAttr |> List.map (\(x, y) -> {name = x, value = y}) 
       xmlElem = XmlParser.Element name attrs xmlSubNodes
     in
     xmlElem
   Rectangle {leftTop, size} ->
     let
-      newAttrs =
+      newAttr =
         Dict.insert "x" (toString <| first leftTop) <<
         Dict.insert "y" (toString <| second leftTop) <<
         Dict.insert "width" (toString <| first size) <<
-        Dict.insert "height" (toString <| second size) <| elem.attr
-      attrs = Dict.toList newAttrs |> List.map (\(x, y) -> {name = x, value = y}) 
+        Dict.insert "height" (toString <| second size) <<
+        Dict.insert "style" styleAttr <| elem.attr
+      attrs = Dict.toList newAttr |> List.map (\(x, y) -> {name = x, value = y}) 
     in
     XmlParser.Element "rect" attrs []
   Ellipse {center, size} ->
     let
-      newAttrs =
+      newAttr =
         Dict.insert "cx" (toString <| first center) <<
         Dict.insert "cy" (toString <| second center) <<
         Dict.insert "rx" (toString <| first size / 2) <<
-        Dict.insert "ry" (toString <| second size / 2) <| elem.attr
-      attrs = Dict.toList newAttrs |> List.map (\(x, y) -> {name = x, value = y}) 
+        Dict.insert "ry" (toString <| second size / 2) <<
+        Dict.insert "style" styleAttr <| elem.attr
+      attrs = Dict.toList newAttr |> List.map (\(x, y) -> {name = x, value = y}) 
     in
     XmlParser.Element "ellipse" attrs []
 
