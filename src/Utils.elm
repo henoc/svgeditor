@@ -102,5 +102,6 @@ reflectSvgData: Model -> Cmd msg
 reflectSvgData model =
   let
     svgData = Generator.generateXml model.svg
+    _ = Debug.log "send" svgData
   in
   sendSvgData svgData

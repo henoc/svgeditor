@@ -42,41 +42,46 @@ init =
 
 update : Msg -> Model -> (Model, Cmd Msg)
 update msg model =
-  (case msg of
+  case msg of
     OnProperty changePropertyMsg -> case changePropertyMsg of
       SwichMode HandMode ->
-        {model | mode = HandMode}
+        {model | mode = HandMode} ! []
 
       SwichMode RectMode ->
-        {model | mode = RectMode}
+        {model | mode = RectMode} ! []
 
       SwichMode EllipseMode ->
-        {model | mode = EllipseMode}
+        {model | mode = EllipseMode} ! []
 
       Style styleInfo ->
-        {model | styleInfo = styleInfo}
+        {model | styleInfo = styleInfo} ! []
 
     OnMouse onMouseMsg -> case model.mode of
-      HandMode -> HandMode.update onMouseMsg model
-      _ -> ShapeMode.update onMouseMsg model
+      HandMode ->
+        let newModel = HandMode.update onMouseMsg model in
+        if model /= newModel then newModel ! [Utils.reflectSvgData newModel]
+        else model ! []
+      _ ->
+        let newModel = ShapeMode.update onMouseMsg model in
+        if model /= newModel then newModel ! [Utils.reflectSvgData newModel]
+        else model ! []
     
     OnSelect ident isAdd pos -> case model.mode of
-      HandMode -> HandMode.select ident isAdd pos model
-      _ -> model
+      HandMode -> (HandMode.select ident isAdd pos model) ! []
+      _ -> model ! []
     
     NoSelect -> case model.mode of
-      HandMode -> HandMode.noSelect model
-      _ -> model
+      HandMode -> (HandMode.noSelect model) ! []
+      _ -> model ! []
     
     OnVertex fixed mpos -> case model.mode of
-      HandMode -> HandMode.scale fixed mpos model
-      _ -> model
+      HandMode -> (HandMode.scale fixed mpos model) ! []
+      _ -> model ! []
     
     SvgData svgData ->
       case Parsers.parseSvg svgData of
-        Just data -> {model| svg = data}
-        Nothing -> model
-  ) ! [Utils.reflectSvgData model]
+        Just data -> {model| svg = data} ! []
+        Nothing -> model ! []
 
 
 -- VIEW

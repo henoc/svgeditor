@@ -11918,30 +11918,101 @@ var _user$project$Types$MouseDown = function (a) {
 };
 
 var _user$project$Generator$generateNode = function (elem) {
-	var attrs = A2(
-		_elm_lang$core$List$map,
-		function (_p0) {
-			var _p1 = _p0;
-			return {name: _p1._0, value: _p1._1};
-		},
-		_elm_lang$core$Dict$toList(elem.attr));
-	var _p2 = elem.shape;
-	switch (_p2.ctor) {
+	var _p0 = elem.shape;
+	switch (_p0.ctor) {
 		case 'SVG':
-			var xmlSubNodes = A2(_elm_lang$core$List$map, _user$project$Generator$generateNode, _p2._0.elems);
+			var attrs = A2(
+				_elm_lang$core$List$map,
+				function (_p1) {
+					var _p2 = _p1;
+					return {name: _p2._0, value: _p2._1};
+				},
+				_elm_lang$core$Dict$toList(elem.attr));
+			var xmlSubNodes = A2(_elm_lang$core$List$map, _user$project$Generator$generateNode, _p0._0.elems);
 			var xmlElem = A3(_jinjor$elm_xml_parser$XmlParser$Element, 'svg', attrs, xmlSubNodes);
 			return xmlElem;
 		case 'Unknown':
-			var xmlSubNodes = A2(_elm_lang$core$List$map, _user$project$Generator$generateNode, _p2._0.elems);
-			var xmlElem = A3(_jinjor$elm_xml_parser$XmlParser$Element, _p2._0.name, attrs, xmlSubNodes);
+			var attrs = A2(
+				_elm_lang$core$List$map,
+				function (_p3) {
+					var _p4 = _p3;
+					return {name: _p4._0, value: _p4._1};
+				},
+				_elm_lang$core$Dict$toList(elem.attr));
+			var xmlSubNodes = A2(_elm_lang$core$List$map, _user$project$Generator$generateNode, _p0._0.elems);
+			var xmlElem = A3(_jinjor$elm_xml_parser$XmlParser$Element, _p0._0.name, attrs, xmlSubNodes);
 			return xmlElem;
 		case 'Rectangle':
+			var _p9 = _p0._0.size;
+			var _p8 = _p0._0.leftTop;
+			var newAttrs = function (_p5) {
+				return A3(
+					_elm_lang$core$Dict$insert,
+					'x',
+					_elm_lang$core$Basics$toString(
+						_elm_lang$core$Tuple$first(_p8)),
+					A3(
+						_elm_lang$core$Dict$insert,
+						'y',
+						_elm_lang$core$Basics$toString(
+							_elm_lang$core$Tuple$second(_p8)),
+						A3(
+							_elm_lang$core$Dict$insert,
+							'width',
+							_elm_lang$core$Basics$toString(
+								_elm_lang$core$Tuple$first(_p9)),
+							A3(
+								_elm_lang$core$Dict$insert,
+								'height',
+								_elm_lang$core$Basics$toString(
+									_elm_lang$core$Tuple$second(_p9)),
+								_p5))));
+			}(elem.attr);
+			var attrs = A2(
+				_elm_lang$core$List$map,
+				function (_p6) {
+					var _p7 = _p6;
+					return {name: _p7._0, value: _p7._1};
+				},
+				_elm_lang$core$Dict$toList(newAttrs));
 			return A3(
 				_jinjor$elm_xml_parser$XmlParser$Element,
 				'rect',
 				attrs,
 				{ctor: '[]'});
 		default:
+			var _p14 = _p0._0.size;
+			var _p13 = _p0._0.center;
+			var newAttrs = function (_p10) {
+				return A3(
+					_elm_lang$core$Dict$insert,
+					'cx',
+					_elm_lang$core$Basics$toString(
+						_elm_lang$core$Tuple$first(_p13)),
+					A3(
+						_elm_lang$core$Dict$insert,
+						'cy',
+						_elm_lang$core$Basics$toString(
+							_elm_lang$core$Tuple$second(_p13)),
+						A3(
+							_elm_lang$core$Dict$insert,
+							'rx',
+							_elm_lang$core$Basics$toString(
+								_elm_lang$core$Tuple$first(_p14) / 2),
+							A3(
+								_elm_lang$core$Dict$insert,
+								'ry',
+								_elm_lang$core$Basics$toString(
+									_elm_lang$core$Tuple$second(_p14) / 2),
+								_p10))));
+			}(elem.attr);
+			var attrs = A2(
+				_elm_lang$core$List$map,
+				function (_p11) {
+					var _p12 = _p11;
+					return {name: _p12._0, value: _p12._1};
+				},
+				_elm_lang$core$Dict$toList(newAttrs));
 			return A3(
 				_jinjor$elm_xml_parser$XmlParser$Element,
 				'ellipse',
@@ -11952,11 +12023,7 @@ var _user$project$Generator$generateNode = function (elem) {
 var _user$project$Generator$generateXml = function (elem) {
 	var xmlElem = _user$project$Generator$generateNode(elem);
 	var xmlRoot = {
-		processingInstructions: {
-			ctor: '::',
-			_0: {name: 'xml', value: 'version=\"1.0\"'},
-			_1: {ctor: '[]'}
-		},
+		processingInstructions: {ctor: '[]'},
 		docType: _elm_lang$core$Maybe$Nothing,
 		root: xmlElem
 	};
@@ -12144,6 +12211,7 @@ var _user$project$Utils$sendSvgData = _elm_lang$core$Native_Platform.outgoingPor
 	});
 var _user$project$Utils$reflectSvgData = function (model) {
 	var svgData = _user$project$Generator$generateXml(model.svg);
+	var _p10 = A2(_elm_lang$core$Debug$log, 'send', svgData);
 	return _user$project$Utils$sendSvgData(svgData);
 };
 
@@ -13305,78 +13373,127 @@ var _user$project$Main$view = function (model) {
 };
 var _user$project$Main$update = F2(
 	function (msg, model) {
-		return A2(
-			_elm_lang$core$Platform_Cmd_ops['!'],
-			function () {
-				var _p3 = msg;
-				switch (_p3.ctor) {
-					case 'OnProperty':
-						var _p4 = _p3._0;
-						if (_p4.ctor === 'SwichMode') {
-							switch (_p4._0.ctor) {
-								case 'HandMode':
-									return _elm_lang$core$Native_Utils.update(
-										model,
-										{mode: _user$project$Types$HandMode});
-								case 'RectMode':
-									return _elm_lang$core$Native_Utils.update(
-										model,
-										{mode: _user$project$Types$RectMode});
-								default:
-									return _elm_lang$core$Native_Utils.update(
-										model,
-										{mode: _user$project$Types$EllipseMode});
-							}
-						} else {
-							return _elm_lang$core$Native_Utils.update(
-								model,
-								{styleInfo: _p4._0});
-						}
-					case 'OnMouse':
-						var _p6 = _p3._0;
-						var _p5 = model.mode;
-						if (_p5.ctor === 'HandMode') {
-							return A2(_user$project$HandMode$update, _p6, model);
-						} else {
-							return A2(_user$project$ShapeMode$update, _p6, model);
-						}
-					case 'OnSelect':
-						var _p7 = model.mode;
-						if (_p7.ctor === 'HandMode') {
-							return A4(_user$project$HandMode$select, _p3._0, _p3._1, _p3._2, model);
-						} else {
-							return model;
-						}
-					case 'NoSelect':
-						var _p8 = model.mode;
-						if (_p8.ctor === 'HandMode') {
-							return _user$project$HandMode$noSelect(model);
-						} else {
-							return model;
-						}
-					case 'OnVertex':
-						var _p9 = model.mode;
-						if (_p9.ctor === 'HandMode') {
-							return A3(_user$project$HandMode$scale, _p3._0, _p3._1, model);
-						} else {
-							return model;
-						}
-					default:
-						var _p10 = _user$project$Parsers$parseSvg(_p3._0);
-						if (_p10.ctor === 'Just') {
-							return _elm_lang$core$Native_Utils.update(
-								model,
-								{svg: _p10._0});
-						} else {
-							return model;
-						}
+		var _p3 = msg;
+		switch (_p3.ctor) {
+			case 'OnProperty':
+				var _p4 = _p3._0;
+				if (_p4.ctor === 'SwichMode') {
+					switch (_p4._0.ctor) {
+						case 'HandMode':
+							return A2(
+								_elm_lang$core$Platform_Cmd_ops['!'],
+								_elm_lang$core$Native_Utils.update(
+									model,
+									{mode: _user$project$Types$HandMode}),
+								{ctor: '[]'});
+						case 'RectMode':
+							return A2(
+								_elm_lang$core$Platform_Cmd_ops['!'],
+								_elm_lang$core$Native_Utils.update(
+									model,
+									{mode: _user$project$Types$RectMode}),
+								{ctor: '[]'});
+						default:
+							return A2(
+								_elm_lang$core$Platform_Cmd_ops['!'],
+								_elm_lang$core$Native_Utils.update(
+									model,
+									{mode: _user$project$Types$EllipseMode}),
+								{ctor: '[]'});
+					}
+				} else {
+					return A2(
+						_elm_lang$core$Platform_Cmd_ops['!'],
+						_elm_lang$core$Native_Utils.update(
+							model,
+							{styleInfo: _p4._0}),
+						{ctor: '[]'});
 				}
-			}(),
-			{
-				ctor: '::',
-				_0: _user$project$Utils$reflectSvgData(model),
-				_1: {ctor: '[]'}
-			});
+			case 'OnMouse':
+				var _p6 = _p3._0;
+				var _p5 = model.mode;
+				if (_p5.ctor === 'HandMode') {
+					var newModel = A2(_user$project$HandMode$update, _p6, model);
+					return (!_elm_lang$core$Native_Utils.eq(model, newModel)) ? A2(
+						_elm_lang$core$Platform_Cmd_ops['!'],
+						newModel,
+						{
+							ctor: '::',
+							_0: _user$project$Utils$reflectSvgData(newModel),
+							_1: {ctor: '[]'}
+						}) : A2(
+						_elm_lang$core$Platform_Cmd_ops['!'],
+						model,
+						{ctor: '[]'});
+				} else {
+					var newModel = A2(_user$project$ShapeMode$update, _p6, model);
+					return (!_elm_lang$core$Native_Utils.eq(model, newModel)) ? A2(
+						_elm_lang$core$Platform_Cmd_ops['!'],
+						newModel,
+						{
+							ctor: '::',
+							_0: _user$project$Utils$reflectSvgData(newModel),
+							_1: {ctor: '[]'}
+						}) : A2(
+						_elm_lang$core$Platform_Cmd_ops['!'],
+						model,
+						{ctor: '[]'});
+				}
+			case 'OnSelect':
+				var _p7 = model.mode;
+				if (_p7.ctor === 'HandMode') {
+					return A2(
+						_elm_lang$core$Platform_Cmd_ops['!'],
+						A4(_user$project$HandMode$select, _p3._0, _p3._1, _p3._2, model),
+						{ctor: '[]'});
+				} else {
+					return A2(
+						_elm_lang$core$Platform_Cmd_ops['!'],
+						model,
+						{ctor: '[]'});
+				}
+			case 'NoSelect':
+				var _p8 = model.mode;
+				if (_p8.ctor === 'HandMode') {
+					return A2(
+						_elm_lang$core$Platform_Cmd_ops['!'],
+						_user$project$HandMode$noSelect(model),
+						{ctor: '[]'});
+				} else {
+					return A2(
+						_elm_lang$core$Platform_Cmd_ops['!'],
+						model,
+						{ctor: '[]'});
+				}
+			case 'OnVertex':
+				var _p9 = model.mode;
+				if (_p9.ctor === 'HandMode') {
+					return A2(
+						_elm_lang$core$Platform_Cmd_ops['!'],
+						A3(_user$project$HandMode$scale, _p3._0, _p3._1, model),
+						{ctor: '[]'});
+				} else {
+					return A2(
+						_elm_lang$core$Platform_Cmd_ops['!'],
+						model,
+						{ctor: '[]'});
+				}
+			default:
+				var _p10 = _user$project$Parsers$parseSvg(_p3._0);
+				if (_p10.ctor === 'Just') {
+					return A2(
+						_elm_lang$core$Platform_Cmd_ops['!'],
+						_elm_lang$core$Native_Utils.update(
+							model,
+							{svg: _p10._0}),
+						{ctor: '[]'});
+				} else {
+					return A2(
+						_elm_lang$core$Platform_Cmd_ops['!'],
+						model,
+						{ctor: '[]'});
+				}
+		}
 	});
 var _user$project$Main$init = A2(
 	_elm_lang$core$Platform_Cmd_ops['!'],
