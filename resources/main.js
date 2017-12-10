@@ -13267,6 +13267,17 @@ var _user$project$Parsers$getFloatAttr = F2(
 		return _user$project$Parsers$floatAttr(
 			A2(_user$project$Parsers$getAttr, name, attrs));
 	});
+var _user$project$Parsers$floatParser = A2(
+	_user$project$Combinators$map,
+	function (x) {
+		return A2(
+			_elm_lang$core$Result$withDefault,
+			0,
+			_elm_lang$core$String$toFloat(x));
+	},
+	_user$project$Combinators$regexParser('[+-]?[0-9]+(\\.[0-9]*)?([eE][+-]?[0-9]+)?'));
+var _user$project$Parsers$pointPairParser = A2(_user$project$Combinators$andThen, _user$project$Parsers$floatParser, _user$project$Parsers$floatParser);
+var _user$project$Parsers$pointsParser = _user$project$Combinators$rep(_user$project$Parsers$pointPairParser);
 var _user$project$Parsers$stylePairParser = A2(
 	_user$project$Combinators$andThen,
 	_user$project$Combinators$regexParser('[^\\s:]+'),
@@ -13310,9 +13321,9 @@ var _user$project$Parsers$convertNode = F2(
 		if (_p5.ctor === 'Text') {
 			return _elm_lang$core$Maybe$Nothing;
 		} else {
-			var _p14 = _p5._2;
-			var _p13 = _p5._0;
-			var _p12 = _p5._1;
+			var _p16 = _p5._2;
+			var _p15 = _p5._0;
+			var _p14 = _p5._1;
 			var loop = F3(
 				function (id, subNodes, acc) {
 					loop:
@@ -13353,19 +13364,19 @@ var _user$project$Parsers$convertNode = F2(
 					function (a) {
 						return {ctor: '_Tuple2', _0: a.name, _1: a.value};
 					},
-					_p12));
-			var styleMap = _user$project$Parsers$getStyle(_p12);
+					_p14));
+			var styleMap = _user$project$Parsers$getStyle(_p14);
 			return _elm_lang$core$Maybe$Just(
 				function () {
-					var _p9 = _p13;
+					var _p9 = _p15;
 					switch (_p9) {
 						case 'svg':
-							var h = A2(_user$project$Parsers$getFloatAttr, 'height', _p12);
-							var w = A2(_user$project$Parsers$getFloatAttr, 'width', _p12);
+							var h = A2(_user$project$Parsers$getFloatAttr, 'height', _p14);
+							var w = A2(_user$project$Parsers$getFloatAttr, 'width', _p14);
 							var _p10 = A3(
 								loop,
 								id,
-								_p14,
+								_p16,
 								{ctor: '[]'});
 							var nextId = _p10._0;
 							var subElems = _p10._1;
@@ -13384,10 +13395,10 @@ var _user$project$Parsers$convertNode = F2(
 								}
 							};
 						case 'rect':
-							var h = A2(_user$project$Parsers$getFloatAttr, 'height', _p12);
-							var w = A2(_user$project$Parsers$getFloatAttr, 'width', _p12);
-							var y = A2(_user$project$Parsers$getFloatAttr, 'y', _p12);
-							var x = A2(_user$project$Parsers$getFloatAttr, 'x', _p12);
+							var h = A2(_user$project$Parsers$getFloatAttr, 'height', _p14);
+							var w = A2(_user$project$Parsers$getFloatAttr, 'width', _p14);
+							var y = A2(_user$project$Parsers$getFloatAttr, 'y', _p14);
+							var x = A2(_user$project$Parsers$getFloatAttr, 'x', _p14);
 							return {
 								ctor: '_Tuple2',
 								_0: id + 1,
@@ -13403,10 +13414,10 @@ var _user$project$Parsers$convertNode = F2(
 								}
 							};
 						case 'ellipse':
-							var cy = A2(_user$project$Parsers$getFloatAttr, 'cy', _p12);
-							var cx = A2(_user$project$Parsers$getFloatAttr, 'cx', _p12);
-							var ry = A2(_user$project$Parsers$getFloatAttr, 'ry', _p12);
-							var rx = A2(_user$project$Parsers$getFloatAttr, 'rx', _p12);
+							var cy = A2(_user$project$Parsers$getFloatAttr, 'cy', _p14);
+							var cx = A2(_user$project$Parsers$getFloatAttr, 'cx', _p14);
+							var ry = A2(_user$project$Parsers$getFloatAttr, 'ry', _p14);
+							var rx = A2(_user$project$Parsers$getFloatAttr, 'rx', _p14);
 							return {
 								ctor: '_Tuple2',
 								_0: id + 1,
@@ -13421,14 +13432,68 @@ var _user$project$Parsers$convertNode = F2(
 										})
 								}
 							};
+						case 'polygon':
+							var points = function () {
+								var _p11 = _user$project$Parsers$pointsParser(
+									A2(
+										_user$project$Combinators$input,
+										A2(
+											_elm_lang$core$Maybe$withDefault,
+											'',
+											A2(_user$project$Parsers$getAttr, 'points', _p14)),
+										'[\\s,]+'));
+								if (_p11.ctor === 'ParseSuccess') {
+									return _p11._0;
+								} else {
+									return {ctor: '[]'};
+								}
+							}();
+							return {
+								ctor: '_Tuple2',
+								_0: id + 1,
+								_1: {
+									style: styleMap,
+									id: id,
+									attr: attrMap,
+									shape: _user$project$Types$Polygon(
+										{points: points, enclosed: true})
+								}
+							};
+						case 'polyline':
+							var points = function () {
+								var _p12 = _user$project$Parsers$pointsParser(
+									A2(
+										_user$project$Combinators$input,
+										A2(
+											_elm_lang$core$Maybe$withDefault,
+											'',
+											A2(_user$project$Parsers$getAttr, 'points', _p14)),
+										'[\\s,]+'));
+								if (_p12.ctor === 'ParseSuccess') {
+									return _p12._0;
+								} else {
+									return {ctor: '[]'};
+								}
+							}();
+							return {
+								ctor: '_Tuple2',
+								_0: id + 1,
+								_1: {
+									style: styleMap,
+									id: id,
+									attr: attrMap,
+									shape: _user$project$Types$Polygon(
+										{points: points, enclosed: false})
+								}
+							};
 						default:
-							var _p11 = A3(
+							var _p13 = A3(
 								loop,
 								id,
-								_p14,
+								_p16,
 								{ctor: '[]'});
-							var nextId = _p11._0;
-							var subElems = _p11._1;
+							var nextId = _p13._0;
+							var subElems = _p13._1;
 							return {
 								ctor: '_Tuple2',
 								_0: nextId + 1,
@@ -13437,7 +13502,7 @@ var _user$project$Parsers$convertNode = F2(
 									id: nextId,
 									attr: attrMap,
 									shape: _user$project$Types$Unknown(
-										{name: _p13, elems: subElems})
+										{name: _p15, elems: subElems})
 								}
 							};
 					}
@@ -13446,17 +13511,17 @@ var _user$project$Parsers$convertNode = F2(
 	});
 var _user$project$Parsers$parseSvg = function (text) {
 	var node = function () {
-		var _p15 = _jinjor$elm_xml_parser$XmlParser$parse(text);
-		if (_p15.ctor === 'Ok') {
+		var _p17 = _jinjor$elm_xml_parser$XmlParser$parse(text);
+		if (_p17.ctor === 'Ok') {
 			return A2(
 				_elm_lang$core$Maybe$map,
 				_elm_lang$core$Tuple$second,
-				A2(_user$project$Parsers$convertNode, 0, _p15._0.root));
+				A2(_user$project$Parsers$convertNode, 0, _p17._0.root));
 		} else {
 			return _elm_lang$core$Maybe$Nothing;
 		}
 	}();
-	var _p16 = A2(_elm_lang$core$Debug$log, 'nodes', node);
+	var _p18 = A2(_elm_lang$core$Debug$log, 'nodes', node);
 	return node;
 };
 

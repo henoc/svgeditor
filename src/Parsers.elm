@@ -13,6 +13,15 @@ stylePairParser = andThen (regexParser "[^\\s:]+") (regexParser "[^\\s;]+")
 styleParser: Parser (Dict String String)
 styleParser = Combinators.map Dict.fromList <| rep stylePairParser
 
+floatParser: Parser Float
+floatParser = regexParser "[+-]?[0-9]+(\\.[0-9]*)?([eE][+-]?[0-9]+)?" |> Combinators.map (\x -> Result.withDefault 0 <| String.toFloat x)
+
+pointPairParser: Parser (Float, Float)
+pointPairParser = andThen floatParser floatParser
+
+pointsParser: Parser (List (Float, Float))
+pointsParser = rep pointPairParser
+
 getAttr: String -> List XmlParser.Attribute -> Maybe String
 getAttr name attrs =
   let
@@ -94,6 +103,30 @@ convertNode id node = case node of
           id = id,
           attr = attrMap,
           shape = Ellipse {center = (cx, cy), size = (rx * 2, ry * 2)}
+        })
+      "polygon" ->
+        let
+          points = case pointsParser <| input (Maybe.withDefault "" (getAttr "points" attrs)) "[\\s,]+" of
+            ParseSuccess r i -> r
+            ParseFailure _ _ -> []
+        in
+        (id+1, {
+          style = styleMap,
+          id = id,
+          attr = attrMap,
+          shape = Polygon {points = points, enclosed = True}
+        })
+      "polyline" ->
+        let
+          points = case pointsParser <| input (Maybe.withDefault "" (getAttr "points" attrs)) "[\\s,]+" of
+            ParseSuccess r i -> r
+            ParseFailure _ _ -> []
+        in
+        (id+1, {
+          style = styleMap,
+          id = id,
+          attr = attrMap,
+          shape = Polygon {points = points, enclosed = False}
         })
       others ->
         let
