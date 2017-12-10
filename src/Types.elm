@@ -5,12 +5,17 @@ import Vec2 exposing (Vec2)
 import Set exposing (Set)
 import Dict exposing (Dict)
 
-type Mode = HandMode | RectMode | EllipseMode
+type Mode = HandMode | RectMode | EllipseMode | PolygonMode
 type alias StyleInfo = Dict String String
 type alias AttributeInfo = Dict String String
 
 -- モデルが所有するSVGの形
-type SVGElement = Rectangle { leftTop: Vec2, size: Vec2 } | Ellipse { center: Vec2, size: Vec2 } | SVG {elems: List StyledSVGElement, size: Vec2} | Unknown { name: String, elems: List StyledSVGElement }
+type SVGElement =
+  Rectangle { leftTop: Vec2, size: Vec2 }
+  | Ellipse { center: Vec2, size: Vec2 }
+  | Polygon { points: List Vec2, enclosed: Bool}
+  | SVG {elems: List StyledSVGElement, size: Vec2}
+  | Unknown { name: String, elems: List StyledSVGElement }
 type alias StyledSVGElement = {
   style: StyleInfo,     -- color以外もいれる予定
   attr: AttributeInfo,

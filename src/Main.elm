@@ -52,6 +52,9 @@ update msg model =
 
       SwichMode EllipseMode ->
         {model | mode = EllipseMode} ! []
+      
+      SwichMode PolygonMode ->
+        {model | mode = PolygonMode} ! []
 
       Style styleInfo ->
         {model | styleInfo = styleInfo} ! []
@@ -59,6 +62,10 @@ update msg model =
     OnMouse onMouseMsg -> case model.mode of
       HandMode ->
         let newModel = HandMode.update onMouseMsg model in
+        if model /= newModel then newModel ! [Utils.reflectSvgData newModel]
+        else model ! []
+      PolygonMode ->
+        let newModel = ShapeMode.updatePolygon onMouseMsg model in
         if model /= newModel then newModel ! [Utils.reflectSvgData newModel]
         else model ! []
       _ ->
@@ -94,7 +101,8 @@ view model =
     [ div [] [
         button [ onClick <| OnProperty <| SwichMode HandMode ] [text "hand mode"],
         button [ onClick <| OnProperty <| SwichMode RectMode ] [text "rectangle mode"],
-        button [ onClick <| OnProperty <| SwichMode EllipseMode ] [text "ellispe mode"]
+        button [ onClick <| OnProperty <| SwichMode EllipseMode ] [text "ellispe mode"],
+        button [ onClick <| OnProperty <| SwichMode PolygonMode ] [text "polygon mode"]
       ],
       svg [
         width (toString <| 400),

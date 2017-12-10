@@ -2,7 +2,7 @@ module ViewBuilder exposing (..)
 
 import Types exposing (..)
 import Html exposing (..)
-import Svg exposing (svg, ellipse, rect, circle)
+import Svg exposing (svg, ellipse, rect, circle, polygon, polyline)
 import Svg.Attributes exposing (..)
 import Vec2 exposing (..)
 import Utils
@@ -35,6 +35,12 @@ build svg = case svg.shape of
       rx (toString (sizex / 2)),
       ry (toString (sizey / 2)),
       style  <| buildStyle svg.style,
+      Utils.onItemMouseDown <| \(shift, pos) -> OnSelect svg.id shift pos
+    ] []
+  Polygon pgn ->
+    (if pgn.enclosed then polygon else polyline) [
+      points (String.join "," (List.map (\(x,y) -> (toString x ++ " " ++ toString y)) pgn.points)),
+      style <| buildStyle svg.style,
       Utils.onItemMouseDown <| \(shift, pos) -> OnSelect svg.id shift pos
     ] []
   others -> rect [] []

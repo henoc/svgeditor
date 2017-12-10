@@ -105,3 +105,8 @@ reflectSvgData model =
     _ = Debug.log "send" svgData
   in
   sendSvgData svgData
+
+updateHead: (a -> a) -> List a -> List a
+updateHead fn lst = case lst of
+  hd :: tl -> (fn hd) :: tl
+  [] -> []
