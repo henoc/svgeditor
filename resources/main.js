@@ -12281,23 +12281,134 @@ var _user$project$Utils$reflectSvgData = function (model) {
 	return _user$project$Utils$sendSvgData(svgData);
 };
 
+var _user$project$Shape$translate = F2(
+	function (delta, elem) {
+		return _elm_lang$core$Native_Utils.update(
+			elem,
+			{
+				shape: function () {
+					var _p0 = elem.shape;
+					switch (_p0.ctor) {
+						case 'Rectangle':
+							return _user$project$Types$Rectangle(
+								{
+									leftTop: A2(_user$project$Vec2_ops['+#'], _p0._0.leftTop, delta),
+									size: _p0._0.size
+								});
+						case 'Ellipse':
+							return _user$project$Types$Ellipse(
+								{
+									center: A2(_user$project$Vec2_ops['+#'], _p0._0.center, delta),
+									size: _p0._0.size
+								});
+						case 'Polygon':
+							return _user$project$Types$Polygon(
+								{
+									points: A2(
+										_elm_lang$core$List$map,
+										F2(
+											function (x, y) {
+												return A2(_user$project$Vec2_ops['+#'], x, y);
+											})(delta),
+										_p0._0.points),
+									enclosed: _p0._0.enclosed
+								});
+						default:
+							return _p0;
+					}
+				}()
+			});
+	});
+var _user$project$Shape$getBBox = function (elem) {
+	var _p1 = elem.shape;
+	switch (_p1.ctor) {
+		case 'Rectangle':
+			var _p2 = _p1._0.leftTop;
+			return {
+				leftTop: _p2,
+				rightBottom: A2(_user$project$Vec2_ops['+#'], _p2, _p1._0.size)
+			};
+		case 'Ellipse':
+			var _p4 = _p1._0.size;
+			var _p3 = _p1._0.center;
+			return {
+				leftTop: A2(
+					_user$project$Vec2_ops['-#'],
+					_p3,
+					A2(
+						_user$project$Vec2_ops['/#'],
+						_p4,
+						{ctor: '_Tuple2', _0: 2, _1: 2})),
+				rightBottom: A2(
+					_user$project$Vec2_ops['+#'],
+					_p3,
+					A2(
+						_user$project$Vec2_ops['/#'],
+						_p4,
+						{ctor: '_Tuple2', _0: 2, _1: 2}))
+			};
+		case 'Polygon':
+			var _p5 = _p1._0.points;
+			var bottom = A2(
+				_elm_lang$core$Maybe$withDefault,
+				0,
+				_elm_lang$core$List$maximum(
+					A2(_elm_lang$core$List$map, _elm_lang$core$Tuple$second, _p5)));
+			var right = A2(
+				_elm_lang$core$Maybe$withDefault,
+				0,
+				_elm_lang$core$List$maximum(
+					A2(_elm_lang$core$List$map, _elm_lang$core$Tuple$first, _p5)));
+			var top = A2(
+				_elm_lang$core$Maybe$withDefault,
+				0,
+				_elm_lang$core$List$minimum(
+					A2(_elm_lang$core$List$map, _elm_lang$core$Tuple$second, _p5)));
+			var left = A2(
+				_elm_lang$core$Maybe$withDefault,
+				0,
+				_elm_lang$core$List$minimum(
+					A2(_elm_lang$core$List$map, _elm_lang$core$Tuple$first, _p5)));
+			return {
+				leftTop: {ctor: '_Tuple2', _0: left, _1: top},
+				rightBottom: {ctor: '_Tuple2', _0: right, _1: bottom}
+			};
+		default:
+			return {
+				leftTop: {ctor: '_Tuple2', _0: 0, _1: 0},
+				rightBottom: {ctor: '_Tuple2', _0: 0, _1: 0}
+			};
+	}
+};
 var _user$project$Shape$getCenter = function (elem) {
-	var _p0 = elem.shape;
-	switch (_p0.ctor) {
+	var _p6 = elem.shape;
+	switch (_p6.ctor) {
 		case 'Rectangle':
 			return A2(
 				_user$project$Vec2_ops['+#'],
-				_p0._0.leftTop,
+				_p6._0.leftTop,
 				A2(
 					_user$project$Vec2_ops['/#'],
-					_p0._0.size,
+					_p6._0.size,
 					{ctor: '_Tuple2', _0: 2, _1: 2}));
 		case 'Ellipse':
-			return _p0._0.center;
+			return _p6._0.center;
+		case 'Polygon':
+			var bbox = _user$project$Shape$getBBox(elem);
+			return A2(
+				_user$project$Vec2_ops['/#'],
+				A2(_user$project$Vec2_ops['+#'], bbox.leftTop, bbox.rightBottom),
+				{ctor: '_Tuple2', _0: 2, _1: 2});
 		default:
 			return {ctor: '_Tuple2', _0: 0, _1: 0};
 	}
 };
+var _user$project$Shape$setCenter = F2(
+	function (cent, elem) {
+		var oldCenter = _user$project$Shape$getCenter(elem);
+		var delta = A2(_user$project$Vec2_ops['-#'], cent, oldCenter);
+		return A2(_user$project$Shape$translate, delta, elem);
+	});
 var _user$project$Shape$getOffsettedCenter = F2(
 	function (offset, elem) {
 		return A2(
@@ -12305,36 +12416,10 @@ var _user$project$Shape$getOffsettedCenter = F2(
 			offset,
 			_user$project$Shape$getCenter(elem));
 	});
-var _user$project$Shape$translate = F2(
-	function (delta, elem) {
-		return _elm_lang$core$Native_Utils.update(
-			elem,
-			{
-				shape: function () {
-					var _p1 = elem.shape;
-					switch (_p1.ctor) {
-						case 'Rectangle':
-							return _user$project$Types$Rectangle(
-								{
-									leftTop: A2(_user$project$Vec2_ops['+#'], _p1._0.leftTop, delta),
-									size: _p1._0.size
-								});
-						case 'Ellipse':
-							return _user$project$Types$Ellipse(
-								{
-									center: A2(_user$project$Vec2_ops['+#'], _p1._0.center, delta),
-									size: _p1._0.size
-								});
-						default:
-							return _p1;
-					}
-				}()
-			});
-	});
-var _user$project$Shape$setCenter = F2(
-	function (cent, elem) {
-		var oldCenter = _user$project$Shape$getCenter(elem);
-		var delta = A2(_user$project$Vec2_ops['-#'], cent, oldCenter);
+var _user$project$Shape$setOffsettedCenter = F3(
+	function (offsettedCent, offset, elem) {
+		var oldOffsettedCenter = A2(_user$project$Shape$getOffsettedCenter, offset, elem);
+		var delta = A2(_user$project$Vec2_ops['-#'], offsettedCent, oldOffsettedCenter);
 		return A2(_user$project$Shape$translate, delta, elem);
 	});
 var _user$project$Shape$scale = F2(
@@ -12343,33 +12428,39 @@ var _user$project$Shape$scale = F2(
 			elem,
 			{
 				shape: function () {
-					var _p2 = elem.shape;
-					switch (_p2.ctor) {
+					var _p7 = elem.shape;
+					switch (_p7.ctor) {
 						case 'Rectangle':
 							return _user$project$Types$Rectangle(
 								{
-									leftTop: _p2._0.leftTop,
-									size: A2(_user$project$Vec2_ops['*#'], _p2._0.size, ratio)
+									leftTop: _p7._0.leftTop,
+									size: A2(_user$project$Vec2_ops['*#'], _p7._0.size, ratio)
 								});
 						case 'Ellipse':
 							return _user$project$Types$Ellipse(
 								{
-									center: _p2._0.center,
-									size: A2(_user$project$Vec2_ops['*#'], _p2._0.size, ratio)
+									center: _p7._0.center,
+									size: A2(_user$project$Vec2_ops['*#'], _p7._0.size, ratio)
+								});
+						case 'Polygon':
+							return _user$project$Types$Polygon(
+								{
+									points: A2(
+										_elm_lang$core$List$map,
+										F2(
+											function (x, y) {
+												return A2(_user$project$Vec2_ops['*#'], x, y);
+											})(ratio),
+										_p7._0.points),
+									enclosed: _p7._0.enclosed
 								});
 						default:
-							return _p2;
+							return _p7;
 					}
 				}()
 			});
 		var center = _user$project$Shape$getCenter(elem);
 		return A2(_user$project$Shape$setCenter, center, scaled);
-	});
-var _user$project$Shape$setOffsettedCenter = F3(
-	function (offsettedCent, offset, elem) {
-		var oldOffsettedCenter = A2(_user$project$Shape$getOffsettedCenter, offset, elem);
-		var delta = A2(_user$project$Vec2_ops['-#'], offsettedCent, oldOffsettedCenter);
-		return A2(_user$project$Shape$translate, delta, elem);
 	});
 var _user$project$Shape$scale2 = F3(
 	function (offset, ratio, elem) {
@@ -12381,41 +12472,6 @@ var _user$project$Shape$scale2 = F3(
 			A2(_user$project$Vec2_ops['*#'], offset, ratio),
 			elem);
 	});
-var _user$project$Shape$getBBox = function (elem) {
-	var _p3 = elem.shape;
-	switch (_p3.ctor) {
-		case 'Rectangle':
-			var _p4 = _p3._0.leftTop;
-			return {
-				leftTop: _p4,
-				rightBottom: A2(_user$project$Vec2_ops['+#'], _p4, _p3._0.size)
-			};
-		case 'Ellipse':
-			var _p6 = _p3._0.size;
-			var _p5 = _p3._0.center;
-			return {
-				leftTop: A2(
-					_user$project$Vec2_ops['-#'],
-					_p5,
-					A2(
-						_user$project$Vec2_ops['/#'],
-						_p6,
-						{ctor: '_Tuple2', _0: 2, _1: 2})),
-				rightBottom: A2(
-					_user$project$Vec2_ops['+#'],
-					_p5,
-					A2(
-						_user$project$Vec2_ops['/#'],
-						_p6,
-						{ctor: '_Tuple2', _0: 2, _1: 2}))
-			};
-		default:
-			return {
-				leftTop: {ctor: '_Tuple2', _0: 0, _1: 0},
-				rightBottom: {ctor: '_Tuple2', _0: 0, _1: 0}
-			};
-	}
-};
 
 var _user$project$ShapeList$translate = F2(
 	function (delta, elems) {
