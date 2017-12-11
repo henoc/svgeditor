@@ -57,6 +57,17 @@ generateNode elem =
       attrs = Dict.toList newAttr |> List.map (\(x,y) -> {name = x, value = y})
     in 
     XmlParser.Element (if enclosed then "polygon" else "polyline") attrs []
+  Path {operators} ->
+    let
+      opstr: PathOperator -> String
+      opstr op = op.kind ++ " " ++ (String.join "," (List.map (\(x,y) -> (toString x ++ " " ++ toString y)) op.points))
+      pathopstr = List.map opstr operators |> String.join " "
+      newAttr =
+        Dict.insert "d" pathopstr <<
+        Dict.insert "style" styleAttr <| elem.attr
+      attrs = Dict.toList newAttr |> List.map (\(x,y) -> {name = x, value = y})
+    in
+    XmlParser.Element "path" attrs []
 
 generateXml: StyledSVGElement -> String
 generateXml elem =

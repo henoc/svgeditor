@@ -9,11 +9,14 @@ type Mode = HandMode | RectMode | EllipseMode | PolygonMode
 type alias StyleInfo = Dict String String
 type alias AttributeInfo = Dict String String
 
+type alias PathOperator = { kind: String, points: List Vec2 }
+
 -- モデルが所有するSVGの形
 type SVGElement =
   Rectangle { leftTop: Vec2, size: Vec2 }
   | Ellipse { center: Vec2, size: Vec2 }
   | Polygon { points: List Vec2, enclosed: Bool}
+  | Path { operators: List PathOperator }
   | SVG {elems: List StyledSVGElement, size: Vec2}
   | Unknown { name: String, elems: List StyledSVGElement }
 type alias StyledSVGElement = {

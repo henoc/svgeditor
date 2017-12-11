@@ -11856,6 +11856,10 @@ _user$project$Vec2_ops['+#'] = F2(
 		return {ctor: '_Tuple2', _0: _p14._0 + _p15._0, _1: _p14._1 + _p15._1};
 	});
 
+var _user$project$Types$PathOperator = F2(
+	function (a, b) {
+		return {kind: a, points: b};
+	});
 var _user$project$Types$StyledSVGElement = F4(
 	function (a, b, c, d) {
 		return {style: a, attr: b, id: c, shape: d};
@@ -11877,6 +11881,9 @@ var _user$project$Types$Unknown = function (a) {
 };
 var _user$project$Types$SVG = function (a) {
 	return {ctor: 'SVG', _0: a};
+};
+var _user$project$Types$Path = function (a) {
+	return {ctor: 'Path', _0: a};
 };
 var _user$project$Types$Polygon = function (a) {
 	return {ctor: 'Polygon', _0: a};
@@ -12036,7 +12043,7 @@ var _user$project$Generator$generateNode = function (elem) {
 				'ellipse',
 				attrs,
 				{ctor: '[]'});
-		default:
+		case 'Polygon':
 			var newAttr = function (_p17) {
 				return A3(
 					_elm_lang$core$Dict$insert,
@@ -12069,6 +12076,54 @@ var _user$project$Generator$generateNode = function (elem) {
 			return A3(
 				_jinjor$elm_xml_parser$XmlParser$Element,
 				_p2._0.enclosed ? 'polygon' : 'polyline',
+				attrs,
+				{ctor: '[]'});
+		default:
+			var opstr = function (op) {
+				return A2(
+					_elm_lang$core$Basics_ops['++'],
+					op.kind,
+					A2(
+						_elm_lang$core$Basics_ops['++'],
+						' ',
+						A2(
+							_elm_lang$core$String$join,
+							',',
+							A2(
+								_elm_lang$core$List$map,
+								function (_p22) {
+									var _p23 = _p22;
+									return A2(
+										_elm_lang$core$Basics_ops['++'],
+										_elm_lang$core$Basics$toString(_p23._0),
+										A2(
+											_elm_lang$core$Basics_ops['++'],
+											' ',
+											_elm_lang$core$Basics$toString(_p23._1)));
+								},
+								op.points))));
+			};
+			var pathopstr = A2(
+				_elm_lang$core$String$join,
+				' ',
+				A2(_elm_lang$core$List$map, opstr, _p2._0.operators));
+			var newAttr = function (_p24) {
+				return A3(
+					_elm_lang$core$Dict$insert,
+					'd',
+					pathopstr,
+					A3(_elm_lang$core$Dict$insert, 'style', styleAttr, _p24));
+			}(elem.attr);
+			var attrs = A2(
+				_elm_lang$core$List$map,
+				function (_p25) {
+					var _p26 = _p25;
+					return {name: _p26._0, value: _p26._1};
+				},
+				_elm_lang$core$Dict$toList(newAttr));
+			return A3(
+				_jinjor$elm_xml_parser$XmlParser$Element,
+				'path',
 				attrs,
 				{ctor: '[]'});
 	}
@@ -13288,6 +13343,56 @@ var _user$project$ViewBuilder$build = function (svg) {
 					}
 				},
 				{ctor: '[]'});
+		case 'Path':
+			var opstr = function (op) {
+				return A2(
+					_elm_lang$core$Basics_ops['++'],
+					op.kind,
+					A2(
+						_elm_lang$core$Basics_ops['++'],
+						' ',
+						A2(
+							_elm_lang$core$String$join,
+							',',
+							A2(
+								_elm_lang$core$List$map,
+								function (_p17) {
+									var _p18 = _p17;
+									return A2(
+										_elm_lang$core$Basics_ops['++'],
+										_elm_lang$core$Basics$toString(_p18._0),
+										A2(
+											_elm_lang$core$Basics_ops['++'],
+											' ',
+											_elm_lang$core$Basics$toString(_p18._1)));
+								},
+								op.points))));
+			};
+			var pathopstr = A2(
+				_elm_lang$core$String$join,
+				' ',
+				A2(_elm_lang$core$List$map, opstr, _p3._0.operators));
+			return A2(
+				_elm_lang$svg$Svg$path,
+				{
+					ctor: '::',
+					_0: _elm_lang$svg$Svg_Attributes$d(pathopstr),
+					_1: {
+						ctor: '::',
+						_0: _elm_lang$svg$Svg_Attributes$style(
+							_user$project$ViewBuilder$buildStyle(svg.style)),
+						_1: {
+							ctor: '::',
+							_0: _user$project$Utils$onItemMouseDown(
+								function (_p19) {
+									var _p20 = _p19;
+									return A3(_user$project$Types$OnSelect, svg.id, _p20._0, _p20._1);
+								}),
+							_1: {ctor: '[]'}
+						}
+					}
+				},
+				{ctor: '[]'});
 		default:
 			return A2(
 				_elm_lang$svg$Svg$rect,
@@ -13334,6 +13439,17 @@ var _user$project$Parsers$floatParser = A2(
 	_user$project$Combinators$regexParser('[+-]?[0-9]+(\\.[0-9]*)?([eE][+-]?[0-9]+)?'));
 var _user$project$Parsers$pointPairParser = A2(_user$project$Combinators$andThen, _user$project$Parsers$floatParser, _user$project$Parsers$floatParser);
 var _user$project$Parsers$pointsParser = _user$project$Combinators$rep(_user$project$Parsers$pointPairParser);
+var _user$project$Parsers$pathOpParser = A2(
+	_user$project$Combinators$map,
+	function (_p1) {
+		var _p2 = _p1;
+		return {kind: _p2._0, points: _p2._1};
+	},
+	A2(
+		_user$project$Combinators$andThen,
+		_user$project$Combinators$regexParser('[a-zA-Z]'),
+		_user$project$Parsers$pointsParser));
+var _user$project$Parsers$pathOpsParser = _user$project$Combinators$rep(_user$project$Parsers$pathOpParser);
 var _user$project$Parsers$stylePairParser = A2(
 	_user$project$Combinators$andThen,
 	_user$project$Combinators$regexParser('[^\\s:]+'),
@@ -13344,28 +13460,28 @@ var _user$project$Parsers$styleParser = A2(
 	_user$project$Combinators$rep(_user$project$Parsers$stylePairParser));
 var _user$project$Parsers$getStyleAttr = F2(
 	function (name, attrs) {
-		var _p1 = A2(_user$project$Parsers$getAttr, 'style', attrs);
-		if (_p1.ctor === 'Nothing') {
+		var _p3 = A2(_user$project$Parsers$getAttr, 'style', attrs);
+		if (_p3.ctor === 'Nothing') {
 			return _elm_lang$core$Maybe$Nothing;
 		} else {
-			var _p2 = _user$project$Parsers$styleParser(
-				A2(_user$project$Combinators$input, _p1._0, '[\\s:;]+'));
-			if (_p2.ctor === 'ParseSuccess') {
-				return A2(_elm_lang$core$Dict$get, name, _p2._0);
+			var _p4 = _user$project$Parsers$styleParser(
+				A2(_user$project$Combinators$input, _p3._0, '[\\s:;]+'));
+			if (_p4.ctor === 'ParseSuccess') {
+				return A2(_elm_lang$core$Dict$get, name, _p4._0);
 			} else {
 				return _elm_lang$core$Maybe$Nothing;
 			}
 		}
 	});
 var _user$project$Parsers$getStyle = function (attrs) {
-	var _p3 = A2(_user$project$Parsers$getAttr, 'style', attrs);
-	if (_p3.ctor === 'Nothing') {
+	var _p5 = A2(_user$project$Parsers$getAttr, 'style', attrs);
+	if (_p5.ctor === 'Nothing') {
 		return _elm_lang$core$Dict$empty;
 	} else {
-		var _p4 = _user$project$Parsers$styleParser(
-			A2(_user$project$Combinators$input, _p3._0, '[\\s:;]+'));
-		if (_p4.ctor === 'ParseSuccess') {
-			return _p4._0;
+		var _p6 = _user$project$Parsers$styleParser(
+			A2(_user$project$Combinators$input, _p5._0, '[\\s:;]+'));
+		if (_p6.ctor === 'ParseSuccess') {
+			return _p6._0;
 		} else {
 			return _elm_lang$core$Dict$empty;
 		}
@@ -13373,42 +13489,42 @@ var _user$project$Parsers$getStyle = function (attrs) {
 };
 var _user$project$Parsers$convertNode = F2(
 	function (id, node) {
-		var _p5 = node;
-		if (_p5.ctor === 'Text') {
+		var _p7 = node;
+		if (_p7.ctor === 'Text') {
 			return _elm_lang$core$Maybe$Nothing;
 		} else {
-			var _p16 = _p5._2;
-			var _p15 = _p5._0;
-			var _p14 = _p5._1;
+			var _p19 = _p7._2;
+			var _p18 = _p7._0;
+			var _p17 = _p7._1;
 			var loop = F3(
 				function (id, subNodes, acc) {
 					loop:
 					while (true) {
-						var _p6 = subNodes;
-						if (_p6.ctor === '[]') {
+						var _p8 = subNodes;
+						if (_p8.ctor === '[]') {
 							return {
 								ctor: '_Tuple2',
 								_0: id,
 								_1: _elm_lang$core$List$reverse(acc)
 							};
 						} else {
-							var _p8 = _p6._1;
-							var _p7 = A2(_user$project$Parsers$convertNode, id, _p6._0);
-							if (_p7.ctor === 'Nothing') {
-								var _v8 = id,
-									_v9 = _p8,
-									_v10 = acc;
-								id = _v8;
-								subNodes = _v9;
-								acc = _v10;
+							var _p10 = _p8._1;
+							var _p9 = A2(_user$project$Parsers$convertNode, id, _p8._0);
+							if (_p9.ctor === 'Nothing') {
+								var _v9 = id,
+									_v10 = _p10,
+									_v11 = acc;
+								id = _v9;
+								subNodes = _v10;
+								acc = _v11;
 								continue loop;
 							} else {
-								var _v11 = _p7._0._0,
-									_v12 = _p8,
-									_v13 = {ctor: '::', _0: _p7._0._1, _1: acc};
-								id = _v11;
-								subNodes = _v12;
-								acc = _v13;
+								var _v12 = _p9._0._0,
+									_v13 = _p10,
+									_v14 = {ctor: '::', _0: _p9._0._1, _1: acc};
+								id = _v12;
+								subNodes = _v13;
+								acc = _v14;
 								continue loop;
 							}
 						}
@@ -13420,22 +13536,22 @@ var _user$project$Parsers$convertNode = F2(
 					function (a) {
 						return {ctor: '_Tuple2', _0: a.name, _1: a.value};
 					},
-					_p14));
-			var styleMap = _user$project$Parsers$getStyle(_p14);
+					_p17));
+			var styleMap = _user$project$Parsers$getStyle(_p17);
 			return _elm_lang$core$Maybe$Just(
 				function () {
-					var _p9 = _p15;
-					switch (_p9) {
+					var _p11 = _p18;
+					switch (_p11) {
 						case 'svg':
-							var h = A2(_user$project$Parsers$getFloatAttr, 'height', _p14);
-							var w = A2(_user$project$Parsers$getFloatAttr, 'width', _p14);
-							var _p10 = A3(
+							var h = A2(_user$project$Parsers$getFloatAttr, 'height', _p17);
+							var w = A2(_user$project$Parsers$getFloatAttr, 'width', _p17);
+							var _p12 = A3(
 								loop,
 								id,
-								_p16,
+								_p19,
 								{ctor: '[]'});
-							var nextId = _p10._0;
-							var subElems = _p10._1;
+							var nextId = _p12._0;
+							var subElems = _p12._1;
 							return {
 								ctor: '_Tuple2',
 								_0: nextId + 1,
@@ -13451,10 +13567,10 @@ var _user$project$Parsers$convertNode = F2(
 								}
 							};
 						case 'rect':
-							var h = A2(_user$project$Parsers$getFloatAttr, 'height', _p14);
-							var w = A2(_user$project$Parsers$getFloatAttr, 'width', _p14);
-							var y = A2(_user$project$Parsers$getFloatAttr, 'y', _p14);
-							var x = A2(_user$project$Parsers$getFloatAttr, 'x', _p14);
+							var h = A2(_user$project$Parsers$getFloatAttr, 'height', _p17);
+							var w = A2(_user$project$Parsers$getFloatAttr, 'width', _p17);
+							var y = A2(_user$project$Parsers$getFloatAttr, 'y', _p17);
+							var x = A2(_user$project$Parsers$getFloatAttr, 'x', _p17);
 							return {
 								ctor: '_Tuple2',
 								_0: id + 1,
@@ -13470,10 +13586,10 @@ var _user$project$Parsers$convertNode = F2(
 								}
 							};
 						case 'ellipse':
-							var cy = A2(_user$project$Parsers$getFloatAttr, 'cy', _p14);
-							var cx = A2(_user$project$Parsers$getFloatAttr, 'cx', _p14);
-							var ry = A2(_user$project$Parsers$getFloatAttr, 'ry', _p14);
-							var rx = A2(_user$project$Parsers$getFloatAttr, 'rx', _p14);
+							var cy = A2(_user$project$Parsers$getFloatAttr, 'cy', _p17);
+							var cx = A2(_user$project$Parsers$getFloatAttr, 'cx', _p17);
+							var ry = A2(_user$project$Parsers$getFloatAttr, 'ry', _p17);
+							var rx = A2(_user$project$Parsers$getFloatAttr, 'rx', _p17);
 							return {
 								ctor: '_Tuple2',
 								_0: id + 1,
@@ -13490,16 +13606,16 @@ var _user$project$Parsers$convertNode = F2(
 							};
 						case 'polygon':
 							var points = function () {
-								var _p11 = _user$project$Parsers$pointsParser(
+								var _p13 = _user$project$Parsers$pointsParser(
 									A2(
 										_user$project$Combinators$input,
 										A2(
 											_elm_lang$core$Maybe$withDefault,
 											'',
-											A2(_user$project$Parsers$getAttr, 'points', _p14)),
+											A2(_user$project$Parsers$getAttr, 'points', _p17)),
 										'[\\s,]+'));
-								if (_p11.ctor === 'ParseSuccess') {
-									return _p11._0;
+								if (_p13.ctor === 'ParseSuccess') {
+									return _p13._0;
 								} else {
 									return {ctor: '[]'};
 								}
@@ -13517,16 +13633,16 @@ var _user$project$Parsers$convertNode = F2(
 							};
 						case 'polyline':
 							var points = function () {
-								var _p12 = _user$project$Parsers$pointsParser(
+								var _p14 = _user$project$Parsers$pointsParser(
 									A2(
 										_user$project$Combinators$input,
 										A2(
 											_elm_lang$core$Maybe$withDefault,
 											'',
-											A2(_user$project$Parsers$getAttr, 'points', _p14)),
+											A2(_user$project$Parsers$getAttr, 'points', _p17)),
 										'[\\s,]+'));
-								if (_p12.ctor === 'ParseSuccess') {
-									return _p12._0;
+								if (_p14.ctor === 'ParseSuccess') {
+									return _p14._0;
 								} else {
 									return {ctor: '[]'};
 								}
@@ -13542,14 +13658,41 @@ var _user$project$Parsers$convertNode = F2(
 										{points: points, enclosed: false})
 								}
 							};
+						case 'path':
+							var pathOps = function () {
+								var _p15 = _user$project$Parsers$pathOpsParser(
+									A2(
+										_user$project$Combinators$input,
+										A2(
+											_elm_lang$core$Maybe$withDefault,
+											'',
+											A2(_user$project$Parsers$getAttr, 'd', _p17)),
+										'[\\s,]+'));
+								if (_p15.ctor === 'ParseSuccess') {
+									return _p15._0;
+								} else {
+									return {ctor: '[]'};
+								}
+							}();
+							return {
+								ctor: '_Tuple2',
+								_0: id + 1,
+								_1: {
+									style: styleMap,
+									id: id,
+									attr: attrMap,
+									shape: _user$project$Types$Path(
+										{operators: pathOps})
+								}
+							};
 						default:
-							var _p13 = A3(
+							var _p16 = A3(
 								loop,
 								id,
-								_p16,
+								_p19,
 								{ctor: '[]'});
-							var nextId = _p13._0;
-							var subElems = _p13._1;
+							var nextId = _p16._0;
+							var subElems = _p16._1;
 							return {
 								ctor: '_Tuple2',
 								_0: nextId + 1,
@@ -13558,7 +13701,7 @@ var _user$project$Parsers$convertNode = F2(
 									id: nextId,
 									attr: attrMap,
 									shape: _user$project$Types$Unknown(
-										{name: _p15, elems: subElems})
+										{name: _p18, elems: subElems})
 								}
 							};
 					}
@@ -13567,17 +13710,17 @@ var _user$project$Parsers$convertNode = F2(
 	});
 var _user$project$Parsers$parseSvg = function (text) {
 	var node = function () {
-		var _p17 = _jinjor$elm_xml_parser$XmlParser$parse(text);
-		if (_p17.ctor === 'Ok') {
+		var _p20 = _jinjor$elm_xml_parser$XmlParser$parse(text);
+		if (_p20.ctor === 'Ok') {
 			return A2(
 				_elm_lang$core$Maybe$map,
 				_elm_lang$core$Tuple$second,
-				A2(_user$project$Parsers$convertNode, 0, _p17._0.root));
+				A2(_user$project$Parsers$convertNode, 0, _p20._0.root));
 		} else {
 			return _elm_lang$core$Maybe$Nothing;
 		}
 	}();
-	var _p18 = A2(_elm_lang$core$Debug$log, 'nodes', node);
+	var _p21 = A2(_elm_lang$core$Debug$log, 'nodes', node);
 	return node;
 };
 

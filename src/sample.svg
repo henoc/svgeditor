@@ -4,5 +4,5 @@
   <ellipse rx="50" ry="30" cx="200" cy="200"></ellipse>
   <polyline points="0,40 40,40 40,80 80,80 80,120 120,120 120,160"
   style="fill:white;stroke:red;stroke-width:4" />
-  <path d="M10 80 C 40 10, 65 10, 95 80 S 150 150, 180 80" stroke="white" fill="none"/>
+  <path d="M10 80 C 40 10, 65 10, 95 80 S 150 150, 180 80" style="fill:none;stroke:white"/>
 </svg>

@@ -2,7 +2,7 @@ module ViewBuilder exposing (..)
 
 import Types exposing (..)
 import Html exposing (..)
-import Svg exposing (svg, ellipse, rect, circle, polygon, polyline)
+import Svg exposing (svg, ellipse, rect, circle, polygon, polyline, path)
 import Svg.Attributes exposing (..)
 import Vec2 exposing (..)
 import Utils
@@ -42,6 +42,17 @@ build svg = case svg.shape of
       points (String.join "," (List.map (\(x,y) -> (toString x ++ " " ++ toString y)) pgn.points)),
       style <| buildStyle svg.style,
       Utils.onItemMouseDown <| \(shift, pos) -> OnSelect svg.id shift pos
+    ] []
+  Path {operators} ->
+    let
+      opstr: PathOperator -> String
+      opstr op = op.kind ++ " " ++ (String.join "," (List.map (\(x,y) -> (toString x ++ " " ++ toString y)) op.points))
+      pathopstr = List.map opstr operators |> String.join " "
+    in
+    Svg.path [
+      d pathopstr,
+      style <| buildStyle svg.style,
+      Utils.onItemMouseDown <| \(shift, pos) -> OnSelect svg.id shift pos      
     ] []
   others -> rect [] []
 

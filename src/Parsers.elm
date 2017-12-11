@@ -22,6 +22,12 @@ pointPairParser = andThen floatParser floatParser
 pointsParser: Parser (List (Float, Float))
 pointsParser = rep pointPairParser
 
+pathOpParser: Parser PathOperator
+pathOpParser = andThen (regexParser "[a-zA-Z]") pointsParser |> Combinators.map (\(o, p) -> {kind = o, points = p})
+
+pathOpsParser: Parser (List PathOperator)
+pathOpsParser = rep pathOpParser
+
 getAttr: String -> List XmlParser.Attribute -> Maybe String
 getAttr name attrs =
   let
@@ -127,6 +133,18 @@ convertNode id node = case node of
           id = id,
           attr = attrMap,
           shape = Polygon {points = points, enclosed = False}
+        })
+      "path" ->
+        let
+          pathOps = case pathOpsParser <| input (Maybe.withDefault "" (getAttr "d" attrs)) "[\\s,]+" of
+            ParseSuccess r i -> r
+            ParseFailure _ _ -> []
+        in
+        (id+1, {
+          style = styleMap,
+          id = id,
+          attr = attrMap,
+          shape = Path {operators = pathOps}
         })
       others ->
         let
