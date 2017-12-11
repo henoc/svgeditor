@@ -93,7 +93,7 @@ export function activate(context: vscode.ExtensionContext) {
    */
   vscode.commands.registerCommand("extension.reflectToEditor", (text: string) => {
     provider.editor!.edit(editbuilder => {
-      editbuilder.replace(allRange(provider.editor!), htmlPretty.prettyPrint(text, {indent_size: 2}));
+      editbuilder.replace(allRange(provider.editor!), htmlPretty.prettyPrint(text, {indent_size: 2, max_char: 0}));
     });
   });
 }
