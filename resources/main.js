@@ -11864,9 +11864,9 @@ var _user$project$Types$StyledSVGElement = F4(
 	function (a, b, c, d) {
 		return {style: a, attr: b, id: c, shape: d};
 	});
-var _user$project$Types$Model = F8(
-	function (a, b, c, d, e, f, g, h) {
-		return {mode: a, dragBegin: b, svg: c, styleInfo: d, idGen: e, selected: f, fixedPoint: g, selectedRef: h};
+var _user$project$Types$Model = F9(
+	function (a, b, c, d, e, f, g, h, i) {
+		return {mode: a, dragBegin: b, svg: c, styleInfo: d, idGen: e, selected: f, nodeId: g, fixedPoint: h, selectedRef: i};
 	});
 var _user$project$Types$Box = F2(
 	function (a, b) {
@@ -11875,6 +11875,7 @@ var _user$project$Types$Box = F2(
 var _user$project$Types$PolygonMode = {ctor: 'PolygonMode'};
 var _user$project$Types$EllipseMode = {ctor: 'EllipseMode'};
 var _user$project$Types$RectMode = {ctor: 'RectMode'};
+var _user$project$Types$NodeMode = {ctor: 'NodeMode'};
 var _user$project$Types$HandMode = {ctor: 'HandMode'};
 var _user$project$Types$Unknown = function (a) {
 	return {ctor: 'Unknown', _0: a};
@@ -11897,6 +11898,10 @@ var _user$project$Types$Rectangle = function (a) {
 var _user$project$Types$SvgData = function (a) {
 	return {ctor: 'SvgData', _0: a};
 };
+var _user$project$Types$OnNode = F2(
+	function (a, b) {
+		return {ctor: 'OnNode', _0: a, _1: b};
+	});
 var _user$project$Types$OnVertex = F2(
 	function (a, b) {
 		return {ctor: 'OnVertex', _0: a, _1: b};
@@ -12139,14 +12144,68 @@ var _user$project$Generator$generateXml = function (elem) {
 	return data;
 };
 
+var _user$project$Utils$replaceNth = F3(
+	function (n, fn, lst) {
+		if (_elm_lang$core$Native_Utils.eq(n, 0)) {
+			var _p0 = lst;
+			if (_p0.ctor === '::') {
+				return {
+					ctor: '::',
+					_0: fn(_p0._0),
+					_1: _p0._1
+				};
+			} else {
+				return {ctor: '[]'};
+			}
+		} else {
+			var _p1 = lst;
+			if (_p1.ctor === '::') {
+				return {
+					ctor: '::',
+					_0: _p1._0,
+					_1: A3(_user$project$Utils$replaceNth, n - 1, fn, _p1._1)
+				};
+			} else {
+				return lst;
+			}
+		}
+	});
+var _user$project$Utils$replacePathNth = F3(
+	function (n, fn, ops) {
+		var _p2 = ops;
+		if (_p2.ctor === '[]') {
+			return {ctor: '[]'};
+		} else {
+			var _p4 = _p2._1;
+			var _p3 = _p2._0;
+			return (_elm_lang$core$Native_Utils.cmp(
+				_elm_lang$core$List$length(_p3.points),
+				n) > 0) ? {
+				ctor: '::',
+				_0: {
+					kind: _p3.kind,
+					points: A3(_user$project$Utils$replaceNth, n, fn, _p3.points)
+				},
+				_1: _p4
+			} : {
+				ctor: '::',
+				_0: _p3,
+				_1: A3(
+					_user$project$Utils$replacePathNth,
+					n - _elm_lang$core$List$length(_p3.points),
+					fn,
+					_p4)
+			};
+		}
+	});
 var _user$project$Utils$updateHead = F2(
 	function (fn, lst) {
-		var _p0 = lst;
-		if (_p0.ctor === '::') {
+		var _p5 = lst;
+		if (_p5.ctor === '::') {
 			return {
 				ctor: '::',
-				_0: fn(_p0._0),
-				_1: _p0._1
+				_0: fn(_p5._0),
+				_1: _p5._1
 			};
 		} else {
 			return {ctor: '[]'};
@@ -12154,14 +12213,14 @@ var _user$project$Utils$updateHead = F2(
 	});
 var _user$project$Utils$changeContains = F2(
 	function (elems, svgroot) {
-		var _p1 = svgroot.shape;
-		if (_p1.ctor === 'SVG') {
+		var _p6 = svgroot.shape;
+		if (_p6.ctor === 'SVG') {
 			return _elm_lang$core$Native_Utils.update(
 				svgroot,
 				{
 					shape: _user$project$Types$SVG(
 						_elm_lang$core$Native_Utils.update(
-							_p1._0,
+							_p6._0,
 							{elems: elems}))
 				});
 		} else {
@@ -12191,32 +12250,32 @@ var _user$project$Utils$replace = F3(
 	function (filter, replacer, lst) {
 		replace:
 		while (true) {
-			var _p2 = lst;
-			if (_p2.ctor === '::') {
-				var _p5 = _p2._1;
-				var _p4 = _p2._0;
-				if (filter(_p4)) {
-					var _p3 = replacer;
-					if (_p3.ctor === '::') {
+			var _p7 = lst;
+			if (_p7.ctor === '::') {
+				var _p10 = _p7._1;
+				var _p9 = _p7._0;
+				if (filter(_p9)) {
+					var _p8 = replacer;
+					if (_p8.ctor === '::') {
 						return {
 							ctor: '::',
-							_0: _p3._0,
-							_1: A3(_user$project$Utils$replace, filter, _p3._1, _p5)
+							_0: _p8._0,
+							_1: A3(_user$project$Utils$replace, filter, _p8._1, _p10)
 						};
 					} else {
-						var _v4 = filter,
-							_v5 = {ctor: '[]'},
-							_v6 = _p5;
-						filter = _v4;
-						replacer = _v5;
-						lst = _v6;
+						var _v7 = filter,
+							_v8 = {ctor: '[]'},
+							_v9 = _p10;
+						filter = _v7;
+						replacer = _v8;
+						lst = _v9;
 						continue replace;
 					}
 				} else {
 					return {
 						ctor: '::',
-						_0: _p4,
-						_1: A3(_user$project$Utils$replace, filter, replacer, _p5)
+						_0: _p9,
+						_1: A3(_user$project$Utils$replace, filter, replacer, _p10)
 					};
 				}
 			} else {
@@ -12255,9 +12314,9 @@ var _user$project$Utils$onItemMouseDown = function (tagger) {
 		A2(_elm_lang$core$Json_Decode$map, tagger, mouseEvent));
 };
 var _user$project$Utils$getElems = function (model) {
-	var _p6 = model.svg.shape;
-	if (_p6.ctor === 'SVG') {
-		return _p6._0.elems;
+	var _p11 = model.svg.shape;
+	if (_p11.ctor === 'SVG') {
+		return _p11._0.elems;
 	} else {
 		return {ctor: '[]'};
 	}
@@ -12267,14 +12326,14 @@ var _user$project$Utils$getById = F2(
 		var loop = function (lst) {
 			loop:
 			while (true) {
-				var _p7 = lst;
-				if (_p7.ctor === '::') {
-					var _p8 = _p7._0;
-					if (_elm_lang$core$Native_Utils.eq(_p8.id, ident)) {
-						return _elm_lang$core$Maybe$Just(_p8);
+				var _p12 = lst;
+				if (_p12.ctor === '::') {
+					var _p13 = _p12._0;
+					if (_elm_lang$core$Native_Utils.eq(_p13.id, ident)) {
+						return _elm_lang$core$Maybe$Just(_p13);
 					} else {
-						var _v9 = _p7._1;
-						lst = _v9;
+						var _v12 = _p12._1;
+						lst = _v12;
 						continue loop;
 					}
 				} else {
@@ -12285,20 +12344,31 @@ var _user$project$Utils$getById = F2(
 		return loop(
 			_user$project$Utils$getElems(model));
 	});
+var _user$project$Utils$flattenList = function (lst) {
+	var _p14 = lst;
+	if (_p14.ctor === '::') {
+		return A2(
+			_elm_lang$core$Basics_ops['++'],
+			_p14._0,
+			_user$project$Utils$flattenList(_p14._1));
+	} else {
+		return {ctor: '[]'};
+	}
+};
 var _user$project$Utils$flatten = function (lst) {
 	flatten:
 	while (true) {
-		var _p9 = lst;
-		if (_p9.ctor === '::') {
-			if (_p9._0.ctor === 'Just') {
+		var _p15 = lst;
+		if (_p15.ctor === '::') {
+			if (_p15._0.ctor === 'Just') {
 				return {
 					ctor: '::',
-					_0: _p9._0._0,
-					_1: _user$project$Utils$flatten(_p9._1)
+					_0: _p15._0._0,
+					_1: _user$project$Utils$flatten(_p15._1)
 				};
 			} else {
-				var _v11 = _p9._1;
-				lst = _v11;
+				var _v15 = _p15._1;
+				lst = _v15;
 				continue flatten;
 			}
 		} else {
@@ -12312,9 +12382,9 @@ var _user$project$Utils$init = function (lst) {
 };
 var _user$project$Utils$last = function (lst) {
 	var len = _elm_lang$core$List$length(lst);
-	var _p10 = A2(_elm_lang$core$List$drop, len - 1, lst);
-	if ((_p10.ctor === '::') && (_p10._1.ctor === '[]')) {
-		return _elm_lang$core$Maybe$Just(_p10._0);
+	var _p16 = A2(_elm_lang$core$List$drop, len - 1, lst);
+	if ((_p16.ctor === '::') && (_p16._1.ctor === '[]')) {
+		return _elm_lang$core$Maybe$Just(_p16._0);
 	} else {
 		return _elm_lang$core$Maybe$Nothing;
 	}
@@ -12332,29 +12402,73 @@ var _user$project$Utils$sendSvgData = _elm_lang$core$Native_Platform.outgoingPor
 	});
 var _user$project$Utils$reflectSvgData = function (model) {
 	var svgData = _user$project$Generator$generateXml(model.svg);
-	var _p11 = A2(_elm_lang$core$Debug$log, 'send', svgData);
+	var _p17 = A2(_elm_lang$core$Debug$log, 'send', svgData);
 	return _user$project$Utils$sendSvgData(svgData);
 };
 
+var _user$project$Shape$getPoints = function (elem) {
+	var _p0 = elem.shape;
+	switch (_p0.ctor) {
+		case 'Polygon':
+			return _p0._0.points;
+		case 'Path':
+			return _user$project$Utils$flattenList(
+				A2(
+					_elm_lang$core$List$map,
+					function (op) {
+						return op.points;
+					},
+					_p0._0.operators));
+		default:
+			return {ctor: '[]'};
+	}
+};
+var _user$project$Shape$replaceNode = F3(
+	function (n, fn, elem) {
+		var _p1 = elem.shape;
+		switch (_p1.ctor) {
+			case 'Polygon':
+				return _elm_lang$core$Native_Utils.update(
+					elem,
+					{
+						shape: _user$project$Types$Polygon(
+							{
+								points: A3(_user$project$Utils$replaceNth, n, fn, _p1._0.points),
+								enclosed: _p1._0.enclosed
+							})
+					});
+			case 'Path':
+				return _elm_lang$core$Native_Utils.update(
+					elem,
+					{
+						shape: _user$project$Types$Path(
+							{
+								operators: A3(_user$project$Utils$replacePathNth, n, fn, _p1._0.operators)
+							})
+					});
+			default:
+				return elem;
+		}
+	});
 var _user$project$Shape$translate = F2(
 	function (delta, elem) {
 		return _elm_lang$core$Native_Utils.update(
 			elem,
 			{
 				shape: function () {
-					var _p0 = elem.shape;
-					switch (_p0.ctor) {
+					var _p2 = elem.shape;
+					switch (_p2.ctor) {
 						case 'Rectangle':
 							return _user$project$Types$Rectangle(
 								{
-									leftTop: A2(_user$project$Vec2_ops['+#'], _p0._0.leftTop, delta),
-									size: _p0._0.size
+									leftTop: A2(_user$project$Vec2_ops['+#'], _p2._0.leftTop, delta),
+									size: _p2._0.size
 								});
 						case 'Ellipse':
 							return _user$project$Types$Ellipse(
 								{
-									center: A2(_user$project$Vec2_ops['+#'], _p0._0.center, delta),
-									size: _p0._0.size
+									center: A2(_user$project$Vec2_ops['+#'], _p2._0.center, delta),
+									size: _p2._0.size
 								});
 						case 'Polygon':
 							return _user$project$Types$Polygon(
@@ -12365,65 +12479,65 @@ var _user$project$Shape$translate = F2(
 											function (x, y) {
 												return A2(_user$project$Vec2_ops['+#'], x, y);
 											})(delta),
-										_p0._0.points),
-									enclosed: _p0._0.enclosed
+										_p2._0.points),
+									enclosed: _p2._0.enclosed
 								});
 						default:
-							return _p0;
+							return _p2;
 					}
 				}()
 			});
 	});
 var _user$project$Shape$getBBox = function (elem) {
-	var _p1 = elem.shape;
-	switch (_p1.ctor) {
+	var _p3 = elem.shape;
+	switch (_p3.ctor) {
 		case 'Rectangle':
-			var _p2 = _p1._0.leftTop;
+			var _p4 = _p3._0.leftTop;
 			return {
-				leftTop: _p2,
-				rightBottom: A2(_user$project$Vec2_ops['+#'], _p2, _p1._0.size)
+				leftTop: _p4,
+				rightBottom: A2(_user$project$Vec2_ops['+#'], _p4, _p3._0.size)
 			};
 		case 'Ellipse':
-			var _p4 = _p1._0.size;
-			var _p3 = _p1._0.center;
+			var _p6 = _p3._0.size;
+			var _p5 = _p3._0.center;
 			return {
 				leftTop: A2(
 					_user$project$Vec2_ops['-#'],
-					_p3,
+					_p5,
 					A2(
 						_user$project$Vec2_ops['/#'],
-						_p4,
+						_p6,
 						{ctor: '_Tuple2', _0: 2, _1: 2})),
 				rightBottom: A2(
 					_user$project$Vec2_ops['+#'],
-					_p3,
+					_p5,
 					A2(
 						_user$project$Vec2_ops['/#'],
-						_p4,
+						_p6,
 						{ctor: '_Tuple2', _0: 2, _1: 2}))
 			};
 		case 'Polygon':
-			var _p5 = _p1._0.points;
+			var _p7 = _p3._0.points;
 			var bottom = A2(
 				_elm_lang$core$Maybe$withDefault,
 				0,
 				_elm_lang$core$List$maximum(
-					A2(_elm_lang$core$List$map, _elm_lang$core$Tuple$second, _p5)));
+					A2(_elm_lang$core$List$map, _elm_lang$core$Tuple$second, _p7)));
 			var right = A2(
 				_elm_lang$core$Maybe$withDefault,
 				0,
 				_elm_lang$core$List$maximum(
-					A2(_elm_lang$core$List$map, _elm_lang$core$Tuple$first, _p5)));
+					A2(_elm_lang$core$List$map, _elm_lang$core$Tuple$first, _p7)));
 			var top = A2(
 				_elm_lang$core$Maybe$withDefault,
 				0,
 				_elm_lang$core$List$minimum(
-					A2(_elm_lang$core$List$map, _elm_lang$core$Tuple$second, _p5)));
+					A2(_elm_lang$core$List$map, _elm_lang$core$Tuple$second, _p7)));
 			var left = A2(
 				_elm_lang$core$Maybe$withDefault,
 				0,
 				_elm_lang$core$List$minimum(
-					A2(_elm_lang$core$List$map, _elm_lang$core$Tuple$first, _p5)));
+					A2(_elm_lang$core$List$map, _elm_lang$core$Tuple$first, _p7)));
 			return {
 				leftTop: {ctor: '_Tuple2', _0: left, _1: top},
 				rightBottom: {ctor: '_Tuple2', _0: right, _1: bottom}
@@ -12436,18 +12550,18 @@ var _user$project$Shape$getBBox = function (elem) {
 	}
 };
 var _user$project$Shape$getCenter = function (elem) {
-	var _p6 = elem.shape;
-	switch (_p6.ctor) {
+	var _p8 = elem.shape;
+	switch (_p8.ctor) {
 		case 'Rectangle':
 			return A2(
 				_user$project$Vec2_ops['+#'],
-				_p6._0.leftTop,
+				_p8._0.leftTop,
 				A2(
 					_user$project$Vec2_ops['/#'],
-					_p6._0.size,
+					_p8._0.size,
 					{ctor: '_Tuple2', _0: 2, _1: 2}));
 		case 'Ellipse':
-			return _p6._0.center;
+			return _p8._0.center;
 		case 'Polygon':
 			var bbox = _user$project$Shape$getBBox(elem);
 			return A2(
@@ -12483,19 +12597,19 @@ var _user$project$Shape$scale = F2(
 			elem,
 			{
 				shape: function () {
-					var _p7 = elem.shape;
-					switch (_p7.ctor) {
+					var _p9 = elem.shape;
+					switch (_p9.ctor) {
 						case 'Rectangle':
 							return _user$project$Types$Rectangle(
 								{
-									leftTop: _p7._0.leftTop,
-									size: A2(_user$project$Vec2_ops['*#'], _p7._0.size, ratio)
+									leftTop: _p9._0.leftTop,
+									size: A2(_user$project$Vec2_ops['*#'], _p9._0.size, ratio)
 								});
 						case 'Ellipse':
 							return _user$project$Types$Ellipse(
 								{
-									center: _p7._0.center,
-									size: A2(_user$project$Vec2_ops['*#'], _p7._0.size, ratio)
+									center: _p9._0.center,
+									size: A2(_user$project$Vec2_ops['*#'], _p9._0.size, ratio)
 								});
 						case 'Polygon':
 							return _user$project$Types$Polygon(
@@ -12506,11 +12620,11 @@ var _user$project$Shape$scale = F2(
 											function (x, y) {
 												return A2(_user$project$Vec2_ops['*#'], x, y);
 											})(ratio),
-										_p7._0.points),
-									enclosed: _p7._0.enclosed
+										_p9._0.points),
+									enclosed: _p9._0.enclosed
 								});
 						default:
-							return _p7;
+							return _p9;
 					}
 				}()
 			});
@@ -13087,6 +13201,159 @@ var _user$project$ShapeMode$update = F2(
 		}
 	});
 
+var _user$project$NodeMode$update = F2(
+	function (msg, model) {
+		var _p0 = msg;
+		switch (_p0.ctor) {
+			case 'MouseMove':
+				var _p1 = model.nodeId;
+				if (_p1.ctor === 'Nothing') {
+					return model;
+				} else {
+					var _p2 = model.dragBegin;
+					if (_p2.ctor === 'Nothing') {
+						return model;
+					} else {
+						var _p3 = model.selectedRef;
+						if (_p3.ctor === '[]') {
+							return model;
+						} else {
+							var pos = _user$project$Vec2$toVec2(_p0._0);
+							var nodeMoved = A3(
+								_user$project$Shape$replaceNode,
+								_p1._0,
+								function (pre) {
+									return A2(
+										_user$project$Vec2_ops['+#'],
+										A2(_user$project$Vec2_ops['-#'], pos, _p2._0),
+										pre);
+								},
+								_p3._0);
+							var newElems = A3(
+								_user$project$Utils$replace,
+								function (elem) {
+									return A2(_elm_lang$core$Set$member, elem.id, model.selected);
+								},
+								{
+									ctor: '::',
+									_0: nodeMoved,
+									_1: {ctor: '[]'}
+								},
+								_user$project$Utils$getElems(model));
+							return _elm_lang$core$Native_Utils.update(
+								model,
+								{
+									svg: A2(_user$project$Utils$changeContains, newElems, model.svg)
+								});
+						}
+					}
+				}
+			case 'MouseUp':
+				var selectedRef = A2(
+					_elm_lang$core$List$filter,
+					function (e) {
+						return A2(_elm_lang$core$Set$member, e.id, model.selected);
+					},
+					_user$project$Utils$getElems(model));
+				return _elm_lang$core$Native_Utils.update(
+					model,
+					{dragBegin: _elm_lang$core$Maybe$Nothing, fixedPoint: _elm_lang$core$Maybe$Nothing, selectedRef: selectedRef});
+			default:
+				return model;
+		}
+	});
+var _user$project$NodeMode$nodeSelect = F3(
+	function (nodeId, mpos, model) {
+		return _elm_lang$core$Native_Utils.update(
+			model,
+			{
+				dragBegin: _elm_lang$core$Maybe$Just(mpos),
+				nodeId: _elm_lang$core$Maybe$Just(nodeId)
+			});
+	});
+var _user$project$NodeMode$noSelect = function (model) {
+	return _elm_lang$core$Native_Utils.update(
+		model,
+		{selected: _elm_lang$core$Set$empty});
+};
+var _user$project$NodeMode$select = F3(
+	function (ident, pos, model) {
+		var selected = _elm_lang$core$Set$singleton(ident);
+		var selectedRef = A2(
+			_elm_lang$core$List$filter,
+			function (e) {
+				return A2(_elm_lang$core$Set$member, e.id, selected);
+			},
+			_user$project$Utils$getElems(model));
+		return _elm_lang$core$Native_Utils.update(
+			model,
+			{selected: selected, selectedRef: selectedRef});
+	});
+
+var _user$project$ViewBuilder$buildNodes = function (model) {
+	var svglst = _user$project$Utils$flatten(
+		A2(
+			_elm_lang$core$List$map,
+			function (k) {
+				return A2(_user$project$Utils$getById, k, model);
+			},
+			_elm_lang$core$Set$toList(model.selected)));
+	var positions = function () {
+		var _p0 = _elm_lang$core$List$head(svglst);
+		if (_p0.ctor === 'Just') {
+			return _user$project$Shape$getPoints(_p0._0);
+		} else {
+			return {ctor: '[]'};
+		}
+	}();
+	var nodeIds = A2(
+		_elm_lang$core$List$range,
+		0,
+		_elm_lang$core$List$length(positions) - 1);
+	return A3(
+		_elm_lang$core$List$map2,
+		F2(
+			function (pos, nodeId) {
+				return A2(
+					_elm_lang$svg$Svg$circle,
+					{
+						ctor: '::',
+						_0: _elm_lang$svg$Svg_Attributes$cx(
+							_elm_lang$core$Basics$toString(
+								_elm_lang$core$Tuple$first(pos))),
+						_1: {
+							ctor: '::',
+							_0: _elm_lang$svg$Svg_Attributes$cy(
+								_elm_lang$core$Basics$toString(
+									_elm_lang$core$Tuple$second(pos))),
+							_1: {
+								ctor: '::',
+								_0: _elm_lang$svg$Svg_Attributes$r('5'),
+								_1: {
+									ctor: '::',
+									_0: _elm_lang$svg$Svg_Attributes$fill('#AA5533'),
+									_1: {
+										ctor: '::',
+										_0: _elm_lang$svg$Svg_Attributes$stroke('#553311'),
+										_1: {
+											ctor: '::',
+											_0: _user$project$Utils$onItemMouseDown(
+												function (_p1) {
+													var _p2 = _p1;
+													return A2(_user$project$Types$OnNode, _p2._1, nodeId);
+												}),
+											_1: {ctor: '[]'}
+										}
+									}
+								}
+							}
+						}
+					},
+					{ctor: '[]'});
+			}),
+		positions,
+		nodeIds);
+};
 var _user$project$ViewBuilder$buildVertexes = function (model) {
 	var svglst = _user$project$Utils$flatten(
 		A2(
@@ -13163,9 +13430,9 @@ var _user$project$ViewBuilder$buildVertexes = function (model) {
 										_1: {
 											ctor: '::',
 											_0: _user$project$Utils$onItemMouseDown(
-												function (_p0) {
-													var _p1 = _p0;
-													return A2(_user$project$Types$OnVertex, anti, _p1._1);
+												function (_p3) {
+													var _p4 = _p3;
+													return A2(_user$project$Types$OnVertex, anti, _p4._1);
 												}),
 											_1: {ctor: '[]'}
 										}
@@ -13182,12 +13449,12 @@ var _user$project$ViewBuilder$buildVertexes = function (model) {
 var _user$project$ViewBuilder$buildStyle = function (style) {
 	var pat = F2(
 		function (name, maybeVal) {
-			var _p2 = maybeVal;
-			if (_p2.ctor === 'Just') {
+			var _p5 = maybeVal;
+			if (_p5.ctor === 'Just') {
 				return A2(
 					_elm_lang$core$Basics_ops['++'],
 					name,
-					A2(_elm_lang$core$Basics_ops['++'], ':', _p2._0));
+					A2(_elm_lang$core$Basics_ops['++'], ':', _p5._0));
 			} else {
 				return '';
 			}
@@ -13207,17 +13474,17 @@ var _user$project$ViewBuilder$buildStyle = function (style) {
 				A2(_elm_lang$core$Dict$get, 'stroke', style))));
 };
 var _user$project$ViewBuilder$build = function (svg) {
-	var _p3 = svg.shape;
-	switch (_p3.ctor) {
+	var _p6 = svg.shape;
+	switch (_p6.ctor) {
 		case 'Rectangle':
-			var _p7 = _p3._0.size;
-			var _p6 = _p3._0.leftTop;
+			var _p10 = _p6._0.size;
+			var _p9 = _p6._0.leftTop;
 			var left = A2(
 				_user$project$Vec2_ops['-#'],
-				_p6,
+				_p9,
 				A2(
 					_user$project$Vec2_ops['/#'],
-					_p7,
+					_p10,
 					{ctor: '_Tuple2', _0: 2, _1: 2}));
 			return A2(
 				_elm_lang$svg$Svg$rect,
@@ -13225,22 +13492,22 @@ var _user$project$ViewBuilder$build = function (svg) {
 					ctor: '::',
 					_0: _elm_lang$svg$Svg_Attributes$x(
 						_elm_lang$core$Basics$toString(
-							_elm_lang$core$Tuple$first(_p6))),
+							_elm_lang$core$Tuple$first(_p9))),
 					_1: {
 						ctor: '::',
 						_0: _elm_lang$svg$Svg_Attributes$y(
 							_elm_lang$core$Basics$toString(
-								_elm_lang$core$Tuple$second(_p6))),
+								_elm_lang$core$Tuple$second(_p9))),
 						_1: {
 							ctor: '::',
 							_0: _elm_lang$svg$Svg_Attributes$width(
 								_elm_lang$core$Basics$toString(
-									_elm_lang$core$Tuple$first(_p7))),
+									_elm_lang$core$Tuple$first(_p10))),
 							_1: {
 								ctor: '::',
 								_0: _elm_lang$svg$Svg_Attributes$height(
 									_elm_lang$core$Basics$toString(
-										_elm_lang$core$Tuple$second(_p7))),
+										_elm_lang$core$Tuple$second(_p10))),
 								_1: {
 									ctor: '::',
 									_0: _elm_lang$svg$Svg_Attributes$style(
@@ -13248,9 +13515,9 @@ var _user$project$ViewBuilder$build = function (svg) {
 									_1: {
 										ctor: '::',
 										_0: _user$project$Utils$onItemMouseDown(
-											function (_p4) {
-												var _p5 = _p4;
-												return A3(_user$project$Types$OnSelect, svg.id, _p5._0, _p5._1);
+											function (_p7) {
+												var _p8 = _p7;
+												return A3(_user$project$Types$OnSelect, svg.id, _p8._0, _p8._1);
 											}),
 										_1: {ctor: '[]'}
 									}
@@ -13261,12 +13528,12 @@ var _user$project$ViewBuilder$build = function (svg) {
 				},
 				{ctor: '[]'});
 		case 'Ellipse':
-			var _p11 = _p3._0.size;
-			var _p10 = _p3._0.center;
-			var centx = _elm_lang$core$Tuple$first(_p10);
-			var centy = _elm_lang$core$Tuple$second(_p10);
-			var sizex = _elm_lang$core$Tuple$first(_p11);
-			var sizey = _elm_lang$core$Tuple$second(_p11);
+			var _p14 = _p6._0.size;
+			var _p13 = _p6._0.center;
+			var centx = _elm_lang$core$Tuple$first(_p13);
+			var centy = _elm_lang$core$Tuple$second(_p13);
+			var sizex = _elm_lang$core$Tuple$first(_p14);
+			var sizey = _elm_lang$core$Tuple$second(_p14);
 			return A2(
 				_elm_lang$svg$Svg$ellipse,
 				{
@@ -13292,9 +13559,9 @@ var _user$project$ViewBuilder$build = function (svg) {
 									_1: {
 										ctor: '::',
 										_0: _user$project$Utils$onItemMouseDown(
-											function (_p8) {
-												var _p9 = _p8;
-												return A3(_user$project$Types$OnSelect, svg.id, _p9._0, _p9._1);
+											function (_p11) {
+												var _p12 = _p11;
+												return A3(_user$project$Types$OnSelect, svg.id, _p12._0, _p12._1);
 											}),
 										_1: {ctor: '[]'}
 									}
@@ -13305,9 +13572,9 @@ var _user$project$ViewBuilder$build = function (svg) {
 				},
 				{ctor: '[]'});
 		case 'Polygon':
-			var _p16 = _p3._0;
+			var _p19 = _p6._0;
 			return A2(
-				_p16.enclosed ? _elm_lang$svg$Svg$polygon : _elm_lang$svg$Svg$polyline,
+				_p19.enclosed ? _elm_lang$svg$Svg$polygon : _elm_lang$svg$Svg$polyline,
 				{
 					ctor: '::',
 					_0: _elm_lang$svg$Svg_Attributes$points(
@@ -13316,17 +13583,17 @@ var _user$project$ViewBuilder$build = function (svg) {
 							',',
 							A2(
 								_elm_lang$core$List$map,
-								function (_p12) {
-									var _p13 = _p12;
+								function (_p15) {
+									var _p16 = _p15;
 									return A2(
 										_elm_lang$core$Basics_ops['++'],
-										_elm_lang$core$Basics$toString(_p13._0),
+										_elm_lang$core$Basics$toString(_p16._0),
 										A2(
 											_elm_lang$core$Basics_ops['++'],
 											' ',
-											_elm_lang$core$Basics$toString(_p13._1)));
+											_elm_lang$core$Basics$toString(_p16._1)));
 								},
-								_p16.points))),
+								_p19.points))),
 					_1: {
 						ctor: '::',
 						_0: _elm_lang$svg$Svg_Attributes$style(
@@ -13334,9 +13601,9 @@ var _user$project$ViewBuilder$build = function (svg) {
 						_1: {
 							ctor: '::',
 							_0: _user$project$Utils$onItemMouseDown(
-								function (_p14) {
-									var _p15 = _p14;
-									return A3(_user$project$Types$OnSelect, svg.id, _p15._0, _p15._1);
+								function (_p17) {
+									var _p18 = _p17;
+									return A3(_user$project$Types$OnSelect, svg.id, _p18._0, _p18._1);
 								}),
 							_1: {ctor: '[]'}
 						}
@@ -13356,22 +13623,22 @@ var _user$project$ViewBuilder$build = function (svg) {
 							',',
 							A2(
 								_elm_lang$core$List$map,
-								function (_p17) {
-									var _p18 = _p17;
+								function (_p20) {
+									var _p21 = _p20;
 									return A2(
 										_elm_lang$core$Basics_ops['++'],
-										_elm_lang$core$Basics$toString(_p18._0),
+										_elm_lang$core$Basics$toString(_p21._0),
 										A2(
 											_elm_lang$core$Basics_ops['++'],
 											' ',
-											_elm_lang$core$Basics$toString(_p18._1)));
+											_elm_lang$core$Basics$toString(_p21._1)));
 								},
 								op.points))));
 			};
 			var pathopstr = A2(
 				_elm_lang$core$String$join,
 				' ',
-				A2(_elm_lang$core$List$map, opstr, _p3._0.operators));
+				A2(_elm_lang$core$List$map, opstr, _p6._0.operators));
 			return A2(
 				_elm_lang$svg$Svg$path,
 				{
@@ -13384,9 +13651,9 @@ var _user$project$ViewBuilder$build = function (svg) {
 						_1: {
 							ctor: '::',
 							_0: _user$project$Utils$onItemMouseDown(
-								function (_p19) {
-									var _p20 = _p19;
-									return A3(_user$project$Types$OnSelect, svg.id, _p20._0, _p20._1);
+								function (_p22) {
+									var _p23 = _p22;
+									return A3(_user$project$Types$OnSelect, svg.id, _p23._0, _p23._1);
 								}),
 							_1: {ctor: '[]'}
 						}
@@ -13790,12 +14057,12 @@ var _user$project$Main$view = function (model) {
 								ctor: '::',
 								_0: _elm_lang$html$Html_Events$onClick(
 									_user$project$Types$OnProperty(
-										_user$project$Types$SwichMode(_user$project$Types$RectMode))),
+										_user$project$Types$SwichMode(_user$project$Types$NodeMode))),
 								_1: {ctor: '[]'}
 							},
 							{
 								ctor: '::',
-								_0: _elm_lang$html$Html$text('rectangle mode'),
+								_0: _elm_lang$html$Html$text('node mode'),
 								_1: {ctor: '[]'}
 							}),
 						_1: {
@@ -13806,12 +14073,12 @@ var _user$project$Main$view = function (model) {
 									ctor: '::',
 									_0: _elm_lang$html$Html_Events$onClick(
 										_user$project$Types$OnProperty(
-											_user$project$Types$SwichMode(_user$project$Types$EllipseMode))),
+											_user$project$Types$SwichMode(_user$project$Types$RectMode))),
 									_1: {ctor: '[]'}
 								},
 								{
 									ctor: '::',
-									_0: _elm_lang$html$Html$text('ellispe mode'),
+									_0: _elm_lang$html$Html$text('rectangle mode'),
 									_1: {ctor: '[]'}
 								}),
 							_1: {
@@ -13822,15 +14089,32 @@ var _user$project$Main$view = function (model) {
 										ctor: '::',
 										_0: _elm_lang$html$Html_Events$onClick(
 											_user$project$Types$OnProperty(
-												_user$project$Types$SwichMode(_user$project$Types$PolygonMode))),
+												_user$project$Types$SwichMode(_user$project$Types$EllipseMode))),
 										_1: {ctor: '[]'}
 									},
 									{
 										ctor: '::',
-										_0: _elm_lang$html$Html$text('polygon mode'),
+										_0: _elm_lang$html$Html$text('ellispe mode'),
 										_1: {ctor: '[]'}
 									}),
-								_1: {ctor: '[]'}
+								_1: {
+									ctor: '::',
+									_0: A2(
+										_elm_lang$html$Html$button,
+										{
+											ctor: '::',
+											_0: _elm_lang$html$Html_Events$onClick(
+												_user$project$Types$OnProperty(
+													_user$project$Types$SwichMode(_user$project$Types$PolygonMode))),
+											_1: {ctor: '[]'}
+										},
+										{
+											ctor: '::',
+											_0: _elm_lang$html$Html$text('polygon mode'),
+											_1: {ctor: '[]'}
+										}),
+									_1: {ctor: '[]'}
+								}
 							}
 						}
 					}
@@ -13860,7 +14144,17 @@ var _user$project$Main$view = function (model) {
 							_elm_lang$core$List$map,
 							_user$project$ViewBuilder$build,
 							_user$project$Utils$getElems(model)),
-						_user$project$ViewBuilder$buildVertexes(model))),
+						function () {
+							var _p3 = model.mode;
+							switch (_p3.ctor) {
+								case 'NodeMode':
+									return _user$project$ViewBuilder$buildNodes(model);
+								case 'HandMode':
+									return _user$project$ViewBuilder$buildVertexes(model);
+								default:
+									return {ctor: '[]'};
+							}
+						}())),
 				_1: {
 					ctor: '::',
 					_0: A2(
@@ -13907,18 +14201,25 @@ var _user$project$Main$view = function (model) {
 };
 var _user$project$Main$update = F2(
 	function (msg, model) {
-		var _p3 = msg;
-		switch (_p3.ctor) {
+		var _p4 = msg;
+		switch (_p4.ctor) {
 			case 'OnProperty':
-				var _p4 = _p3._0;
-				if (_p4.ctor === 'SwichMode') {
-					switch (_p4._0.ctor) {
+				var _p5 = _p4._0;
+				if (_p5.ctor === 'SwichMode') {
+					switch (_p5._0.ctor) {
 						case 'HandMode':
 							return A2(
 								_elm_lang$core$Platform_Cmd_ops['!'],
 								_elm_lang$core$Native_Utils.update(
 									model,
 									{mode: _user$project$Types$HandMode}),
+								{ctor: '[]'});
+						case 'NodeMode':
+							return A2(
+								_elm_lang$core$Platform_Cmd_ops['!'],
+								_elm_lang$core$Native_Utils.update(
+									model,
+									{mode: _user$project$Types$NodeMode}),
 								{ctor: '[]'});
 						case 'RectMode':
 							return A2(
@@ -13947,15 +14248,28 @@ var _user$project$Main$update = F2(
 						_elm_lang$core$Platform_Cmd_ops['!'],
 						_elm_lang$core$Native_Utils.update(
 							model,
-							{styleInfo: _p4._0}),
+							{styleInfo: _p5._0}),
 						{ctor: '[]'});
 				}
 			case 'OnMouse':
-				var _p6 = _p3._0;
-				var _p5 = model.mode;
-				switch (_p5.ctor) {
+				var _p7 = _p4._0;
+				var _p6 = model.mode;
+				switch (_p6.ctor) {
 					case 'HandMode':
-						var newModel = A2(_user$project$HandMode$update, _p6, model);
+						var newModel = A2(_user$project$HandMode$update, _p7, model);
+						return (!_elm_lang$core$Native_Utils.eq(model, newModel)) ? A2(
+							_elm_lang$core$Platform_Cmd_ops['!'],
+							newModel,
+							{
+								ctor: '::',
+								_0: _user$project$Utils$reflectSvgData(newModel),
+								_1: {ctor: '[]'}
+							}) : A2(
+							_elm_lang$core$Platform_Cmd_ops['!'],
+							model,
+							{ctor: '[]'});
+					case 'NodeMode':
+						var newModel = A2(_user$project$NodeMode$update, _p7, model);
 						return (!_elm_lang$core$Native_Utils.eq(model, newModel)) ? A2(
 							_elm_lang$core$Platform_Cmd_ops['!'],
 							newModel,
@@ -13968,7 +14282,7 @@ var _user$project$Main$update = F2(
 							model,
 							{ctor: '[]'});
 					case 'PolygonMode':
-						var newModel = A2(_user$project$ShapeMode$updatePolygon, _p6, model);
+						var newModel = A2(_user$project$ShapeMode$updatePolygon, _p7, model);
 						return (!_elm_lang$core$Native_Utils.eq(model, newModel)) ? A2(
 							_elm_lang$core$Platform_Cmd_ops['!'],
 							newModel,
@@ -13981,7 +14295,7 @@ var _user$project$Main$update = F2(
 							model,
 							{ctor: '[]'});
 					default:
-						var newModel = A2(_user$project$ShapeMode$update, _p6, model);
+						var newModel = A2(_user$project$ShapeMode$update, _p7, model);
 						return (!_elm_lang$core$Native_Utils.eq(model, newModel)) ? A2(
 							_elm_lang$core$Platform_Cmd_ops['!'],
 							newModel,
@@ -13995,24 +14309,51 @@ var _user$project$Main$update = F2(
 							{ctor: '[]'});
 				}
 			case 'OnSelect':
-				var _p7 = model.mode;
-				if (_p7.ctor === 'HandMode') {
-					return A2(
-						_elm_lang$core$Platform_Cmd_ops['!'],
-						A4(_user$project$HandMode$select, _p3._0, _p3._1, _p3._2, model),
-						{ctor: '[]'});
-				} else {
-					return A2(
-						_elm_lang$core$Platform_Cmd_ops['!'],
-						model,
-						{ctor: '[]'});
+				var _p10 = _p4._2;
+				var _p9 = _p4._0;
+				var _p8 = model.mode;
+				switch (_p8.ctor) {
+					case 'HandMode':
+						return A2(
+							_elm_lang$core$Platform_Cmd_ops['!'],
+							A4(_user$project$HandMode$select, _p9, _p4._1, _p10, model),
+							{ctor: '[]'});
+					case 'NodeMode':
+						return A2(
+							_elm_lang$core$Platform_Cmd_ops['!'],
+							A3(_user$project$NodeMode$select, _p9, _p10, model),
+							{ctor: '[]'});
+					default:
+						return A2(
+							_elm_lang$core$Platform_Cmd_ops['!'],
+							model,
+							{ctor: '[]'});
 				}
 			case 'NoSelect':
-				var _p8 = model.mode;
-				if (_p8.ctor === 'HandMode') {
+				var _p11 = model.mode;
+				switch (_p11.ctor) {
+					case 'HandMode':
+						return A2(
+							_elm_lang$core$Platform_Cmd_ops['!'],
+							_user$project$HandMode$noSelect(model),
+							{ctor: '[]'});
+					case 'NodeMode':
+						return A2(
+							_elm_lang$core$Platform_Cmd_ops['!'],
+							_user$project$NodeMode$noSelect(model),
+							{ctor: '[]'});
+					default:
+						return A2(
+							_elm_lang$core$Platform_Cmd_ops['!'],
+							model,
+							{ctor: '[]'});
+				}
+			case 'OnVertex':
+				var _p12 = model.mode;
+				if (_p12.ctor === 'HandMode') {
 					return A2(
 						_elm_lang$core$Platform_Cmd_ops['!'],
-						_user$project$HandMode$noSelect(model),
+						A3(_user$project$HandMode$scale, _p4._0, _p4._1, model),
 						{ctor: '[]'});
 				} else {
 					return A2(
@@ -14020,12 +14361,12 @@ var _user$project$Main$update = F2(
 						model,
 						{ctor: '[]'});
 				}
-			case 'OnVertex':
-				var _p9 = model.mode;
-				if (_p9.ctor === 'HandMode') {
+			case 'OnNode':
+				var _p13 = model.mode;
+				if (_p13.ctor === 'NodeMode') {
 					return A2(
 						_elm_lang$core$Platform_Cmd_ops['!'],
-						A3(_user$project$HandMode$scale, _p3._0, _p3._1, model),
+						A3(_user$project$NodeMode$nodeSelect, _p4._1, _p4._0, model),
 						{ctor: '[]'});
 				} else {
 					return A2(
@@ -14034,13 +14375,13 @@ var _user$project$Main$update = F2(
 						{ctor: '[]'});
 				}
 			default:
-				var _p10 = _user$project$Parsers$parseSvg(_p3._0);
-				if (_p10.ctor === 'Just') {
+				var _p14 = _user$project$Parsers$parseSvg(_p4._0);
+				if (_p14.ctor === 'Just') {
 					return A2(
 						_elm_lang$core$Platform_Cmd_ops['!'],
 						_elm_lang$core$Native_Utils.update(
 							model,
-							{svg: _p10._0}),
+							{svg: _p14._0}),
 						{ctor: '[]'});
 				} else {
 					return A2(
@@ -14078,6 +14419,7 @@ var _user$project$Main$init = A2(
 		idGen: 0,
 		selected: _elm_lang$core$Set$empty,
 		fixedPoint: _elm_lang$core$Maybe$Nothing,
+		nodeId: _elm_lang$core$Maybe$Nothing,
 		selectedRef: {ctor: '[]'}
 	},
 	{

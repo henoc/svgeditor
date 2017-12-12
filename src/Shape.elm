@@ -3,6 +3,7 @@ module Shape exposing (..)
 import Types exposing (..)
 import Vec2 exposing (..)
 import Tuple exposing (first, second)
+import Utils
 
 getBBox : StyledSVGElement -> Box
 getBBox elem = case elem.shape of
@@ -82,3 +83,18 @@ scale2 offset ratio elem =
   in
   setOffsettedCenter fixedPoint (offset *# ratio) elem
 
+-- n番目のノードの座標をfnにする
+replaceNode: Int -> (Vec2 -> Vec2) -> StyledSVGElement -> StyledSVGElement
+replaceNode n fn elem = case elem.shape of
+  Polygon {points, enclosed} ->
+    {elem|shape = Polygon {points = Utils.replaceNth n fn points, enclosed = enclosed}}
+  Path {operators} ->
+    {elem|shape = Path {operators = Utils.replacePathNth n fn operators}}
+  others -> elem
+
+-- ノードのリストを返す
+getPoints: StyledSVGElement -> List Vec2
+getPoints elem = case elem.shape of
+  Polygon {points, enclosed} -> points
+  Path {operators} -> List.map (\op -> op.points) operators |> Utils.flattenList
+  others -> []

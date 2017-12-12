@@ -12,6 +12,7 @@ import Mouse
 import Utils
 import ShapeMode
 import HandMode
+import NodeMode
 import ViewBuilder
 import Parsers
 import Dict exposing (Dict)
@@ -34,6 +35,7 @@ init =
       idGen = 0,
       selected = Set.empty,
       fixedPoint = Nothing,
+      nodeId = Nothing,
       selectedRef = []
     } ! [Utils.getSvgData ()]
 
@@ -46,6 +48,9 @@ update msg model =
     OnProperty changePropertyMsg -> case changePropertyMsg of
       SwichMode HandMode ->
         {model | mode = HandMode} ! []
+      
+      SwichMode NodeMode ->
+        {model | mode = NodeMode} ! []
 
       SwichMode RectMode ->
         {model | mode = RectMode} ! []
@@ -64,6 +69,10 @@ update msg model =
         let newModel = HandMode.update onMouseMsg model in
         if model /= newModel then newModel ! [Utils.reflectSvgData newModel]
         else model ! []
+      NodeMode ->
+        let newModel = NodeMode.update onMouseMsg model in
+        if model /= newModel then newModel ! [Utils.reflectSvgData newModel]
+        else model ! []
       PolygonMode ->
         let newModel = ShapeMode.updatePolygon onMouseMsg model in
         if model /= newModel then newModel ! [Utils.reflectSvgData newModel]
@@ -75,14 +84,20 @@ update msg model =
     
     OnSelect ident isAdd pos -> case model.mode of
       HandMode -> (HandMode.select ident isAdd pos model) ! []
+      NodeMode -> (NodeMode.select ident pos model) ! []
       _ -> model ! []
     
     NoSelect -> case model.mode of
       HandMode -> (HandMode.noSelect model) ! []
+      NodeMode -> (NodeMode.noSelect model) ! []
       _ -> model ! []
     
     OnVertex fixed mpos -> case model.mode of
       HandMode -> (HandMode.scale fixed mpos model) ! []
+      _ -> model ! []
+    
+    OnNode mpos nodeId -> case model.mode of
+      NodeMode -> (NodeMode.nodeSelect nodeId mpos model) ! []
       _ -> model ! []
     
     SvgData svgData ->
@@ -100,6 +115,7 @@ view model =
   div []
     [ div [] [
         button [ onClick <| OnProperty <| SwichMode HandMode ] [text "hand mode"],
+        button [ onClick <| OnProperty <| SwichMode NodeMode ] [text "node mode"],        
         button [ onClick <| OnProperty <| SwichMode RectMode ] [text "rectangle mode"],
         button [ onClick <| OnProperty <| SwichMode EllipseMode ] [text "ellispe mode"],
         button [ onClick <| OnProperty <| SwichMode PolygonMode ] [text "polygon mode"]
@@ -109,7 +125,11 @@ view model =
         height (toString <| 400),
         onMouseDown NoSelect
       ]
-      ((List.map ViewBuilder.build (Utils.getElems model) ) ++ (ViewBuilder.buildVertexes model)),
+      ((List.map ViewBuilder.build (Utils.getElems model) ) ++ (case model.mode of
+        NodeMode -> ViewBuilder.buildNodes model
+        HandMode -> ViewBuilder.buildVertexes model
+        _ -> []
+      )),
       Html.input [ type_ "color", onInput <| \c -> OnProperty <| Style (Dict.insert "fill" c styleInfo) ] [],
       Html.input [ type_ "color", onInput <| \c -> OnProperty <| Style (Dict.insert "stroke" c styleInfo) ] []    
     ]

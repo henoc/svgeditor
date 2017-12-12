@@ -90,4 +90,3 @@ noSelect model =
 scale: Vec2 -> Vec2 -> Model -> Model
 scale fixed mpos model =
   {model | fixedPoint = Just fixed, dragBegin = Just mpos}
-

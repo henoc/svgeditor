@@ -25,6 +25,11 @@ flatten lst = case lst of
   Nothing :: tl -> flatten tl
   [] -> []
 
+flattenList: List (List a) -> List a
+flattenList lst = case lst of
+  hd :: tl -> hd ++ flattenList tl
+  [] -> []
+
 getElems: Model -> List StyledSVGElement
 getElems model = case model.svg.shape of
   SVG {elems} -> elems
@@ -110,3 +115,24 @@ updateHead: (a -> a) -> List a -> List a
 updateHead fn lst = case lst of
   hd :: tl -> (fn hd) :: tl
   [] -> []
+
+-- リストのn番目をfnの結果に置き換える
+replaceNth: Int -> (a -> a) -> List a -> List a 
+replaceNth n fn lst =
+  if n == 0 then case lst of
+    hd :: tl -> (fn hd) :: tl
+    [] -> []
+  else case lst of
+    hd :: tl -> hd :: replaceNth (n-1) fn tl
+    [] -> lst
+
+-- pathOperatorsのn番目の座標をfnに置き換える
+replacePathNth: Int -> (Vec2 -> Vec2) -> List PathOperator -> List PathOperator
+replacePathNth n fn ops =
+  case ops of
+    [] -> []
+    hd :: tl ->
+      if List.length hd.points > n then
+       {kind = hd.kind, points = replaceNth n fn hd.points} :: tl
+      else
+        hd :: replacePathNth (n - List.length hd.points) fn tl

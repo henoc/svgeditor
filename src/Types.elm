@@ -5,7 +5,7 @@ import Vec2 exposing (Vec2)
 import Set exposing (Set)
 import Dict exposing (Dict)
 
-type Mode = HandMode | RectMode | EllipseMode | PolygonMode
+type Mode = HandMode | NodeMode | RectMode | EllipseMode | PolygonMode
 type alias StyleInfo = Dict String String
 type alias AttributeInfo = Dict String String
 
@@ -33,11 +33,12 @@ type alias Model = {
   styleInfo: StyleInfo,
   idGen: Int,
   selected: Set Int,
+  nodeId: Maybe Int,
   fixedPoint: Maybe Vec2,
   selectedRef: List StyledSVGElement
 }
 
-type Msg = OnProperty ChangePropertyMsg | OnMouse MouseMsg | OnSelect Int Bool Vec2 | NoSelect | OnVertex Vec2 Vec2 | SvgData String
+type Msg = OnProperty ChangePropertyMsg | OnMouse MouseMsg | OnSelect Int Bool Vec2 | NoSelect | OnVertex Vec2 Vec2 | OnNode Vec2 Int | SvgData String
 type ChangePropertyMsg = SwichMode Mode | Style StyleInfo
 type MouseMsg = MouseDown Mouse.Position | MouseUp Mouse.Position | MouseMove Mouse.Position
 

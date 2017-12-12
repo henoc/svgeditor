@@ -10,6 +10,7 @@ import Set exposing (Set)
 import ShapeList exposing (..)
 import Tuple exposing (first, second)
 import Dict exposing (Dict)
+import Shape
 
 -- モデル所有のSVGモデルのDOMを構築する
 build : StyledSVGElement -> Html Msg
@@ -102,3 +103,25 @@ buildVertexes model =
         Utils.onItemMouseDown <| \(shift, pos) -> OnVertex anti pos
       ] [])
     positions (List.reverse positions)
+
+-- ノードモードでのノードを表示する
+buildNodes: Model -> List (Html Msg)
+buildNodes model =
+  let
+    svglst : List StyledSVGElement
+    svglst = List.map (\k -> Utils.getById k model) (Set.toList model.selected) |> Utils.flatten
+    positions = case List.head svglst of
+      Just selected -> Shape.getPoints selected
+      Nothing -> []
+    nodeIds = List.range 0 (List.length positions - 1)
+  in
+  List.map2
+    (\pos -> \nodeId -> circle [
+        cx <| toString (first pos),
+        cy <| toString (second pos),
+        r "5",
+        fill "#AA5533",
+        stroke "#553311",
+        Utils.onItemMouseDown <| \(shift, pos) -> OnNode pos nodeId
+      ] [])
+    positions nodeIds
