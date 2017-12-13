@@ -70,6 +70,10 @@ update msg model =
         (Actions.duplicate model) ! []
       Delete ->
         (Actions.delete model) ! []
+      BringForward ->
+        (Actions.bringForward model) ! []
+      SendBackward ->
+        (Actions.sendBackward model) ! []
 
     OnMouse onMouseMsg -> case model.mode of
       HandMode ->
@@ -130,7 +134,9 @@ view model =
         ],
         p [] [
           button [ onClick <| OnAction <| Duplicate ] [text "duplicate"],
-          button [ onClick <| OnAction <| Delete ] [text "delete"]
+          button [ onClick <| OnAction <| Delete ] [text "delete"],
+          button [ onClick <| OnAction <| BringForward ][text "bring forward"],
+          button [ onClick <| OnAction <| SendBackward ][text "send backward"]
         ]
       ],
       svg [

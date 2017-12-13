@@ -11682,6 +11682,8 @@ var _user$project$Types$MouseUp = function (a) {
 var _user$project$Types$MouseDown = function (a) {
 	return {ctor: 'MouseDown', _0: a};
 };
+var _user$project$Types$SendBackward = {ctor: 'SendBackward'};
+var _user$project$Types$BringForward = {ctor: 'BringForward'};
 var _user$project$Types$Delete = {ctor: 'Delete'};
 var _user$project$Types$Duplicate = {ctor: 'Duplicate'};
 
@@ -12167,6 +12169,72 @@ var _user$project$Utils$reflectSvgData = function (model) {
 	return _user$project$Utils$sendSvgData(svgData);
 };
 
+var _user$project$Actions$bringForward = function (model) {
+	var elems = _user$project$Utils$getElems(model);
+	var loop = function (elems) {
+		var _p0 = elems;
+		if ((_p0.ctor === '::') && (_p0._1.ctor === '::')) {
+			var _p3 = _p0._1._1;
+			var _p2 = _p0._1._0;
+			var _p1 = _p0._0;
+			return A2(_elm_lang$core$Set$member, _p2.id, model.selected) ? {
+				ctor: '::',
+				_0: _p2,
+				_1: loop(
+					{ctor: '::', _0: _p1, _1: _p3})
+			} : {
+				ctor: '::',
+				_0: _p1,
+				_1: loop(
+					{ctor: '::', _0: _p2, _1: _p3})
+			};
+		} else {
+			return _p0;
+		}
+	};
+	return _elm_lang$core$Native_Utils.update(
+		model,
+		{
+			svg: A2(
+				_user$project$Utils$changeContains,
+				_elm_lang$core$List$reverse(
+					loop(
+						_elm_lang$core$List$reverse(elems))),
+				model.svg)
+		});
+};
+var _user$project$Actions$sendBackward = function (model) {
+	var elems = _user$project$Utils$getElems(model);
+	var loop = function (elems) {
+		var _p4 = elems;
+		if ((_p4.ctor === '::') && (_p4._1.ctor === '::')) {
+			var _p7 = _p4._1._1;
+			var _p6 = _p4._1._0;
+			var _p5 = _p4._0;
+			return A2(_elm_lang$core$Set$member, _p6.id, model.selected) ? {
+				ctor: '::',
+				_0: _p6,
+				_1: loop(
+					{ctor: '::', _0: _p5, _1: _p7})
+			} : {
+				ctor: '::',
+				_0: _p5,
+				_1: loop(
+					{ctor: '::', _0: _p6, _1: _p7})
+			};
+		} else {
+			return _p4;
+		}
+	};
+	return _elm_lang$core$Native_Utils.update(
+		model,
+		{
+			svg: A2(
+				_user$project$Utils$changeContains,
+				loop(elems),
+				model.svg)
+		});
+};
 var _user$project$Actions$delete = function (model) {
 	var elems = _user$project$Utils$getElems(model);
 	var newElems = A2(
@@ -14216,7 +14284,39 @@ var _user$project$Main$view = function (model) {
 											_0: _elm_lang$html$Html$text('delete'),
 											_1: {ctor: '[]'}
 										}),
-									_1: {ctor: '[]'}
+									_1: {
+										ctor: '::',
+										_0: A2(
+											_elm_lang$html$Html$button,
+											{
+												ctor: '::',
+												_0: _elm_lang$html$Html_Events$onClick(
+													_user$project$Types$OnAction(_user$project$Types$BringForward)),
+												_1: {ctor: '[]'}
+											},
+											{
+												ctor: '::',
+												_0: _elm_lang$html$Html$text('bring forward'),
+												_1: {ctor: '[]'}
+											}),
+										_1: {
+											ctor: '::',
+											_0: A2(
+												_elm_lang$html$Html$button,
+												{
+													ctor: '::',
+													_0: _elm_lang$html$Html_Events$onClick(
+														_user$project$Types$OnAction(_user$project$Types$SendBackward)),
+													_1: {ctor: '[]'}
+												},
+												{
+													ctor: '::',
+													_0: _elm_lang$html$Html$text('send backward'),
+													_1: {ctor: '[]'}
+												}),
+											_1: {ctor: '[]'}
+										}
+									}
 								}
 							}),
 						_1: {ctor: '[]'}
@@ -14356,16 +14456,27 @@ var _user$project$Main$update = F2(
 				}
 			case 'OnAction':
 				var _p6 = _p4._0;
-				if (_p6.ctor === 'Duplicate') {
-					return A2(
-						_elm_lang$core$Platform_Cmd_ops['!'],
-						_user$project$Actions$duplicate(model),
-						{ctor: '[]'});
-				} else {
-					return A2(
-						_elm_lang$core$Platform_Cmd_ops['!'],
-						_user$project$Actions$delete(model),
-						{ctor: '[]'});
+				switch (_p6.ctor) {
+					case 'Duplicate':
+						return A2(
+							_elm_lang$core$Platform_Cmd_ops['!'],
+							_user$project$Actions$duplicate(model),
+							{ctor: '[]'});
+					case 'Delete':
+						return A2(
+							_elm_lang$core$Platform_Cmd_ops['!'],
+							_user$project$Actions$delete(model),
+							{ctor: '[]'});
+					case 'BringForward':
+						return A2(
+							_elm_lang$core$Platform_Cmd_ops['!'],
+							_user$project$Actions$bringForward(model),
+							{ctor: '[]'});
+					default:
+						return A2(
+							_elm_lang$core$Platform_Cmd_ops['!'],
+							_user$project$Actions$sendBackward(model),
+							{ctor: '[]'});
 				}
 			case 'OnMouse':
 				var _p8 = _p4._0;

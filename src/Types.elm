@@ -41,7 +41,7 @@ type alias Model = {
 type Msg = OnProperty ChangePropertyMsg | OnAction Action | OnMouse MouseMsg | OnSelect Int Bool Vec2 | NoSelect | OnVertex Vec2 Vec2 | OnNode Vec2 Int | SvgData String
 type ChangePropertyMsg = SwichMode Mode | Style StyleInfo
 type MouseMsg = MouseDown Mouse.Position | MouseUp Mouse.Position | MouseMove Mouse.Position
-type Action = Duplicate | Delete
+type Action = Duplicate | Delete | BringForward | SendBackward
 
 type alias Box = {
   leftTop: Vec2,
