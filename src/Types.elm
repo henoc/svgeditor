@@ -20,7 +20,7 @@ type SVGElement =
   | SVG {elems: List StyledSVGElement, size: Vec2}
   | Unknown { name: String, elems: List StyledSVGElement }
 type alias StyledSVGElement = {
-  style: StyleInfo,     -- color以外もいれる予定
+  style: StyleInfo,
   attr: AttributeInfo,
   id: Int,
   shape: SVGElement
@@ -38,9 +38,10 @@ type alias Model = {
   selectedRef: List StyledSVGElement
 }
 
-type Msg = OnProperty ChangePropertyMsg | OnMouse MouseMsg | OnSelect Int Bool Vec2 | NoSelect | OnVertex Vec2 Vec2 | OnNode Vec2 Int | SvgData String
+type Msg = OnProperty ChangePropertyMsg | OnAction Action | OnMouse MouseMsg | OnSelect Int Bool Vec2 | NoSelect | OnVertex Vec2 Vec2 | OnNode Vec2 Int | SvgData String
 type ChangePropertyMsg = SwichMode Mode | Style StyleInfo
 type MouseMsg = MouseDown Mouse.Position | MouseUp Mouse.Position | MouseMove Mouse.Position
+type Action = Duplicate | Delete
 
 type alias Box = {
   leftTop: Vec2,

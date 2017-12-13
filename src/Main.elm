@@ -1,6 +1,6 @@
 module Main exposing (..)
 
-import Html exposing (Html, button, div, text, node)
+import Html exposing (Html, button, div, text, node, p)
 import Svg exposing (svg, ellipse, rect)
 import Svg.Attributes exposing (..)
 import Html.Events exposing (onClick, onInput, onMouseDown)
@@ -15,6 +15,7 @@ import HandMode
 import NodeMode
 import ViewBuilder
 import Parsers
+import Actions
 import Dict exposing (Dict)
 
 main : Program Never Model Msg
@@ -63,6 +64,12 @@ update msg model =
 
       Style styleInfo ->
         {model | styleInfo = styleInfo} ! []
+    
+    OnAction action -> case action of
+      Duplicate ->
+        (Actions.duplicate model) ! []
+      Delete ->
+        (Actions.delete model) ! []
 
     OnMouse onMouseMsg -> case model.mode of
       HandMode ->
@@ -114,11 +121,17 @@ view model =
   let styleInfo = model.styleInfo in
   div []
     [ div [] [
-        button [ onClick <| OnProperty <| SwichMode HandMode ] [text "hand mode"],
-        button [ onClick <| OnProperty <| SwichMode NodeMode ] [text "node mode"],        
-        button [ onClick <| OnProperty <| SwichMode RectMode ] [text "rectangle mode"],
-        button [ onClick <| OnProperty <| SwichMode EllipseMode ] [text "ellispe mode"],
-        button [ onClick <| OnProperty <| SwichMode PolygonMode ] [text "polygon mode"]
+        p [] [
+          button [ onClick <| OnProperty <| SwichMode HandMode ] [text "hand mode"],
+          button [ onClick <| OnProperty <| SwichMode NodeMode ] [text "node mode"],        
+          button [ onClick <| OnProperty <| SwichMode RectMode ] [text "rectangle mode"],
+          button [ onClick <| OnProperty <| SwichMode EllipseMode ] [text "ellispe mode"],
+          button [ onClick <| OnProperty <| SwichMode PolygonMode ] [text "polygon mode"]
+        ],
+        p [] [
+          button [ onClick <| OnAction <| Duplicate ] [text "duplicate"],
+          button [ onClick <| OnAction <| Delete ] [text "delete"]
+        ]
       ],
       svg [
         width (toString <| 400),

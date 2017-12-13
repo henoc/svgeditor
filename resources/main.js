@@ -11567,259 +11567,6 @@ var _jinjor$elm_xml_parser$XmlParser$parse = function (source) {
 	return A2(_elm_tools$parser$Parser$run, _jinjor$elm_xml_parser$XmlParser$xml, source);
 };
 
-var _user$project$Combinators$skipwhitespace = function (input) {
-	var reg = _elm_lang$core$Regex$regex(input.whitespace);
-	var result = A3(
-		_elm_lang$core$Regex$find,
-		_elm_lang$core$Regex$AtMost(1),
-		reg,
-		A2(_elm_lang$core$String$dropLeft, input.position, input.data));
-	var _p0 = result;
-	if (_p0.ctor === '[]') {
-		return input;
-	} else {
-		var _p1 = _p0._0;
-		return (!_elm_lang$core$Native_Utils.eq(_p1.index, 0)) ? input : _elm_lang$core$Native_Utils.update(
-			input,
-			{
-				position: input.position + _elm_lang$core$String$length(_p1.match)
-			});
-	}
-};
-var _user$project$Combinators$input = F2(
-	function (data, whitespace) {
-		return {data: data, position: 0, whitespace: whitespace};
-	});
-var _user$project$Combinators$normalInput = function (data) {
-	return {data: data, position: 0, whitespace: '\\s+'};
-};
-var _user$project$Combinators$Input = F3(
-	function (a, b, c) {
-		return {data: a, position: b, whitespace: c};
-	});
-var _user$project$Combinators$ParseFailure = F2(
-	function (a, b) {
-		return {ctor: 'ParseFailure', _0: a, _1: b};
-	});
-var _user$project$Combinators$ParseSuccess = F2(
-	function (a, b) {
-		return {ctor: 'ParseSuccess', _0: a, _1: b};
-	});
-var _user$project$Combinators$resultMap = F2(
-	function (fn, p) {
-		var _p2 = p;
-		if (_p2.ctor === 'ParseSuccess') {
-			return A2(
-				_user$project$Combinators$ParseSuccess,
-				fn(_p2._0),
-				_p2._1);
-		} else {
-			return A2(_user$project$Combinators$ParseFailure, _p2._0, _p2._1);
-		}
-	});
-var _user$project$Combinators$andThen = F3(
-	function (p, q, input) {
-		var _p3 = p(input);
-		if (_p3.ctor === 'ParseSuccess') {
-			return A2(
-				_user$project$Combinators$resultMap,
-				function (r2) {
-					return {ctor: '_Tuple2', _0: _p3._0, _1: r2};
-				},
-				q(_p3._1));
-		} else {
-			return A2(_user$project$Combinators$ParseFailure, _p3._0, input);
-		}
-	});
-var _user$project$Combinators$stringParser = F2(
-	function (str, rawInput) {
-		var input = _user$project$Combinators$skipwhitespace(rawInput);
-		return A2(
-			_elm_lang$core$String$startsWith,
-			str,
-			A2(_elm_lang$core$String$dropLeft, input.position, input.data)) ? A2(
-			_user$project$Combinators$ParseSuccess,
-			str,
-			_elm_lang$core$Native_Utils.update(
-				input,
-				{
-					position: input.position + _elm_lang$core$String$length(str)
-				})) : A2(
-			_user$project$Combinators$ParseFailure,
-			A2(_elm_lang$core$Basics_ops['++'], 'input doesn\'t start with ', str),
-			input);
-	});
-var _user$project$Combinators$regexParser = F2(
-	function (str, rawInput) {
-		var reg = _elm_lang$core$Regex$regex(str);
-		var input = _user$project$Combinators$skipwhitespace(rawInput);
-		var result = A3(
-			_elm_lang$core$Regex$find,
-			_elm_lang$core$Regex$AtMost(1),
-			reg,
-			A2(_elm_lang$core$String$dropLeft, input.position, input.data));
-		var _p4 = result;
-		if (_p4.ctor === '[]') {
-			return A2(
-				_user$project$Combinators$ParseFailure,
-				A2(_elm_lang$core$Basics_ops['++'], 'input doesn\'t match with ', str),
-				input);
-		} else {
-			var _p5 = _p4._0;
-			return (!_elm_lang$core$Native_Utils.eq(_p5.index, 0)) ? A2(
-				_user$project$Combinators$ParseFailure,
-				A2(_elm_lang$core$Basics_ops['++'], 'input doesn\'t match with ', str),
-				input) : A2(
-				_user$project$Combinators$ParseSuccess,
-				_p5.match,
-				_elm_lang$core$Native_Utils.update(
-					input,
-					{
-						position: input.position + _elm_lang$core$String$length(_p5.match)
-					}));
-		}
-	});
-var _user$project$Combinators$or = F3(
-	function (p, q, input) {
-		var _p6 = p(input);
-		if (_p6.ctor === 'ParseSuccess') {
-			return A2(_user$project$Combinators$ParseSuccess, _p6._0, _p6._1);
-		} else {
-			var _p7 = q(input);
-			if (_p7.ctor === 'ParseSuccess') {
-				return A2(_user$project$Combinators$ParseSuccess, _p7._0, _p7._1);
-			} else {
-				return A2(_user$project$Combinators$ParseFailure, _p7._0, input);
-			}
-		}
-	});
-var _user$project$Combinators$option = F2(
-	function (p, input) {
-		var _p8 = p(input);
-		if (_p8.ctor === 'ParseSuccess') {
-			return A2(
-				_user$project$Combinators$ParseSuccess,
-				_elm_lang$core$Maybe$Just(_p8._0),
-				_p8._1);
-		} else {
-			return A2(_user$project$Combinators$ParseSuccess, _elm_lang$core$Maybe$Nothing, input);
-		}
-	});
-var _user$project$Combinators$map = F3(
-	function (fn, p, input) {
-		var _p9 = p(input);
-		if (_p9.ctor === 'ParseSuccess') {
-			return A2(
-				_user$project$Combinators$ParseSuccess,
-				fn(_p9._0),
-				_p9._1);
-		} else {
-			return A2(_user$project$Combinators$ParseFailure, _p9._0, _p9._1);
-		}
-	});
-var _user$project$Combinators$onlyLeft = F2(
-	function (p, q) {
-		return A2(
-			_user$project$Combinators$map,
-			function (_p10) {
-				var _p11 = _p10;
-				return _p11._0;
-			},
-			A2(_user$project$Combinators$andThen, p, q));
-	});
-var _user$project$Combinators$onlyRight = F2(
-	function (p, q) {
-		return A2(
-			_user$project$Combinators$map,
-			function (_p12) {
-				var _p13 = _p12;
-				return _p13._1;
-			},
-			A2(_user$project$Combinators$andThen, p, q));
-	});
-var _user$project$Combinators$rep = F2(
-	function (p, input) {
-		var loop = F3(
-			function (p, i, acc) {
-				loop:
-				while (true) {
-					var _p14 = p(i);
-					if (_p14.ctor === 'ParseSuccess') {
-						var _v11 = p,
-							_v12 = _p14._1,
-							_v13 = {ctor: '::', _0: _p14._0, _1: acc};
-						p = _v11;
-						i = _v12;
-						acc = _v13;
-						continue loop;
-					} else {
-						return A2(
-							_user$project$Combinators$ParseSuccess,
-							_elm_lang$core$List$reverse(acc),
-							_p14._1);
-					}
-				}
-			});
-		return A3(
-			loop,
-			p,
-			input,
-			{ctor: '[]'});
-	});
-var _user$project$Combinators$rep1 = F2(
-	function (p, input) {
-		var p2 = A2(
-			_user$project$Combinators$andThen,
-			p,
-			_user$project$Combinators$rep(p));
-		var _p15 = p2(input);
-		if (_p15.ctor === 'ParseSuccess') {
-			return A2(
-				_user$project$Combinators$ParseSuccess,
-				{ctor: '::', _0: _p15._0._0, _1: _p15._0._1},
-				_p15._1);
-		} else {
-			return A2(_user$project$Combinators$ParseFailure, _p15._0, _p15._1);
-		}
-	});
-var _user$project$Combinators$rep1sep = F3(
-	function (p, s, input) {
-		var p2 = A2(
-			_user$project$Combinators$andThen,
-			p,
-			_user$project$Combinators$rep(
-				A2(_user$project$Combinators$onlyRight, s, p)));
-		var _p16 = p2(input);
-		if (_p16.ctor === 'ParseSuccess') {
-			return A2(
-				_user$project$Combinators$ParseSuccess,
-				{ctor: '::', _0: _p16._0._0, _1: _p16._0._1},
-				_p16._1);
-		} else {
-			return A2(_user$project$Combinators$ParseFailure, _p16._0, _p16._1);
-		}
-	});
-var _user$project$Combinators$repsep = F3(
-	function (p, s, input) {
-		var p2 = A2(
-			_user$project$Combinators$andThen,
-			p,
-			_user$project$Combinators$rep(
-				A2(_user$project$Combinators$onlyRight, s, p)));
-		var _p17 = p2(input);
-		if (_p17.ctor === 'ParseSuccess') {
-			return A2(
-				_user$project$Combinators$ParseSuccess,
-				{ctor: '::', _0: _p17._0._0, _1: _p17._0._1},
-				_p17._1);
-		} else {
-			return A2(
-				_user$project$Combinators$ParseSuccess,
-				{ctor: '[]'},
-				input);
-		}
-	});
-
 var _user$project$Vec2$toVec2 = function (position) {
 	return {
 		ctor: '_Tuple2',
@@ -11914,6 +11661,9 @@ var _user$project$Types$OnSelect = F3(
 var _user$project$Types$OnMouse = function (a) {
 	return {ctor: 'OnMouse', _0: a};
 };
+var _user$project$Types$OnAction = function (a) {
+	return {ctor: 'OnAction', _0: a};
+};
 var _user$project$Types$OnProperty = function (a) {
 	return {ctor: 'OnProperty', _0: a};
 };
@@ -11932,6 +11682,8 @@ var _user$project$Types$MouseUp = function (a) {
 var _user$project$Types$MouseDown = function (a) {
 	return {ctor: 'MouseDown', _0: a};
 };
+var _user$project$Types$Delete = {ctor: 'Delete'};
+var _user$project$Types$Duplicate = {ctor: 'Duplicate'};
 
 var _user$project$Generator$generateNode = function (elem) {
 	var styleAttr = A2(
@@ -12344,6 +12096,15 @@ var _user$project$Utils$getById = F2(
 		return loop(
 			_user$project$Utils$getElems(model));
 	});
+var _user$project$Utils$getLastId = function (model) {
+	var ids = A2(
+		_elm_lang$core$List$map,
+		function (_) {
+			return _.id;
+		},
+		_user$project$Utils$getElems(model));
+	return _elm_lang$core$List$maximum(ids);
+};
 var _user$project$Utils$flattenList = function (lst) {
 	var _p14 = lst;
 	if (_p14.ctor === '::') {
@@ -12405,6 +12166,302 @@ var _user$project$Utils$reflectSvgData = function (model) {
 	var _p17 = A2(_elm_lang$core$Debug$log, 'send', svgData);
 	return _user$project$Utils$sendSvgData(svgData);
 };
+
+var _user$project$Actions$delete = function (model) {
+	var elems = _user$project$Utils$getElems(model);
+	var newElems = A2(
+		_elm_lang$core$List$filter,
+		function (x) {
+			return !A2(_elm_lang$core$Set$member, x.id, model.selected);
+		},
+		elems);
+	return _elm_lang$core$Native_Utils.update(
+		model,
+		{
+			svg: A2(_user$project$Utils$changeContains, newElems, model.svg)
+		});
+};
+var _user$project$Actions$duplicate = function (model) {
+	var nextId = 1 + A2(
+		_elm_lang$core$Maybe$withDefault,
+		0,
+		_user$project$Utils$getLastId(model));
+	var copied = A3(
+		_elm_lang$core$List$map2,
+		F2(
+			function (e, id) {
+				return _elm_lang$core$Native_Utils.update(
+					e,
+					{id: id});
+			}),
+		model.selectedRef,
+		A2(
+			_elm_lang$core$List$range,
+			nextId,
+			nextId + _elm_lang$core$List$length(model.selectedRef)));
+	var newElems = A2(
+		_elm_lang$core$Basics_ops['++'],
+		_user$project$Utils$getElems(model),
+		copied);
+	return _elm_lang$core$Native_Utils.update(
+		model,
+		{
+			svg: A2(_user$project$Utils$changeContains, newElems, model.svg)
+		});
+};
+
+var _user$project$Combinators$skipwhitespace = function (input) {
+	var reg = _elm_lang$core$Regex$regex(input.whitespace);
+	var result = A3(
+		_elm_lang$core$Regex$find,
+		_elm_lang$core$Regex$AtMost(1),
+		reg,
+		A2(_elm_lang$core$String$dropLeft, input.position, input.data));
+	var _p0 = result;
+	if (_p0.ctor === '[]') {
+		return input;
+	} else {
+		var _p1 = _p0._0;
+		return (!_elm_lang$core$Native_Utils.eq(_p1.index, 0)) ? input : _elm_lang$core$Native_Utils.update(
+			input,
+			{
+				position: input.position + _elm_lang$core$String$length(_p1.match)
+			});
+	}
+};
+var _user$project$Combinators$input = F2(
+	function (data, whitespace) {
+		return {data: data, position: 0, whitespace: whitespace};
+	});
+var _user$project$Combinators$normalInput = function (data) {
+	return {data: data, position: 0, whitespace: '\\s+'};
+};
+var _user$project$Combinators$Input = F3(
+	function (a, b, c) {
+		return {data: a, position: b, whitespace: c};
+	});
+var _user$project$Combinators$ParseFailure = F2(
+	function (a, b) {
+		return {ctor: 'ParseFailure', _0: a, _1: b};
+	});
+var _user$project$Combinators$ParseSuccess = F2(
+	function (a, b) {
+		return {ctor: 'ParseSuccess', _0: a, _1: b};
+	});
+var _user$project$Combinators$resultMap = F2(
+	function (fn, p) {
+		var _p2 = p;
+		if (_p2.ctor === 'ParseSuccess') {
+			return A2(
+				_user$project$Combinators$ParseSuccess,
+				fn(_p2._0),
+				_p2._1);
+		} else {
+			return A2(_user$project$Combinators$ParseFailure, _p2._0, _p2._1);
+		}
+	});
+var _user$project$Combinators$andThen = F3(
+	function (p, q, input) {
+		var _p3 = p(input);
+		if (_p3.ctor === 'ParseSuccess') {
+			return A2(
+				_user$project$Combinators$resultMap,
+				function (r2) {
+					return {ctor: '_Tuple2', _0: _p3._0, _1: r2};
+				},
+				q(_p3._1));
+		} else {
+			return A2(_user$project$Combinators$ParseFailure, _p3._0, input);
+		}
+	});
+var _user$project$Combinators$stringParser = F2(
+	function (str, rawInput) {
+		var input = _user$project$Combinators$skipwhitespace(rawInput);
+		return A2(
+			_elm_lang$core$String$startsWith,
+			str,
+			A2(_elm_lang$core$String$dropLeft, input.position, input.data)) ? A2(
+			_user$project$Combinators$ParseSuccess,
+			str,
+			_elm_lang$core$Native_Utils.update(
+				input,
+				{
+					position: input.position + _elm_lang$core$String$length(str)
+				})) : A2(
+			_user$project$Combinators$ParseFailure,
+			A2(_elm_lang$core$Basics_ops['++'], 'input doesn\'t start with ', str),
+			input);
+	});
+var _user$project$Combinators$regexParser = F2(
+	function (str, rawInput) {
+		var reg = _elm_lang$core$Regex$regex(str);
+		var input = _user$project$Combinators$skipwhitespace(rawInput);
+		var result = A3(
+			_elm_lang$core$Regex$find,
+			_elm_lang$core$Regex$AtMost(1),
+			reg,
+			A2(_elm_lang$core$String$dropLeft, input.position, input.data));
+		var _p4 = result;
+		if (_p4.ctor === '[]') {
+			return A2(
+				_user$project$Combinators$ParseFailure,
+				A2(_elm_lang$core$Basics_ops['++'], 'input doesn\'t match with ', str),
+				input);
+		} else {
+			var _p5 = _p4._0;
+			return (!_elm_lang$core$Native_Utils.eq(_p5.index, 0)) ? A2(
+				_user$project$Combinators$ParseFailure,
+				A2(_elm_lang$core$Basics_ops['++'], 'input doesn\'t match with ', str),
+				input) : A2(
+				_user$project$Combinators$ParseSuccess,
+				_p5.match,
+				_elm_lang$core$Native_Utils.update(
+					input,
+					{
+						position: input.position + _elm_lang$core$String$length(_p5.match)
+					}));
+		}
+	});
+var _user$project$Combinators$or = F3(
+	function (p, q, input) {
+		var _p6 = p(input);
+		if (_p6.ctor === 'ParseSuccess') {
+			return A2(_user$project$Combinators$ParseSuccess, _p6._0, _p6._1);
+		} else {
+			var _p7 = q(input);
+			if (_p7.ctor === 'ParseSuccess') {
+				return A2(_user$project$Combinators$ParseSuccess, _p7._0, _p7._1);
+			} else {
+				return A2(_user$project$Combinators$ParseFailure, _p7._0, input);
+			}
+		}
+	});
+var _user$project$Combinators$option = F2(
+	function (p, input) {
+		var _p8 = p(input);
+		if (_p8.ctor === 'ParseSuccess') {
+			return A2(
+				_user$project$Combinators$ParseSuccess,
+				_elm_lang$core$Maybe$Just(_p8._0),
+				_p8._1);
+		} else {
+			return A2(_user$project$Combinators$ParseSuccess, _elm_lang$core$Maybe$Nothing, input);
+		}
+	});
+var _user$project$Combinators$map = F3(
+	function (fn, p, input) {
+		var _p9 = p(input);
+		if (_p9.ctor === 'ParseSuccess') {
+			return A2(
+				_user$project$Combinators$ParseSuccess,
+				fn(_p9._0),
+				_p9._1);
+		} else {
+			return A2(_user$project$Combinators$ParseFailure, _p9._0, _p9._1);
+		}
+	});
+var _user$project$Combinators$onlyLeft = F2(
+	function (p, q) {
+		return A2(
+			_user$project$Combinators$map,
+			function (_p10) {
+				var _p11 = _p10;
+				return _p11._0;
+			},
+			A2(_user$project$Combinators$andThen, p, q));
+	});
+var _user$project$Combinators$onlyRight = F2(
+	function (p, q) {
+		return A2(
+			_user$project$Combinators$map,
+			function (_p12) {
+				var _p13 = _p12;
+				return _p13._1;
+			},
+			A2(_user$project$Combinators$andThen, p, q));
+	});
+var _user$project$Combinators$rep = F2(
+	function (p, input) {
+		var loop = F3(
+			function (p, i, acc) {
+				loop:
+				while (true) {
+					var _p14 = p(i);
+					if (_p14.ctor === 'ParseSuccess') {
+						var _v11 = p,
+							_v12 = _p14._1,
+							_v13 = {ctor: '::', _0: _p14._0, _1: acc};
+						p = _v11;
+						i = _v12;
+						acc = _v13;
+						continue loop;
+					} else {
+						return A2(
+							_user$project$Combinators$ParseSuccess,
+							_elm_lang$core$List$reverse(acc),
+							_p14._1);
+					}
+				}
+			});
+		return A3(
+			loop,
+			p,
+			input,
+			{ctor: '[]'});
+	});
+var _user$project$Combinators$rep1 = F2(
+	function (p, input) {
+		var p2 = A2(
+			_user$project$Combinators$andThen,
+			p,
+			_user$project$Combinators$rep(p));
+		var _p15 = p2(input);
+		if (_p15.ctor === 'ParseSuccess') {
+			return A2(
+				_user$project$Combinators$ParseSuccess,
+				{ctor: '::', _0: _p15._0._0, _1: _p15._0._1},
+				_p15._1);
+		} else {
+			return A2(_user$project$Combinators$ParseFailure, _p15._0, _p15._1);
+		}
+	});
+var _user$project$Combinators$rep1sep = F3(
+	function (p, s, input) {
+		var p2 = A2(
+			_user$project$Combinators$andThen,
+			p,
+			_user$project$Combinators$rep(
+				A2(_user$project$Combinators$onlyRight, s, p)));
+		var _p16 = p2(input);
+		if (_p16.ctor === 'ParseSuccess') {
+			return A2(
+				_user$project$Combinators$ParseSuccess,
+				{ctor: '::', _0: _p16._0._0, _1: _p16._0._1},
+				_p16._1);
+		} else {
+			return A2(_user$project$Combinators$ParseFailure, _p16._0, _p16._1);
+		}
+	});
+var _user$project$Combinators$repsep = F3(
+	function (p, s, input) {
+		var p2 = A2(
+			_user$project$Combinators$andThen,
+			p,
+			_user$project$Combinators$rep(
+				A2(_user$project$Combinators$onlyRight, s, p)));
+		var _p17 = p2(input);
+		if (_p17.ctor === 'ParseSuccess') {
+			return A2(
+				_user$project$Combinators$ParseSuccess,
+				{ctor: '::', _0: _p17._0._0, _1: _p17._0._1},
+				_p17._1);
+		} else {
+			return A2(
+				_user$project$Combinators$ParseSuccess,
+				{ctor: '[]'},
+				input);
+		}
+	});
 
 var _user$project$Shape$getPoints = function (elem) {
 	var _p0 = elem.shape;
@@ -14036,36 +14093,9 @@ var _user$project$Main$view = function (model) {
 				{
 					ctor: '::',
 					_0: A2(
-						_elm_lang$html$Html$button,
+						_elm_lang$html$Html$p,
+						{ctor: '[]'},
 						{
-							ctor: '::',
-							_0: _elm_lang$html$Html_Events$onClick(
-								_user$project$Types$OnProperty(
-									_user$project$Types$SwichMode(_user$project$Types$HandMode))),
-							_1: {ctor: '[]'}
-						},
-						{
-							ctor: '::',
-							_0: _elm_lang$html$Html$text('hand mode'),
-							_1: {ctor: '[]'}
-						}),
-					_1: {
-						ctor: '::',
-						_0: A2(
-							_elm_lang$html$Html$button,
-							{
-								ctor: '::',
-								_0: _elm_lang$html$Html_Events$onClick(
-									_user$project$Types$OnProperty(
-										_user$project$Types$SwichMode(_user$project$Types$NodeMode))),
-								_1: {ctor: '[]'}
-							},
-							{
-								ctor: '::',
-								_0: _elm_lang$html$Html$text('node mode'),
-								_1: {ctor: '[]'}
-							}),
-						_1: {
 							ctor: '::',
 							_0: A2(
 								_elm_lang$html$Html$button,
@@ -14073,12 +14103,12 @@ var _user$project$Main$view = function (model) {
 									ctor: '::',
 									_0: _elm_lang$html$Html_Events$onClick(
 										_user$project$Types$OnProperty(
-											_user$project$Types$SwichMode(_user$project$Types$RectMode))),
+											_user$project$Types$SwichMode(_user$project$Types$HandMode))),
 									_1: {ctor: '[]'}
 								},
 								{
 									ctor: '::',
-									_0: _elm_lang$html$Html$text('rectangle mode'),
+									_0: _elm_lang$html$Html$text('hand mode'),
 									_1: {ctor: '[]'}
 								}),
 							_1: {
@@ -14089,12 +14119,12 @@ var _user$project$Main$view = function (model) {
 										ctor: '::',
 										_0: _elm_lang$html$Html_Events$onClick(
 											_user$project$Types$OnProperty(
-												_user$project$Types$SwichMode(_user$project$Types$EllipseMode))),
+												_user$project$Types$SwichMode(_user$project$Types$NodeMode))),
 										_1: {ctor: '[]'}
 									},
 									{
 										ctor: '::',
-										_0: _elm_lang$html$Html$text('ellispe mode'),
+										_0: _elm_lang$html$Html$text('node mode'),
 										_1: {ctor: '[]'}
 									}),
 								_1: {
@@ -14105,18 +14135,91 @@ var _user$project$Main$view = function (model) {
 											ctor: '::',
 											_0: _elm_lang$html$Html_Events$onClick(
 												_user$project$Types$OnProperty(
-													_user$project$Types$SwichMode(_user$project$Types$PolygonMode))),
+													_user$project$Types$SwichMode(_user$project$Types$RectMode))),
 											_1: {ctor: '[]'}
 										},
 										{
 											ctor: '::',
-											_0: _elm_lang$html$Html$text('polygon mode'),
+											_0: _elm_lang$html$Html$text('rectangle mode'),
+											_1: {ctor: '[]'}
+										}),
+									_1: {
+										ctor: '::',
+										_0: A2(
+											_elm_lang$html$Html$button,
+											{
+												ctor: '::',
+												_0: _elm_lang$html$Html_Events$onClick(
+													_user$project$Types$OnProperty(
+														_user$project$Types$SwichMode(_user$project$Types$EllipseMode))),
+												_1: {ctor: '[]'}
+											},
+											{
+												ctor: '::',
+												_0: _elm_lang$html$Html$text('ellispe mode'),
+												_1: {ctor: '[]'}
+											}),
+										_1: {
+											ctor: '::',
+											_0: A2(
+												_elm_lang$html$Html$button,
+												{
+													ctor: '::',
+													_0: _elm_lang$html$Html_Events$onClick(
+														_user$project$Types$OnProperty(
+															_user$project$Types$SwichMode(_user$project$Types$PolygonMode))),
+													_1: {ctor: '[]'}
+												},
+												{
+													ctor: '::',
+													_0: _elm_lang$html$Html$text('polygon mode'),
+													_1: {ctor: '[]'}
+												}),
+											_1: {ctor: '[]'}
+										}
+									}
+								}
+							}
+						}),
+					_1: {
+						ctor: '::',
+						_0: A2(
+							_elm_lang$html$Html$p,
+							{ctor: '[]'},
+							{
+								ctor: '::',
+								_0: A2(
+									_elm_lang$html$Html$button,
+									{
+										ctor: '::',
+										_0: _elm_lang$html$Html_Events$onClick(
+											_user$project$Types$OnAction(_user$project$Types$Duplicate)),
+										_1: {ctor: '[]'}
+									},
+									{
+										ctor: '::',
+										_0: _elm_lang$html$Html$text('duplicate'),
+										_1: {ctor: '[]'}
+									}),
+								_1: {
+									ctor: '::',
+									_0: A2(
+										_elm_lang$html$Html$button,
+										{
+											ctor: '::',
+											_0: _elm_lang$html$Html_Events$onClick(
+												_user$project$Types$OnAction(_user$project$Types$Delete)),
+											_1: {ctor: '[]'}
+										},
+										{
+											ctor: '::',
+											_0: _elm_lang$html$Html$text('delete'),
 											_1: {ctor: '[]'}
 										}),
 									_1: {ctor: '[]'}
 								}
-							}
-						}
+							}),
+						_1: {ctor: '[]'}
 					}
 				}),
 			_1: {
@@ -14251,12 +14354,25 @@ var _user$project$Main$update = F2(
 							{styleInfo: _p5._0}),
 						{ctor: '[]'});
 				}
+			case 'OnAction':
+				var _p6 = _p4._0;
+				if (_p6.ctor === 'Duplicate') {
+					return A2(
+						_elm_lang$core$Platform_Cmd_ops['!'],
+						_user$project$Actions$duplicate(model),
+						{ctor: '[]'});
+				} else {
+					return A2(
+						_elm_lang$core$Platform_Cmd_ops['!'],
+						_user$project$Actions$delete(model),
+						{ctor: '[]'});
+				}
 			case 'OnMouse':
-				var _p7 = _p4._0;
-				var _p6 = model.mode;
-				switch (_p6.ctor) {
+				var _p8 = _p4._0;
+				var _p7 = model.mode;
+				switch (_p7.ctor) {
 					case 'HandMode':
-						var newModel = A2(_user$project$HandMode$update, _p7, model);
+						var newModel = A2(_user$project$HandMode$update, _p8, model);
 						return (!_elm_lang$core$Native_Utils.eq(model, newModel)) ? A2(
 							_elm_lang$core$Platform_Cmd_ops['!'],
 							newModel,
@@ -14269,7 +14385,7 @@ var _user$project$Main$update = F2(
 							model,
 							{ctor: '[]'});
 					case 'NodeMode':
-						var newModel = A2(_user$project$NodeMode$update, _p7, model);
+						var newModel = A2(_user$project$NodeMode$update, _p8, model);
 						return (!_elm_lang$core$Native_Utils.eq(model, newModel)) ? A2(
 							_elm_lang$core$Platform_Cmd_ops['!'],
 							newModel,
@@ -14282,7 +14398,7 @@ var _user$project$Main$update = F2(
 							model,
 							{ctor: '[]'});
 					case 'PolygonMode':
-						var newModel = A2(_user$project$ShapeMode$updatePolygon, _p7, model);
+						var newModel = A2(_user$project$ShapeMode$updatePolygon, _p8, model);
 						return (!_elm_lang$core$Native_Utils.eq(model, newModel)) ? A2(
 							_elm_lang$core$Platform_Cmd_ops['!'],
 							newModel,
@@ -14295,7 +14411,7 @@ var _user$project$Main$update = F2(
 							model,
 							{ctor: '[]'});
 					default:
-						var newModel = A2(_user$project$ShapeMode$update, _p7, model);
+						var newModel = A2(_user$project$ShapeMode$update, _p8, model);
 						return (!_elm_lang$core$Native_Utils.eq(model, newModel)) ? A2(
 							_elm_lang$core$Platform_Cmd_ops['!'],
 							newModel,
@@ -14309,19 +14425,19 @@ var _user$project$Main$update = F2(
 							{ctor: '[]'});
 				}
 			case 'OnSelect':
-				var _p10 = _p4._2;
-				var _p9 = _p4._0;
-				var _p8 = model.mode;
-				switch (_p8.ctor) {
+				var _p11 = _p4._2;
+				var _p10 = _p4._0;
+				var _p9 = model.mode;
+				switch (_p9.ctor) {
 					case 'HandMode':
 						return A2(
 							_elm_lang$core$Platform_Cmd_ops['!'],
-							A4(_user$project$HandMode$select, _p9, _p4._1, _p10, model),
+							A4(_user$project$HandMode$select, _p10, _p4._1, _p11, model),
 							{ctor: '[]'});
 					case 'NodeMode':
 						return A2(
 							_elm_lang$core$Platform_Cmd_ops['!'],
-							A3(_user$project$NodeMode$select, _p9, _p10, model),
+							A3(_user$project$NodeMode$select, _p10, _p11, model),
 							{ctor: '[]'});
 					default:
 						return A2(
@@ -14330,8 +14446,8 @@ var _user$project$Main$update = F2(
 							{ctor: '[]'});
 				}
 			case 'NoSelect':
-				var _p11 = model.mode;
-				switch (_p11.ctor) {
+				var _p12 = model.mode;
+				switch (_p12.ctor) {
 					case 'HandMode':
 						return A2(
 							_elm_lang$core$Platform_Cmd_ops['!'],
@@ -14349,8 +14465,8 @@ var _user$project$Main$update = F2(
 							{ctor: '[]'});
 				}
 			case 'OnVertex':
-				var _p12 = model.mode;
-				if (_p12.ctor === 'HandMode') {
+				var _p13 = model.mode;
+				if (_p13.ctor === 'HandMode') {
 					return A2(
 						_elm_lang$core$Platform_Cmd_ops['!'],
 						A3(_user$project$HandMode$scale, _p4._0, _p4._1, model),
@@ -14362,8 +14478,8 @@ var _user$project$Main$update = F2(
 						{ctor: '[]'});
 				}
 			case 'OnNode':
-				var _p13 = model.mode;
-				if (_p13.ctor === 'NodeMode') {
+				var _p14 = model.mode;
+				if (_p14.ctor === 'NodeMode') {
 					return A2(
 						_elm_lang$core$Platform_Cmd_ops['!'],
 						A3(_user$project$NodeMode$nodeSelect, _p4._1, _p4._0, model),
@@ -14375,13 +14491,13 @@ var _user$project$Main$update = F2(
 						{ctor: '[]'});
 				}
 			default:
-				var _p14 = _user$project$Parsers$parseSvg(_p4._0);
-				if (_p14.ctor === 'Just') {
+				var _p15 = _user$project$Parsers$parseSvg(_p4._0);
+				if (_p15.ctor === 'Just') {
 					return A2(
 						_elm_lang$core$Platform_Cmd_ops['!'],
 						_elm_lang$core$Native_Utils.update(
 							model,
-							{svg: _p14._0}),
+							{svg: _p15._0}),
 						{ctor: '[]'});
 				} else {
 					return A2(

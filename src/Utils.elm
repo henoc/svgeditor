@@ -47,6 +47,13 @@ getById ident model =
   in
   loop <| getElems model
 
+getLastId: Model -> Maybe Int
+getLastId model =
+  let
+    ids = List.map .id <| getElems model
+  in
+  List.maximum ids
+
 shiftKey: Json.Decoder Bool
 shiftKey = Json.field "shiftKey" Json.bool
 
