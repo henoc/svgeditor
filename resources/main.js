@@ -14820,35 +14820,79 @@ var _user$project$Main$view = function (model) {
 									{ctor: '[]'}),
 								_1: {
 									ctor: '::',
-									_0: _elm_lang$html$Html$text(' stroke:'),
+									_0: A2(
+										_elm_lang$html$Html$button,
+										{
+											ctor: '::',
+											_0: _elm_lang$html$Html_Attributes$checked(true),
+											_1: {
+												ctor: '::',
+												_0: _elm_lang$html$Html_Events$onClick(
+													_user$project$Types$OnProperty(
+														_user$project$Types$Style(
+															A3(_elm_lang$core$Dict$insert, 'fill', 'none', styleInfo)))),
+												_1: {ctor: '[]'}
+											}
+										},
+										{
+											ctor: '::',
+											_0: _elm_lang$html$Html$text('none'),
+											_1: {ctor: '[]'}
+										}),
 									_1: {
 										ctor: '::',
-										_0: A2(
-											_elm_lang$html$Html$input,
-											{
-												ctor: '::',
-												_0: _elm_lang$svg$Svg_Attributes$type_('color'),
-												_1: {
+										_0: _elm_lang$html$Html$text(' stroke:'),
+										_1: {
+											ctor: '::',
+											_0: A2(
+												_elm_lang$html$Html$input,
+												{
 													ctor: '::',
-													_0: _elm_lang$html$Html_Attributes$value(
-														A2(
-															_elm_lang$core$Maybe$withDefault,
-															'#000000',
-															A2(_elm_lang$core$Dict$get, 'stroke', model.styleInfo))),
+													_0: _elm_lang$svg$Svg_Attributes$type_('color'),
 													_1: {
 														ctor: '::',
-														_0: _elm_lang$html$Html_Events$onInput(
-															function (c) {
-																return _user$project$Types$OnProperty(
-																	_user$project$Types$Style(
-																		A3(_elm_lang$core$Dict$insert, 'stroke', c, styleInfo)));
-															}),
-														_1: {ctor: '[]'}
+														_0: _elm_lang$html$Html_Attributes$value(
+															A2(
+																_elm_lang$core$Maybe$withDefault,
+																'#000000',
+																A2(_elm_lang$core$Dict$get, 'stroke', model.styleInfo))),
+														_1: {
+															ctor: '::',
+															_0: _elm_lang$html$Html_Events$onInput(
+																function (c) {
+																	return _user$project$Types$OnProperty(
+																		_user$project$Types$Style(
+																			A3(_elm_lang$core$Dict$insert, 'stroke', c, styleInfo)));
+																}),
+															_1: {ctor: '[]'}
+														}
 													}
-												}
-											},
-											{ctor: '[]'}),
-										_1: {ctor: '[]'}
+												},
+												{ctor: '[]'}),
+											_1: {
+												ctor: '::',
+												_0: A2(
+													_elm_lang$html$Html$button,
+													{
+														ctor: '::',
+														_0: _elm_lang$html$Html_Attributes$checked(true),
+														_1: {
+															ctor: '::',
+															_0: _elm_lang$html$Html_Events$onClick(
+																_user$project$Types$OnProperty(
+																	_user$project$Types$Style(
+																		A3(_elm_lang$core$Dict$insert, 'stroke', 'none', styleInfo)))),
+															_1: {ctor: '[]'}
+														}
+													},
+													{
+														ctor: '::',
+														_0: _elm_lang$html$Html$text('none'),
+														_1: {ctor: '[]'}
+													}),
+												_1: {ctor: '[]'}
+											}
+										}
 									}
 								}
 							}

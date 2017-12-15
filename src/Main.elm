@@ -4,7 +4,7 @@ import Html exposing (Html, button, div, text, node, p)
 import Svg exposing (svg, ellipse, rect)
 import Svg.Attributes exposing (..)
 import Html.Events exposing (onClick, onInput, onMouseDown)
-import Html.Attributes exposing (value)
+import Html.Attributes exposing (value, checked)
 import Vec2 exposing (..)
 import Set exposing (Set)
 import Types exposing (..)
@@ -154,8 +154,10 @@ view model =
       p [] [
         text "fill:",
         Html.input [ type_ "color", value <| Maybe.withDefault "#000000" (Dict.get "fill" model.styleInfo) , onInput <| \c -> OnProperty <| Style (Dict.insert "fill" c styleInfo) ] [],
+        button [ checked True, onClick <| OnProperty <| Style (Dict.insert "fill" "none" styleInfo) ] [text "none"],
         text " stroke:",
-        Html.input [ type_ "color", value <| Maybe.withDefault "#000000" (Dict.get "stroke" model.styleInfo) ,onInput <| \c -> OnProperty <| Style (Dict.insert "stroke" c styleInfo) ] []
+        Html.input [ type_ "color", value <| Maybe.withDefault "#000000" (Dict.get "stroke" model.styleInfo) ,onInput <| \c -> OnProperty <| Style (Dict.insert "stroke" c styleInfo) ] [],
+        button [ checked True, onClick <| OnProperty <| Style (Dict.insert "stroke" "none" styleInfo) ] [text "none"]
       ]  
     ]
 
