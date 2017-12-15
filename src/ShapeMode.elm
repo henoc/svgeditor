@@ -8,13 +8,16 @@ import Dict exposing (Dict)
 update : MouseMsg -> Model -> Model
 update msg model = case msg of
     MouseDown position ->
-          let modelSvg = model.svg in
+          let
+            modelSvg = model.svg
+            correctedPos = (toVec2 position) -# (model.clientLeft, model.clientTop)
+          in
           { model |
             dragBegin = Just <| toVec2 position,
             svg = Utils.changeContains (
                     case model.mode of
-                      RectMode -> (Utils.getElems model) ++ { shape = Rectangle {leftTop = toVec2 position, size = (0, 0)}, style = model.styleInfo, attr = Dict.empty, id = model.idGen } :: []
-                      EllipseMode -> (Utils.getElems model) ++ { shape = Ellipse {center = toVec2 position, size = (0, 0)}, style = model.styleInfo, attr = Dict.empty, id = model.idGen } :: []
+                      RectMode -> (Utils.getElems model) ++ { shape = Rectangle {leftTop = correctedPos, size = (0, 0)}, style = model.styleInfo, attr = Dict.empty, id = model.idGen } :: []
+                      EllipseMode -> (Utils.getElems model) ++ { shape = Ellipse {center = correctedPos, size = (0, 0)}, style = model.styleInfo, attr = Dict.empty, id = model.idGen } :: []
                       _ -> Utils.getElems model
                   ) modelSvg
             ,
@@ -43,13 +46,16 @@ update msg model = case msg of
 updatePolygon : MouseMsg -> Model -> Model
 updatePolygon msg model = case msg of
   MouseDown position ->
+    let
+      correctedPos = (toVec2 position) -# (model.clientLeft, model.clientTop)
+    in
     case model.dragBegin of
       Nothing -> -- 新しくpolygonを作成
         {model |
           dragBegin = Just <| toVec2 position,
           svg = Utils.changeContains (
             Utils.getElems model ++ {
-              shape = Polygon {points = [toVec2 position, toVec2 position], enclosed = False },
+              shape = Polygon {points = [correctedPos, correctedPos], enclosed = False },
               style = model.styleInfo,
               attr = Dict.empty,
               id = model.idGen
@@ -74,7 +80,7 @@ updatePolygon msg model = case msg of
                   svg = Utils.changeContains (
                     init ++ {last|
                       shape = Polygon {
-                        points = (toVec2 position) :: points,
+                        points = correctedPos :: points,
                         enclosed = enclosed
                       }
                     } :: []

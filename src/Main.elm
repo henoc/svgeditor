@@ -38,7 +38,9 @@ init =
       selected = Set.empty,
       fixedPoint = Nothing,
       nodeId = Nothing,
-      selectedRef = []
+      selectedRef = [],
+      clientLeft = 0,
+      clientTop = 0
     } ! [Utils.getSvgData ()]
 
 
@@ -55,13 +57,13 @@ update msg model =
         {model | mode = NodeMode} ! []
 
       SwichMode RectMode ->
-        {model | mode = RectMode} ! []
+        {model | mode = RectMode} ! [Utils.getBoundingClientLeft "root", Utils.getBoundingClientTop "root"]
 
       SwichMode EllipseMode ->
-        {model | mode = EllipseMode} ! []
+        {model | mode = EllipseMode} ! [Utils.getBoundingClientLeft "root", Utils.getBoundingClientTop "root"]
       
       SwichMode PolygonMode ->
-        {model | mode = PolygonMode} ! []
+        {model | mode = PolygonMode} ! [Utils.getBoundingClientLeft "root", Utils.getBoundingClientTop "root"]
 
       Style styleInfo -> case model.mode of
         HandMode -> (HandMode.changeStyle styleInfo model) ! []
@@ -117,6 +119,12 @@ update msg model =
       case Parsers.parseSvg svgData of
         Just data -> {model| svg = data} ! []
         Nothing -> model ! []
+    
+    SvgRootLeft left ->
+      {model| clientLeft = left} ! []
+    
+    SvgRootTop top ->
+      {model| clientTop = top} ! []
 
 
 -- VIEW
@@ -141,16 +149,18 @@ view model =
           button [ onClick <| OnAction <| SendBackward ][text "send backward"]
         ]
       ],
-      svg [
-        width (toString <| 400),
-        height (toString <| 400),
-        onMouseDown NoSelect
-      ]
-      ((List.map ViewBuilder.build (Utils.getElems model) ) ++ (case model.mode of
-        NodeMode -> ViewBuilder.buildNodes model
-        HandMode -> ViewBuilder.buildVertexes model
-        _ -> []
-      )),
+      div [id "root"] [
+        svg [
+          width (toString <| 400),
+          height (toString <| 400),
+          onMouseDown NoSelect
+        ]
+        ((List.map ViewBuilder.build (Utils.getElems model) ) ++ (case model.mode of
+          NodeMode -> ViewBuilder.buildNodes model
+          HandMode -> ViewBuilder.buildVertexes model
+          _ -> []
+        ))
+      ],
       p [] [
         text "fill:",
         Html.input [ type_ "color", value <| Maybe.withDefault "#000000" (Dict.get "fill" model.styleInfo) , onInput <| \c -> OnProperty <| Style (Dict.insert "fill" c styleInfo) ] [],
@@ -168,4 +178,7 @@ view model =
 subscriptions : Model -> Sub Msg
 subscriptions model =
     Sub.batch
-        [ Mouse.downs <| OnMouse << MouseDown, Mouse.ups <| OnMouse << MouseUp, Mouse.moves <| OnMouse << MouseMove, Utils.getSvgDataFromJs SvgData ]
+        [
+          Mouse.downs <| OnMouse << MouseDown, Mouse.ups <| OnMouse << MouseUp, Mouse.moves <| OnMouse << MouseMove, Utils.getSvgDataFromJs SvgData,
+          Utils.getBoundingClientLeftFromJs SvgRootLeft, Utils.getBoundingClientTopFromJs SvgRootTop
+        ]

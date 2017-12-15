@@ -11961,10 +11961,29 @@ var _user$project$Types$StyledSVGElement = F4(
 	function (a, b, c, d) {
 		return {style: a, attr: b, id: c, shape: d};
 	});
-var _user$project$Types$Model = F9(
-	function (a, b, c, d, e, f, g, h, i) {
-		return {mode: a, dragBegin: b, svg: c, styleInfo: d, idGen: e, selected: f, nodeId: g, fixedPoint: h, selectedRef: i};
-	});
+var _user$project$Types$Model = function (a) {
+	return function (b) {
+		return function (c) {
+			return function (d) {
+				return function (e) {
+					return function (f) {
+						return function (g) {
+							return function (h) {
+								return function (i) {
+									return function (j) {
+										return function (k) {
+											return {mode: a, dragBegin: b, svg: c, styleInfo: d, idGen: e, selected: f, nodeId: g, fixedPoint: h, selectedRef: i, clientLeft: j, clientTop: k};
+										};
+									};
+								};
+							};
+						};
+					};
+				};
+			};
+		};
+	};
+};
 var _user$project$Types$Box = F2(
 	function (a, b) {
 		return {leftTop: a, rightBottom: b};
@@ -11991,6 +12010,12 @@ var _user$project$Types$Ellipse = function (a) {
 };
 var _user$project$Types$Rectangle = function (a) {
 	return {ctor: 'Rectangle', _0: a};
+};
+var _user$project$Types$SvgRootTop = function (a) {
+	return {ctor: 'SvgRootTop', _0: a};
+};
+var _user$project$Types$SvgRootLeft = function (a) {
+	return {ctor: 'SvgRootLeft', _0: a};
 };
 var _user$project$Types$SvgData = function (a) {
 	return {ctor: 'SvgData', _0: a};
@@ -12518,6 +12543,18 @@ var _user$project$Utils$reflectSvgData = function (model) {
 	var _p17 = A2(_elm_lang$core$Debug$log, 'send', svgData);
 	return _user$project$Utils$sendSvgData(svgData);
 };
+var _user$project$Utils$getBoundingClientLeft = _elm_lang$core$Native_Platform.outgoingPort(
+	'getBoundingClientLeft',
+	function (v) {
+		return v;
+	});
+var _user$project$Utils$getBoundingClientLeftFromJs = _elm_lang$core$Native_Platform.incomingPort('getBoundingClientLeftFromJs', _elm_lang$core$Json_Decode$float);
+var _user$project$Utils$getBoundingClientTop = _elm_lang$core$Native_Platform.outgoingPort(
+	'getBoundingClientTop',
+	function (v) {
+		return v;
+	});
+var _user$project$Utils$getBoundingClientTopFromJs = _elm_lang$core$Native_Platform.incomingPort('getBoundingClientTopFromJs', _elm_lang$core$Json_Decode$float);
 
 var _user$project$Actions$bringForward = function (model) {
 	var elems = _user$project$Utils$getElems(model);
@@ -13430,6 +13467,10 @@ var _user$project$ShapeMode$updatePolygon = F2(
 		switch (_p0.ctor) {
 			case 'MouseDown':
 				var _p5 = _p0._0;
+				var correctedPos = A2(
+					_user$project$Vec2_ops['-#'],
+					_user$project$Vec2$toVec2(_p5),
+					{ctor: '_Tuple2', _0: model.clientLeft, _1: model.clientTop});
 				var _p1 = model.dragBegin;
 				if (_p1.ctor === 'Nothing') {
 					return _elm_lang$core$Native_Utils.update(
@@ -13449,10 +13490,10 @@ var _user$project$ShapeMode$updatePolygon = F2(
 												{
 													points: {
 														ctor: '::',
-														_0: _user$project$Vec2$toVec2(_p5),
+														_0: correctedPos,
 														_1: {
 															ctor: '::',
-															_0: _user$project$Vec2$toVec2(_p5),
+															_0: correctedPos,
 															_1: {ctor: '[]'}
 														}
 													},
@@ -13502,11 +13543,7 @@ var _user$project$ShapeMode$updatePolygon = F2(
 														{
 															shape: _user$project$Types$Polygon(
 																{
-																	points: {
-																		ctor: '::',
-																		_0: _user$project$Vec2$toVec2(_p5),
-																		_1: _p3._0.points
-																	},
+																	points: {ctor: '::', _0: correctedPos, _1: _p3._0.points},
 																	enclosed: _p3._0.enclosed
 																})
 														}),
@@ -13578,6 +13615,10 @@ var _user$project$ShapeMode$update = F2(
 		switch (_p10.ctor) {
 			case 'MouseDown':
 				var _p12 = _p10._0;
+				var correctedPos = A2(
+					_user$project$Vec2_ops['-#'],
+					_user$project$Vec2$toVec2(_p12),
+					{ctor: '_Tuple2', _0: model.clientLeft, _1: model.clientTop});
 				var modelSvg = model.svg;
 				return _elm_lang$core$Native_Utils.update(
 					model,
@@ -13598,7 +13639,7 @@ var _user$project$ShapeMode$update = F2(
 												_0: {
 													shape: _user$project$Types$Rectangle(
 														{
-															leftTop: _user$project$Vec2$toVec2(_p12),
+															leftTop: correctedPos,
 															size: {ctor: '_Tuple2', _0: 0, _1: 0}
 														}),
 													style: model.styleInfo,
@@ -13616,7 +13657,7 @@ var _user$project$ShapeMode$update = F2(
 												_0: {
 													shape: _user$project$Types$Ellipse(
 														{
-															center: _user$project$Vec2$toVec2(_p12),
+															center: correctedPos,
 															size: {ctor: '_Tuple2', _0: 0, _1: 0}
 														}),
 													style: model.styleInfo,
@@ -14567,7 +14608,15 @@ var _user$project$Main$subscriptions = function (model) {
 					_1: {
 						ctor: '::',
 						_0: _user$project$Utils$getSvgDataFromJs(_user$project$Types$SvgData),
-						_1: {ctor: '[]'}
+						_1: {
+							ctor: '::',
+							_0: _user$project$Utils$getBoundingClientLeftFromJs(_user$project$Types$SvgRootLeft),
+							_1: {
+								ctor: '::',
+								_0: _user$project$Utils$getBoundingClientTopFromJs(_user$project$Types$SvgRootTop),
+								_1: {ctor: '[]'}
+							}
+						}
 					}
 				}
 			}
@@ -14750,39 +14799,50 @@ var _user$project$Main$view = function (model) {
 			_1: {
 				ctor: '::',
 				_0: A2(
-					_elm_lang$svg$Svg$svg,
+					_elm_lang$html$Html$div,
 					{
 						ctor: '::',
-						_0: _elm_lang$svg$Svg_Attributes$width(
-							_elm_lang$core$Basics$toString(400)),
-						_1: {
-							ctor: '::',
-							_0: _elm_lang$svg$Svg_Attributes$height(
-								_elm_lang$core$Basics$toString(400)),
-							_1: {
-								ctor: '::',
-								_0: _elm_lang$html$Html_Events$onMouseDown(_user$project$Types$NoSelect),
-								_1: {ctor: '[]'}
-							}
-						}
+						_0: _elm_lang$svg$Svg_Attributes$id('root'),
+						_1: {ctor: '[]'}
 					},
-					A2(
-						_elm_lang$core$Basics_ops['++'],
-						A2(
-							_elm_lang$core$List$map,
-							_user$project$ViewBuilder$build,
-							_user$project$Utils$getElems(model)),
-						function () {
-							var _p3 = model.mode;
-							switch (_p3.ctor) {
-								case 'NodeMode':
-									return _user$project$ViewBuilder$buildNodes(model);
-								case 'HandMode':
-									return _user$project$ViewBuilder$buildVertexes(model);
-								default:
-									return {ctor: '[]'};
-							}
-						}())),
+					{
+						ctor: '::',
+						_0: A2(
+							_elm_lang$svg$Svg$svg,
+							{
+								ctor: '::',
+								_0: _elm_lang$svg$Svg_Attributes$width(
+									_elm_lang$core$Basics$toString(400)),
+								_1: {
+									ctor: '::',
+									_0: _elm_lang$svg$Svg_Attributes$height(
+										_elm_lang$core$Basics$toString(400)),
+									_1: {
+										ctor: '::',
+										_0: _elm_lang$html$Html_Events$onMouseDown(_user$project$Types$NoSelect),
+										_1: {ctor: '[]'}
+									}
+								}
+							},
+							A2(
+								_elm_lang$core$Basics_ops['++'],
+								A2(
+									_elm_lang$core$List$map,
+									_user$project$ViewBuilder$build,
+									_user$project$Utils$getElems(model)),
+								function () {
+									var _p3 = model.mode;
+									switch (_p3.ctor) {
+										case 'NodeMode':
+											return _user$project$ViewBuilder$buildNodes(model);
+										case 'HandMode':
+											return _user$project$ViewBuilder$buildVertexes(model);
+										default:
+											return {ctor: '[]'};
+									}
+								}())),
+						_1: {ctor: '[]'}
+					}),
 				_1: {
 					ctor: '::',
 					_0: A2(
@@ -14930,7 +14990,15 @@ var _user$project$Main$update = F2(
 								_elm_lang$core$Native_Utils.update(
 									model,
 									{mode: _user$project$Types$RectMode}),
-								{ctor: '[]'});
+								{
+									ctor: '::',
+									_0: _user$project$Utils$getBoundingClientLeft('root'),
+									_1: {
+										ctor: '::',
+										_0: _user$project$Utils$getBoundingClientTop('root'),
+										_1: {ctor: '[]'}
+									}
+								});
 						case 'EllipseMode':
 							return A2(
 								_elm_lang$core$Platform_Cmd_ops['!'],
@@ -15110,7 +15178,7 @@ var _user$project$Main$update = F2(
 						model,
 						{ctor: '[]'});
 				}
-			default:
+			case 'SvgData':
 				var _p17 = _user$project$Parsers$parseSvg(_p4._0);
 				if (_p17.ctor === 'Just') {
 					return A2(
@@ -15125,6 +15193,20 @@ var _user$project$Main$update = F2(
 						model,
 						{ctor: '[]'});
 				}
+			case 'SvgRootLeft':
+				return A2(
+					_elm_lang$core$Platform_Cmd_ops['!'],
+					_elm_lang$core$Native_Utils.update(
+						model,
+						{clientLeft: _p4._0}),
+					{ctor: '[]'});
+			default:
+				return A2(
+					_elm_lang$core$Platform_Cmd_ops['!'],
+					_elm_lang$core$Native_Utils.update(
+						model,
+						{clientTop: _p4._0}),
+					{ctor: '[]'});
 		}
 	});
 var _user$project$Main$init = A2(
@@ -15156,7 +15238,9 @@ var _user$project$Main$init = A2(
 		selected: _elm_lang$core$Set$empty,
 		fixedPoint: _elm_lang$core$Maybe$Nothing,
 		nodeId: _elm_lang$core$Maybe$Nothing,
-		selectedRef: {ctor: '[]'}
+		selectedRef: {ctor: '[]'},
+		clientLeft: 0,
+		clientTop: 0
 	},
 	{
 		ctor: '::',

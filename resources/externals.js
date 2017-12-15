@@ -15,3 +15,13 @@ app.ports.sendSvgData.subscribe(function(svgData) {
     "file://"
   );
 });
+
+app.ports.getBoundingClientLeft.subscribe(function(id){
+  const elem = document.getElementById(id);
+  app.ports.getBoundingClientLeftFromJs.send(elem.getBoundingClientRect().left);
+});
+
+app.ports.getBoundingClientTop.subscribe(function(id){
+  const elem = document.getElementById(id);
+  app.ports.getBoundingClientTopFromJs.send(elem.getBoundingClientRect().top);
+});

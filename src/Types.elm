@@ -35,10 +35,13 @@ type alias Model = {
   selected: Set Int,
   nodeId: Maybe Int,
   fixedPoint: Maybe Vec2,
-  selectedRef: List StyledSVGElement
+  selectedRef: List StyledSVGElement,
+  clientLeft: Float,
+  clientTop: Float
 }
 
-type Msg = OnProperty ChangePropertyMsg | OnAction Action | OnMouse MouseMsg | OnSelect Int Bool Vec2 | NoSelect | OnVertex Vec2 Vec2 | OnNode Vec2 Int | SvgData String
+type Msg = OnProperty ChangePropertyMsg | OnAction Action | OnMouse MouseMsg | OnSelect Int Bool Vec2 | NoSelect | OnVertex Vec2 Vec2 | OnNode Vec2 Int
+  | SvgData String | SvgRootLeft Float | SvgRootTop Float
 type ChangePropertyMsg = SwichMode Mode | Style StyleInfo
 type MouseMsg = MouseDown Mouse.Position | MouseUp Mouse.Position | MouseMove Mouse.Position
 type Action = Duplicate | Delete | BringForward | SendBackward
