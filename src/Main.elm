@@ -4,6 +4,7 @@ import Html exposing (Html, button, div, text, node, p)
 import Svg exposing (svg, ellipse, rect)
 import Svg.Attributes exposing (..)
 import Html.Events exposing (onClick, onInput, onMouseDown)
+import Html.Attributes exposing (value)
 import Vec2 exposing (..)
 import Set exposing (Set)
 import Types exposing (..)
@@ -62,8 +63,9 @@ update msg model =
       SwichMode PolygonMode ->
         {model | mode = PolygonMode} ! []
 
-      Style styleInfo ->
-        {model | styleInfo = styleInfo} ! []
+      Style styleInfo -> case model.mode of
+        HandMode -> (HandMode.changeStyle styleInfo model) ! []
+        _ -> {model | styleInfo = styleInfo} ! []
     
     OnAction action -> case action of
       Duplicate ->
@@ -149,8 +151,12 @@ view model =
         HandMode -> ViewBuilder.buildVertexes model
         _ -> []
       )),
-      Html.input [ type_ "color", onInput <| \c -> OnProperty <| Style (Dict.insert "fill" c styleInfo) ] [],
-      Html.input [ type_ "color", onInput <| \c -> OnProperty <| Style (Dict.insert "stroke" c styleInfo) ] []    
+      p [] [
+        text "fill:",
+        Html.input [ type_ "color", value <| Maybe.withDefault "#000000" (Dict.get "fill" model.styleInfo) , onInput <| \c -> OnProperty <| Style (Dict.insert "fill" c styleInfo) ] [],
+        text " stroke:",
+        Html.input [ type_ "color", value <| Maybe.withDefault "#000000" (Dict.get "stroke" model.styleInfo) ,onInput <| \c -> OnProperty <| Style (Dict.insert "stroke" c styleInfo) ] []
+      ]  
     ]
 
 

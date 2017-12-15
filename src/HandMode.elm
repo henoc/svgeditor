@@ -7,6 +7,7 @@ import Set exposing (Set)
 import Shape
 import ShapeList
 import Debug
+import Dict exposing (Dict)
 
 update : MouseMsg -> Model -> Model
 update msg model = case msg of
@@ -63,9 +64,15 @@ update msg model = case msg of
 
 select : Int -> Bool -> Vec2 -> Model -> Model
 select ident isAdd pos model =
+  let
+    selectedStyle = Maybe.withDefault Dict.empty <| Maybe.map .style (Utils.getById ident model)
+    fill = Maybe.withDefault "#000000" <| Dict.get "fill" selectedStyle
+    stroke = Maybe.withDefault "#000000" <| Dict.get "stroke" selectedStyle
+    newStyleInfo = Dict.insert "fill" fill << Dict.insert "stroke" stroke <| model.styleInfo
+  in
   -- 選択中のものを選択
   if Set.member ident model.selected then
-    {model | dragBegin = Just pos}
+    {model | dragBegin = Just pos, styleInfo = newStyleInfo}
   
   -- 追加選択
   else if isAdd then
@@ -73,7 +80,7 @@ select ident isAdd pos model =
       selected = Set.insert ident model.selected
       selectedRef = List.filter (\e -> Set.member e.id selected) (Utils.getElems model)
     in
-    {model | selected = selected, dragBegin = Just pos, selectedRef = selectedRef}
+    {model | selected = selected, dragBegin = Just pos, selectedRef = selectedRef, styleInfo = newStyleInfo}
 
   -- 新規選択
   else
@@ -81,7 +88,7 @@ select ident isAdd pos model =
       selected = Set.singleton ident
       selectedRef = List.filter (\e -> Set.member e.id selected) (Utils.getElems model)
     in
-    { model | selected = Set.singleton ident, dragBegin = Just pos, selectedRef = selectedRef }
+    { model | selected = Set.singleton ident, dragBegin = Just pos, selectedRef = selectedRef, styleInfo = newStyleInfo}
 
 noSelect : Model -> Model
 noSelect model =
@@ -90,3 +97,18 @@ noSelect model =
 scale: Vec2 -> Vec2 -> Model -> Model
 scale fixed mpos model =
   {model | fixedPoint = Just fixed, dragBegin = Just mpos}
+
+changeStyle: StyleInfo -> Model -> Model
+changeStyle styleInfo model =
+  let
+    changed = List.map (\e -> {e | style = styleInfo}) model.selectedRef
+    newElems = Utils.replace
+      (\elem -> Set.member elem.id model.selected)
+      changed
+      (Utils.getElems model)
+  in
+  {model |
+    svg = Utils.changeContains newElems model.svg,
+    styleInfo = styleInfo,
+    selectedRef = changed
+  }
