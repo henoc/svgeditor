@@ -13278,11 +13278,11 @@ var _user$project$HandMode$select = F4(
 				A2(_user$project$Utils$getById, ident, model)));
 		var fill = A2(
 			_elm_lang$core$Maybe$withDefault,
-			'#000000',
+			'none',
 			A2(_elm_lang$core$Dict$get, 'fill', selectedStyle));
 		var stroke = A2(
 			_elm_lang$core$Maybe$withDefault,
-			'#000000',
+			'none',
 			A2(_elm_lang$core$Dict$get, 'stroke', selectedStyle));
 		var newStyleInfo = function (_p0) {
 			return A3(
@@ -13973,169 +13973,168 @@ var _user$project$ViewBuilder$buildVertexes = function (model) {
 		positions,
 		_elm_lang$core$List$reverse(positions));
 };
-var _user$project$ViewBuilder$buildStyle = function (style) {
-	var pat = F2(
-		function (name, maybeVal) {
-			var _p5 = maybeVal;
-			if (_p5.ctor === 'Just') {
+var _user$project$ViewBuilder$build = function (svg) {
+	var styleStr = A2(
+		_elm_lang$core$String$join,
+		';',
+		A2(
+			_elm_lang$core$List$map,
+			function (_p5) {
+				var _p6 = _p5;
 				return A2(
 					_elm_lang$core$Basics_ops['++'],
-					name,
-					A2(_elm_lang$core$Basics_ops['++'], ':', _p5._0));
-			} else {
-				return '';
-			}
-		});
-	return A2(
-		_elm_lang$core$Basics_ops['++'],
-		A2(
-			pat,
-			'fill',
-			A2(_elm_lang$core$Dict$get, 'fill', style)),
-		A2(
-			_elm_lang$core$Basics_ops['++'],
-			';',
-			A2(
-				pat,
-				'stroke',
-				A2(_elm_lang$core$Dict$get, 'stroke', style))));
-};
-var _user$project$ViewBuilder$build = function (svg) {
-	var _p6 = svg.shape;
-	switch (_p6.ctor) {
+					_p6._0,
+					A2(_elm_lang$core$Basics_ops['++'], ':', _p6._1));
+			},
+			_elm_lang$core$Dict$toList(svg.style)));
+	var attrList = A2(
+		_elm_lang$core$List$map,
+		function (_p7) {
+			var _p8 = _p7;
+			return A2(_elm_lang$html$Html_Attributes$attribute, _p8._0, _p8._1);
+		},
+		_elm_lang$core$Dict$toList(svg.attr));
+	var _p9 = svg.shape;
+	switch (_p9.ctor) {
 		case 'Rectangle':
-			var _p10 = _p6._0.size;
-			var _p9 = _p6._0.leftTop;
+			var _p13 = _p9._0.size;
+			var _p12 = _p9._0.leftTop;
 			var left = A2(
 				_user$project$Vec2_ops['-#'],
-				_p9,
+				_p12,
 				A2(
 					_user$project$Vec2_ops['/#'],
-					_p10,
+					_p13,
 					{ctor: '_Tuple2', _0: 2, _1: 2}));
 			return A2(
 				_elm_lang$svg$Svg$rect,
-				{
-					ctor: '::',
-					_0: _elm_lang$svg$Svg_Attributes$x(
-						_elm_lang$core$Basics$toString(
-							_elm_lang$core$Tuple$first(_p9))),
-					_1: {
+				A2(
+					_elm_lang$core$Basics_ops['++'],
+					attrList,
+					{
 						ctor: '::',
-						_0: _elm_lang$svg$Svg_Attributes$y(
+						_0: _elm_lang$svg$Svg_Attributes$x(
 							_elm_lang$core$Basics$toString(
-								_elm_lang$core$Tuple$second(_p9))),
+								_elm_lang$core$Tuple$first(_p12))),
 						_1: {
 							ctor: '::',
-							_0: _elm_lang$svg$Svg_Attributes$width(
+							_0: _elm_lang$svg$Svg_Attributes$y(
 								_elm_lang$core$Basics$toString(
-									_elm_lang$core$Tuple$first(_p10))),
+									_elm_lang$core$Tuple$second(_p12))),
 							_1: {
 								ctor: '::',
-								_0: _elm_lang$svg$Svg_Attributes$height(
+								_0: _elm_lang$svg$Svg_Attributes$width(
 									_elm_lang$core$Basics$toString(
-										_elm_lang$core$Tuple$second(_p10))),
+										_elm_lang$core$Tuple$first(_p13))),
 								_1: {
 									ctor: '::',
-									_0: _elm_lang$svg$Svg_Attributes$style(
-										_user$project$ViewBuilder$buildStyle(svg.style)),
+									_0: _elm_lang$svg$Svg_Attributes$height(
+										_elm_lang$core$Basics$toString(
+											_elm_lang$core$Tuple$second(_p13))),
 									_1: {
 										ctor: '::',
-										_0: _user$project$Utils$onItemMouseDown(
-											function (_p7) {
-												var _p8 = _p7;
-												return A3(_user$project$Types$OnSelect, svg.id, _p8._0, _p8._1);
-											}),
-										_1: {ctor: '[]'}
+										_0: _elm_lang$svg$Svg_Attributes$style(styleStr),
+										_1: {
+											ctor: '::',
+											_0: _user$project$Utils$onItemMouseDown(
+												function (_p10) {
+													var _p11 = _p10;
+													return A3(_user$project$Types$OnSelect, svg.id, _p11._0, _p11._1);
+												}),
+											_1: {ctor: '[]'}
+										}
 									}
 								}
 							}
 						}
-					}
-				},
+					}),
 				{ctor: '[]'});
 		case 'Ellipse':
-			var _p14 = _p6._0.size;
-			var _p13 = _p6._0.center;
-			var centx = _elm_lang$core$Tuple$first(_p13);
-			var centy = _elm_lang$core$Tuple$second(_p13);
-			var sizex = _elm_lang$core$Tuple$first(_p14);
-			var sizey = _elm_lang$core$Tuple$second(_p14);
+			var _p17 = _p9._0.size;
+			var _p16 = _p9._0.center;
+			var centx = _elm_lang$core$Tuple$first(_p16);
+			var centy = _elm_lang$core$Tuple$second(_p16);
+			var sizex = _elm_lang$core$Tuple$first(_p17);
+			var sizey = _elm_lang$core$Tuple$second(_p17);
 			return A2(
 				_elm_lang$svg$Svg$ellipse,
-				{
-					ctor: '::',
-					_0: _elm_lang$svg$Svg_Attributes$cx(
-						_elm_lang$core$Basics$toString(centx)),
-					_1: {
+				A2(
+					_elm_lang$core$Basics_ops['++'],
+					attrList,
+					{
 						ctor: '::',
-						_0: _elm_lang$svg$Svg_Attributes$cy(
-							_elm_lang$core$Basics$toString(centy)),
+						_0: _elm_lang$svg$Svg_Attributes$cx(
+							_elm_lang$core$Basics$toString(centx)),
 						_1: {
 							ctor: '::',
-							_0: _elm_lang$svg$Svg_Attributes$rx(
-								_elm_lang$core$Basics$toString(sizex / 2)),
+							_0: _elm_lang$svg$Svg_Attributes$cy(
+								_elm_lang$core$Basics$toString(centy)),
 							_1: {
 								ctor: '::',
-								_0: _elm_lang$svg$Svg_Attributes$ry(
-									_elm_lang$core$Basics$toString(sizey / 2)),
+								_0: _elm_lang$svg$Svg_Attributes$rx(
+									_elm_lang$core$Basics$toString(sizex / 2)),
 								_1: {
 									ctor: '::',
-									_0: _elm_lang$svg$Svg_Attributes$style(
-										_user$project$ViewBuilder$buildStyle(svg.style)),
+									_0: _elm_lang$svg$Svg_Attributes$ry(
+										_elm_lang$core$Basics$toString(sizey / 2)),
 									_1: {
 										ctor: '::',
-										_0: _user$project$Utils$onItemMouseDown(
-											function (_p11) {
-												var _p12 = _p11;
-												return A3(_user$project$Types$OnSelect, svg.id, _p12._0, _p12._1);
-											}),
-										_1: {ctor: '[]'}
+										_0: _elm_lang$svg$Svg_Attributes$style(styleStr),
+										_1: {
+											ctor: '::',
+											_0: _user$project$Utils$onItemMouseDown(
+												function (_p14) {
+													var _p15 = _p14;
+													return A3(_user$project$Types$OnSelect, svg.id, _p15._0, _p15._1);
+												}),
+											_1: {ctor: '[]'}
+										}
 									}
 								}
 							}
 						}
-					}
-				},
+					}),
 				{ctor: '[]'});
 		case 'Polygon':
-			var _p19 = _p6._0;
+			var _p22 = _p9._0;
 			return A2(
-				_p19.enclosed ? _elm_lang$svg$Svg$polygon : _elm_lang$svg$Svg$polyline,
-				{
-					ctor: '::',
-					_0: _elm_lang$svg$Svg_Attributes$points(
-						A2(
-							_elm_lang$core$String$join,
-							',',
-							A2(
-								_elm_lang$core$List$map,
-								function (_p15) {
-									var _p16 = _p15;
-									return A2(
-										_elm_lang$core$Basics_ops['++'],
-										_elm_lang$core$Basics$toString(_p16._0),
-										A2(
-											_elm_lang$core$Basics_ops['++'],
-											' ',
-											_elm_lang$core$Basics$toString(_p16._1)));
-								},
-								_p19.points))),
-					_1: {
+				_p22.enclosed ? _elm_lang$svg$Svg$polygon : _elm_lang$svg$Svg$polyline,
+				A2(
+					_elm_lang$core$Basics_ops['++'],
+					attrList,
+					{
 						ctor: '::',
-						_0: _elm_lang$svg$Svg_Attributes$style(
-							_user$project$ViewBuilder$buildStyle(svg.style)),
+						_0: _elm_lang$svg$Svg_Attributes$points(
+							A2(
+								_elm_lang$core$String$join,
+								',',
+								A2(
+									_elm_lang$core$List$map,
+									function (_p18) {
+										var _p19 = _p18;
+										return A2(
+											_elm_lang$core$Basics_ops['++'],
+											_elm_lang$core$Basics$toString(_p19._0),
+											A2(
+												_elm_lang$core$Basics_ops['++'],
+												' ',
+												_elm_lang$core$Basics$toString(_p19._1)));
+									},
+									_p22.points))),
 						_1: {
 							ctor: '::',
-							_0: _user$project$Utils$onItemMouseDown(
-								function (_p17) {
-									var _p18 = _p17;
-									return A3(_user$project$Types$OnSelect, svg.id, _p18._0, _p18._1);
-								}),
-							_1: {ctor: '[]'}
+							_0: _elm_lang$svg$Svg_Attributes$style(styleStr),
+							_1: {
+								ctor: '::',
+								_0: _user$project$Utils$onItemMouseDown(
+									function (_p20) {
+										var _p21 = _p20;
+										return A3(_user$project$Types$OnSelect, svg.id, _p21._0, _p21._1);
+									}),
+								_1: {ctor: '[]'}
+							}
 						}
-					}
-				},
+					}),
 				{ctor: '[]'});
 		case 'Path':
 			var opstr = function (op) {
@@ -14150,48 +14149,72 @@ var _user$project$ViewBuilder$build = function (svg) {
 							',',
 							A2(
 								_elm_lang$core$List$map,
-								function (_p20) {
-									var _p21 = _p20;
+								function (_p23) {
+									var _p24 = _p23;
 									return A2(
 										_elm_lang$core$Basics_ops['++'],
-										_elm_lang$core$Basics$toString(_p21._0),
+										_elm_lang$core$Basics$toString(_p24._0),
 										A2(
 											_elm_lang$core$Basics_ops['++'],
 											' ',
-											_elm_lang$core$Basics$toString(_p21._1)));
+											_elm_lang$core$Basics$toString(_p24._1)));
 								},
 								op.points))));
 			};
 			var pathopstr = A2(
 				_elm_lang$core$String$join,
 				' ',
-				A2(_elm_lang$core$List$map, opstr, _p6._0.operators));
+				A2(_elm_lang$core$List$map, opstr, _p9._0.operators));
 			return A2(
 				_elm_lang$svg$Svg$path,
-				{
-					ctor: '::',
-					_0: _elm_lang$svg$Svg_Attributes$d(pathopstr),
-					_1: {
+				A2(
+					_elm_lang$core$Basics_ops['++'],
+					attrList,
+					{
 						ctor: '::',
-						_0: _elm_lang$svg$Svg_Attributes$style(
-							_user$project$ViewBuilder$buildStyle(svg.style)),
+						_0: _elm_lang$svg$Svg_Attributes$d(pathopstr),
 						_1: {
 							ctor: '::',
-							_0: _user$project$Utils$onItemMouseDown(
-								function (_p22) {
-									var _p23 = _p22;
-									return A3(_user$project$Types$OnSelect, svg.id, _p23._0, _p23._1);
-								}),
+							_0: _elm_lang$svg$Svg_Attributes$style(styleStr),
+							_1: {
+								ctor: '::',
+								_0: _user$project$Utils$onItemMouseDown(
+									function (_p25) {
+										var _p26 = _p25;
+										return A3(_user$project$Types$OnSelect, svg.id, _p26._0, _p26._1);
+									}),
+								_1: {ctor: '[]'}
+							}
+						}
+					}),
+				{ctor: '[]'});
+		case 'SVG':
+			var _p27 = _p9._0.size;
+			return A2(
+				_elm_lang$svg$Svg$svg,
+				A2(
+					_elm_lang$core$Basics_ops['++'],
+					attrList,
+					{
+						ctor: '::',
+						_0: _elm_lang$svg$Svg_Attributes$width(
+							_elm_lang$core$Basics$toString(
+								_elm_lang$core$Tuple$first(_p27))),
+						_1: {
+							ctor: '::',
+							_0: _elm_lang$svg$Svg_Attributes$height(
+								_elm_lang$core$Basics$toString(
+									_elm_lang$core$Tuple$second(_p27))),
 							_1: {ctor: '[]'}
 						}
-					}
-				},
-				{ctor: '[]'});
+					}),
+				A2(_elm_lang$core$List$map, _user$project$ViewBuilder$build, _p9._0.elems));
 		default:
-			return A2(
-				_elm_lang$svg$Svg$rect,
-				{ctor: '[]'},
-				{ctor: '[]'});
+			return A3(
+				_elm_lang$html$Html$node,
+				_p9._0.name,
+				attrList,
+				A2(_elm_lang$core$List$map, _user$project$ViewBuilder$build, _p9._0.elems));
 	}
 };
 

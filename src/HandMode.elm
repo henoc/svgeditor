@@ -66,8 +66,8 @@ select : Int -> Bool -> Vec2 -> Model -> Model
 select ident isAdd pos model =
   let
     selectedStyle = Maybe.withDefault Dict.empty <| Maybe.map .style (Utils.getById ident model)
-    fill = Maybe.withDefault "#000000" <| Dict.get "fill" selectedStyle
-    stroke = Maybe.withDefault "#000000" <| Dict.get "stroke" selectedStyle
+    fill = Maybe.withDefault "none" <| Dict.get "fill" selectedStyle
+    stroke = Maybe.withDefault "none" <| Dict.get "stroke" selectedStyle
     newStyleInfo = Dict.insert "fill" fill << Dict.insert "stroke" stroke <| model.styleInfo
   in
   -- 選択中のものを選択
