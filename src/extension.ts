@@ -11,11 +11,11 @@ export function activate(context: vscode.ExtensionContext) {
   let previewUri = vscode.Uri.parse("svgeditor://authority/svgeditor");
   let readResource =
     (filename: string) => fs.readFileSync(path.join(__dirname, "..", "resources", filename), "UTF-8");
-  let insertJs = readResource("bundle.js");
-  let insertCss = readResource("bundle.css");
   let viewer = readResource("viewer.ejs");
+  let mainJs = readResource("main.js");
+  let externalJs = readResource("externals.js");
   let templateSvg = readResource("template.svg");
-  let icons = readResource("icons.svg");
+  let style = readResource("style.css");
 
   class TextDocumentContentProvider implements vscode.TextDocumentContentProvider {
     public editor: vscode.TextEditor;
@@ -35,19 +35,17 @@ export function activate(context: vscode.ExtensionContext) {
 
     private createCssSnippet(): string {
       const svg = this.editor.document.getText();
-      const js = insertJs;
-      const css = insertCss;
+      const external2 = externalJs.replace("{{svg}}", svg.replace(/`/g, ""));
       const html = render(viewer, {
-        svg: svg,
-        js: js,
-        css: css,
-        icons: icons
+        main: mainJs,
+        externals: external2,
+        style: style
       });
-      let logDir = path.join(__dirname, "..", "log");
-      if (!fs.existsSync(logDir)) {
-        fs.mkdirSync(logDir);
-      }
-      fs.writeFileSync(path.join(__dirname, "..", "log", "log.html"), html);
+      // let logDir = path.join(__dirname, "..", "log");
+      // if (!fs.existsSync(logDir)) {
+      //   fs.mkdirSync(logDir);
+      // }
+      // fs.writeFileSync(path.join(__dirname, "..", "log", "log.html"), html);
       return html;
     }
   }
@@ -64,14 +62,14 @@ export function activate(context: vscode.ExtensionContext) {
     }
   });
 
-  disposables.push(vscode.commands.registerCommand("extension.openSvgEditor", () => {
+  disposables.push(vscode.commands.registerCommand("svgeditor.openSvgEditor", () => {
     provider.editor = vscode.window.activeTextEditor;
     return vscode.commands.executeCommand("vscode.previewHtml", previewUri, vscode.ViewColumn.Two, "SVG Editor").then((success) => undefined, (reason) => {
       vscode.window.showErrorMessage(reason);
     });
   }));
 
-  disposables.push(vscode.commands.registerCommand("extension.newSvgEditor", () => {
+  disposables.push(vscode.commands.registerCommand("svgeditor.newSvgEditor", () => {
     return vscode.commands.executeCommand("workbench.action.files.newUntitledFile").then(
       (success) => {
         provider.editor = vscode.window.activeTextEditor;
@@ -95,9 +93,9 @@ export function activate(context: vscode.ExtensionContext) {
   /**
    * Call only by previewer
    */
-  vscode.commands.registerCommand("extension.reflectToEditor", (text: string) => {
+  vscode.commands.registerCommand("svgeditor.reflectToEditor", (text: string) => {
     provider.editor!.edit(editbuilder => {
-      editbuilder.replace(allRange(provider.editor!), htmlPretty.prettyPrint(text, {indent_size: 2}));
+      editbuilder.replace(allRange(provider.editor!), htmlPretty.prettyPrint(text, {indent_size: 2, max_char: 0}));
     });
   });
 }

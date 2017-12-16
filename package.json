@@ -2,13 +2,14 @@
   "name": "svgeditor",
   "displayName": "SVG Editor",
   "description": "Visual and literal SVG editor for VSCode.",
-  "version": "0.3.1",
+  "version": "0.4.0",
   "publisher": "henoc",
   "icon": "images/SVG_logo.png",
   "galleryBanner": {
     "color": "#5c2d91",
     "theme": "dark"
   },
+  "license": "MIT",
   "bugs": {
     "url": "https://github.com/Henoc/svgeditor/issues",
     "email": "agekutar@gmail.com"
@@ -24,61 +25,46 @@
     "vscode": "^0.10.7"
   },
   "activationEvents": [
-    "onCommand:extension.openSvgEditor",
-    "onCommand:extension.newSvgEditor"
+    "onCommand:svgeditor.openSvgEditor",
+    "onCommand:svgeditor.newSvgEditor"
   ],
   "main": "./out/extension",
   "contributes": {
     "commands": [
       {
-        "command": "extension.openSvgEditor",
+        "command": "svgeditor.openSvgEditor",
         "title": "Open SVG Editor"
       },
       {
-        "command": "extension.newSvgEditor",
+        "command": "svgeditor.newSvgEditor",
         "title": "New File with SVG Editor"
       }
     ],
     "menus": {
       "editor/title": [
         {
-          "command": "extension.openSvgEditor",
+          "command": "svgeditor.openSvgEditor",
           "when": "resourceLangId == svg"
         }
       ]
     }
   },
   "scripts": {
-    "vscode:prepublish": "tsc -p ./",
-    "compile": "tsc -p ./ && npm run bundle",
-    "bundle": "browserify out/preview/common.js -o resources/bundle.js -p [ parcelify -o resources/bundle.css ]",
+    "vscode:prepublish": "npm run compile",
+    "compile": "tsc -p ./ && npm run elm",
+    "elm": "elm make src/Main.elm --output resources/main.js",
     "postinstall": "node ./node_modules/vscode/bin/install",
     "test": "npm run compile && ava out/test --verbose"
   },
   "devDependencies": {
     "@types/node": "*",
-    "ava": "^0.23.0",
-    "browserify": "^14.5.0",
-    "parcelify": "^2.2.0",
     "tslint": "^5.8.0",
     "typescript": "^2.6.1",
     "vscode": "^1.0.0"
   },
   "dependencies": {
-    "@types/clipboard": "^1.5.35",
     "@types/ejs": "^2.3.33",
-    "@types/jquery": "^3.2.16",
-    "@types/tinycolor2": "^1.4.0",
     "ejs": "^2.5.7",
-    "html": "^1.0.0",
-    "jquery": "^3.2.1",
-    "spectrum-colorpicker": "^1.8.0",
-    "svgjs": "^2.6.2",
-    "tinycolor2": "^1.4.1",
-    "yaparsec": "^1.0.5"
-  },
-  "style": [
-    "./node_modules/spectrum-colorpicker/spectrum.css",
-    "./src/preview/svgeditor.css"
-  ]
+    "html": "^1.0.0"
+  }
 }

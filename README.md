@@ -16,20 +16,21 @@ You can create shapes using the SVG's coder or directly creating shapes with the
 ## Kinds of operation
 
 - Hand mode
-  - Scale and rotate.
-    - Note: Rotation uses the transform attribute. Transform property order is now `translate, rotate, scale, translate`. If this transform property order is not followed correctly, the shape will not be effected.
+  - Scale and translate.
 - Node mode
-  - Edit node of line, polyline, polygon and path object.
-- Rectangle, ellipse, polygon, path, text mode
+  - Edit node of polyline, polygon.
+- Rectangle, ellipse, polygon mode
   - Make new object.
 
 ## Future plans
 
-- [x] Reflect embedded CSS in SVG
+- [ ] Reimplement rotation
+- [ ] Reimplement path mode, text mode
+- [ ] Reimplement group and ungroup
+- [ ] Reflect embedded CSS in SVG
 - [ ] Attributes output style options
 - [ ] Line cap, marker
 - [ ] Scale objects with fixed aspect ratio mode
-- [x] `g` tag
 - [ ] `defs` tag
 - [ ] `use` tag
 - [ ] Gradation colors
@@ -39,6 +40,7 @@ You can create shapes using the SVG's coder or directly creating shapes with the
 
 ## ChangeLog
 
+- 0.4.0 Reimplement with Elm. Many things have improved, but some functions are temporary unavailable 😥
 - 0.3.0 Added group and ungroup button, improved right click menu
 - 0.2.0 Affected embedded CSS in SVG
 - 0.1.0 Released
