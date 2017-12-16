@@ -5,7 +5,7 @@ app.ports.getSvgData.subscribe(function(){
 });
 
 app.ports.sendSvgData.subscribe(function(svgData) {
-  const name = "extension.reflectToEditor";
+  const name = "svgeditor.reflectToEditor";
   const args = [svgData];
   window.parent.postMessage(
     {

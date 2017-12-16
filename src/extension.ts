@@ -41,11 +41,11 @@ export function activate(context: vscode.ExtensionContext) {
         externals: external2,
         style: style
       });
-      let logDir = path.join(__dirname, "..", "log");
-      if (!fs.existsSync(logDir)) {
-        fs.mkdirSync(logDir);
-      }
-      fs.writeFileSync(path.join(__dirname, "..", "log", "log.html"), html);
+      // let logDir = path.join(__dirname, "..", "log");
+      // if (!fs.existsSync(logDir)) {
+      //   fs.mkdirSync(logDir);
+      // }
+      // fs.writeFileSync(path.join(__dirname, "..", "log", "log.html"), html);
       return html;
     }
   }
@@ -62,14 +62,14 @@ export function activate(context: vscode.ExtensionContext) {
     }
   });
 
-  disposables.push(vscode.commands.registerCommand("extension.openSvgEditor", () => {
+  disposables.push(vscode.commands.registerCommand("svgeditor.openSvgEditor", () => {
     provider.editor = vscode.window.activeTextEditor;
     return vscode.commands.executeCommand("vscode.previewHtml", previewUri, vscode.ViewColumn.Two, "SVG Editor").then((success) => undefined, (reason) => {
       vscode.window.showErrorMessage(reason);
     });
   }));
 
-  disposables.push(vscode.commands.registerCommand("extension.newSvgEditor", () => {
+  disposables.push(vscode.commands.registerCommand("svgeditor.newSvgEditor", () => {
     return vscode.commands.executeCommand("workbench.action.files.newUntitledFile").then(
       (success) => {
         provider.editor = vscode.window.activeTextEditor;
@@ -93,7 +93,7 @@ export function activate(context: vscode.ExtensionContext) {
   /**
    * Call only by previewer
    */
-  vscode.commands.registerCommand("extension.reflectToEditor", (text: string) => {
+  vscode.commands.registerCommand("svgeditor.reflectToEditor", (text: string) => {
     provider.editor!.edit(editbuilder => {
       editbuilder.replace(allRange(provider.editor!), htmlPretty.prettyPrint(text, {indent_size: 2, max_char: 0}));
     });

@@ -2,7 +2,7 @@
   "name": "svgeditor",
   "displayName": "SVG Editor",
   "description": "Visual and literal SVG editor for VSCode.",
-  "version": "0.3.1",
+  "version": "0.4.0",
   "publisher": "henoc",
   "icon": "images/SVG_logo.png",
   "galleryBanner": {
@@ -25,25 +25,25 @@
     "vscode": "^0.10.7"
   },
   "activationEvents": [
-    "onCommand:extension.openSvgEditor",
-    "onCommand:extension.newSvgEditor"
+    "onCommand:svgeditor.openSvgEditor",
+    "onCommand:svgeditor.newSvgEditor"
   ],
   "main": "./out/extension",
   "contributes": {
     "commands": [
       {
-        "command": "extension.openSvgEditor",
+        "command": "svgeditor.openSvgEditor",
         "title": "Open SVG Editor"
       },
       {
-        "command": "extension.newSvgEditor",
+        "command": "svgeditor.newSvgEditor",
         "title": "New File with SVG Editor"
       }
     ],
     "menus": {
       "editor/title": [
         {
-          "command": "extension.openSvgEditor",
+          "command": "svgeditor.openSvgEditor",
           "when": "resourceLangId == svg"
         }
       ]
