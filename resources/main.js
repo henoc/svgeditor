@@ -15005,14 +15005,30 @@ var _user$project$Main$update = F2(
 								_elm_lang$core$Native_Utils.update(
 									model,
 									{mode: _user$project$Types$EllipseMode}),
-								{ctor: '[]'});
+								{
+									ctor: '::',
+									_0: _user$project$Utils$getBoundingClientLeft('root'),
+									_1: {
+										ctor: '::',
+										_0: _user$project$Utils$getBoundingClientTop('root'),
+										_1: {ctor: '[]'}
+									}
+								});
 						default:
 							return A2(
 								_elm_lang$core$Platform_Cmd_ops['!'],
 								_elm_lang$core$Native_Utils.update(
 									model,
 									{mode: _user$project$Types$PolygonMode}),
-								{ctor: '[]'});
+								{
+									ctor: '::',
+									_0: _user$project$Utils$getBoundingClientLeft('root'),
+									_1: {
+										ctor: '::',
+										_0: _user$project$Utils$getBoundingClientTop('root'),
+										_1: {ctor: '[]'}
+									}
+								});
 					}
 				} else {
 					var _p7 = _p5._0;

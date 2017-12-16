@@ -15,6 +15,7 @@ export function activate(context: vscode.ExtensionContext) {
   let mainJs = readResource("main.js");
   let externalJs = readResource("externals.js");
   let templateSvg = readResource("template.svg");
+  let style = readResource("style.css");
 
   class TextDocumentContentProvider implements vscode.TextDocumentContentProvider {
     public editor: vscode.TextEditor;
@@ -37,7 +38,8 @@ export function activate(context: vscode.ExtensionContext) {
       const external2 = externalJs.replace("{{svg}}", svg.replace(/`/g, ""));
       const html = render(viewer, {
         main: mainJs,
-        externals: external2
+        externals: external2,
+        style: style
       });
       let logDir = path.join(__dirname, "..", "log");
       if (!fs.existsSync(logDir)) {

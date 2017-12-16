@@ -1,0 +1,13 @@
+button {
+  background: none;
+  border: none;
+  color: currentColor;
+  font-weight: bold;
+  border-radius: 3px;
+}
+button:hover {
+  background: rgba(255,200,200,0.3);
+}
+svg {
+  border: solid 1px rgba(255,200,200,0.3);
+}
