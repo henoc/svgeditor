@@ -12412,6 +12412,13 @@ var _user$project$Utils$replace = F3(
 			}
 		}
 	});
+var _user$project$Utils$onPush = function (message) {
+	return A3(
+		_elm_lang$html$Html_Events$onWithOptions,
+		'mousedown',
+		{stopPropagation: true, preventDefault: false},
+		_elm_lang$core$Json_Decode$succeed(message));
+};
 var _user$project$Utils$clientY = A2(_elm_lang$core$Json_Decode$field, 'clientY', _elm_lang$core$Json_Decode$int);
 var _user$project$Utils$clientX = A2(_elm_lang$core$Json_Decode$field, 'clientX', _elm_lang$core$Json_Decode$int);
 var _user$project$Utils$shiftKey = A2(_elm_lang$core$Json_Decode$field, 'shiftKey', _elm_lang$core$Json_Decode$bool);
@@ -14640,7 +14647,7 @@ var _user$project$Main$view = function (model) {
 								_elm_lang$html$Html$button,
 								{
 									ctor: '::',
-									_0: _elm_lang$html$Html_Events$onClick(
+									_0: _user$project$Utils$onPush(
 										_user$project$Types$OnProperty(
 											_user$project$Types$SwichMode(_user$project$Types$HandMode))),
 									_1: {ctor: '[]'}
@@ -14656,7 +14663,7 @@ var _user$project$Main$view = function (model) {
 									_elm_lang$html$Html$button,
 									{
 										ctor: '::',
-										_0: _elm_lang$html$Html_Events$onClick(
+										_0: _user$project$Utils$onPush(
 											_user$project$Types$OnProperty(
 												_user$project$Types$SwichMode(_user$project$Types$NodeMode))),
 										_1: {ctor: '[]'}
@@ -14672,7 +14679,7 @@ var _user$project$Main$view = function (model) {
 										_elm_lang$html$Html$button,
 										{
 											ctor: '::',
-											_0: _elm_lang$html$Html_Events$onClick(
+											_0: _user$project$Utils$onPush(
 												_user$project$Types$OnProperty(
 													_user$project$Types$SwichMode(_user$project$Types$RectMode))),
 											_1: {ctor: '[]'}
@@ -14688,7 +14695,7 @@ var _user$project$Main$view = function (model) {
 											_elm_lang$html$Html$button,
 											{
 												ctor: '::',
-												_0: _elm_lang$html$Html_Events$onClick(
+												_0: _user$project$Utils$onPush(
 													_user$project$Types$OnProperty(
 														_user$project$Types$SwichMode(_user$project$Types$EllipseMode))),
 												_1: {ctor: '[]'}
@@ -14704,7 +14711,7 @@ var _user$project$Main$view = function (model) {
 												_elm_lang$html$Html$button,
 												{
 													ctor: '::',
-													_0: _elm_lang$html$Html_Events$onClick(
+													_0: _user$project$Utils$onPush(
 														_user$project$Types$OnProperty(
 															_user$project$Types$SwichMode(_user$project$Types$PolygonMode))),
 													_1: {ctor: '[]'}
@@ -14731,7 +14738,7 @@ var _user$project$Main$view = function (model) {
 									_elm_lang$html$Html$button,
 									{
 										ctor: '::',
-										_0: _elm_lang$html$Html_Events$onClick(
+										_0: _user$project$Utils$onPush(
 											_user$project$Types$OnAction(_user$project$Types$Duplicate)),
 										_1: {ctor: '[]'}
 									},
@@ -14746,7 +14753,7 @@ var _user$project$Main$view = function (model) {
 										_elm_lang$html$Html$button,
 										{
 											ctor: '::',
-											_0: _elm_lang$html$Html_Events$onClick(
+											_0: _user$project$Utils$onPush(
 												_user$project$Types$OnAction(_user$project$Types$Delete)),
 											_1: {ctor: '[]'}
 										},
@@ -14761,7 +14768,7 @@ var _user$project$Main$view = function (model) {
 											_elm_lang$html$Html$button,
 											{
 												ctor: '::',
-												_0: _elm_lang$html$Html_Events$onClick(
+												_0: _user$project$Utils$onPush(
 													_user$project$Types$OnAction(_user$project$Types$BringForward)),
 												_1: {ctor: '[]'}
 											},
@@ -14776,7 +14783,7 @@ var _user$project$Main$view = function (model) {
 												_elm_lang$html$Html$button,
 												{
 													ctor: '::',
-													_0: _elm_lang$html$Html_Events$onClick(
+													_0: _user$project$Utils$onPush(
 														_user$project$Types$OnAction(_user$project$Types$SendBackward)),
 													_1: {ctor: '[]'}
 												},

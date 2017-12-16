@@ -63,6 +63,10 @@ clientX = Json.field "clientX" Json.int
 clientY: Json.Decoder Int
 clientY = Json.field "clientY" Json.int
 
+onPush : msg -> Attribute msg
+onPush message =
+  onWithOptions "mousedown" { stopPropagation = True , preventDefault = False } (Json.succeed message)
+
 onItemMouseDown : ((Bool, Vec2) -> msg) -> Attribute msg
 onItemMouseDown tagger =
   let

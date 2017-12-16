@@ -136,17 +136,17 @@ view model =
   div []
     [ div [] [
         p [] [
-          button [ onClick <| OnProperty <| SwichMode HandMode ] [text "hand mode"],
-          button [ onClick <| OnProperty <| SwichMode NodeMode ] [text "node mode"],        
-          button [ onClick <| OnProperty <| SwichMode RectMode ] [text "rectangle mode"],
-          button [ onClick <| OnProperty <| SwichMode EllipseMode ] [text "ellispe mode"],
-          button [ onClick <| OnProperty <| SwichMode PolygonMode ] [text "polygon mode"]
+          button [ Utils.onPush <| OnProperty <| SwichMode HandMode ] [text "hand mode"],
+          button [ Utils.onPush <| OnProperty <| SwichMode NodeMode ] [text "node mode"],        
+          button [ Utils.onPush <| OnProperty <| SwichMode RectMode ] [text "rectangle mode"],
+          button [ Utils.onPush <| OnProperty <| SwichMode EllipseMode ] [text "ellispe mode"],
+          button [ Utils.onPush <| OnProperty <| SwichMode PolygonMode ] [text "polygon mode"]
         ],
         p [] [
-          button [ onClick <| OnAction <| Duplicate ] [text "duplicate"],
-          button [ onClick <| OnAction <| Delete ] [text "delete"],
-          button [ onClick <| OnAction <| BringForward ][text "bring forward"],
-          button [ onClick <| OnAction <| SendBackward ][text "send backward"]
+          button [ Utils.onPush <| OnAction <| Duplicate ] [text "duplicate"],
+          button [ Utils.onPush <| OnAction <| Delete ] [text "delete"],
+          button [ Utils.onPush <| OnAction <| BringForward ][text "bring forward"],
+          button [ Utils.onPush <| OnAction <| SendBackward ][text "send backward"]
         ]
       ],
       div [id "root"] [
