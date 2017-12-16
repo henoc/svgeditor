@@ -13466,18 +13466,16 @@ var _user$project$ShapeMode$updatePolygon = F2(
 		var _p0 = msg;
 		switch (_p0.ctor) {
 			case 'MouseDown':
-				var _p5 = _p0._0;
 				var correctedPos = A2(
 					_user$project$Vec2_ops['-#'],
-					_user$project$Vec2$toVec2(_p5),
+					_user$project$Vec2$toVec2(_p0._0),
 					{ctor: '_Tuple2', _0: model.clientLeft, _1: model.clientTop});
 				var _p1 = model.dragBegin;
 				if (_p1.ctor === 'Nothing') {
 					return _elm_lang$core$Native_Utils.update(
 						model,
 						{
-							dragBegin: _elm_lang$core$Maybe$Just(
-								_user$project$Vec2$toVec2(_p5)),
+							dragBegin: _elm_lang$core$Maybe$Just(correctedPos),
 							svg: A2(
 								_user$project$Utils$changeContains,
 								A2(
@@ -13509,9 +13507,7 @@ var _user$project$ShapeMode$updatePolygon = F2(
 							idGen: model.idGen + 1
 						});
 				} else {
-					if (_elm_lang$core$Native_Utils.eq(
-						_p1._0,
-						_user$project$Vec2$toVec2(_p5))) {
+					if (_elm_lang$core$Native_Utils.eq(_p1._0, correctedPos)) {
 						return _elm_lang$core$Native_Utils.update(
 							model,
 							{dragBegin: _elm_lang$core$Maybe$Nothing});
@@ -13529,8 +13525,7 @@ var _user$project$ShapeMode$updatePolygon = F2(
 								return _elm_lang$core$Native_Utils.update(
 									model,
 									{
-										dragBegin: _elm_lang$core$Maybe$Just(
-											_user$project$Vec2$toVec2(_p5)),
+										dragBegin: _elm_lang$core$Maybe$Just(correctedPos),
 										svg: A2(
 											_user$project$Utils$changeContains,
 											A2(
@@ -13558,20 +13553,24 @@ var _user$project$ShapeMode$updatePolygon = F2(
 					}
 				}
 			case 'MouseMove':
-				var _p6 = model.dragBegin;
-				if (_p6.ctor === 'Nothing') {
+				var correctedPos = A2(
+					_user$project$Vec2_ops['-#'],
+					_user$project$Vec2$toVec2(_p0._0),
+					{ctor: '_Tuple2', _0: model.clientLeft, _1: model.clientTop});
+				var _p5 = model.dragBegin;
+				if (_p5.ctor === 'Nothing') {
 					return model;
 				} else {
-					var _p7 = _user$project$Utils$last(
+					var _p6 = _user$project$Utils$last(
 						_user$project$Utils$getElems(model));
-					if (_p7.ctor === 'Nothing') {
+					if (_p6.ctor === 'Nothing') {
 						return model;
 					} else {
-						var _p9 = _p7._0;
+						var _p8 = _p6._0;
 						var init = _user$project$Utils$init(
 							_user$project$Utils$getElems(model));
-						var _p8 = _p9.shape;
-						if (_p8.ctor === 'Polygon') {
+						var _p7 = _p8.shape;
+						if (_p7.ctor === 'Polygon') {
 							return _elm_lang$core$Native_Utils.update(
 								model,
 								{
@@ -13583,17 +13582,17 @@ var _user$project$ShapeMode$updatePolygon = F2(
 											{
 												ctor: '::',
 												_0: _elm_lang$core$Native_Utils.update(
-													_p9,
+													_p8,
 													{
 														shape: _user$project$Types$Polygon(
 															{
 																points: A2(
 																	_user$project$Utils$updateHead,
 																	function (p) {
-																		return _user$project$Vec2$toVec2(_p0._0);
+																		return correctedPos;
 																	},
-																	_p8._0.points),
-																enclosed: _p8._0.enclosed
+																	_p7._0.points),
+																enclosed: _p7._0.enclosed
 															})
 													}),
 												_1: {ctor: '[]'}
@@ -13611,25 +13610,23 @@ var _user$project$ShapeMode$updatePolygon = F2(
 	});
 var _user$project$ShapeMode$update = F2(
 	function (msg, model) {
-		var _p10 = msg;
-		switch (_p10.ctor) {
+		var _p9 = msg;
+		switch (_p9.ctor) {
 			case 'MouseDown':
-				var _p12 = _p10._0;
 				var correctedPos = A2(
 					_user$project$Vec2_ops['-#'],
-					_user$project$Vec2$toVec2(_p12),
+					_user$project$Vec2$toVec2(_p9._0),
 					{ctor: '_Tuple2', _0: model.clientLeft, _1: model.clientTop});
 				var modelSvg = model.svg;
 				return _elm_lang$core$Native_Utils.update(
 					model,
 					{
-						dragBegin: _elm_lang$core$Maybe$Just(
-							_user$project$Vec2$toVec2(_p12)),
+						dragBegin: _elm_lang$core$Maybe$Just(correctedPos),
 						svg: A2(
 							_user$project$Utils$changeContains,
 							function () {
-								var _p11 = model.mode;
-								switch (_p11.ctor) {
+								var _p10 = model.mode;
+								switch (_p10.ctor) {
 									case 'RectMode':
 										return A2(
 											_elm_lang$core$Basics_ops['++'],
@@ -13678,26 +13675,29 @@ var _user$project$ShapeMode$update = F2(
 					model,
 					{dragBegin: _elm_lang$core$Maybe$Nothing});
 			default:
-				var _p19 = _p10._0;
-				var _p13 = model.dragBegin;
-				if (_p13.ctor === 'Nothing') {
+				var correctedPos = A2(
+					_user$project$Vec2_ops['-#'],
+					_user$project$Vec2$toVec2(_p9._0),
+					{ctor: '_Tuple2', _0: model.clientLeft, _1: model.clientTop});
+				var _p11 = model.dragBegin;
+				if (_p11.ctor === 'Nothing') {
 					return model;
 				} else {
-					var _p18 = _p13._0._1;
-					var _p17 = _p13._0._0;
+					var _p16 = _p11._0._1;
+					var _p15 = _p11._0._0;
 					if (_elm_lang$core$Native_Utils.eq(model.mode, _user$project$Types$HandMode)) {
 						return model;
 					} else {
-						var _p14 = _user$project$Utils$last(
+						var _p12 = _user$project$Utils$last(
 							_user$project$Utils$getElems(model));
-						if (_p14.ctor === 'Nothing') {
+						if (_p12.ctor === 'Nothing') {
 							return model;
 						} else {
-							var _p16 = _p14._0;
+							var _p14 = _p12._0;
 							var init = _user$project$Utils$init(
 								_user$project$Utils$getElems(model));
-							var _p15 = _p16.shape;
-							switch (_p15.ctor) {
+							var _p13 = _p14.shape;
+							switch (_p13.ctor) {
 								case 'Rectangle':
 									var modelSvg = model.svg;
 									return _elm_lang$core$Native_Utils.update(
@@ -13711,15 +13711,15 @@ var _user$project$ShapeMode$update = F2(
 													{
 														ctor: '::',
 														_0: _elm_lang$core$Native_Utils.update(
-															_p16,
+															_p14,
 															{
 																shape: _user$project$Types$Rectangle(
 																	{
-																		leftTop: _p15._0.leftTop,
+																		leftTop: _p13._0.leftTop,
 																		size: A2(
 																			_user$project$Vec2_ops['-#'],
-																			_user$project$Vec2$toVec2(_p19),
-																			{ctor: '_Tuple2', _0: _p17, _1: _p18})
+																			correctedPos,
+																			{ctor: '_Tuple2', _0: _p15, _1: _p16})
 																	})
 															}),
 														_1: {ctor: '[]'}
@@ -13739,7 +13739,7 @@ var _user$project$ShapeMode$update = F2(
 													{
 														ctor: '::',
 														_0: _elm_lang$core$Native_Utils.update(
-															_p16,
+															_p14,
 															{
 																shape: _user$project$Types$Ellipse(
 																	{
@@ -13747,13 +13747,13 @@ var _user$project$ShapeMode$update = F2(
 																			_user$project$Vec2_ops['/#'],
 																			A2(
 																				_user$project$Vec2_ops['+#'],
-																				{ctor: '_Tuple2', _0: _p17, _1: _p18},
-																				_user$project$Vec2$toVec2(_p19)),
+																				{ctor: '_Tuple2', _0: _p15, _1: _p16},
+																				correctedPos),
 																			{ctor: '_Tuple2', _0: 2, _1: 2}),
 																		size: A2(
 																			_user$project$Vec2_ops['-#'],
-																			_user$project$Vec2$toVec2(_p19),
-																			{ctor: '_Tuple2', _0: _p17, _1: _p18})
+																			correctedPos,
+																			{ctor: '_Tuple2', _0: _p15, _1: _p16})
 																	})
 															}),
 														_1: {ctor: '[]'}
@@ -14570,10 +14570,7 @@ var _user$project$Parsers$parseSvg = function (text) {
 	var node = function () {
 		var _p20 = _jinjor$elm_xml_parser$XmlParser$parse(text);
 		if (_p20.ctor === 'Ok') {
-			return A2(
-				_elm_lang$core$Maybe$map,
-				_elm_lang$core$Tuple$second,
-				A2(_user$project$Parsers$convertNode, 0, _p20._0.root));
+			return A2(_user$project$Parsers$convertNode, 0, _p20._0.root);
 		} else {
 			return _elm_lang$core$Maybe$Nothing;
 		}
@@ -15201,7 +15198,7 @@ var _user$project$Main$update = F2(
 						_elm_lang$core$Platform_Cmd_ops['!'],
 						_elm_lang$core$Native_Utils.update(
 							model,
-							{svg: _p17._0}),
+							{svg: _p17._0._1, idGen: _p17._0._0}),
 						{ctor: '[]'});
 				} else {
 					return A2(

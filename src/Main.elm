@@ -117,7 +117,7 @@ update msg model =
     
     SvgData svgData ->
       case Parsers.parseSvg svgData of
-        Just data -> {model| svg = data} ! []
+        Just (nextId, data) -> {model| svg = data, idGen = nextId} ! []
         Nothing -> model ! []
     
     SvgRootLeft left ->

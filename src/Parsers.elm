@@ -157,11 +157,11 @@ convertNode id node = case node of
           shape = Unknown {name = name, elems = subElems}
         })
 
-parseSvg: String -> Maybe StyledSVGElement
+parseSvg: String -> Maybe (Int, StyledSVGElement)
 parseSvg text =
   let
     node = case XmlParser.parse text of
-      Ok {processingInstructions, docType, root} -> Maybe.map Tuple.second <| convertNode 0 root
+      Ok {processingInstructions, docType, root} -> convertNode 0 root
       Err _ -> Nothing
     _ = Debug.log "nodes" node
   in

@@ -8,26 +8,30 @@ import Dict exposing (Dict)
 update : MouseMsg -> Model -> Model
 update msg model = case msg of
     MouseDown position ->
-          let
-            modelSvg = model.svg
-            correctedPos = (toVec2 position) -# (model.clientLeft, model.clientTop)
-          in
-          { model |
-            dragBegin = Just <| toVec2 position,
-            svg = Utils.changeContains (
-                    case model.mode of
-                      RectMode -> (Utils.getElems model) ++ { shape = Rectangle {leftTop = correctedPos, size = (0, 0)}, style = model.styleInfo, attr = Dict.empty, id = model.idGen } :: []
-                      EllipseMode -> (Utils.getElems model) ++ { shape = Ellipse {center = correctedPos, size = (0, 0)}, style = model.styleInfo, attr = Dict.empty, id = model.idGen } :: []
-                      _ -> Utils.getElems model
-                  ) modelSvg
-            ,
-            idGen = model.idGen + 1
-          }
+      let
+        modelSvg = model.svg
+        correctedPos = (toVec2 position) -# (model.clientLeft, model.clientTop)
+      in
+      { model |
+        dragBegin = Just <| correctedPos,
+        svg = Utils.changeContains (
+                case model.mode of
+                  RectMode -> (Utils.getElems model) ++ { shape = Rectangle {leftTop = correctedPos, size = (0, 0)}, style = model.styleInfo, attr = Dict.empty, id = model.idGen } :: []
+                  EllipseMode -> (Utils.getElems model) ++ { shape = Ellipse {center = correctedPos, size = (0, 0)}, style = model.styleInfo, attr = Dict.empty, id = model.idGen } :: []
+                  _ -> Utils.getElems model
+              ) modelSvg
+        ,
+        idGen = model.idGen + 1
+      }
     
     MouseUp position ->
       {model | dragBegin = Nothing }
     
-    MouseMove position -> case model.dragBegin of
+    MouseMove position ->
+      let
+        correctedPos = (toVec2 position) -# (model.clientLeft, model.clientTop)      
+      in
+      case model.dragBegin of
       Nothing -> model
       Just (x, y) -> if model.mode == HandMode then model else case Utils.last (Utils.getElems model) of
         Nothing -> model
@@ -37,10 +41,10 @@ update msg model = case msg of
           case last.shape of
             Rectangle {leftTop, size} ->
               let modelSvg = model.svg in
-                {model | svg = Utils.changeContains (init ++ {last | shape = Rectangle {leftTop = leftTop, size = (toVec2 position) -# (x, y) }} :: []) model.svg }
+                {model | svg = Utils.changeContains (init ++ {last | shape = Rectangle {leftTop = leftTop, size = correctedPos -# (x, y) }} :: []) model.svg }
             Ellipse {center, size} ->
               let modelSvg = model.svg in
-                {model | svg = Utils.changeContains (init ++ {last | shape = Ellipse {center = ((x, y) +# (toVec2 position)) /# (2, 2), size = (toVec2 position) -# (x, y)}} :: []) model.svg }
+                {model | svg = Utils.changeContains (init ++ {last | shape = Ellipse {center = ((x, y) +# correctedPos) /# (2, 2), size = correctedPos -# (x, y)}} :: []) model.svg }
             others -> model
 
 updatePolygon : MouseMsg -> Model -> Model
@@ -52,7 +56,7 @@ updatePolygon msg model = case msg of
     case model.dragBegin of
       Nothing -> -- 新しくpolygonを作成
         {model |
-          dragBegin = Just <| toVec2 position,
+          dragBegin = Just <| correctedPos,
           svg = Utils.changeContains (
             Utils.getElems model ++ {
               shape = Polygon {points = [correctedPos, correctedPos], enclosed = False },
@@ -65,7 +69,7 @@ updatePolygon msg model = case msg of
         }
       Just dragBegin ->
         -- ダブルクリックで終了
-        if dragBegin == (toVec2 position) then
+        if dragBegin == correctedPos then
           {model| dragBegin = Nothing}
         else case Utils.last <| Utils.getElems model of -- ノードを追加
           Nothing -> model
@@ -76,7 +80,7 @@ updatePolygon msg model = case msg of
             case last.shape of
               Polygon {points, enclosed} ->
                 {model|
-                  dragBegin = Just <| toVec2 position,
+                  dragBegin = Just <| correctedPos,
                   svg = Utils.changeContains (
                     init ++ {last|
                       shape = Polygon {
@@ -87,7 +91,11 @@ updatePolygon msg model = case msg of
                   ) model.svg
                 }
               others -> model
-  MouseMove position -> case model.dragBegin of
+  MouseMove position ->
+    let
+        correctedPos = (toVec2 position) -# (model.clientLeft, model.clientTop)    
+    in
+    case model.dragBegin of
     Nothing -> model
     Just (x, y) -> case Utils.last <| Utils.getElems model of
       Nothing -> model
@@ -101,7 +109,7 @@ updatePolygon msg model = case msg of
               svg = Utils.changeContains (
                 init ++ {last |
                   shape = Polygon {
-                    points = Utils.updateHead (\p -> toVec2 position) points,
+                    points = Utils.updateHead (\p -> correctedPos) points,
                     enclosed = enclosed
                   }
                 } :: []
