@@ -64,15 +64,9 @@ update msg model = case msg of
 
 select : Int -> Bool -> Vec2 -> Model -> Model
 select ident isAdd pos model =
-  let
-    selectedStyle = Maybe.withDefault Dict.empty <| Maybe.map .style (Utils.getById ident model)
-    fill = Maybe.withDefault "none" <| Dict.get "fill" selectedStyle
-    stroke = Maybe.withDefault "none" <| Dict.get "stroke" selectedStyle
-    newStyleInfo = Dict.insert "fill" fill << Dict.insert "stroke" stroke <| model.styleInfo
-  in
   -- 選択中のものを選択
   if Set.member ident model.selected then
-    {model | dragBegin = Just pos, styleInfo = newStyleInfo}
+    {model | dragBegin = Just pos}
   
   -- 追加選択
   else if isAdd then
@@ -80,7 +74,7 @@ select ident isAdd pos model =
       selected = Set.insert ident model.selected
       selectedRef = List.filter (\e -> Set.member e.id selected) (Utils.getElems model)
     in
-    {model | selected = selected, dragBegin = Just pos, selectedRef = selectedRef, styleInfo = newStyleInfo}
+    {model | selected = selected, dragBegin = Just pos, selectedRef = selectedRef}
 
   -- 新規選択
   else
@@ -88,7 +82,7 @@ select ident isAdd pos model =
       selected = Set.singleton ident
       selectedRef = List.filter (\e -> Set.member e.id selected) (Utils.getElems model)
     in
-    { model | selected = Set.singleton ident, dragBegin = Just pos, selectedRef = selectedRef, styleInfo = newStyleInfo}
+    { model | selected = Set.singleton ident, dragBegin = Just pos, selectedRef = selectedRef}
 
 noSelect : Model -> Model
 noSelect model =

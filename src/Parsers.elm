@@ -6,6 +6,27 @@ import Combinators exposing (..)
 import Dict exposing (Dict)
 import Utils
 import Debug
+import Color.Convert exposing (..)
+import Color exposing (Color)
+
+intParser: Parser Int
+intParser = \input -> case (regexParser "[0-9]+") input of
+  ParseSuccess r i -> case String.toInt r of
+    Ok k -> ParseSuccess k i
+    Err _ -> ParseFailure "unreached" i
+  ParseFailure r i -> ParseFailure r i
+
+rgbParser: Parser (Int, Int, Int)
+rgbParser = onlyRight (stringParser "rgb") (andThen (andThen intParser intParser) intParser) |> map (\((x,y),z) -> (x,y,z))
+
+-- rgb(x,y,z)をhexにする
+normalizeColor: String -> Maybe String
+normalizeColor data = case data of
+  "none" -> Nothing
+  "" -> Nothing
+  _ -> case rgbParser (input data "[\\(\\),\\s]+" ) of
+    ParseSuccess (r,g,b) i -> Just (colorToHex (Color.rgb r g b))
+    ParseFailure r i -> Nothing
 
 stylePairParser: Parser (String, String)
 stylePairParser = andThen (regexParser "[^\\s:]+") (regexParser "[^\\s;]+")

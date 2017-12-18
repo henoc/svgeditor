@@ -98,7 +98,7 @@ update msg model =
         else model ! []
     
     OnSelect ident isAdd pos -> case model.mode of
-      HandMode -> (HandMode.select ident isAdd pos model) ! []
+      HandMode -> (HandMode.select ident isAdd pos model) ! [Utils.getStyle ("svgeditor" ++ (toString ident))]
       NodeMode -> (NodeMode.select ident pos model) ! []
       _ -> model ! []
     
@@ -125,6 +125,19 @@ update msg model =
     
     SvgRootTop top ->
       {model| clientTop = top} ! []
+    
+    ComputedStyle maybeStyle ->
+      let
+        newStyleInfo = case maybeStyle of
+          Just styleObject ->
+            let
+              hexFill = Parsers.normalizeColor styleObject.fill
+              hexStroke = Parsers.normalizeColor styleObject.stroke
+            in
+            Utils.maybeInsert "fill" hexFill << Utils.maybeInsert "stroke" hexStroke <| model.styleInfo
+          Nothing -> model.styleInfo
+      in
+      {model| styleInfo = newStyleInfo} ! []
 
 
 -- VIEW
@@ -180,5 +193,6 @@ subscriptions model =
     Sub.batch
         [
           Mouse.downs <| OnMouse << MouseDown, Mouse.ups <| OnMouse << MouseUp, Mouse.moves <| OnMouse << MouseMove, Utils.getSvgDataFromJs SvgData,
-          Utils.getBoundingClientLeftFromJs SvgRootLeft, Utils.getBoundingClientTopFromJs SvgRootTop
+          Utils.getBoundingClientLeftFromJs SvgRootLeft, Utils.getBoundingClientTopFromJs SvgRootTop,
+          Utils.getStyleFromJs ComputedStyle
         ]

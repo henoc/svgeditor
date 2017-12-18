@@ -1,8 +1,6 @@
-<?xml version="1.0"?>
 <svg>
-  <rect x="100" y="100" width="50" height="50" style="fill:#00ffff;stroke:#999999"></rect>
-  <ellipse rx="50" ry="30" cx="200" cy="200"></ellipse>
-  <polyline points="0,40 40,40 40,80 80,80 80,120 120,120 120,160"
-  style="fill:white;stroke:red;stroke-width:4" />
-  <path d="M10 80 C 40 10, 65 10, 95 80 S 150 150, 180 80" style="fill:none;stroke:white"/>
+  <rect height="50" style="fill:#00ffff;stroke:#999999" width="50" x="100" y="100" />
+  <ellipse cx="200" cy="200" rx="50" ry="30" style="" />
+  <polyline points="18 71,58 71,58 111,98 111,98 151,138 151,138 191" style="fill:white;stroke:red;stroke-width:4" />
+  <path d="M 10 80 C 40 10,65 10,95 80 S 150 150,180 80" style="fill:none;stroke:white" />
 </svg>

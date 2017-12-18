@@ -25,3 +25,12 @@ app.ports.getBoundingClientTop.subscribe(function(id){
   const elem = document.getElementById(id);
   app.ports.getBoundingClientTopFromJs.send(elem.getBoundingClientRect().top);
 });
+
+app.ports.getStyle.subscribe(function(id){
+  const elem = document.getElementById(id);
+  if (elem == null) {
+    app.ports.getStyleFromJs.send(null);
+  } else {
+    app.ports.getStyleFromJs.send(window.getComputedStyle(elem));
+  }
+});

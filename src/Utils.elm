@@ -6,6 +6,7 @@ import Json.Decode as Json
 import Vec2 exposing (..)
 import Tuple exposing (first, second)
 import Generator
+import Dict exposing (Dict)
 
 last : List a -> Maybe a
 last lst =
@@ -109,16 +110,6 @@ changeContains elems svgroot = case svgroot.shape of
   SVG props -> {svgroot| shape = SVG {props | elems = elems } }
   others -> svgroot
 
-port getSvgData: () -> Cmd msg
-port getSvgDataFromJs: (String -> msg) -> Sub msg
-
-port sendSvgData: String -> Cmd msg
-
-port getBoundingClientLeft: String -> Cmd msg
-port getBoundingClientLeftFromJs: (Float -> msg) -> Sub msg
-port getBoundingClientTop: String -> Cmd msg
-port getBoundingClientTopFromJs: (Float -> msg) -> Sub msg
-
 reflectSvgData: Model -> Cmd msg
 reflectSvgData model =
   let
@@ -152,3 +143,21 @@ replacePathNth n fn ops =
        {kind = hd.kind, points = replaceNth n fn hd.points} :: tl
       else
         hd :: replacePathNth (n - List.length hd.points) fn tl
+
+maybeInsert: String -> Maybe String -> Dict String String -> Dict String String
+maybeInsert key maybeValue dict = case maybeValue of
+  Just x -> Dict.insert key x dict
+  Nothing -> dict
+
+port getSvgData: () -> Cmd msg
+port getSvgDataFromJs: (String -> msg) -> Sub msg
+
+port sendSvgData: String -> Cmd msg
+
+port getBoundingClientLeft: String -> Cmd msg
+port getBoundingClientLeftFromJs: (Float -> msg) -> Sub msg
+port getBoundingClientTop: String -> Cmd msg
+port getBoundingClientTopFromJs: (Float -> msg) -> Sub msg
+
+port getStyle: String -> Cmd msg
+port getStyleFromJs: (Maybe StyleObject -> msg) -> Sub msg

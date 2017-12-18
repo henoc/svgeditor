@@ -2732,6 +2732,172 @@ var _elm_lang$core$Char$isHexDigit = function ($char) {
 		$char));
 };
 
+var _elm_lang$core$Color$fmod = F2(
+	function (f, n) {
+		var integer = _elm_lang$core$Basics$floor(f);
+		return (_elm_lang$core$Basics$toFloat(
+			A2(_elm_lang$core$Basics_ops['%'], integer, n)) + f) - _elm_lang$core$Basics$toFloat(integer);
+	});
+var _elm_lang$core$Color$rgbToHsl = F3(
+	function (red, green, blue) {
+		var b = _elm_lang$core$Basics$toFloat(blue) / 255;
+		var g = _elm_lang$core$Basics$toFloat(green) / 255;
+		var r = _elm_lang$core$Basics$toFloat(red) / 255;
+		var cMax = A2(
+			_elm_lang$core$Basics$max,
+			A2(_elm_lang$core$Basics$max, r, g),
+			b);
+		var cMin = A2(
+			_elm_lang$core$Basics$min,
+			A2(_elm_lang$core$Basics$min, r, g),
+			b);
+		var c = cMax - cMin;
+		var lightness = (cMax + cMin) / 2;
+		var saturation = _elm_lang$core$Native_Utils.eq(lightness, 0) ? 0 : (c / (1 - _elm_lang$core$Basics$abs((2 * lightness) - 1)));
+		var hue = _elm_lang$core$Basics$degrees(60) * (_elm_lang$core$Native_Utils.eq(cMax, r) ? A2(_elm_lang$core$Color$fmod, (g - b) / c, 6) : (_elm_lang$core$Native_Utils.eq(cMax, g) ? (((b - r) / c) + 2) : (((r - g) / c) + 4)));
+		return {ctor: '_Tuple3', _0: hue, _1: saturation, _2: lightness};
+	});
+var _elm_lang$core$Color$hslToRgb = F3(
+	function (hue, saturation, lightness) {
+		var normHue = hue / _elm_lang$core$Basics$degrees(60);
+		var chroma = (1 - _elm_lang$core$Basics$abs((2 * lightness) - 1)) * saturation;
+		var x = chroma * (1 - _elm_lang$core$Basics$abs(
+			A2(_elm_lang$core$Color$fmod, normHue, 2) - 1));
+		var _p0 = (_elm_lang$core$Native_Utils.cmp(normHue, 0) < 0) ? {ctor: '_Tuple3', _0: 0, _1: 0, _2: 0} : ((_elm_lang$core$Native_Utils.cmp(normHue, 1) < 0) ? {ctor: '_Tuple3', _0: chroma, _1: x, _2: 0} : ((_elm_lang$core$Native_Utils.cmp(normHue, 2) < 0) ? {ctor: '_Tuple3', _0: x, _1: chroma, _2: 0} : ((_elm_lang$core$Native_Utils.cmp(normHue, 3) < 0) ? {ctor: '_Tuple3', _0: 0, _1: chroma, _2: x} : ((_elm_lang$core$Native_Utils.cmp(normHue, 4) < 0) ? {ctor: '_Tuple3', _0: 0, _1: x, _2: chroma} : ((_elm_lang$core$Native_Utils.cmp(normHue, 5) < 0) ? {ctor: '_Tuple3', _0: x, _1: 0, _2: chroma} : ((_elm_lang$core$Native_Utils.cmp(normHue, 6) < 0) ? {ctor: '_Tuple3', _0: chroma, _1: 0, _2: x} : {ctor: '_Tuple3', _0: 0, _1: 0, _2: 0}))))));
+		var r = _p0._0;
+		var g = _p0._1;
+		var b = _p0._2;
+		var m = lightness - (chroma / 2);
+		return {ctor: '_Tuple3', _0: r + m, _1: g + m, _2: b + m};
+	});
+var _elm_lang$core$Color$toRgb = function (color) {
+	var _p1 = color;
+	if (_p1.ctor === 'RGBA') {
+		return {red: _p1._0, green: _p1._1, blue: _p1._2, alpha: _p1._3};
+	} else {
+		var _p2 = A3(_elm_lang$core$Color$hslToRgb, _p1._0, _p1._1, _p1._2);
+		var r = _p2._0;
+		var g = _p2._1;
+		var b = _p2._2;
+		return {
+			red: _elm_lang$core$Basics$round(255 * r),
+			green: _elm_lang$core$Basics$round(255 * g),
+			blue: _elm_lang$core$Basics$round(255 * b),
+			alpha: _p1._3
+		};
+	}
+};
+var _elm_lang$core$Color$toHsl = function (color) {
+	var _p3 = color;
+	if (_p3.ctor === 'HSLA') {
+		return {hue: _p3._0, saturation: _p3._1, lightness: _p3._2, alpha: _p3._3};
+	} else {
+		var _p4 = A3(_elm_lang$core$Color$rgbToHsl, _p3._0, _p3._1, _p3._2);
+		var h = _p4._0;
+		var s = _p4._1;
+		var l = _p4._2;
+		return {hue: h, saturation: s, lightness: l, alpha: _p3._3};
+	}
+};
+var _elm_lang$core$Color$HSLA = F4(
+	function (a, b, c, d) {
+		return {ctor: 'HSLA', _0: a, _1: b, _2: c, _3: d};
+	});
+var _elm_lang$core$Color$hsla = F4(
+	function (hue, saturation, lightness, alpha) {
+		return A4(
+			_elm_lang$core$Color$HSLA,
+			hue - _elm_lang$core$Basics$turns(
+				_elm_lang$core$Basics$toFloat(
+					_elm_lang$core$Basics$floor(hue / (2 * _elm_lang$core$Basics$pi)))),
+			saturation,
+			lightness,
+			alpha);
+	});
+var _elm_lang$core$Color$hsl = F3(
+	function (hue, saturation, lightness) {
+		return A4(_elm_lang$core$Color$hsla, hue, saturation, lightness, 1);
+	});
+var _elm_lang$core$Color$complement = function (color) {
+	var _p5 = color;
+	if (_p5.ctor === 'HSLA') {
+		return A4(
+			_elm_lang$core$Color$hsla,
+			_p5._0 + _elm_lang$core$Basics$degrees(180),
+			_p5._1,
+			_p5._2,
+			_p5._3);
+	} else {
+		var _p6 = A3(_elm_lang$core$Color$rgbToHsl, _p5._0, _p5._1, _p5._2);
+		var h = _p6._0;
+		var s = _p6._1;
+		var l = _p6._2;
+		return A4(
+			_elm_lang$core$Color$hsla,
+			h + _elm_lang$core$Basics$degrees(180),
+			s,
+			l,
+			_p5._3);
+	}
+};
+var _elm_lang$core$Color$grayscale = function (p) {
+	return A4(_elm_lang$core$Color$HSLA, 0, 0, 1 - p, 1);
+};
+var _elm_lang$core$Color$greyscale = function (p) {
+	return A4(_elm_lang$core$Color$HSLA, 0, 0, 1 - p, 1);
+};
+var _elm_lang$core$Color$RGBA = F4(
+	function (a, b, c, d) {
+		return {ctor: 'RGBA', _0: a, _1: b, _2: c, _3: d};
+	});
+var _elm_lang$core$Color$rgba = _elm_lang$core$Color$RGBA;
+var _elm_lang$core$Color$rgb = F3(
+	function (r, g, b) {
+		return A4(_elm_lang$core$Color$RGBA, r, g, b, 1);
+	});
+var _elm_lang$core$Color$lightRed = A4(_elm_lang$core$Color$RGBA, 239, 41, 41, 1);
+var _elm_lang$core$Color$red = A4(_elm_lang$core$Color$RGBA, 204, 0, 0, 1);
+var _elm_lang$core$Color$darkRed = A4(_elm_lang$core$Color$RGBA, 164, 0, 0, 1);
+var _elm_lang$core$Color$lightOrange = A4(_elm_lang$core$Color$RGBA, 252, 175, 62, 1);
+var _elm_lang$core$Color$orange = A4(_elm_lang$core$Color$RGBA, 245, 121, 0, 1);
+var _elm_lang$core$Color$darkOrange = A4(_elm_lang$core$Color$RGBA, 206, 92, 0, 1);
+var _elm_lang$core$Color$lightYellow = A4(_elm_lang$core$Color$RGBA, 255, 233, 79, 1);
+var _elm_lang$core$Color$yellow = A4(_elm_lang$core$Color$RGBA, 237, 212, 0, 1);
+var _elm_lang$core$Color$darkYellow = A4(_elm_lang$core$Color$RGBA, 196, 160, 0, 1);
+var _elm_lang$core$Color$lightGreen = A4(_elm_lang$core$Color$RGBA, 138, 226, 52, 1);
+var _elm_lang$core$Color$green = A4(_elm_lang$core$Color$RGBA, 115, 210, 22, 1);
+var _elm_lang$core$Color$darkGreen = A4(_elm_lang$core$Color$RGBA, 78, 154, 6, 1);
+var _elm_lang$core$Color$lightBlue = A4(_elm_lang$core$Color$RGBA, 114, 159, 207, 1);
+var _elm_lang$core$Color$blue = A4(_elm_lang$core$Color$RGBA, 52, 101, 164, 1);
+var _elm_lang$core$Color$darkBlue = A4(_elm_lang$core$Color$RGBA, 32, 74, 135, 1);
+var _elm_lang$core$Color$lightPurple = A4(_elm_lang$core$Color$RGBA, 173, 127, 168, 1);
+var _elm_lang$core$Color$purple = A4(_elm_lang$core$Color$RGBA, 117, 80, 123, 1);
+var _elm_lang$core$Color$darkPurple = A4(_elm_lang$core$Color$RGBA, 92, 53, 102, 1);
+var _elm_lang$core$Color$lightBrown = A4(_elm_lang$core$Color$RGBA, 233, 185, 110, 1);
+var _elm_lang$core$Color$brown = A4(_elm_lang$core$Color$RGBA, 193, 125, 17, 1);
+var _elm_lang$core$Color$darkBrown = A4(_elm_lang$core$Color$RGBA, 143, 89, 2, 1);
+var _elm_lang$core$Color$black = A4(_elm_lang$core$Color$RGBA, 0, 0, 0, 1);
+var _elm_lang$core$Color$white = A4(_elm_lang$core$Color$RGBA, 255, 255, 255, 1);
+var _elm_lang$core$Color$lightGrey = A4(_elm_lang$core$Color$RGBA, 238, 238, 236, 1);
+var _elm_lang$core$Color$grey = A4(_elm_lang$core$Color$RGBA, 211, 215, 207, 1);
+var _elm_lang$core$Color$darkGrey = A4(_elm_lang$core$Color$RGBA, 186, 189, 182, 1);
+var _elm_lang$core$Color$lightGray = A4(_elm_lang$core$Color$RGBA, 238, 238, 236, 1);
+var _elm_lang$core$Color$gray = A4(_elm_lang$core$Color$RGBA, 211, 215, 207, 1);
+var _elm_lang$core$Color$darkGray = A4(_elm_lang$core$Color$RGBA, 186, 189, 182, 1);
+var _elm_lang$core$Color$lightCharcoal = A4(_elm_lang$core$Color$RGBA, 136, 138, 133, 1);
+var _elm_lang$core$Color$charcoal = A4(_elm_lang$core$Color$RGBA, 85, 87, 83, 1);
+var _elm_lang$core$Color$darkCharcoal = A4(_elm_lang$core$Color$RGBA, 46, 52, 54, 1);
+var _elm_lang$core$Color$Radial = F5(
+	function (a, b, c, d, e) {
+		return {ctor: 'Radial', _0: a, _1: b, _2: c, _3: d, _4: e};
+	});
+var _elm_lang$core$Color$radial = _elm_lang$core$Color$Radial;
+var _elm_lang$core$Color$Linear = F3(
+	function (a, b, c) {
+		return {ctor: 'Linear', _0: a, _1: b, _2: c};
+	});
+var _elm_lang$core$Color$linear = _elm_lang$core$Color$Linear;
+
 //import Native.Utils //
 
 var _elm_lang$core$Native_Scheduler = function() {
@@ -10552,6 +10718,478 @@ var _elm_tools$parser$Parser$AtLeast = function (a) {
 var _elm_tools$parser$Parser$zeroOrMore = _elm_tools$parser$Parser$AtLeast(0);
 var _elm_tools$parser$Parser$oneOrMore = _elm_tools$parser$Parser$AtLeast(1);
 
+var _fredcy$elm_parseint$ParseInt$charFromInt = function (i) {
+	return (_elm_lang$core$Native_Utils.cmp(i, 10) < 0) ? _elm_lang$core$Char$fromCode(
+		i + _elm_lang$core$Char$toCode(
+			_elm_lang$core$Native_Utils.chr('0'))) : ((_elm_lang$core$Native_Utils.cmp(i, 36) < 0) ? _elm_lang$core$Char$fromCode(
+		(i - 10) + _elm_lang$core$Char$toCode(
+			_elm_lang$core$Native_Utils.chr('A'))) : _elm_lang$core$Native_Utils.crash(
+		'ParseInt',
+		{
+			start: {line: 158, column: 9},
+			end: {line: 158, column: 20}
+		})(
+		_elm_lang$core$Basics$toString(i)));
+};
+var _fredcy$elm_parseint$ParseInt$toRadixUnsafe = F2(
+	function (radix, i) {
+		return (_elm_lang$core$Native_Utils.cmp(i, radix) < 0) ? _elm_lang$core$String$fromChar(
+			_fredcy$elm_parseint$ParseInt$charFromInt(i)) : A2(
+			_elm_lang$core$Basics_ops['++'],
+			A2(_fredcy$elm_parseint$ParseInt$toRadixUnsafe, radix, (i / radix) | 0),
+			_elm_lang$core$String$fromChar(
+				_fredcy$elm_parseint$ParseInt$charFromInt(
+					A2(_elm_lang$core$Basics_ops['%'], i, radix))));
+	});
+var _fredcy$elm_parseint$ParseInt$toOct = _fredcy$elm_parseint$ParseInt$toRadixUnsafe(8);
+var _fredcy$elm_parseint$ParseInt$toHex = _fredcy$elm_parseint$ParseInt$toRadixUnsafe(16);
+var _fredcy$elm_parseint$ParseInt$isBetween = F3(
+	function (lower, upper, c) {
+		var ci = _elm_lang$core$Char$toCode(c);
+		return (_elm_lang$core$Native_Utils.cmp(
+			_elm_lang$core$Char$toCode(lower),
+			ci) < 1) && (_elm_lang$core$Native_Utils.cmp(
+			ci,
+			_elm_lang$core$Char$toCode(upper)) < 1);
+	});
+var _fredcy$elm_parseint$ParseInt$charOffset = F2(
+	function (basis, c) {
+		return _elm_lang$core$Char$toCode(c) - _elm_lang$core$Char$toCode(basis);
+	});
+var _fredcy$elm_parseint$ParseInt$InvalidRadix = function (a) {
+	return {ctor: 'InvalidRadix', _0: a};
+};
+var _fredcy$elm_parseint$ParseInt$toRadix = F2(
+	function (radix, i) {
+		return ((_elm_lang$core$Native_Utils.cmp(2, radix) < 1) && (_elm_lang$core$Native_Utils.cmp(radix, 36) < 1)) ? ((_elm_lang$core$Native_Utils.cmp(i, 0) < 0) ? _elm_lang$core$Result$Ok(
+			A2(
+				_elm_lang$core$Basics_ops['++'],
+				'-',
+				A2(_fredcy$elm_parseint$ParseInt$toRadixUnsafe, radix, 0 - i))) : _elm_lang$core$Result$Ok(
+			A2(_fredcy$elm_parseint$ParseInt$toRadixUnsafe, radix, i))) : _elm_lang$core$Result$Err(
+			_fredcy$elm_parseint$ParseInt$InvalidRadix(radix));
+	});
+var _fredcy$elm_parseint$ParseInt$OutOfRange = function (a) {
+	return {ctor: 'OutOfRange', _0: a};
+};
+var _fredcy$elm_parseint$ParseInt$InvalidChar = function (a) {
+	return {ctor: 'InvalidChar', _0: a};
+};
+var _fredcy$elm_parseint$ParseInt$intFromChar = F2(
+	function (radix, c) {
+		var validInt = function (i) {
+			return (_elm_lang$core$Native_Utils.cmp(i, radix) < 0) ? _elm_lang$core$Result$Ok(i) : _elm_lang$core$Result$Err(
+				_fredcy$elm_parseint$ParseInt$OutOfRange(c));
+		};
+		var toInt = A3(
+			_fredcy$elm_parseint$ParseInt$isBetween,
+			_elm_lang$core$Native_Utils.chr('0'),
+			_elm_lang$core$Native_Utils.chr('9'),
+			c) ? _elm_lang$core$Result$Ok(
+			A2(
+				_fredcy$elm_parseint$ParseInt$charOffset,
+				_elm_lang$core$Native_Utils.chr('0'),
+				c)) : (A3(
+			_fredcy$elm_parseint$ParseInt$isBetween,
+			_elm_lang$core$Native_Utils.chr('a'),
+			_elm_lang$core$Native_Utils.chr('z'),
+			c) ? _elm_lang$core$Result$Ok(
+			10 + A2(
+				_fredcy$elm_parseint$ParseInt$charOffset,
+				_elm_lang$core$Native_Utils.chr('a'),
+				c)) : (A3(
+			_fredcy$elm_parseint$ParseInt$isBetween,
+			_elm_lang$core$Native_Utils.chr('A'),
+			_elm_lang$core$Native_Utils.chr('Z'),
+			c) ? _elm_lang$core$Result$Ok(
+			10 + A2(
+				_fredcy$elm_parseint$ParseInt$charOffset,
+				_elm_lang$core$Native_Utils.chr('A'),
+				c)) : _elm_lang$core$Result$Err(
+			_fredcy$elm_parseint$ParseInt$InvalidChar(c))));
+		return A2(_elm_lang$core$Result$andThen, validInt, toInt);
+	});
+var _fredcy$elm_parseint$ParseInt$parseIntR = F2(
+	function (radix, rstring) {
+		var _p0 = _elm_lang$core$String$uncons(rstring);
+		if (_p0.ctor === 'Nothing') {
+			return _elm_lang$core$Result$Ok(0);
+		} else {
+			return A2(
+				_elm_lang$core$Result$andThen,
+				function (ci) {
+					return A2(
+						_elm_lang$core$Result$andThen,
+						function (ri) {
+							return _elm_lang$core$Result$Ok(ci + (ri * radix));
+						},
+						A2(_fredcy$elm_parseint$ParseInt$parseIntR, radix, _p0._0._1));
+				},
+				A2(_fredcy$elm_parseint$ParseInt$intFromChar, radix, _p0._0._0));
+		}
+	});
+var _fredcy$elm_parseint$ParseInt$parseIntRadix = F2(
+	function (radix, string) {
+		return ((_elm_lang$core$Native_Utils.cmp(2, radix) < 1) && (_elm_lang$core$Native_Utils.cmp(radix, 36) < 1)) ? A2(
+			_fredcy$elm_parseint$ParseInt$parseIntR,
+			radix,
+			_elm_lang$core$String$reverse(string)) : _elm_lang$core$Result$Err(
+			_fredcy$elm_parseint$ParseInt$InvalidRadix(radix));
+	});
+var _fredcy$elm_parseint$ParseInt$parseInt = _fredcy$elm_parseint$ParseInt$parseIntRadix(10);
+var _fredcy$elm_parseint$ParseInt$parseIntOct = _fredcy$elm_parseint$ParseInt$parseIntRadix(8);
+var _fredcy$elm_parseint$ParseInt$parseIntHex = _fredcy$elm_parseint$ParseInt$parseIntRadix(16);
+
+var _eskimoblood$elm_color_extra$Color_Convert$xyzToColor = function (_p0) {
+	var _p1 = _p0;
+	var c = function (ch) {
+		var ch_ = (_elm_lang$core$Native_Utils.cmp(ch, 3.1308e-3) > 0) ? ((1.055 * Math.pow(ch, 1 / 2.4)) - 5.5e-2) : (12.92 * ch);
+		return _elm_lang$core$Basics$round(
+			A3(_elm_lang$core$Basics$clamp, 0, 255, ch_ * 255));
+	};
+	var z_ = _p1.z / 100;
+	var y_ = _p1.y / 100;
+	var x_ = _p1.x / 100;
+	var r = ((x_ * 3.2404542) + (y_ * -1.5371385)) + (z_ * -0.4986);
+	var g = ((x_ * -0.969266) + (y_ * 1.8760108)) + (z_ * 4.1556e-2);
+	var b = ((x_ * 5.56434e-2) + (y_ * -0.2040259)) + (z_ * 1.0572252);
+	return A3(
+		_elm_lang$core$Color$rgb,
+		c(r),
+		c(g),
+		c(b));
+};
+var _eskimoblood$elm_color_extra$Color_Convert$labToXyz = function (_p2) {
+	var _p3 = _p2;
+	var y = (_p3.l + 16) / 116;
+	var c = function (ch) {
+		var ch_ = (ch * ch) * ch;
+		return (_elm_lang$core$Native_Utils.cmp(ch_, 8.856e-3) > 0) ? ch_ : ((ch - (16 / 116)) / 7.787);
+	};
+	return {
+		y: c(y) * 100,
+		x: c(y + (_p3.a / 500)) * 95.047,
+		z: c(y - (_p3.b / 200)) * 108.883
+	};
+};
+var _eskimoblood$elm_color_extra$Color_Convert$labToColor = function (_p4) {
+	return _eskimoblood$elm_color_extra$Color_Convert$xyzToColor(
+		_eskimoblood$elm_color_extra$Color_Convert$labToXyz(_p4));
+};
+var _eskimoblood$elm_color_extra$Color_Convert$xyzToLab = function (_p5) {
+	var _p6 = _p5;
+	var c = function (ch) {
+		return (_elm_lang$core$Native_Utils.cmp(ch, 8.856e-3) > 0) ? Math.pow(ch, 1 / 3) : ((7.787 * ch) + (16 / 116));
+	};
+	var x_ = c(_p6.x / 95.047);
+	var y_ = c(_p6.y / 100);
+	var z_ = c(_p6.z / 108.883);
+	return {l: (116 * y_) - 16, a: 500 * (x_ - y_), b: 200 * (y_ - z_)};
+};
+var _eskimoblood$elm_color_extra$Color_Convert$colorToXyz = function (cl) {
+	var _p7 = _elm_lang$core$Color$toRgb(cl);
+	var red = _p7.red;
+	var green = _p7.green;
+	var blue = _p7.blue;
+	var c = function (ch) {
+		var ch_ = _elm_lang$core$Basics$toFloat(ch) / 255;
+		var ch__ = (_elm_lang$core$Native_Utils.cmp(ch_, 4.045e-2) > 0) ? Math.pow((ch_ + 5.5e-2) / 1.055, 2.4) : (ch_ / 12.92);
+		return ch__ * 100;
+	};
+	var r = c(red);
+	var g = c(green);
+	var b = c(blue);
+	return {x: ((r * 0.4124) + (g * 0.3576)) + (b * 0.1805), y: ((r * 0.2126) + (g * 0.7152)) + (b * 7.22e-2), z: ((r * 1.93e-2) + (g * 0.1192)) + (b * 0.9505)};
+};
+var _eskimoblood$elm_color_extra$Color_Convert$colorToLab = function (_p8) {
+	return _eskimoblood$elm_color_extra$Color_Convert$xyzToLab(
+		_eskimoblood$elm_color_extra$Color_Convert$colorToXyz(_p8));
+};
+var _eskimoblood$elm_color_extra$Color_Convert$toRadix = function (n) {
+	var getChr = function (c) {
+		return (_elm_lang$core$Native_Utils.cmp(c, 10) < 0) ? _elm_lang$core$Basics$toString(c) : _elm_lang$core$String$fromChar(
+			_elm_lang$core$Char$fromCode(87 + c));
+	};
+	return (_elm_lang$core$Native_Utils.cmp(n, 16) < 0) ? getChr(n) : A2(
+		_elm_lang$core$Basics_ops['++'],
+		_eskimoblood$elm_color_extra$Color_Convert$toRadix((n / 16) | 0),
+		getChr(
+			A2(_elm_lang$core$Basics_ops['%'], n, 16)));
+};
+var _eskimoblood$elm_color_extra$Color_Convert$toHex = function (_p9) {
+	return A3(
+		_elm_lang$core$String$padLeft,
+		2,
+		_elm_lang$core$Native_Utils.chr('0'),
+		_eskimoblood$elm_color_extra$Color_Convert$toRadix(_p9));
+};
+var _eskimoblood$elm_color_extra$Color_Convert$colorToHex = function (cl) {
+	var _p10 = _elm_lang$core$Color$toRgb(cl);
+	var red = _p10.red;
+	var green = _p10.green;
+	var blue = _p10.blue;
+	return A2(
+		_elm_lang$core$String$join,
+		'',
+		A2(
+			F2(
+				function (x, y) {
+					return {ctor: '::', _0: x, _1: y};
+				}),
+			'#',
+			A2(
+				_elm_lang$core$List$map,
+				_eskimoblood$elm_color_extra$Color_Convert$toHex,
+				{
+					ctor: '::',
+					_0: red,
+					_1: {
+						ctor: '::',
+						_0: green,
+						_1: {
+							ctor: '::',
+							_0: blue,
+							_1: {ctor: '[]'}
+						}
+					}
+				})));
+};
+var _eskimoblood$elm_color_extra$Color_Convert$hexToColor = function () {
+	var pattern = A2(
+		_elm_lang$core$Basics_ops['++'],
+		'',
+		A2(
+			_elm_lang$core$Basics_ops['++'],
+			'^',
+			A2(
+				_elm_lang$core$Basics_ops['++'],
+				'#?',
+				A2(
+					_elm_lang$core$Basics_ops['++'],
+					'(?:',
+					A2(
+						_elm_lang$core$Basics_ops['++'],
+						'(?:([a-f\\d]{2})([a-f\\d]{2})([a-f\\d]{2}))',
+						A2(
+							_elm_lang$core$Basics_ops['++'],
+							'|',
+							A2(
+								_elm_lang$core$Basics_ops['++'],
+								'(?:([a-f\\d])([a-f\\d])([a-f\\d]))',
+								A2(_elm_lang$core$Basics_ops['++'], ')', '$'))))))));
+	var extend = function (token) {
+		var _p11 = _elm_lang$core$String$toList(token);
+		if ((_p11.ctor === '::') && (_p11._1.ctor === '[]')) {
+			var _p12 = _p11._0;
+			return _elm_lang$core$String$fromList(
+				{
+					ctor: '::',
+					_0: _p12,
+					_1: {
+						ctor: '::',
+						_0: _p12,
+						_1: {ctor: '[]'}
+					}
+				});
+		} else {
+			return token;
+		}
+	};
+	return function (_p13) {
+		return A2(
+			_elm_lang$core$Result$andThen,
+			function (colors) {
+				var _p15 = A2(
+					_elm_lang$core$List$map,
+					function (_p14) {
+						return _fredcy$elm_parseint$ParseInt$parseIntHex(
+							extend(_p14));
+					},
+					colors);
+				if (((((((_p15.ctor === '::') && (_p15._0.ctor === 'Ok')) && (_p15._1.ctor === '::')) && (_p15._1._0.ctor === 'Ok')) && (_p15._1._1.ctor === '::')) && (_p15._1._1._0.ctor === 'Ok')) && (_p15._1._1._1.ctor === '[]')) {
+					return _elm_lang$core$Result$Ok(
+						A3(_elm_lang$core$Color$rgb, _p15._0._0, _p15._1._0._0, _p15._1._1._0._0));
+				} else {
+					return _elm_lang$core$Result$Err('Parsing ints from hex failed');
+				}
+			},
+			A2(
+				_elm_lang$core$Result$fromMaybe,
+				'Parsing hex regex failed',
+				A2(
+					_elm_lang$core$Maybe$map,
+					_elm_lang$core$List$filterMap(_elm_lang$core$Basics$identity),
+					A2(
+						_elm_lang$core$Maybe$map,
+						function (_) {
+							return _.submatches;
+						},
+						_elm_lang$core$List$head(
+							A3(
+								_elm_lang$core$Regex$find,
+								_elm_lang$core$Regex$AtMost(1),
+								_elm_lang$core$Regex$regex(pattern),
+								_elm_lang$core$String$toLower(_p13)))))));
+	};
+}();
+var _eskimoblood$elm_color_extra$Color_Convert$cssColorString = F2(
+	function (kind, values) {
+		return A2(
+			_elm_lang$core$Basics_ops['++'],
+			kind,
+			A2(
+				_elm_lang$core$Basics_ops['++'],
+				'(',
+				A2(
+					_elm_lang$core$Basics_ops['++'],
+					A2(_elm_lang$core$String$join, ', ', values),
+					')')));
+	});
+var _eskimoblood$elm_color_extra$Color_Convert$toPercentString = function (_p16) {
+	return A3(
+		_elm_lang$core$Basics$flip,
+		F2(
+			function (x, y) {
+				return A2(_elm_lang$core$Basics_ops['++'], x, y);
+			}),
+		'%',
+		_elm_lang$core$Basics$toString(
+			_elm_lang$core$Basics$round(
+				A2(
+					F2(
+						function (x, y) {
+							return x * y;
+						}),
+					100,
+					_p16))));
+};
+var _eskimoblood$elm_color_extra$Color_Convert$hueToString = function (_p17) {
+	return _elm_lang$core$Basics$toString(
+		_elm_lang$core$Basics$round(
+			A3(
+				_elm_lang$core$Basics$flip,
+				F2(
+					function (x, y) {
+						return x / y;
+					}),
+				_elm_lang$core$Basics$pi,
+				A2(
+					F2(
+						function (x, y) {
+							return x * y;
+						}),
+					180,
+					_p17))));
+};
+var _eskimoblood$elm_color_extra$Color_Convert$colorToCssHsla = function (cl) {
+	var _p18 = _elm_lang$core$Color$toHsl(cl);
+	var hue = _p18.hue;
+	var saturation = _p18.saturation;
+	var lightness = _p18.lightness;
+	var alpha = _p18.alpha;
+	return A2(
+		_eskimoblood$elm_color_extra$Color_Convert$cssColorString,
+		'hsla',
+		{
+			ctor: '::',
+			_0: _eskimoblood$elm_color_extra$Color_Convert$hueToString(hue),
+			_1: {
+				ctor: '::',
+				_0: _eskimoblood$elm_color_extra$Color_Convert$toPercentString(saturation),
+				_1: {
+					ctor: '::',
+					_0: _eskimoblood$elm_color_extra$Color_Convert$toPercentString(lightness),
+					_1: {
+						ctor: '::',
+						_0: _elm_lang$core$Basics$toString(alpha),
+						_1: {ctor: '[]'}
+					}
+				}
+			}
+		});
+};
+var _eskimoblood$elm_color_extra$Color_Convert$colorToCssHsl = function (cl) {
+	var _p19 = _elm_lang$core$Color$toHsl(cl);
+	var hue = _p19.hue;
+	var saturation = _p19.saturation;
+	var lightness = _p19.lightness;
+	var alpha = _p19.alpha;
+	return A2(
+		_eskimoblood$elm_color_extra$Color_Convert$cssColorString,
+		'hsl',
+		{
+			ctor: '::',
+			_0: _eskimoblood$elm_color_extra$Color_Convert$hueToString(hue),
+			_1: {
+				ctor: '::',
+				_0: _eskimoblood$elm_color_extra$Color_Convert$toPercentString(saturation),
+				_1: {
+					ctor: '::',
+					_0: _eskimoblood$elm_color_extra$Color_Convert$toPercentString(lightness),
+					_1: {ctor: '[]'}
+				}
+			}
+		});
+};
+var _eskimoblood$elm_color_extra$Color_Convert$colorToCssRgba = function (cl) {
+	var _p20 = _elm_lang$core$Color$toRgb(cl);
+	var red = _p20.red;
+	var green = _p20.green;
+	var blue = _p20.blue;
+	var alpha = _p20.alpha;
+	return A2(
+		_eskimoblood$elm_color_extra$Color_Convert$cssColorString,
+		'rgba',
+		{
+			ctor: '::',
+			_0: _elm_lang$core$Basics$toString(red),
+			_1: {
+				ctor: '::',
+				_0: _elm_lang$core$Basics$toString(green),
+				_1: {
+					ctor: '::',
+					_0: _elm_lang$core$Basics$toString(blue),
+					_1: {
+						ctor: '::',
+						_0: _elm_lang$core$Basics$toString(alpha),
+						_1: {ctor: '[]'}
+					}
+				}
+			}
+		});
+};
+var _eskimoblood$elm_color_extra$Color_Convert$colorToCssRgb = function (cl) {
+	var _p21 = _elm_lang$core$Color$toRgb(cl);
+	var red = _p21.red;
+	var green = _p21.green;
+	var blue = _p21.blue;
+	var alpha = _p21.alpha;
+	return A2(
+		_eskimoblood$elm_color_extra$Color_Convert$cssColorString,
+		'rgb',
+		{
+			ctor: '::',
+			_0: _elm_lang$core$Basics$toString(red),
+			_1: {
+				ctor: '::',
+				_0: _elm_lang$core$Basics$toString(green),
+				_1: {
+					ctor: '::',
+					_0: _elm_lang$core$Basics$toString(blue),
+					_1: {ctor: '[]'}
+				}
+			}
+		});
+};
+var _eskimoblood$elm_color_extra$Color_Convert$XYZ = F3(
+	function (a, b, c) {
+		return {x: a, y: b, z: c};
+	});
+var _eskimoblood$elm_color_extra$Color_Convert$Lab = F3(
+	function (a, b, c) {
+		return {l: a, a: b, b: c};
+	});
+
 var _rtfeldman$hex$Hex$toString = function (num) {
 	return _elm_lang$core$String$fromList(
 		(_elm_lang$core$Native_Utils.cmp(num, 0) < 0) ? {
@@ -11988,6 +12626,10 @@ var _user$project$Types$Box = F2(
 	function (a, b) {
 		return {leftTop: a, rightBottom: b};
 	});
+var _user$project$Types$StyleObject = F2(
+	function (a, b) {
+		return {fill: a, stroke: b};
+	});
 var _user$project$Types$PolygonMode = {ctor: 'PolygonMode'};
 var _user$project$Types$EllipseMode = {ctor: 'EllipseMode'};
 var _user$project$Types$RectMode = {ctor: 'RectMode'};
@@ -12010,6 +12652,9 @@ var _user$project$Types$Ellipse = function (a) {
 };
 var _user$project$Types$Rectangle = function (a) {
 	return {ctor: 'Rectangle', _0: a};
+};
+var _user$project$Types$ComputedStyle = function (a) {
+	return {ctor: 'ComputedStyle', _0: a};
 };
 var _user$project$Types$SvgRootTop = function (a) {
 	return {ctor: 'SvgRootTop', _0: a};
@@ -12273,26 +12918,35 @@ var _user$project$Generator$generateXml = function (elem) {
 	return data;
 };
 
+var _user$project$Utils$maybeInsert = F3(
+	function (key, maybeValue, dict) {
+		var _p0 = maybeValue;
+		if (_p0.ctor === 'Just') {
+			return A3(_elm_lang$core$Dict$insert, key, _p0._0, dict);
+		} else {
+			return dict;
+		}
+	});
 var _user$project$Utils$replaceNth = F3(
 	function (n, fn, lst) {
 		if (_elm_lang$core$Native_Utils.eq(n, 0)) {
-			var _p0 = lst;
-			if (_p0.ctor === '::') {
+			var _p1 = lst;
+			if (_p1.ctor === '::') {
 				return {
 					ctor: '::',
-					_0: fn(_p0._0),
-					_1: _p0._1
+					_0: fn(_p1._0),
+					_1: _p1._1
 				};
 			} else {
 				return {ctor: '[]'};
 			}
 		} else {
-			var _p1 = lst;
-			if (_p1.ctor === '::') {
+			var _p2 = lst;
+			if (_p2.ctor === '::') {
 				return {
 					ctor: '::',
-					_0: _p1._0,
-					_1: A3(_user$project$Utils$replaceNth, n - 1, fn, _p1._1)
+					_0: _p2._0,
+					_1: A3(_user$project$Utils$replaceNth, n - 1, fn, _p2._1)
 				};
 			} else {
 				return lst;
@@ -12301,40 +12955,40 @@ var _user$project$Utils$replaceNth = F3(
 	});
 var _user$project$Utils$replacePathNth = F3(
 	function (n, fn, ops) {
-		var _p2 = ops;
-		if (_p2.ctor === '[]') {
+		var _p3 = ops;
+		if (_p3.ctor === '[]') {
 			return {ctor: '[]'};
 		} else {
-			var _p4 = _p2._1;
-			var _p3 = _p2._0;
+			var _p5 = _p3._1;
+			var _p4 = _p3._0;
 			return (_elm_lang$core$Native_Utils.cmp(
-				_elm_lang$core$List$length(_p3.points),
+				_elm_lang$core$List$length(_p4.points),
 				n) > 0) ? {
 				ctor: '::',
 				_0: {
-					kind: _p3.kind,
-					points: A3(_user$project$Utils$replaceNth, n, fn, _p3.points)
+					kind: _p4.kind,
+					points: A3(_user$project$Utils$replaceNth, n, fn, _p4.points)
 				},
-				_1: _p4
+				_1: _p5
 			} : {
 				ctor: '::',
-				_0: _p3,
+				_0: _p4,
 				_1: A3(
 					_user$project$Utils$replacePathNth,
-					n - _elm_lang$core$List$length(_p3.points),
+					n - _elm_lang$core$List$length(_p4.points),
 					fn,
-					_p4)
+					_p5)
 			};
 		}
 	});
 var _user$project$Utils$updateHead = F2(
 	function (fn, lst) {
-		var _p5 = lst;
-		if (_p5.ctor === '::') {
+		var _p6 = lst;
+		if (_p6.ctor === '::') {
 			return {
 				ctor: '::',
-				_0: fn(_p5._0),
-				_1: _p5._1
+				_0: fn(_p6._0),
+				_1: _p6._1
 			};
 		} else {
 			return {ctor: '[]'};
@@ -12342,14 +12996,14 @@ var _user$project$Utils$updateHead = F2(
 	});
 var _user$project$Utils$changeContains = F2(
 	function (elems, svgroot) {
-		var _p6 = svgroot.shape;
-		if (_p6.ctor === 'SVG') {
+		var _p7 = svgroot.shape;
+		if (_p7.ctor === 'SVG') {
 			return _elm_lang$core$Native_Utils.update(
 				svgroot,
 				{
 					shape: _user$project$Types$SVG(
 						_elm_lang$core$Native_Utils.update(
-							_p6._0,
+							_p7._0,
 							{elems: elems}))
 				});
 		} else {
@@ -12379,32 +13033,32 @@ var _user$project$Utils$replace = F3(
 	function (filter, replacer, lst) {
 		replace:
 		while (true) {
-			var _p7 = lst;
-			if (_p7.ctor === '::') {
-				var _p10 = _p7._1;
-				var _p9 = _p7._0;
-				if (filter(_p9)) {
-					var _p8 = replacer;
-					if (_p8.ctor === '::') {
+			var _p8 = lst;
+			if (_p8.ctor === '::') {
+				var _p11 = _p8._1;
+				var _p10 = _p8._0;
+				if (filter(_p10)) {
+					var _p9 = replacer;
+					if (_p9.ctor === '::') {
 						return {
 							ctor: '::',
-							_0: _p8._0,
-							_1: A3(_user$project$Utils$replace, filter, _p8._1, _p10)
+							_0: _p9._0,
+							_1: A3(_user$project$Utils$replace, filter, _p9._1, _p11)
 						};
 					} else {
-						var _v7 = filter,
-							_v8 = {ctor: '[]'},
-							_v9 = _p10;
-						filter = _v7;
-						replacer = _v8;
-						lst = _v9;
+						var _v8 = filter,
+							_v9 = {ctor: '[]'},
+							_v10 = _p11;
+						filter = _v8;
+						replacer = _v9;
+						lst = _v10;
 						continue replace;
 					}
 				} else {
 					return {
 						ctor: '::',
-						_0: _p9,
-						_1: A3(_user$project$Utils$replace, filter, replacer, _p10)
+						_0: _p10,
+						_1: A3(_user$project$Utils$replace, filter, replacer, _p11)
 					};
 				}
 			} else {
@@ -12450,9 +13104,9 @@ var _user$project$Utils$onItemMouseDown = function (tagger) {
 		A2(_elm_lang$core$Json_Decode$map, tagger, mouseEvent));
 };
 var _user$project$Utils$getElems = function (model) {
-	var _p11 = model.svg.shape;
-	if (_p11.ctor === 'SVG') {
-		return _p11._0.elems;
+	var _p12 = model.svg.shape;
+	if (_p12.ctor === 'SVG') {
+		return _p12._0.elems;
 	} else {
 		return {ctor: '[]'};
 	}
@@ -12462,14 +13116,14 @@ var _user$project$Utils$getById = F2(
 		var loop = function (lst) {
 			loop:
 			while (true) {
-				var _p12 = lst;
-				if (_p12.ctor === '::') {
-					var _p13 = _p12._0;
-					if (_elm_lang$core$Native_Utils.eq(_p13.id, ident)) {
-						return _elm_lang$core$Maybe$Just(_p13);
+				var _p13 = lst;
+				if (_p13.ctor === '::') {
+					var _p14 = _p13._0;
+					if (_elm_lang$core$Native_Utils.eq(_p14.id, ident)) {
+						return _elm_lang$core$Maybe$Just(_p14);
 					} else {
-						var _v12 = _p12._1;
-						lst = _v12;
+						var _v13 = _p13._1;
+						lst = _v13;
 						continue loop;
 					}
 				} else {
@@ -12490,12 +13144,12 @@ var _user$project$Utils$getLastId = function (model) {
 	return _elm_lang$core$List$maximum(ids);
 };
 var _user$project$Utils$flattenList = function (lst) {
-	var _p14 = lst;
-	if (_p14.ctor === '::') {
+	var _p15 = lst;
+	if (_p15.ctor === '::') {
 		return A2(
 			_elm_lang$core$Basics_ops['++'],
-			_p14._0,
-			_user$project$Utils$flattenList(_p14._1));
+			_p15._0,
+			_user$project$Utils$flattenList(_p15._1));
 	} else {
 		return {ctor: '[]'};
 	}
@@ -12503,17 +13157,17 @@ var _user$project$Utils$flattenList = function (lst) {
 var _user$project$Utils$flatten = function (lst) {
 	flatten:
 	while (true) {
-		var _p15 = lst;
-		if (_p15.ctor === '::') {
-			if (_p15._0.ctor === 'Just') {
+		var _p16 = lst;
+		if (_p16.ctor === '::') {
+			if (_p16._0.ctor === 'Just') {
 				return {
 					ctor: '::',
-					_0: _p15._0._0,
-					_1: _user$project$Utils$flatten(_p15._1)
+					_0: _p16._0._0,
+					_1: _user$project$Utils$flatten(_p16._1)
 				};
 			} else {
-				var _v15 = _p15._1;
-				lst = _v15;
+				var _v16 = _p16._1;
+				lst = _v16;
 				continue flatten;
 			}
 		} else {
@@ -12527,9 +13181,9 @@ var _user$project$Utils$init = function (lst) {
 };
 var _user$project$Utils$last = function (lst) {
 	var len = _elm_lang$core$List$length(lst);
-	var _p16 = A2(_elm_lang$core$List$drop, len - 1, lst);
-	if ((_p16.ctor === '::') && (_p16._1.ctor === '[]')) {
-		return _elm_lang$core$Maybe$Just(_p16._0);
+	var _p17 = A2(_elm_lang$core$List$drop, len - 1, lst);
+	if ((_p17.ctor === '::') && (_p17._1.ctor === '[]')) {
+		return _elm_lang$core$Maybe$Just(_p17._0);
 	} else {
 		return _elm_lang$core$Maybe$Nothing;
 	}
@@ -12547,7 +13201,7 @@ var _user$project$Utils$sendSvgData = _elm_lang$core$Native_Platform.outgoingPor
 	});
 var _user$project$Utils$reflectSvgData = function (model) {
 	var svgData = _user$project$Generator$generateXml(model.svg);
-	var _p17 = A2(_elm_lang$core$Debug$log, 'send', svgData);
+	var _p18 = A2(_elm_lang$core$Debug$log, 'send', svgData);
 	return _user$project$Utils$sendSvgData(svgData);
 };
 var _user$project$Utils$getBoundingClientLeft = _elm_lang$core$Native_Platform.outgoingPort(
@@ -12562,6 +13216,37 @@ var _user$project$Utils$getBoundingClientTop = _elm_lang$core$Native_Platform.ou
 		return v;
 	});
 var _user$project$Utils$getBoundingClientTopFromJs = _elm_lang$core$Native_Platform.incomingPort('getBoundingClientTopFromJs', _elm_lang$core$Json_Decode$float);
+var _user$project$Utils$getStyle = _elm_lang$core$Native_Platform.outgoingPort(
+	'getStyle',
+	function (v) {
+		return v;
+	});
+var _user$project$Utils$getStyleFromJs = _elm_lang$core$Native_Platform.incomingPort(
+	'getStyleFromJs',
+	_elm_lang$core$Json_Decode$oneOf(
+		{
+			ctor: '::',
+			_0: _elm_lang$core$Json_Decode$null(_elm_lang$core$Maybe$Nothing),
+			_1: {
+				ctor: '::',
+				_0: A2(
+					_elm_lang$core$Json_Decode$map,
+					_elm_lang$core$Maybe$Just,
+					A2(
+						_elm_lang$core$Json_Decode$andThen,
+						function (fill) {
+							return A2(
+								_elm_lang$core$Json_Decode$andThen,
+								function (stroke) {
+									return _elm_lang$core$Json_Decode$succeed(
+										{fill: fill, stroke: stroke});
+								},
+								A2(_elm_lang$core$Json_Decode$field, 'stroke', _elm_lang$core$Json_Decode$string));
+						},
+						A2(_elm_lang$core$Json_Decode$field, 'fill', _elm_lang$core$Json_Decode$string))),
+				_1: {ctor: '[]'}
+			}
+		}));
 
 var _user$project$Actions$bringForward = function (model) {
 	var elems = _user$project$Utils$getElems(model);
@@ -13311,36 +13996,11 @@ var _user$project$HandMode$noSelect = function (model) {
 };
 var _user$project$HandMode$select = F4(
 	function (ident, isAdd, pos, model) {
-		var selectedStyle = A2(
-			_elm_lang$core$Maybe$withDefault,
-			_elm_lang$core$Dict$empty,
-			A2(
-				_elm_lang$core$Maybe$map,
-				function (_) {
-					return _.style;
-				},
-				A2(_user$project$Utils$getById, ident, model)));
-		var fill = A2(
-			_elm_lang$core$Maybe$withDefault,
-			'none',
-			A2(_elm_lang$core$Dict$get, 'fill', selectedStyle));
-		var stroke = A2(
-			_elm_lang$core$Maybe$withDefault,
-			'none',
-			A2(_elm_lang$core$Dict$get, 'stroke', selectedStyle));
-		var newStyleInfo = function (_p0) {
-			return A3(
-				_elm_lang$core$Dict$insert,
-				'fill',
-				fill,
-				A3(_elm_lang$core$Dict$insert, 'stroke', stroke, _p0));
-		}(model.styleInfo);
 		if (A2(_elm_lang$core$Set$member, ident, model.selected)) {
 			return _elm_lang$core$Native_Utils.update(
 				model,
 				{
-					dragBegin: _elm_lang$core$Maybe$Just(pos),
-					styleInfo: newStyleInfo
+					dragBegin: _elm_lang$core$Maybe$Just(pos)
 				});
 		} else {
 			if (isAdd) {
@@ -13356,8 +14016,7 @@ var _user$project$HandMode$select = F4(
 					{
 						selected: selected,
 						dragBegin: _elm_lang$core$Maybe$Just(pos),
-						selectedRef: selectedRef,
-						styleInfo: newStyleInfo
+						selectedRef: selectedRef
 					});
 			} else {
 				var selected = _elm_lang$core$Set$singleton(ident);
@@ -13372,34 +14031,33 @@ var _user$project$HandMode$select = F4(
 					{
 						selected: _elm_lang$core$Set$singleton(ident),
 						dragBegin: _elm_lang$core$Maybe$Just(pos),
-						selectedRef: selectedRef,
-						styleInfo: newStyleInfo
+						selectedRef: selectedRef
 					});
 			}
 		}
 	});
 var _user$project$HandMode$update = F2(
 	function (msg, model) {
-		var _p1 = msg;
-		switch (_p1.ctor) {
+		var _p0 = msg;
+		switch (_p0.ctor) {
 			case 'MouseMove':
-				var _p6 = _p1._0;
-				var _p2 = model.dragBegin;
-				if (_p2.ctor === 'Nothing') {
+				var _p5 = _p0._0;
+				var _p1 = model.dragBegin;
+				if (_p1.ctor === 'Nothing') {
 					return model;
 				} else {
-					var _p5 = _p2._0;
-					var _p3 = model.fixedPoint;
-					if (_p3.ctor === 'Nothing') {
+					var _p4 = _p1._0;
+					var _p2 = model.fixedPoint;
+					if (_p2.ctor === 'Nothing') {
 						var modelsvg = model.svg;
 						var selected = model.selected;
-						var pos = _user$project$Vec2$toVec2(_p6);
+						var pos = _user$project$Vec2$toVec2(_p5);
 						var moved = A2(
 							_elm_lang$core$List$map,
 							function (e) {
 								return A2(
 									_user$project$Shape$translate,
-									A2(_user$project$Vec2_ops['-#'], pos, _p5),
+									A2(_user$project$Vec2_ops['-#'], pos, _p4),
 									e);
 							},
 							model.selectedRef);
@@ -13416,7 +14074,7 @@ var _user$project$HandMode$update = F2(
 								svg: A2(_user$project$Utils$changeContains, newElems, modelsvg)
 							});
 					} else {
-						var _p4 = _p3._0;
+						var _p3 = _p2._0;
 						var modelsvg = model.svg;
 						var selectedElems = model.selectedRef;
 						var cent = _user$project$ShapeList$getCenter(selectedElems);
@@ -13426,17 +14084,17 @@ var _user$project$HandMode$update = F2(
 								_user$project$Vec2_ops['*#'],
 								cent,
 								{ctor: '_Tuple2', _0: 2, _1: 2}),
-							_p4);
-						var pos = _user$project$Vec2$toVec2(_p6);
-						var delta = A2(_user$project$Vec2_ops['-#'], pos, _p5);
+							_p3);
+						var pos = _user$project$Vec2$toVec2(_p5);
+						var delta = A2(_user$project$Vec2_ops['-#'], pos, _p4);
 						var newAntiFixed = A2(_user$project$Vec2_ops['+#'], antiFixed, delta);
 						var ratio = A2(
 							_user$project$Utils$ratio,
-							A2(_user$project$Vec2_ops['-#'], newAntiFixed, _p4),
-							A2(_user$project$Vec2_ops['-#'], antiFixed, _p4));
+							A2(_user$project$Vec2_ops['-#'], newAntiFixed, _p3),
+							A2(_user$project$Vec2_ops['-#'], antiFixed, _p3));
 						var newSelectedElems = A3(
 							_user$project$ShapeList$scale2,
-							A2(_user$project$Vec2_ops['-#'], _p4, cent),
+							A2(_user$project$Vec2_ops['-#'], _p3, cent),
 							ratio,
 							selectedElems);
 						var newElems = A3(
@@ -14035,13 +14693,18 @@ var _user$project$ViewBuilder$build = function (svg) {
 					A2(_elm_lang$core$Basics_ops['++'], ':', _p6._1));
 			},
 			_elm_lang$core$Dict$toList(svg.style)));
+	var rdomId = A2(
+		_elm_lang$core$Basics_ops['++'],
+		'svgeditor',
+		_elm_lang$core$Basics$toString(svg.id));
 	var attrList = A2(
 		_elm_lang$core$List$map,
 		function (_p7) {
 			var _p8 = _p7;
 			return A2(_elm_lang$html$Html_Attributes$attribute, _p8._0, _p8._1);
 		},
-		_elm_lang$core$Dict$toList(svg.attr));
+		_elm_lang$core$Dict$toList(
+			A3(_elm_lang$core$Dict$insert, 'id', rdomId, svg.attr)));
 	var _p9 = svg.shape;
 	switch (_p9.ctor) {
 		case 'Rectangle':
@@ -14585,6 +15248,52 @@ var _user$project$Parsers$parseSvg = function (text) {
 	var _p21 = A2(_elm_lang$core$Debug$log, 'nodes', node);
 	return node;
 };
+var _user$project$Parsers$intParser = function (input) {
+	var _p22 = A2(_user$project$Combinators$regexParser, '[0-9]+', input);
+	if (_p22.ctor === 'ParseSuccess') {
+		var _p24 = _p22._1;
+		var _p23 = _elm_lang$core$String$toInt(_p22._0);
+		if (_p23.ctor === 'Ok') {
+			return A2(_user$project$Combinators$ParseSuccess, _p23._0, _p24);
+		} else {
+			return A2(_user$project$Combinators$ParseFailure, 'unreached', _p24);
+		}
+	} else {
+		return A2(_user$project$Combinators$ParseFailure, _p22._0, _p22._1);
+	}
+};
+var _user$project$Parsers$rgbParser = A2(
+	_user$project$Combinators$map,
+	function (_p25) {
+		var _p26 = _p25;
+		return {ctor: '_Tuple3', _0: _p26._0._0, _1: _p26._0._1, _2: _p26._1};
+	},
+	A2(
+		_user$project$Combinators$onlyRight,
+		_user$project$Combinators$stringParser('rgb'),
+		A2(
+			_user$project$Combinators$andThen,
+			A2(_user$project$Combinators$andThen, _user$project$Parsers$intParser, _user$project$Parsers$intParser),
+			_user$project$Parsers$intParser)));
+var _user$project$Parsers$normalizeColor = function (data) {
+	var _p27 = data;
+	switch (_p27) {
+		case 'none':
+			return _elm_lang$core$Maybe$Nothing;
+		case '':
+			return _elm_lang$core$Maybe$Nothing;
+		default:
+			var _p28 = _user$project$Parsers$rgbParser(
+				A2(_user$project$Combinators$input, data, '[\\(\\),\\s]+'));
+			if (_p28.ctor === 'ParseSuccess') {
+				return _elm_lang$core$Maybe$Just(
+					_eskimoblood$elm_color_extra$Color_Convert$colorToHex(
+						A3(_elm_lang$core$Color$rgb, _p28._0._0, _p28._0._1, _p28._0._2)));
+			} else {
+				return _elm_lang$core$Maybe$Nothing;
+			}
+	}
+};
 
 var _user$project$Main$subscriptions = function (model) {
 	return _elm_lang$core$Platform_Sub$batch(
@@ -14618,7 +15327,11 @@ var _user$project$Main$subscriptions = function (model) {
 							_1: {
 								ctor: '::',
 								_0: _user$project$Utils$getBoundingClientTopFromJs(_user$project$Types$SvgRootTop),
-								_1: {ctor: '[]'}
+								_1: {
+									ctor: '::',
+									_0: _user$project$Utils$getStyleFromJs(_user$project$Types$ComputedStyle),
+									_1: {ctor: '[]'}
+								}
 							}
 						}
 					}
@@ -15141,7 +15854,15 @@ var _user$project$Main$update = F2(
 						return A2(
 							_elm_lang$core$Platform_Cmd_ops['!'],
 							A4(_user$project$HandMode$select, _p12, _p4._1, _p13, model),
-							{ctor: '[]'});
+							{
+								ctor: '::',
+								_0: _user$project$Utils$getStyle(
+									A2(
+										_elm_lang$core$Basics_ops['++'],
+										'svgeditor',
+										_elm_lang$core$Basics$toString(_p12))),
+								_1: {ctor: '[]'}
+							});
 					case 'NodeMode':
 						return A2(
 							_elm_lang$core$Platform_Cmd_ops['!'],
@@ -15220,12 +15941,36 @@ var _user$project$Main$update = F2(
 						model,
 						{clientLeft: _p4._0}),
 					{ctor: '[]'});
-			default:
+			case 'SvgRootTop':
 				return A2(
 					_elm_lang$core$Platform_Cmd_ops['!'],
 					_elm_lang$core$Native_Utils.update(
 						model,
 						{clientTop: _p4._0}),
+					{ctor: '[]'});
+			default:
+				var newStyleInfo = function () {
+					var _p18 = _p4._0;
+					if (_p18.ctor === 'Just') {
+						var _p20 = _p18._0;
+						var hexStroke = _user$project$Parsers$normalizeColor(_p20.stroke);
+						var hexFill = _user$project$Parsers$normalizeColor(_p20.fill);
+						return function (_p19) {
+							return A3(
+								_user$project$Utils$maybeInsert,
+								'fill',
+								hexFill,
+								A3(_user$project$Utils$maybeInsert, 'stroke', hexStroke, _p19));
+						}(model.styleInfo);
+					} else {
+						return model.styleInfo;
+					}
+				}();
+				return A2(
+					_elm_lang$core$Platform_Cmd_ops['!'],
+					_elm_lang$core$Native_Utils.update(
+						model,
+						{styleInfo: newStyleInfo}),
 					{ctor: '[]'});
 		}
 	});

@@ -17,8 +17,10 @@ import Shape
 build : StyledSVGElement -> Html Msg
 build svg =
   let
+    rdomId = "svgeditor" ++ (toString svg.id)
     -- 元からあったunknownな属性はそのまま入れる
-    attrList = Dict.toList svg.attr |> List.map (\(x, y) -> attribute x y)
+    -- idだけは一時的に上書きする
+    attrList = Dict.insert "id" rdomId svg.attr |> Dict.toList |> List.map (\(x, y) -> attribute x y)
     styleStr = Dict.toList svg.style |> List.map (\(x, y) -> x ++ ":" ++ y) |> String.join ";"
   in
   case svg.shape of

@@ -27,7 +27,7 @@ You can create shapes using the SVG's coder or directly creating shapes with the
 - [ ] Reimplement rotation
 - [ ] Reimplement path mode, text mode
 - [ ] Reimplement group and ungroup
-- [ ] Reflect embedded CSS in SVG
+- [x] Reflect embedded CSS in SVG
 - [ ] Attributes output style options
 - [ ] Line cap, marker
 - [ ] Scale objects with fixed aspect ratio mode
