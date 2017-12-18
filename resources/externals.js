@@ -16,14 +16,9 @@ app.ports.sendSvgData.subscribe(function(svgData) {
   );
 });
 
-app.ports.getBoundingClientLeft.subscribe(function(id){
+app.ports.getBoundingClientRect.subscribe(function(id){
   const elem = document.getElementById(id);
-  app.ports.getBoundingClientLeftFromJs.send(elem.getBoundingClientRect().left);
-});
-
-app.ports.getBoundingClientTop.subscribe(function(id){
-  const elem = document.getElementById(id);
-  app.ports.getBoundingClientTopFromJs.send(elem.getBoundingClientRect().top);
+  app.ports.getBoundingClientRectFromJs.send(elem.getBoundingClientRect());
 });
 
 app.ports.getStyle.subscribe(function(id){

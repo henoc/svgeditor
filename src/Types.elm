@@ -41,7 +41,7 @@ type alias Model = {
 }
 
 type Msg = OnProperty ChangePropertyMsg | OnAction Action | OnMouse MouseMsg | OnSelect Int Bool Vec2 | NoSelect | OnVertex Vec2 Vec2 | OnNode Vec2 Int
-  | SvgData String | SvgRootLeft Float | SvgRootTop Float | ComputedStyle (Maybe StyleObject)
+  | SvgData String | SvgRootRect ClientRect | ComputedStyle (Maybe StyleObject)
 type ChangePropertyMsg = SwichMode Mode | Style StyleInfo
 type MouseMsg = MouseDown Mouse.Position | MouseUp Mouse.Position | MouseMove Mouse.Position
 type Action = Duplicate | Delete | BringForward | SendBackward
@@ -55,4 +55,10 @@ type alias Box = {
 type alias StyleObject = {
   fill: String,
   stroke: String
+}
+
+-- portのgetBoundingClientRect用
+type alias ClientRect = {
+  left: Float,
+  top: Float
 }

@@ -12630,6 +12630,10 @@ var _user$project$Types$StyleObject = F2(
 	function (a, b) {
 		return {fill: a, stroke: b};
 	});
+var _user$project$Types$ClientRect = F2(
+	function (a, b) {
+		return {left: a, top: b};
+	});
 var _user$project$Types$PolygonMode = {ctor: 'PolygonMode'};
 var _user$project$Types$EllipseMode = {ctor: 'EllipseMode'};
 var _user$project$Types$RectMode = {ctor: 'RectMode'};
@@ -12656,11 +12660,8 @@ var _user$project$Types$Rectangle = function (a) {
 var _user$project$Types$ComputedStyle = function (a) {
 	return {ctor: 'ComputedStyle', _0: a};
 };
-var _user$project$Types$SvgRootTop = function (a) {
-	return {ctor: 'SvgRootTop', _0: a};
-};
-var _user$project$Types$SvgRootLeft = function (a) {
-	return {ctor: 'SvgRootLeft', _0: a};
+var _user$project$Types$SvgRootRect = function (a) {
+	return {ctor: 'SvgRootRect', _0: a};
 };
 var _user$project$Types$SvgData = function (a) {
 	return {ctor: 'SvgData', _0: a};
@@ -13204,18 +13205,25 @@ var _user$project$Utils$reflectSvgData = function (model) {
 	var _p18 = A2(_elm_lang$core$Debug$log, 'send', svgData);
 	return _user$project$Utils$sendSvgData(svgData);
 };
-var _user$project$Utils$getBoundingClientLeft = _elm_lang$core$Native_Platform.outgoingPort(
-	'getBoundingClientLeft',
+var _user$project$Utils$getBoundingClientRect = _elm_lang$core$Native_Platform.outgoingPort(
+	'getBoundingClientRect',
 	function (v) {
 		return v;
 	});
-var _user$project$Utils$getBoundingClientLeftFromJs = _elm_lang$core$Native_Platform.incomingPort('getBoundingClientLeftFromJs', _elm_lang$core$Json_Decode$float);
-var _user$project$Utils$getBoundingClientTop = _elm_lang$core$Native_Platform.outgoingPort(
-	'getBoundingClientTop',
-	function (v) {
-		return v;
-	});
-var _user$project$Utils$getBoundingClientTopFromJs = _elm_lang$core$Native_Platform.incomingPort('getBoundingClientTopFromJs', _elm_lang$core$Json_Decode$float);
+var _user$project$Utils$getBoundingClientRectFromJs = _elm_lang$core$Native_Platform.incomingPort(
+	'getBoundingClientRectFromJs',
+	A2(
+		_elm_lang$core$Json_Decode$andThen,
+		function (left) {
+			return A2(
+				_elm_lang$core$Json_Decode$andThen,
+				function (top) {
+					return _elm_lang$core$Json_Decode$succeed(
+						{left: left, top: top});
+				},
+				A2(_elm_lang$core$Json_Decode$field, 'top', _elm_lang$core$Json_Decode$float));
+		},
+		A2(_elm_lang$core$Json_Decode$field, 'left', _elm_lang$core$Json_Decode$float)));
 var _user$project$Utils$getStyle = _elm_lang$core$Native_Platform.outgoingPort(
 	'getStyle',
 	function (v) {
@@ -15323,15 +15331,11 @@ var _user$project$Main$subscriptions = function (model) {
 						_0: _user$project$Utils$getSvgDataFromJs(_user$project$Types$SvgData),
 						_1: {
 							ctor: '::',
-							_0: _user$project$Utils$getBoundingClientLeftFromJs(_user$project$Types$SvgRootLeft),
+							_0: _user$project$Utils$getBoundingClientRectFromJs(_user$project$Types$SvgRootRect),
 							_1: {
 								ctor: '::',
-								_0: _user$project$Utils$getBoundingClientTopFromJs(_user$project$Types$SvgRootTop),
-								_1: {
-									ctor: '::',
-									_0: _user$project$Utils$getStyleFromJs(_user$project$Types$ComputedStyle),
-									_1: {ctor: '[]'}
-								}
+								_0: _user$project$Utils$getStyleFromJs(_user$project$Types$ComputedStyle),
+								_1: {ctor: '[]'}
 							}
 						}
 					}
@@ -15709,12 +15713,8 @@ var _user$project$Main$update = F2(
 									{mode: _user$project$Types$RectMode}),
 								{
 									ctor: '::',
-									_0: _user$project$Utils$getBoundingClientLeft('root'),
-									_1: {
-										ctor: '::',
-										_0: _user$project$Utils$getBoundingClientTop('root'),
-										_1: {ctor: '[]'}
-									}
+									_0: _user$project$Utils$getBoundingClientRect('root'),
+									_1: {ctor: '[]'}
 								});
 						case 'EllipseMode':
 							return A2(
@@ -15724,12 +15724,8 @@ var _user$project$Main$update = F2(
 									{mode: _user$project$Types$EllipseMode}),
 								{
 									ctor: '::',
-									_0: _user$project$Utils$getBoundingClientLeft('root'),
-									_1: {
-										ctor: '::',
-										_0: _user$project$Utils$getBoundingClientTop('root'),
-										_1: {ctor: '[]'}
-									}
+									_0: _user$project$Utils$getBoundingClientRect('root'),
+									_1: {ctor: '[]'}
 								});
 						default:
 							return A2(
@@ -15739,12 +15735,8 @@ var _user$project$Main$update = F2(
 									{mode: _user$project$Types$PolygonMode}),
 								{
 									ctor: '::',
-									_0: _user$project$Utils$getBoundingClientLeft('root'),
-									_1: {
-										ctor: '::',
-										_0: _user$project$Utils$getBoundingClientTop('root'),
-										_1: {ctor: '[]'}
-									}
+									_0: _user$project$Utils$getBoundingClientRect('root'),
+									_1: {ctor: '[]'}
 								});
 					}
 				} else {
@@ -15934,33 +15926,27 @@ var _user$project$Main$update = F2(
 						model,
 						{ctor: '[]'});
 				}
-			case 'SvgRootLeft':
+			case 'SvgRootRect':
+				var _p18 = _p4._0;
 				return A2(
 					_elm_lang$core$Platform_Cmd_ops['!'],
 					_elm_lang$core$Native_Utils.update(
 						model,
-						{clientLeft: _p4._0}),
-					{ctor: '[]'});
-			case 'SvgRootTop':
-				return A2(
-					_elm_lang$core$Platform_Cmd_ops['!'],
-					_elm_lang$core$Native_Utils.update(
-						model,
-						{clientTop: _p4._0}),
+						{clientLeft: _p18.left, clientTop: _p18.top}),
 					{ctor: '[]'});
 			default:
 				var newStyleInfo = function () {
-					var _p18 = _p4._0;
-					if (_p18.ctor === 'Just') {
-						var _p20 = _p18._0;
-						var hexStroke = _user$project$Parsers$normalizeColor(_p20.stroke);
-						var hexFill = _user$project$Parsers$normalizeColor(_p20.fill);
-						return function (_p19) {
+					var _p19 = _p4._0;
+					if (_p19.ctor === 'Just') {
+						var _p21 = _p19._0;
+						var hexStroke = _user$project$Parsers$normalizeColor(_p21.stroke);
+						var hexFill = _user$project$Parsers$normalizeColor(_p21.fill);
+						return function (_p20) {
 							return A3(
 								_user$project$Utils$maybeInsert,
 								'fill',
 								hexFill,
-								A3(_user$project$Utils$maybeInsert, 'stroke', hexStroke, _p19));
+								A3(_user$project$Utils$maybeInsert, 'stroke', hexStroke, _p20));
 						}(model.styleInfo);
 					} else {
 						return model.styleInfo;

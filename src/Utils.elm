@@ -154,10 +154,8 @@ port getSvgDataFromJs: (String -> msg) -> Sub msg
 
 port sendSvgData: String -> Cmd msg
 
-port getBoundingClientLeft: String -> Cmd msg
-port getBoundingClientLeftFromJs: (Float -> msg) -> Sub msg
-port getBoundingClientTop: String -> Cmd msg
-port getBoundingClientTopFromJs: (Float -> msg) -> Sub msg
+port getBoundingClientRect: String -> Cmd msg
+port getBoundingClientRectFromJs: (ClientRect -> msg) -> Sub msg
 
 port getStyle: String -> Cmd msg
 port getStyleFromJs: (Maybe StyleObject -> msg) -> Sub msg

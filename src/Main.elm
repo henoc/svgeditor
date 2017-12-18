@@ -57,13 +57,13 @@ update msg model =
         {model | mode = NodeMode} ! []
 
       SwichMode RectMode ->
-        {model | mode = RectMode} ! [Utils.getBoundingClientLeft "root", Utils.getBoundingClientTop "root"]
+        {model | mode = RectMode} ! [Utils.getBoundingClientRect "root"]
 
       SwichMode EllipseMode ->
-        {model | mode = EllipseMode} ! [Utils.getBoundingClientLeft "root", Utils.getBoundingClientTop "root"]
+        {model | mode = EllipseMode} ! [Utils.getBoundingClientRect "root"]
       
       SwichMode PolygonMode ->
-        {model | mode = PolygonMode} ! [Utils.getBoundingClientLeft "root", Utils.getBoundingClientTop "root"]
+        {model | mode = PolygonMode} ! [Utils.getBoundingClientRect "root"]
 
       Style styleInfo -> case model.mode of
         HandMode -> (HandMode.changeStyle styleInfo model) ! []
@@ -120,11 +120,8 @@ update msg model =
         Just (nextId, data) -> {model| svg = data, idGen = nextId} ! []
         Nothing -> model ! []
     
-    SvgRootLeft left ->
-      {model| clientLeft = left} ! []
-    
-    SvgRootTop top ->
-      {model| clientTop = top} ! []
+    SvgRootRect rect ->
+      {model| clientLeft = rect.left, clientTop = rect.top} ! []
     
     ComputedStyle maybeStyle ->
       let
@@ -193,6 +190,6 @@ subscriptions model =
     Sub.batch
         [
           Mouse.downs <| OnMouse << MouseDown, Mouse.ups <| OnMouse << MouseUp, Mouse.moves <| OnMouse << MouseMove, Utils.getSvgDataFromJs SvgData,
-          Utils.getBoundingClientLeftFromJs SvgRootLeft, Utils.getBoundingClientTopFromJs SvgRootTop,
+          Utils.getBoundingClientRectFromJs SvgRootRect,
           Utils.getStyleFromJs ComputedStyle
         ]
