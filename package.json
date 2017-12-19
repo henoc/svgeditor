@@ -6,8 +6,8 @@
   "publisher": "henoc",
   "icon": "images/SVG_logo.png",
   "galleryBanner": {
-    "color": "#5c2d91",
-    "theme": "dark"
+    "color": "#FFCB77",
+    "theme": "light"
   },
   "license": "MIT",
   "bugs": {
