@@ -17,6 +17,15 @@ getBBox elem = case elem.shape of
       bottom = List.map second points |> List.maximum |> Maybe.withDefault 0
     in
     {leftTop = (left, top), rightBottom = (right, bottom)}
+  Path {operators} ->
+    let
+      points = getPoints elem
+      left = List.map first points |> List.minimum |> Maybe.withDefault 0
+      top = List.map second points |> List.minimum |> Maybe.withDefault 0
+      right = List.map first points |> List.maximum |> Maybe.withDefault 0
+      bottom = List.map second points |> List.maximum |> Maybe.withDefault 0
+    in
+    {leftTop = (left, top), rightBottom = (right, bottom)}    
   others -> {leftTop = (0, 0), rightBottom = (0, 0)}
 
 -- 平行移動
@@ -26,6 +35,10 @@ translate delta elem = {elem| shape =
     Rectangle {leftTop, size} -> Rectangle {leftTop = leftTop +# delta, size = size}
     Ellipse {center, size} -> Ellipse {center = center +# delta, size = size}
     Polygon {points, enclosed} -> Polygon {points = List.map ((+#) delta) points, enclosed = enclosed}
+    Path {operators} ->
+      Path {
+        operators = List.map (\op -> {op| points = List.map ((+#) delta) op.points}) operators
+      }
     others -> others
   )}
 
@@ -35,7 +48,9 @@ getCenter elem = case elem.shape of
   Rectangle {leftTop, size} -> leftTop +# size /# (2, 2)
   Ellipse {center, size} -> center
   Polygon {points, enclosed} ->
-    let bbox = getBBox elem in (bbox.leftTop +# bbox.rightBottom) /# (2, 2) 
+    let bbox = getBBox elem in (bbox.leftTop +# bbox.rightBottom) /# (2, 2)
+  Path {operators} ->
+    let bbox = getBBox elem in (bbox.leftTop +# bbox.rightBottom) /# (2, 2)    
   others -> (0, 0)
 
 setCenter : Vec2 -> StyledSVGElement -> StyledSVGElement
@@ -69,6 +84,9 @@ scale ratio elem =
         Rectangle {leftTop , size} -> Rectangle {leftTop = leftTop, size = size *# ratio}
         Ellipse {center, size} -> Ellipse {center = center, size = size *# ratio}
         Polygon {points, enclosed} -> Polygon {points = List.map ((*#) ratio) points, enclosed = enclosed}
+        Path {operators} -> Path {
+          operators = List.map (\op -> {op|points = List.map ((*#) ratio) op.points}) operators
+        }
         others -> others
     )}
   in

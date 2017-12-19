@@ -40,6 +40,7 @@ You can create shapes using the SVG's coder or directly creating shapes with the
 
 ## ChangeLog
 
+- 0.4.2 Enable to select path element again
 - 0.4.1 Support embedded CSS again
 - 0.4.0 Reimplement with Elm. Many things have improved, but some functions are temporary unavailable 😥
 - 0.3.0 Added group and ungroup button, improved right click menu
