@@ -96,5 +96,5 @@ replaceNode n fn elem = case elem.shape of
 getPoints: StyledSVGElement -> List Vec2
 getPoints elem = case elem.shape of
   Polygon {points, enclosed} -> points
-  Path {operators} -> List.map (\op -> op.points) operators |> Utils.flattenList
+  Path {operators} -> List.map .points operators |> Utils.flattenList
   others -> []

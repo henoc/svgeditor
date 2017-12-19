@@ -99,7 +99,7 @@ update msg model =
     
     OnSelect ident isAdd pos -> case model.mode of
       HandMode -> (HandMode.select ident isAdd pos model) ! [Utils.getStyle ("svgeditor" ++ (toString ident))]
-      NodeMode -> (NodeMode.select ident pos model) ! []
+      NodeMode -> (NodeMode.select ident pos model) ! [Utils.getStyle ("svgeditor" ++ (toString ident))]
       _ -> model ! []
     
     NoSelect -> case model.mode of

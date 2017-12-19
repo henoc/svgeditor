@@ -13627,8 +13627,8 @@ var _user$project$Shape$getPoints = function (elem) {
 			return _user$project$Utils$flattenList(
 				A2(
 					_elm_lang$core$List$map,
-					function (op) {
-						return op.points;
+					function (_) {
+						return _.points;
 					},
 					_p0._0.operators));
 		default:
@@ -15859,7 +15859,15 @@ var _user$project$Main$update = F2(
 						return A2(
 							_elm_lang$core$Platform_Cmd_ops['!'],
 							A3(_user$project$NodeMode$select, _p12, _p13, model),
-							{ctor: '[]'});
+							{
+								ctor: '::',
+								_0: _user$project$Utils$getStyle(
+									A2(
+										_elm_lang$core$Basics_ops['++'],
+										'svgeditor',
+										_elm_lang$core$Basics$toString(_p12))),
+								_1: {ctor: '[]'}
+							});
 					default:
 						return A2(
 							_elm_lang$core$Platform_Cmd_ops['!'],
