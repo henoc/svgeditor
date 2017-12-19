@@ -184,6 +184,5 @@ parseSvg text =
     node = case XmlParser.parse text of
       Ok {processingInstructions, docType, root} -> convertNode 0 root
       Err _ -> Nothing
-    _ = Debug.log "nodes" node
   in
   node

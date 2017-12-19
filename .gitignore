@@ -3,3 +3,4 @@ node_modules
 log
 resources/bundle*
 elm-stuff
+resources/main.js

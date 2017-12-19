@@ -13202,7 +13202,6 @@ var _user$project$Utils$sendSvgData = _elm_lang$core$Native_Platform.outgoingPor
 	});
 var _user$project$Utils$reflectSvgData = function (model) {
 	var svgData = _user$project$Generator$generateXml(model.svg);
-	var _p18 = A2(_elm_lang$core$Debug$log, 'send', svgData);
 	return _user$project$Utils$sendSvgData(svgData);
 };
 var _user$project$Utils$getBoundingClientRect = _elm_lang$core$Native_Platform.outgoingPort(
@@ -15253,28 +15252,27 @@ var _user$project$Parsers$parseSvg = function (text) {
 			return _elm_lang$core$Maybe$Nothing;
 		}
 	}();
-	var _p21 = A2(_elm_lang$core$Debug$log, 'nodes', node);
 	return node;
 };
 var _user$project$Parsers$intParser = function (input) {
-	var _p22 = A2(_user$project$Combinators$regexParser, '[0-9]+', input);
-	if (_p22.ctor === 'ParseSuccess') {
-		var _p24 = _p22._1;
-		var _p23 = _elm_lang$core$String$toInt(_p22._0);
-		if (_p23.ctor === 'Ok') {
-			return A2(_user$project$Combinators$ParseSuccess, _p23._0, _p24);
+	var _p21 = A2(_user$project$Combinators$regexParser, '[0-9]+', input);
+	if (_p21.ctor === 'ParseSuccess') {
+		var _p23 = _p21._1;
+		var _p22 = _elm_lang$core$String$toInt(_p21._0);
+		if (_p22.ctor === 'Ok') {
+			return A2(_user$project$Combinators$ParseSuccess, _p22._0, _p23);
 		} else {
-			return A2(_user$project$Combinators$ParseFailure, 'unreached', _p24);
+			return A2(_user$project$Combinators$ParseFailure, 'unreached', _p23);
 		}
 	} else {
-		return A2(_user$project$Combinators$ParseFailure, _p22._0, _p22._1);
+		return A2(_user$project$Combinators$ParseFailure, _p21._0, _p21._1);
 	}
 };
 var _user$project$Parsers$rgbParser = A2(
 	_user$project$Combinators$map,
-	function (_p25) {
-		var _p26 = _p25;
-		return {ctor: '_Tuple3', _0: _p26._0._0, _1: _p26._0._1, _2: _p26._1};
+	function (_p24) {
+		var _p25 = _p24;
+		return {ctor: '_Tuple3', _0: _p25._0._0, _1: _p25._0._1, _2: _p25._1};
 	},
 	A2(
 		_user$project$Combinators$onlyRight,
@@ -15284,19 +15282,19 @@ var _user$project$Parsers$rgbParser = A2(
 			A2(_user$project$Combinators$andThen, _user$project$Parsers$intParser, _user$project$Parsers$intParser),
 			_user$project$Parsers$intParser)));
 var _user$project$Parsers$normalizeColor = function (data) {
-	var _p27 = data;
-	switch (_p27) {
+	var _p26 = data;
+	switch (_p26) {
 		case 'none':
 			return _elm_lang$core$Maybe$Nothing;
 		case '':
 			return _elm_lang$core$Maybe$Nothing;
 		default:
-			var _p28 = _user$project$Parsers$rgbParser(
+			var _p27 = _user$project$Parsers$rgbParser(
 				A2(_user$project$Combinators$input, data, '[\\(\\),\\s]+'));
-			if (_p28.ctor === 'ParseSuccess') {
+			if (_p27.ctor === 'ParseSuccess') {
 				return _elm_lang$core$Maybe$Just(
 					_eskimoblood$elm_color_extra$Color_Convert$colorToHex(
-						A3(_elm_lang$core$Color$rgb, _p28._0._0, _p28._0._1, _p28._0._2)));
+						A3(_elm_lang$core$Color$rgb, _p27._0._0, _p27._0._1, _p27._0._2)));
 			} else {
 				return _elm_lang$core$Maybe$Nothing;
 			}
