@@ -153,6 +153,10 @@ maybeInsert key maybeValue dict = case maybeValue of
   Just x -> Dict.insert key x dict
   Nothing -> dict
 
+limit: Float -> Float -> Float -> Float
+limit lower upper value =
+  if lower > value then lower else if upper < value then upper else value
+
 port getSvgData: () -> Cmd msg
 port getSvgDataFromJs: (String -> msg) -> Sub msg
 

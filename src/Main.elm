@@ -66,8 +66,11 @@ update msg model =
         {model | mode = PolygonMode} ! [Utils.getBoundingClientRect "root"]
 
       Style styleInfo -> case model.mode of
-        HandMode -> (HandMode.changeStyle styleInfo model) ! []
-        _ -> {model | styleInfo = styleInfo} ! []
+        HandMode ->
+          let newModel = HandMode.changeStyle styleInfo model in
+          if model /= newModel then newModel ! [Utils.reflectSvgData newModel]
+          else model ! []
+        _ -> model ! []
     
     OnAction action -> case action of
       Duplicate ->
@@ -125,13 +128,16 @@ update msg model =
     
     ComputedStyle maybeStyle ->
       let
+        selectedStyle = case model.selectedRef of -- 選択中のオブジェクトのスタイル
+          hd :: tl -> hd.style
+          [] -> Dict.empty
         newStyleInfo = case maybeStyle of
           Just styleObject ->
             let
               hexFill = Parsers.normalizeColor styleObject.fill
               hexStroke = Parsers.normalizeColor styleObject.stroke
             in
-            Utils.maybeInsert "fill" hexFill << Utils.maybeInsert "stroke" hexStroke <| model.styleInfo
+            Utils.maybeInsert "fill" hexFill << Utils.maybeInsert "stroke" hexStroke <| selectedStyle
           Nothing -> model.styleInfo
       in
       {model| styleInfo = newStyleInfo} ! []
@@ -171,14 +177,28 @@ view model =
           _ -> []
         ))
       ],
+      let
+        fo = case Dict.get "fill-opacity" model.styleInfo of
+          Nothing -> 1
+          Just x -> Result.withDefault 1 <| String.toFloat x
+        so = case Dict.get "stroke-opacity" model.styleInfo of
+          Nothing -> 1
+          Just x -> Result.withDefault 1 <| String.toFloat x
+      in
       p [] [
         text "fill:",
         Html.input [ type_ "color", value <| Maybe.withDefault "#000000" (Dict.get "fill" model.styleInfo) , onInput <| \c -> OnProperty <| Style (Dict.insert "fill" c styleInfo) ] [],
         button [ checked True, onClick <| OnProperty <| Style (Dict.insert "fill" "none" styleInfo) ] [text "none"],
+        text "opacity:",
+        button [ onClick <| OnProperty <| Style (Dict.insert "fill-opacity" (toString <| Utils.limit 0 1 (fo + 0.2)) styleInfo)] [text "+"],
+        button [ onClick <| OnProperty <| Style (Dict.insert "fill-opacity" (toString <| Utils.limit 0 1 (fo - 0.2)) styleInfo)] [text "-"],
         text " stroke:",
         Html.input [ type_ "color", value <| Maybe.withDefault "#000000" (Dict.get "stroke" model.styleInfo) ,onInput <| \c -> OnProperty <| Style (Dict.insert "stroke" c styleInfo) ] [],
-        button [ checked True, onClick <| OnProperty <| Style (Dict.insert "stroke" "none" styleInfo) ] [text "none"]
-      ]  
+        button [ checked True, onClick <| OnProperty <| Style (Dict.insert "stroke" "none" styleInfo) ] [text "none"],
+        text "opacity:",
+        button [ onClick <| OnProperty <| Style (Dict.insert "stroke-opacity" (toString <| Utils.limit 0 1 (so + 0.2)) styleInfo)] [text "+"],
+        button [ onClick <| OnProperty <| Style (Dict.insert "stroke-opacity" (toString <| Utils.limit 0 1 (so - 0.2)) styleInfo)] [text "-"]
+      ]
     ]
 
 
