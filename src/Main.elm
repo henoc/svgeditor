@@ -161,8 +161,8 @@ view model =
       ],
       div [id "root"] [
         svg [
-          width (toString <| 400),
-          height (toString <| 400),
+          width (toString <| Tuple.first <| Utils.getSvgSize model),
+          height (toString <| Tuple.second <| Utils.getSvgSize model),
           onMouseDown NoSelect
         ]
         ((List.map ViewBuilder.build (Utils.getElems model) ) ++ (case model.mode of

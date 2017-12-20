@@ -36,6 +36,11 @@ getElems model = case model.svg.shape of
   SVG {elems} -> elems
   _ -> []
 
+getSvgSize: Model -> Vec2
+getSvgSize model = case model.svg.shape of
+  SVG {elems, size} -> size
+  _ -> (400, 400)
+
 getById : Int -> Model -> Maybe StyledSVGElement
 getById ident model =
   let

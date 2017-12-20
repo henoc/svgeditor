@@ -33,6 +33,7 @@ You can create shapes using the SVG's coder or directly creating shapes with the
 - [ ] Scale objects with fixed aspect ratio mode
 - [ ] `defs` tag
 - [ ] `use` tag
+- [ ] unit
 - [ ] Gradation colors
 - [ ] No fixed transform attribute
 - [ ] Zoom

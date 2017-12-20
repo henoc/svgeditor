@@ -70,13 +70,13 @@ getStyle attrs = case getAttr "style" attrs of
     ParseSuccess dict i -> dict
     _ -> Dict.empty
 
-floatAttr: Maybe String -> Float
-floatAttr maybeAttr = case maybeAttr of
-  Nothing -> 0
-  Just x -> Result.withDefault 0 (String.toFloat x)
+floatAttr: Float -> Maybe String -> Float
+floatAttr default maybeAttr = case maybeAttr of
+  Nothing -> default
+  Just x -> Result.withDefault default (String.toFloat x)
 
-getFloatAttr: String -> List XmlParser.Attribute -> Float
-getFloatAttr name attrs = floatAttr <| getAttr name attrs
+getFloatAttr: String -> Float -> List XmlParser.Attribute -> Float
+getFloatAttr name default attrs = floatAttr default <| getAttr name attrs
 
 convertNode: Int -> XmlParser.Node -> Maybe (Int, StyledSVGElement)
 convertNode id node = case node of
@@ -96,8 +96,8 @@ convertNode id node = case node of
       "svg" ->
         let
           (nextId, subElems) = loop id subNodes []
-          w = getFloatAttr "width" attrs
-          h = getFloatAttr "height" attrs
+          w = getFloatAttr "width" 400 attrs
+          h = getFloatAttr "height" 400 attrs
         in
         (nextId+1, {
           style = styleMap,
@@ -107,10 +107,10 @@ convertNode id node = case node of
         })
       "rect" ->
         let
-          x = getFloatAttr "x" attrs
-          y = getFloatAttr "y" attrs
-          w = getFloatAttr "width" attrs
-          h = getFloatAttr "height" attrs     
+          x = getFloatAttr "x" 0 attrs
+          y = getFloatAttr "y" 0 attrs
+          w = getFloatAttr "width" 0 attrs
+          h = getFloatAttr "height" 0 attrs     
         in
         (id+1, {
           style = styleMap,
@@ -120,10 +120,10 @@ convertNode id node = case node of
         })
       "ellipse" ->
         let
-          rx = getFloatAttr "rx" attrs
-          ry = getFloatAttr "ry" attrs
-          cx = getFloatAttr "cx" attrs
-          cy = getFloatAttr "cy" attrs
+          rx = getFloatAttr "rx" 0 attrs
+          ry = getFloatAttr "ry" 0 attrs
+          cx = getFloatAttr "cx" 0 attrs
+          cy = getFloatAttr "cy" 0 attrs
         in
         (id+1, {
           style = styleMap,
