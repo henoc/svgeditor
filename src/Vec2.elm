@@ -1,7 +1,5 @@
 module Vec2 exposing (..)
 
-import Mouse
-
 type alias Vec2 = (Float, Float)
 
 (+#) : Vec2 -> Vec2 -> Vec2
@@ -22,6 +20,3 @@ type alias Vec2 = (Float, Float)
 
 infixl 8 +#
 infixl 8 -#
-
-toVec2 : Mouse.Position -> Vec2
-toVec2 position = (toFloat position.x, toFloat position.y)

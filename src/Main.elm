@@ -9,7 +9,6 @@ import Vec2 exposing (..)
 import Set exposing (Set)
 import Types exposing (..)
 import Debug exposing (..)
-import Mouse
 import Utils
 import ShapeMode
 import HandMode
@@ -218,9 +217,11 @@ subscriptions : Model -> Sub Msg
 subscriptions model =
     Sub.batch
         [
-          Mouse.ups <| OnMouse << MouseUp, Mouse.moves <| OnMouse << MouseMove, Utils.getSvgDataFromJs SvgData,
+          Utils.getSvgDataFromJs SvgData,
           Utils.getMouseDownLeftFromJs <| OnMouse << MouseDownLeft,
           Utils.getMouseDownRightFromJs <| OnMouse << MouseDownRight,
+          Utils.getMouseUpFromJs <| OnMouse << MouseUp,
+          Utils.getMouseMoveFromJs <| OnMouse << MouseMove,
           Utils.getBoundingClientRectFromJs SvgRootRect,
           Utils.getStyleFromJs ComputedStyle
         ]

@@ -1,6 +1,5 @@
 module Types exposing (..)
 
-import Mouse
 import Vec2 exposing (Vec2)
 import Set exposing (Set)
 import Dict exposing (Dict)
@@ -44,7 +43,7 @@ type alias Model = {
 type Msg = OnProperty ChangePropertyMsg | OnAction Action | OnMouse MouseMsg | OnSelect Int Bool Vec2 | NoSelect | OnVertex Vec2 Vec2 | OnNode Vec2 Int
   | SvgData String | SvgRootRect ClientRect | ComputedStyle (Maybe StyleObject)
 type ChangePropertyMsg = SwichMode Mode | Style StyleInfo
-type MouseMsg = MouseDownLeft Vec2 | MouseDownRight Vec2 | MouseUp Mouse.Position | MouseMove Mouse.Position
+type MouseMsg = MouseDownLeft Vec2 | MouseDownRight Vec2 | MouseUp Vec2 | MouseMove Vec2
 type Action = Duplicate | Delete | BringForward | SendBackward
 
 type alias Box = {

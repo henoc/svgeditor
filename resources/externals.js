@@ -38,3 +38,10 @@ document.addEventListener("mousedown", mouseEvent => {
     app.ports.getMouseDownRightFromJs.send([mouseEvent.clientX, mouseEvent.clientY]);
   }
 });
+
+document.addEventListener("mouseup", mouseEvent => {
+  app.ports.getMouseUpFromJs.send([mouseEvent.clientX, mouseEvent.clientY]);
+});
+document.addEventListener("mousemove", mouseEvent => {
+  app.ports.getMouseMoveFromJs.send([mouseEvent.clientX, mouseEvent.clientY]);
+});

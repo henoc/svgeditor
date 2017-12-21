@@ -5,12 +5,13 @@ import Types exposing (..)
 import Utils
 import Dict exposing (Dict)
 
+
 update : MouseMsg -> Model -> Model
 update msg model = case msg of
-    MouseDownLeft vpos ->
+    MouseDownLeft pos ->
       let
         modelSvg = model.svg
-        correctedPos = vpos -# (model.clientLeft, model.clientTop)
+        correctedPos = pos -# (model.clientLeft, model.clientTop)
       in
       { model |
         dragBegin = Just <| correctedPos,
@@ -24,13 +25,13 @@ update msg model = case msg of
         idGen = model.idGen + 1
       }
     
-    MouseDownRight vpos -> model
-    MouseUp position ->
+    MouseDownRight pos -> model
+    MouseUp pos ->
       {model | dragBegin = Nothing }
     
-    MouseMove position ->
+    MouseMove pos ->
       let
-        correctedPos = (toVec2 position) -# (model.clientLeft, model.clientTop)      
+        correctedPos = pos -# (model.clientLeft, model.clientTop)      
       in
       case model.dragBegin of
       Nothing -> model
@@ -49,13 +50,13 @@ update msg model = case msg of
 
 updatePolygon : MouseMsg -> Model -> Model
 updatePolygon msg model = case msg of
-  MouseDownRight vpos ->
+  MouseDownRight pos ->
     {model|
       dragBegin = Nothing
     }
-  MouseDownLeft vpos ->
+  MouseDownLeft pos ->
     let
-      correctedPos = vpos -# (model.clientLeft, model.clientTop)
+      correctedPos = pos -# (model.clientLeft, model.clientTop)
     in
     case model.dragBegin of
       Nothing -> -- 新しくpolygonを作成
@@ -92,9 +93,9 @@ updatePolygon msg model = case msg of
                   ) model.svg
                 }
               others -> model
-  MouseMove position ->
+  MouseMove pos ->
     let
-        correctedPos = (toVec2 position) -# (model.clientLeft, model.clientTop)    
+        correctedPos = pos -# (model.clientLeft, model.clientTop)    
     in
     case model.dragBegin of
     Nothing -> model
@@ -114,7 +115,7 @@ updatePolygon msg model = case msg of
               ) model.svg
             }
           others -> model
-  MouseUp position ->
+  MouseUp pos ->
     model
 
 stopPolygon: Model -> Model
@@ -127,13 +128,13 @@ stopPolygon model = case model.dragBegin of
 
 updatePath: MouseMsg -> Model -> Model
 updatePath msg model = case msg of
-  MouseDownRight vpos ->
+  MouseDownRight pos ->
     {model|
       dragBegin = Nothing
     }
-  MouseDownLeft vpos ->
+  MouseDownLeft pos ->
     let
-      correctedPos = vpos -# (model.clientLeft, model.clientTop)
+      correctedPos = pos -# (model.clientLeft, model.clientTop)
     in
     case model.isMouseDown of
     True -> model
@@ -177,9 +178,9 @@ updatePath msg model = case msg of
               isMouseDown = True
             }
           others -> model
-  MouseMove position ->
+  MouseMove pos ->
     let
-      correctedPos = (toVec2 position) -# (model.clientLeft, model.clientTop)
+      correctedPos = pos -# (model.clientLeft, model.clientTop)
       operatorsFn =
         if model.isMouseDown then \x -> \y -> \z -> (updateLast2 x y z) << (updateLast x y z)
         else updateLast
@@ -202,9 +203,9 @@ updatePath msg model = case msg of
             }
           others -> model
 
-  MouseUp position ->
+  MouseUp pos ->
     let
-      correctedPos = (toVec2 position) -# (model.clientLeft, model.clientTop)
+      correctedPos = pos -# (model.clientLeft, model.clientTop)
     in
     case model.isMouseDown of
     False -> model

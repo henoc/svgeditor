@@ -30,7 +30,7 @@ nodeSelect nodeId mpos model =
 -- 選択中のノードがあればそれを移動できる
 update: MouseMsg -> Model -> Model
 update msg model = case msg of
-  MouseMove position -> case model.nodeId of
+  MouseMove pos -> case model.nodeId of
     Nothing -> model
     Just nodeId -> case model.dragBegin of
      Nothing -> model
@@ -41,7 +41,6 @@ update msg model = case msg of
           -- positionにnodeを動かす
           -- selectedRef, selected は handmodeのものを流用
           let
-            pos = toVec2 position
             nodeMoved = Shape.replaceNode nodeId (\pre -> pos -# dragBegin +# pre) selectedRef
             newElems = Utils.replace
               (\elem -> Set.member elem.id model.selected)

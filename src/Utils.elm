@@ -190,3 +190,5 @@ port getStyleFromJs: (Maybe StyleObject -> msg) -> Sub msg
 
 port getMouseDownLeftFromJs: (Vec2 -> msg) -> Sub msg
 port getMouseDownRightFromJs: (Vec2 -> msg) -> Sub msg
+port getMouseUpFromJs: (Vec2 -> msg) -> Sub msg
+port getMouseMoveFromJs: (Vec2 -> msg) -> Sub msg
