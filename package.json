@@ -2,7 +2,7 @@
   "name": "svgeditor",
   "displayName": "SVG Editor",
   "description": "Visual and literal SVG editor for VSCode.",
-  "version": "0.4.4",
+  "version": "0.4.5",
   "publisher": "henoc",
   "icon": "images/SVG_logo.png",
   "galleryBanner": {
@@ -60,7 +60,7 @@
     "@types/node": "*",
     "tslint": "^5.8.0",
     "typescript": "^2.6.1",
-    "vscode": "^1.0.0"
+    "vscode": "^1.1.10"
   },
   "dependencies": {
     "@types/ejs": "^2.3.33",

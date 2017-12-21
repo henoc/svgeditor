@@ -42,6 +42,7 @@ You can create shapes using the SVG's coder or directly creating shapes with the
 
 ## ChangeLog
 
+- 0.4.5 Fix bug of new file command
 - 0.4.4 Add path mode again
 - 0.4.3 Add opacity adjustment button and fix style bugs
 - 0.4.2 Enable to select path element again

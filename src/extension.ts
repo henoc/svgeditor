@@ -72,18 +72,23 @@ export function activate(context: vscode.ExtensionContext) {
   disposables.push(vscode.commands.registerCommand("svgeditor.newSvgEditor", () => {
     return vscode.commands.executeCommand("workbench.action.files.newUntitledFile").then(
       (success) => {
-        provider.editor = vscode.window.activeTextEditor;
-        vscode.window.activeTextEditor.edit(editbuilder => {
-          editbuilder.insert(new vscode.Position(0, 0), templateSvg);
-        }).then(
-          (success) => {
-            vscode.commands.executeCommand("vscode.previewHtml", previewUri, vscode.ViewColumn.Two, "SVG Editor").then(
-            (success) => {
-              provider.update(previewUri);
-            },
-            showError);
+        setTimeout(
+          () => {
+            provider.editor = vscode.window.activeTextEditor;
+            provider.editor.edit(editbuilder => {
+              editbuilder.insert(new vscode.Position(0, 0), templateSvg);
+            }).then(
+              (success) => {
+                vscode.commands.executeCommand("vscode.previewHtml", previewUri, vscode.ViewColumn.Two, "SVG Editor").then(
+                (success) => {
+                  provider.update(previewUri);
+                },
+                showError);
+              },
+              showError);
           },
-          showError);
+          0
+        );
       },
       showError);
   }));
