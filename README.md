@@ -19,13 +19,14 @@ You can create shapes using the SVG's coder or directly creating shapes with the
   - Scale and translate.
 - Node mode
   - Edit node of polyline, polygon.
-- Rectangle, ellipse, polygon mode
+- Rectangle, ellipse, polygon, path mode
   - Make new object.
 
 ## Future plans
 
 - [ ] Reimplement rotation
-- [ ] Reimplement path mode, text mode
+- [x] Reimplement path mode
+- [ ] Reimplement text mode
 - [ ] Reimplement group and ungroup
 - [x] Reflect embedded CSS in SVG
 - [ ] Attributes output style options
@@ -41,6 +42,7 @@ You can create shapes using the SVG's coder or directly creating shapes with the
 
 ## ChangeLog
 
+- 0.4.4 Add path mode again
 - 0.4.3 Add opacity adjustment button and fix style bugs
 - 0.4.2 Enable to select path element again
 - 0.4.1 Support embedded CSS again
