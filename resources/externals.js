@@ -29,3 +29,12 @@ app.ports.getStyle.subscribe(function(id){
     app.ports.getStyleFromJs.send(window.getComputedStyle(elem));
   }
 });
+
+document.addEventListener("mousedown", mouseEvent => {
+  if (mouseEvent.button === 0) {
+    app.ports.getMouseDownLeftFromJs.send([mouseEvent.clientX, mouseEvent.clientY]);
+  }
+  if (mouseEvent.button === 2) {
+    app.ports.getMouseDownRightFromJs.send([mouseEvent.clientX, mouseEvent.clientY]);
+  }
+});

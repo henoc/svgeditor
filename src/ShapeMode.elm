@@ -7,10 +7,10 @@ import Dict exposing (Dict)
 
 update : MouseMsg -> Model -> Model
 update msg model = case msg of
-    MouseDown position ->
+    MouseDownLeft vpos ->
       let
         modelSvg = model.svg
-        correctedPos = (toVec2 position) -# (model.clientLeft, model.clientTop)
+        correctedPos = vpos -# (model.clientLeft, model.clientTop)
       in
       { model |
         dragBegin = Just <| correctedPos,
@@ -24,6 +24,7 @@ update msg model = case msg of
         idGen = model.idGen + 1
       }
     
+    MouseDownRight vpos -> model
     MouseUp position ->
       {model | dragBegin = Nothing }
     
@@ -48,9 +49,13 @@ update msg model = case msg of
 
 updatePolygon : MouseMsg -> Model -> Model
 updatePolygon msg model = case msg of
-  MouseDown position ->
+  MouseDownRight vpos ->
+    {model|
+      dragBegin = Nothing
+    }
+  MouseDownLeft vpos ->
     let
-      correctedPos = (toVec2 position) -# (model.clientLeft, model.clientTop)
+      correctedPos = vpos -# (model.clientLeft, model.clientTop)
     in
     case model.dragBegin of
       Nothing -> -- 新しくpolygonを作成
@@ -112,51 +117,66 @@ updatePolygon msg model = case msg of
   MouseUp position ->
     model
 
+stopPolygon: Model -> Model
+stopPolygon model = case model.dragBegin of
+  Nothing -> model
+  Just dragBegin ->
+    {model|
+      dragBegin = Nothing
+    }
+
 updatePath: MouseMsg -> Model -> Model
 updatePath msg model = case msg of
-  MouseDown position ->
+  MouseDownRight vpos ->
+    {model|
+      dragBegin = Nothing
+    }
+  MouseDownLeft vpos ->
     let
-      correctedPos = (toVec2 position) -# (model.clientLeft, model.clientTop)
+      correctedPos = vpos -# (model.clientLeft, model.clientTop)
     in
-    case model.dragBegin of
-    Nothing -> --新しくpathを作成
-      {model |
-        dragBegin = Just <| correctedPos,
-        svg = Utils.changeContains (
-          Utils.getElems model ++ {
-            shape = Path {
-              operators = [
-                {kind = "C", points = [correctedPos, correctedPos, correctedPos]},
-                {kind = "M", points = [correctedPos]}
-              ]
-            },
-            style = model.styleInfo,
-            attr = Dict.empty,
-            id = model.idGen
-          } :: []) model.svg,
-        idGen = model.idGen + 1,
-        isMouseDown = True
-      }
-    Just dragBegin -> case Utils.initLast (Utils.getElems model) of
-      Nothing -> model
-      Just (init, last) -> case last.shape of
-        Path {operators} ->
-          {model|
-            dragBegin = Just <| correctedPos,
-            svg = Utils.changeContains (
-              init ++ {last |
-                shape = Path {
-                  operators =
-                    {
-                      kind = "C",
-                      points = [dragBegin, correctedPos, correctedPos]
-                    } :: operators
-                }
-              } :: []
-            ) model.svg,
-            isMouseDown = True
-          }
-        others -> model
+    case model.isMouseDown of
+    True -> model
+    False ->
+      case model.dragBegin of
+      Nothing -> --新しくpathを作成
+        {model |
+          dragBegin = Just <| correctedPos,
+          svg = Utils.changeContains (
+            Utils.getElems model ++ {
+              shape = Path {
+                operators = [
+                  {kind = "C", points = [correctedPos, correctedPos, correctedPos]},
+                  {kind = "M", points = [correctedPos]}
+                ]
+              },
+              style = model.styleInfo,
+              attr = Dict.empty,
+              id = model.idGen
+            } :: []) model.svg,
+          idGen = model.idGen + 1,
+          isMouseDown = True
+        }
+      Just dragBegin -> case Utils.initLast (Utils.getElems model) of
+        Nothing -> model
+        Just (init, last) -> case last.shape of
+          Path {operators} ->
+            {model|
+              dragBegin = Just <| correctedPos,
+              svg = Utils.changeContains (
+                init ++ {last |
+                  shape = Path {
+                    operators =
+                      {
+                        kind = "C",
+                        points = [dragBegin, correctedPos, correctedPos]
+                      } :: operators
+                  }
+                } :: []
+              ) model.svg,
+              isMouseDown = True
+            }
+          others -> model
   MouseMove position ->
     let
       correctedPos = (toVec2 position) -# (model.clientLeft, model.clientTop)
@@ -186,25 +206,28 @@ updatePath msg model = case msg of
     let
       correctedPos = (toVec2 position) -# (model.clientLeft, model.clientTop)
     in
-    case model.dragBegin of
-      Nothing -> model
-      Just dragBegin ->
-        case Utils.initLast (Utils.getElems model) of
-          Nothing -> model
-          Just (init, last) -> case last.shape of
-            Path {operators} ->
-              {model|
-                dragBegin = Just <| correctedPos,
-                svg = Utils.changeContains (
-                  init ++ {last|
-                    shape = Path {
-                      operators = updateLast dragBegin correctedPos correctedPos operators
-                    }
-                  } :: []
-                ) model.svg,
-                isMouseDown = False
-              }
-            others -> model
+    case model.isMouseDown of
+    False -> model
+    True ->
+      case model.dragBegin of
+        Nothing -> model
+        Just dragBegin ->
+          case Utils.initLast (Utils.getElems model) of
+            Nothing -> model
+            Just (init, last) -> case last.shape of
+              Path {operators} ->
+                {model|
+                  dragBegin = Just <| correctedPos,
+                  svg = Utils.changeContains (
+                    init ++ {last|
+                      shape = Path {
+                        operators = updateLast dragBegin correctedPos correctedPos operators
+                      }
+                    } :: []
+                  ) model.svg,
+                  isMouseDown = False
+                }
+              others -> model
 
 updateLast: Vec2 -> Vec2 -> Vec2 -> List PathOperator -> List PathOperator
 updateLast adjustBegin adjustEnd endPoint operators = case operators of
@@ -236,3 +259,4 @@ updateLast2 adjustBegin adjustEnd endPoint operators = case operators of
 -- c を中心として a と対称となる点を求める
 symmetry: Vec2 -> Vec2 -> Vec2
 symmetry c a = (2 * Tuple.first c, 2 * Tuple.second c) -# a
+

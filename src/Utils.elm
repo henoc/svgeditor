@@ -1,7 +1,7 @@
 port module Utils exposing (..)
 import Types exposing (..)
 import Html exposing (Attribute)
-import Html.Events exposing (onWithOptions, keyCode)
+import Html.Events exposing (onWithOptions, on, keyCode)
 import Json.Decode as Json
 import Vec2 exposing (..)
 import Tuple exposing (first, second)
@@ -82,6 +82,9 @@ clientX = Json.field "clientX" Json.int
 clientY: Json.Decoder Int
 clientY = Json.field "clientY" Json.int
 
+button: Json.Decoder Int
+button = Json.field "button" Json.int
+
 onPush : msg -> Attribute msg
 onPush message =
   onWithOptions "mousedown" { stopPropagation = True , preventDefault = False } (Json.succeed message)
@@ -96,6 +99,10 @@ onItemMouseDown tagger =
     mouseEvent = Json.map2 (\x -> \y -> (x, y)) shiftKey clientPos
   in
   onWithOptions "mousedown" { stopPropagation = True , preventDefault = False } (Json.map tagger mouseEvent)
+
+onMouseDown2: (Int -> msg) -> Attribute msg
+onMouseDown2 tagger =
+  on "mousedown" (Json.map tagger button)
 
 -- フィルターで除いた要素の代わりに別リストの要素を順番に入れていく
 replace : (a -> Bool) -> List a -> List a -> List a
@@ -180,3 +187,6 @@ port getBoundingClientRectFromJs: (ClientRect -> msg) -> Sub msg
 
 port getStyle: String -> Cmd msg
 port getStyleFromJs: (Maybe StyleObject -> msg) -> Sub msg
+
+port getMouseDownLeftFromJs: (Vec2 -> msg) -> Sub msg
+port getMouseDownRightFromJs: (Vec2 -> msg) -> Sub msg

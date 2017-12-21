@@ -180,7 +180,7 @@ view model =
           height (toString <| Tuple.second <| Utils.getSvgSize model),
           onMouseDown NoSelect
         ]
-        ((List.map ViewBuilder.build (Utils.getElems model) ) ++ (case model.mode of
+        ((List.map (ViewBuilder.build model) (Utils.getElems model)) ++ (case model.mode of
           NodeMode -> ViewBuilder.buildNodes model
           HandMode -> ViewBuilder.buildVertexes model
           _ -> []
@@ -218,7 +218,9 @@ subscriptions : Model -> Sub Msg
 subscriptions model =
     Sub.batch
         [
-          Mouse.downs <| OnMouse << MouseDown, Mouse.ups <| OnMouse << MouseUp, Mouse.moves <| OnMouse << MouseMove, Utils.getSvgDataFromJs SvgData,
+          Mouse.ups <| OnMouse << MouseUp, Mouse.moves <| OnMouse << MouseMove, Utils.getSvgDataFromJs SvgData,
+          Utils.getMouseDownLeftFromJs <| OnMouse << MouseDownLeft,
+          Utils.getMouseDownRightFromJs <| OnMouse << MouseDownRight,
           Utils.getBoundingClientRectFromJs SvgRootRect,
           Utils.getStyleFromJs ComputedStyle
         ]
