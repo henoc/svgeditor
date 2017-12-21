@@ -57,7 +57,7 @@ build svg =
     let
       opstr: PathOperator -> String
       opstr op = op.kind ++ " " ++ (String.join "," (List.map (\(x,y) -> (toString x ++ " " ++ toString y)) op.points))
-      pathopstr = List.map opstr operators |> String.join " "
+      pathopstr = List.map opstr (List.reverse operators) |> String.join " "
     in
     Svg.path (attrList ++ [
       d pathopstr,

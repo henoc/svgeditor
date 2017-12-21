@@ -5,7 +5,7 @@ import Vec2 exposing (Vec2)
 import Set exposing (Set)
 import Dict exposing (Dict)
 
-type Mode = HandMode | NodeMode | RectMode | EllipseMode | PolygonMode
+type Mode = HandMode | NodeMode | RectMode | EllipseMode | PolygonMode | PathMode
 type alias StyleInfo = Dict String String
 type alias AttributeInfo = Dict String String
 
@@ -16,7 +16,7 @@ type SVGElement =
   Rectangle { leftTop: Vec2, size: Vec2 }
   | Ellipse { center: Vec2, size: Vec2 }
   | Polygon { points: List Vec2, enclosed: Bool}
-  | Path { operators: List PathOperator }
+  | Path { operators: List PathOperator }    -- このリストは新しい方が左
   | SVG {elems: List StyledSVGElement, size: Vec2}
   | Unknown { name: String, elems: List StyledSVGElement }
 type alias StyledSVGElement = {
@@ -29,6 +29,7 @@ type alias StyledSVGElement = {
 type alias Model = {
   mode: Mode,
   dragBegin: Maybe Vec2,
+  isMouseDown: Bool,
   svg: StyledSVGElement,
   styleInfo: StyleInfo,
   idGen: Int,

@@ -20,6 +20,19 @@ init lst =
   let len = List.length lst in
   List.take (len - 1) lst
 
+initLast: List a -> Maybe (List a, a)
+initLast lst = case last lst of
+  Nothing -> Nothing
+  Just x -> Just (init lst, x)
+
+-- 最後の２つを分けて得る
+initLast2: List a -> Maybe (List a, a, a)
+initLast2 lst = case initLast lst of
+  Nothing -> Nothing
+  Just (hd, last) -> case initLast hd of
+    Nothing -> Nothing
+    Just (hd2, last2) -> Just (hd2, last2, last)
+
 flatten : List (Maybe a) -> List a
 flatten lst = case lst of
   (Just x) :: tl -> x :: flatten tl
