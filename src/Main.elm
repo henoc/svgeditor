@@ -9,7 +9,6 @@ import Vec2 exposing (..)
 import Set exposing (Set)
 import Types exposing (..)
 import Debug exposing (..)
-import Mouse
 import Utils
 import ShapeMode
 import HandMode
@@ -32,6 +31,7 @@ init =
     {
       mode = HandMode,
       dragBegin = Nothing,
+      isMouseDown = False,
       svg = {style = Dict.empty, id = -1, attr = Dict.empty, shape = SVG {elems = [], size = (400, 400)}},
       styleInfo = Dict.fromList [("fill", "#883333"), ("stroke", "#223366")],
       idGen = 0,
@@ -64,6 +64,9 @@ update msg model =
       
       SwichMode PolygonMode ->
         {model | mode = PolygonMode} ! [Utils.getBoundingClientRect "root"]
+      
+      SwichMode PathMode ->
+        {model | mode = PathMode} ! [Utils.getBoundingClientRect "root"]        
 
       Style styleInfo -> case model.mode of
         HandMode ->
@@ -93,6 +96,10 @@ update msg model =
         else model ! []
       PolygonMode ->
         let newModel = ShapeMode.updatePolygon onMouseMsg model in
+        if model /= newModel then newModel ! [Utils.reflectSvgData newModel]
+        else model ! []
+      PathMode ->
+        let newModel = ShapeMode.updatePath onMouseMsg model in
         if model /= newModel then newModel ! [Utils.reflectSvgData newModel]
         else model ! []
       _ ->
@@ -156,7 +163,8 @@ view model =
           button [ Utils.onPush <| OnProperty <| SwichMode NodeMode ] [text "node mode"],        
           button [ Utils.onPush <| OnProperty <| SwichMode RectMode ] [text "rectangle mode"],
           button [ Utils.onPush <| OnProperty <| SwichMode EllipseMode ] [text "ellispe mode"],
-          button [ Utils.onPush <| OnProperty <| SwichMode PolygonMode ] [text "polygon mode"]
+          button [ Utils.onPush <| OnProperty <| SwichMode PolygonMode ] [text "polygon mode"],
+          button [ Utils.onPush <| OnProperty <| SwichMode PathMode ] [text "path mode"]          
         ],
         p [] [
           button [ Utils.onPush <| OnAction <| Duplicate ] [text "duplicate"],
@@ -171,7 +179,7 @@ view model =
           height (toString <| Tuple.second <| Utils.getSvgSize model),
           onMouseDown NoSelect
         ]
-        ((List.map ViewBuilder.build (Utils.getElems model) ) ++ (case model.mode of
+        ((List.map (ViewBuilder.build model) (Utils.getElems model)) ++ (case model.mode of
           NodeMode -> ViewBuilder.buildNodes model
           HandMode -> ViewBuilder.buildVertexes model
           _ -> []
@@ -209,7 +217,11 @@ subscriptions : Model -> Sub Msg
 subscriptions model =
     Sub.batch
         [
-          Mouse.downs <| OnMouse << MouseDown, Mouse.ups <| OnMouse << MouseUp, Mouse.moves <| OnMouse << MouseMove, Utils.getSvgDataFromJs SvgData,
+          Utils.getSvgDataFromJs SvgData,
+          Utils.getMouseDownLeftFromJs <| OnMouse << MouseDownLeft,
+          Utils.getMouseDownRightFromJs <| OnMouse << MouseDownRight,
+          Utils.getMouseUpFromJs <| OnMouse << MouseUp,
+          Utils.getMouseMoveFromJs <| OnMouse << MouseMove,
           Utils.getBoundingClientRectFromJs SvgRootRect,
           Utils.getStyleFromJs ComputedStyle
         ]

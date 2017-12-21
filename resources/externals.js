@@ -29,3 +29,19 @@ app.ports.getStyle.subscribe(function(id){
     app.ports.getStyleFromJs.send(window.getComputedStyle(elem));
   }
 });
+
+document.addEventListener("mousedown", mouseEvent => {
+  if (mouseEvent.button === 0) {
+    app.ports.getMouseDownLeftFromJs.send([mouseEvent.clientX, mouseEvent.clientY]);
+  }
+  if (mouseEvent.button === 2) {
+    app.ports.getMouseDownRightFromJs.send([mouseEvent.clientX, mouseEvent.clientY]);
+  }
+});
+
+document.addEventListener("mouseup", mouseEvent => {
+  app.ports.getMouseUpFromJs.send([mouseEvent.clientX, mouseEvent.clientY]);
+});
+document.addEventListener("mousemove", mouseEvent => {
+  app.ports.getMouseMoveFromJs.send([mouseEvent.clientX, mouseEvent.clientY]);
+});

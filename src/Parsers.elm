@@ -165,7 +165,7 @@ convertNode id node = case node of
           style = styleMap,
           id = id,
           attr = attrMap,
-          shape = Path {operators = pathOps}
+          shape = Path {operators = List.reverse pathOps}
         })
       others ->
         let

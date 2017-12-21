@@ -1,11 +1,10 @@
 module Types exposing (..)
 
-import Mouse
 import Vec2 exposing (Vec2)
 import Set exposing (Set)
 import Dict exposing (Dict)
 
-type Mode = HandMode | NodeMode | RectMode | EllipseMode | PolygonMode
+type Mode = HandMode | NodeMode | RectMode | EllipseMode | PolygonMode | PathMode
 type alias StyleInfo = Dict String String
 type alias AttributeInfo = Dict String String
 
@@ -16,7 +15,7 @@ type SVGElement =
   Rectangle { leftTop: Vec2, size: Vec2 }
   | Ellipse { center: Vec2, size: Vec2 }
   | Polygon { points: List Vec2, enclosed: Bool}
-  | Path { operators: List PathOperator }
+  | Path { operators: List PathOperator }    -- このリストは新しい方が左
   | SVG {elems: List StyledSVGElement, size: Vec2}
   | Unknown { name: String, elems: List StyledSVGElement }
 type alias StyledSVGElement = {
@@ -29,6 +28,7 @@ type alias StyledSVGElement = {
 type alias Model = {
   mode: Mode,
   dragBegin: Maybe Vec2,
+  isMouseDown: Bool,
   svg: StyledSVGElement,
   styleInfo: StyleInfo,
   idGen: Int,
@@ -43,7 +43,7 @@ type alias Model = {
 type Msg = OnProperty ChangePropertyMsg | OnAction Action | OnMouse MouseMsg | OnSelect Int Bool Vec2 | NoSelect | OnVertex Vec2 Vec2 | OnNode Vec2 Int
   | SvgData String | SvgRootRect ClientRect | ComputedStyle (Maybe StyleObject)
 type ChangePropertyMsg = SwichMode Mode | Style StyleInfo
-type MouseMsg = MouseDown Mouse.Position | MouseUp Mouse.Position | MouseMove Mouse.Position
+type MouseMsg = MouseDownLeft Vec2 | MouseDownRight Vec2 | MouseUp Vec2 | MouseMove Vec2
 type Action = Duplicate | Delete | BringForward | SendBackward
 
 type alias Box = {

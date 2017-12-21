@@ -9,16 +9,16 @@ import ShapeList
 import Debug
 import Dict exposing (Dict)
 
+
 update : MouseMsg -> Model -> Model
 update msg model = case msg of
-  MouseMove position -> case model.dragBegin of
+  MouseMove pos -> case model.dragBegin of
     Nothing -> model
 
     Just dragBegin -> case model.fixedPoint of
       Nothing ->
         -- posとの差分だけ図形を動かす
         let
-          pos = toVec2 position
           selected = model.selected
           modelsvg = model.svg
           moved = List.map (\e -> Shape.translate (pos -# dragBegin) e) model.selectedRef
@@ -33,7 +33,6 @@ update msg model = case msg of
       Just fixed ->
         -- posとの差分だけ縮尺を変更
         let
-          pos = toVec2 position
           delta = pos -# dragBegin
           selectedElems = model.selectedRef
           cent = ShapeList.getCenter selectedElems

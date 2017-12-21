@@ -14,63 +14,66 @@ import Dict exposing (Dict)
 import Shape
 
 -- モデル所有のSVGモデルのDOMを構築する
-build : StyledSVGElement -> Html Msg
-build svg =
+build : Model -> StyledSVGElement -> Html Msg
+build model svg =
   let
     rdomId = "svgeditor" ++ (toString svg.id)
     -- 元からあったunknownな属性はそのまま入れる
     -- idだけは一時的に上書きする
     attrList = Dict.insert "id" rdomId svg.attr |> Dict.toList |> List.map (\(x, y) -> attribute x y)
     styleStr = Dict.toList svg.style |> List.map (\(x, y) -> x ++ ":" ++ y) |> String.join ";"
+    -- HandMode, NodeModeのときだけ図形にクリック判定を与える
+    itemClick = case model.mode of
+      HandMode ->
+        [Utils.onItemMouseDown <| \(shift, pos) -> OnSelect svg.id shift pos]
+      NodeMode ->
+        [Utils.onItemMouseDown <| \(shift, pos) -> OnSelect svg.id shift pos]
+      _ -> []
   in
   case svg.shape of
   Rectangle {leftTop, size} ->
     let left = leftTop -# size /# (2, 2) in
-    rect (attrList ++ [
+    rect (attrList ++ itemClick ++ [
       x (toString  <| Tuple.first leftTop ),
       y (toString <| Tuple.second leftTop),
       width (toString <| Tuple.first size),
       height (toString <| Tuple.second size),
-      style styleStr,
-      Utils.onItemMouseDown <| \(shift, pos) -> OnSelect svg.id shift pos
+      style styleStr
     ]) []
   Ellipse {center, size} ->
     let centx = Tuple.first center in
     let centy = Tuple.second center in
     let sizex = Tuple.first size in
     let sizey = Tuple.second size in
-    ellipse (attrList ++ [
+    ellipse (attrList ++ itemClick ++ [
       cx (toString centx),
       cy (toString centy),
       rx (toString (sizex / 2)),
       ry (toString (sizey / 2)),
-      style styleStr,
-      Utils.onItemMouseDown <| \(shift, pos) -> OnSelect svg.id shift pos
+      style styleStr
     ]) []
   Polygon pgn ->
-    (if pgn.enclosed then polygon else polyline) (attrList ++ [
+    (if pgn.enclosed then polygon else polyline) (attrList ++ itemClick ++ [
       points (String.join "," (List.map (\(x,y) -> (toString x ++ " " ++ toString y)) pgn.points)),
-      style styleStr,
-      Utils.onItemMouseDown <| \(shift, pos) -> OnSelect svg.id shift pos
+      style styleStr
     ]) []
   Path {operators} ->
     let
       opstr: PathOperator -> String
       opstr op = op.kind ++ " " ++ (String.join "," (List.map (\(x,y) -> (toString x ++ " " ++ toString y)) op.points))
-      pathopstr = List.map opstr operators |> String.join " "
+      pathopstr = List.map opstr (List.reverse operators) |> String.join " "
     in
-    Svg.path (attrList ++ [
+    Svg.path (attrList ++ itemClick ++ [
       d pathopstr,
-      style styleStr,
-      Utils.onItemMouseDown <| \(shift, pos) -> OnSelect svg.id shift pos      
+      style styleStr   
     ]) []
   SVG {elems, size} ->
     Svg.svg (attrList ++ [
       width (toString <| Tuple.first size),
       height (toString <| Tuple.second size)
-    ]) (List.map build elems)
+    ]) (List.map (build model) elems)
   Unknown {name, elems} ->
-    node name attrList (List.map build elems) -- unknownは編集できないのでstyleStrはいらないはずである
+    node name attrList (List.map (build model) elems) -- unknownは編集できないのでstyleStrはいらないはずである
 
 -- handModeでの選択頂点などを与える
 buildVertexes : Model -> List (Html Msg)
