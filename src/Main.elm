@@ -73,6 +73,10 @@ update msg model =
           let newModel = HandMode.changeStyle styleInfo model in
           if model /= newModel then newModel ! [Utils.reflectSvgData newModel]
           else model ! []
+        NodeMode ->
+          let newModel = HandMode.changeStyle styleInfo model in
+          if model /= newModel then newModel ! [Utils.reflectSvgData newModel]
+          else model ! []
         _ -> model ! []
     
     OnAction action -> case action of
