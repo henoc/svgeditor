@@ -1,5 +1,5 @@
 button {
-  background: none;
+  background: rgba(255,200,200,0.2);
   border: none;
   color: currentColor;
   font-weight: bold;
