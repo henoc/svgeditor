@@ -131,7 +131,7 @@ update msg model =
     
     SvgData svgData ->
       case Parsers.parseSvg svgData of
-        Just (nextId, data) -> {model| svg = data, idGen = nextId} ! []
+        Just (nextId, data) -> {model| svg = data, idGen = nextId} ! [Utils.encodeURIComponent svgData]
         Nothing -> model ! []
     
     EncodedSvgData encoded ->
@@ -181,10 +181,12 @@ view model =
         ]
       ],
       div [id "root"] [
+        -- 画像としてのsvg
         img [
           id "svgimage",
           src <| model.encoded
         ] [],
+        -- 当たり判定用svg
         svg [
           width (toString <| Tuple.first <| Utils.getSvgSize model),
           height (toString <| Tuple.second <| Utils.getSvgSize model),

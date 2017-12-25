@@ -6,10 +6,15 @@ import Types exposing (..)
 import Debug
 import Tuple exposing (first, second)
 
+maybeInsert: String -> Maybe String -> Dict String String -> Dict String String
+maybeInsert key maybeValue dict = case maybeValue of
+  Just x -> Dict.insert key x dict
+  Nothing -> dict
+
 generateNode: StyledSVGElement -> XmlParser.Node
 generateNode elem =
   let
-    styleAttr = String.join ";" (List.map (\(x,y) -> x ++ ":" ++ y) <| Dict.toList elem.style)
+    styleAttr = if Dict.isEmpty elem.style then Nothing else Just <| String.join ";" (List.map (\(x,y) -> x ++ ":" ++ y) <| Dict.toList elem.style)
   in
   case elem.shape of
   SVG {elems, size} ->
@@ -22,7 +27,7 @@ generateNode elem =
   Unknown {name, elems} ->
     let
       xmlSubNodes = List.map generateNode elems
-      newAttr = Dict.insert "style" styleAttr elem.attr
+      newAttr = maybeInsert "style" styleAttr elem.attr
       attrs = Dict.toList newAttr |> List.map (\(x, y) -> {name = x, value = y}) 
       xmlElem = XmlParser.Element name attrs xmlSubNodes
     in
@@ -34,7 +39,7 @@ generateNode elem =
         Dict.insert "y" (toString <| second leftTop) <<
         Dict.insert "width" (toString <| first size) <<
         Dict.insert "height" (toString <| second size) <<
-        Dict.insert "style" styleAttr <| elem.attr
+        maybeInsert "style" styleAttr <| elem.attr
       attrs = Dict.toList newAttr |> List.map (\(x, y) -> {name = x, value = y}) 
     in
     XmlParser.Element "rect" attrs []
@@ -45,7 +50,7 @@ generateNode elem =
         Dict.insert "cy" (toString <| second center) <<
         Dict.insert "rx" (toString <| first size / 2) <<
         Dict.insert "ry" (toString <| second size / 2) <<
-        Dict.insert "style" styleAttr <| elem.attr
+        maybeInsert "style" styleAttr <| elem.attr
       attrs = Dict.toList newAttr |> List.map (\(x, y) -> {name = x, value = y}) 
     in
     XmlParser.Element "ellipse" attrs []
@@ -53,7 +58,7 @@ generateNode elem =
     let
       newAttr =
         Dict.insert "points" (String.join "," (List.map (\(x,y) -> (toString x) ++ " " ++ (toString y)) points)) <<
-        Dict.insert "style" styleAttr <| elem.attr
+        maybeInsert "style" styleAttr <| elem.attr
       attrs = Dict.toList newAttr |> List.map (\(x,y) -> {name = x, value = y})
     in 
     XmlParser.Element (if enclosed then "polygon" else "polyline") attrs []
@@ -64,7 +69,7 @@ generateNode elem =
       pathopstr = List.map opstr (List.reverse operators) |> String.join " "
       newAttr =
         Dict.insert "d" pathopstr <<
-        Dict.insert "style" styleAttr <| elem.attr
+        maybeInsert "style" styleAttr <| elem.attr
       attrs = Dict.toList newAttr |> List.map (\(x,y) -> {name = x, value = y})
     in
     XmlParser.Element "path" attrs []
