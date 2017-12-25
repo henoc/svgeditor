@@ -1,4 +1,15 @@
-<svg>
+<svg width="400" height="400" xmlns="http://www.w3.org/2000/svg"
+version="1.1" xmlns:xlink="http://www.w3.org/1999/xlink">
+  <defs>
+      <linearGradient id="MyGradient">
+          <stop offset="5%"  stop-color="green"/>
+          <stop offset="95%" stop-color="gold"/>
+      </linearGradient>
+  </defs>
+
+  <rect fill="url(#MyGradient)"
+        x="10" y="10" width="100" height="100"/>
+
   <rect height="50" style="fill:#00ffff;stroke:#999999" width="50" x="100" y="100" />
   <ellipse cx="200" cy="200" rx="50" ry="30" style="" />
   <polyline points="18 71,58 71,58 111,98 111,98 151,138 151,138 191" style="fill:white;stroke:red;stroke-width:4" />

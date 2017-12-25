@@ -20,8 +20,13 @@ build model svg =
     rdomId = "svgeditor" ++ (toString svg.id)
     -- 元からあったunknownな属性はそのまま入れる
     -- idだけは一時的に上書きする
+    -- styleは適当に上書きして当たり判定のある透明な物体にする
     attrList = Dict.insert "id" rdomId svg.attr |> Dict.toList |> List.map (\(x, y) -> attribute x y)
-    styleStr = Dict.toList svg.style |> List.map (\(x, y) -> x ++ ":" ++ y) |> String.join ";"
+    styleStr =
+      Dict.insert "opacity" "0" svg.style |>
+      Dict.insert "fill" "#000000" |>
+      Dict.insert "stroke" "#000000" |>
+      Dict.toList |> List.map (\(x, y) -> x ++ ":" ++ y) |> String.join ";"
     -- HandMode, NodeModeのときだけ図形にクリック判定を与える
     itemClick = case model.mode of
       HandMode ->

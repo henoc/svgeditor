@@ -30,6 +30,11 @@ app.ports.getStyle.subscribe(function(id){
   }
 });
 
+app.ports.encodeURIComponent.subscribe(function(str){
+  const encoded = encodeURIComponent(str);
+  app.ports.encodeURIComponentFromJs.send(encoded);
+});
+
 document.addEventListener("mousedown", mouseEvent => {
   if (mouseEvent.button === 0) {
     app.ports.getMouseDownLeftFromJs.send([mouseEvent.clientX, mouseEvent.clientY]);

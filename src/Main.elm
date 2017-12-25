@@ -1,10 +1,10 @@
 module Main exposing (..)
 
-import Html exposing (Html, button, div, text, node, p)
+import Html exposing (Html, button, div, text, node, p, img)
 import Svg exposing (svg, ellipse, rect)
 import Svg.Attributes exposing (..)
 import Html.Events exposing (onClick, onInput, onMouseDown)
-import Html.Attributes exposing (value, checked)
+import Html.Attributes exposing (value, checked, src)
 import Vec2 exposing (..)
 import Set exposing (Set)
 import Types exposing (..)
@@ -25,7 +25,6 @@ main =
 
 -- MODEL
 
-
 init : ( Model, Cmd Msg )
 init =
     {
@@ -40,7 +39,8 @@ init =
       nodeId = Nothing,
       selectedRef = [],
       clientLeft = 0,
-      clientTop = 0
+      clientTop = 0,
+      encoded = ""
     } ! [Utils.getSvgData ()]
 
 
@@ -131,8 +131,11 @@ update msg model =
     
     SvgData svgData ->
       case Parsers.parseSvg svgData of
-        Just (nextId, data) -> {model| svg = data, idGen = nextId} ! []
+        Just (nextId, data) -> {model| svg = data, idGen = nextId} ! [Utils.encodeURIComponent svgData]
         Nothing -> model ! []
+    
+    EncodedSvgData encoded ->
+      {model| encoded = "data:image/svg+xml," ++ encoded} ! []
     
     SvgRootRect rect ->
       {model| clientLeft = rect.left, clientTop = rect.top} ! []
@@ -178,6 +181,12 @@ view model =
         ]
       ],
       div [id "root"] [
+        -- 画像としてのsvg
+        img [
+          id "svgimage",
+          src <| model.encoded
+        ] [],
+        -- 当たり判定用svg
         svg [
           width (toString <| Tuple.first <| Utils.getSvgSize model),
           height (toString <| Tuple.second <| Utils.getSvgSize model),
@@ -235,6 +244,7 @@ subscriptions model =
     Sub.batch
         [
           Utils.getSvgDataFromJs SvgData,
+          Utils.encodeURIComponentFromJs EncodedSvgData,
           Utils.getMouseDownLeftFromJs <| OnMouse << MouseDownLeft,
           Utils.getMouseDownRightFromJs <| OnMouse << MouseDownRight,
           Utils.getMouseUpFromJs <| OnMouse << MouseUp,
