@@ -135,12 +135,13 @@ changeContains elems svgroot = case svgroot.shape of
   SVG props -> {svgroot| shape = SVG {props | elems = elems } }
   others -> svgroot
 
+-- svg文字列をエディタに送信する & エンコードされた文字列を得る
 reflectSvgData: Model -> Cmd msg
 reflectSvgData model =
   let
     svgData = Generator.generateXml model.svg
   in
-  sendSvgData svgData
+  Cmd.batch [sendSvgData svgData, encodeURIComponent svgData]
 
 updateHead: (a -> a) -> List a -> List a
 updateHead fn lst = case lst of
@@ -196,3 +197,6 @@ port getMouseDownLeftFromJs: (Vec2 -> msg) -> Sub msg
 port getMouseDownRightFromJs: (Vec2 -> msg) -> Sub msg
 port getMouseUpFromJs: (Vec2 -> msg) -> Sub msg
 port getMouseMoveFromJs: (Vec2 -> msg) -> Sub msg
+
+port encodeURIComponent: String -> Cmd msg
+port encodeURIComponentFromJs: (String -> msg) -> Sub msg

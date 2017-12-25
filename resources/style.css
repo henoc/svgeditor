@@ -8,6 +8,19 @@ button {
 button:hover {
   background: rgba(255,200,200,0.3);
 }
-svg {
+#root {
   border: solid 1px rgba(255,200,200,0.3);
+  position: relative;
+  width: 400px;
+  height: 400px;
+}
+svg {
+  position: absolute;
+  left: 0px;
+  top: 0px;
+}
+#svgimage {
+  position: absolute;
+  left: 0px;
+  top: 0px;
 }
