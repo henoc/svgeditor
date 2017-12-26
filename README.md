@@ -42,6 +42,7 @@ You can create shapes using the SVG's coder or directly creating shapes with the
 
 ## ChangeLog
 
+- 0.5.1 Got better
 - 0.5.0 Enable to resolve reference. Elements filled with linearGradient are recognized correct for example.
 - 0.4.5 Fix bug of new file command
 - 0.4.4 Add path mode again
