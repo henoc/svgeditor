@@ -4,7 +4,7 @@ import Html exposing (Html, button, div, text, node, p, img)
 import Svg exposing (svg, ellipse, rect)
 import Svg.Attributes exposing (..)
 import Html.Events exposing (onClick, onInput, onMouseDown)
-import Html.Attributes exposing (value, checked, src)
+import Html.Attributes exposing (value, checked, src, attribute)
 import Vec2 exposing (..)
 import Set exposing (Set)
 import Types exposing (..)
@@ -77,7 +77,7 @@ update msg model =
           let newModel = HandMode.changeStyle styleInfo model in
           if model /= newModel then newModel ! [Utils.reflectSvgData newModel]
           else model ! []
-        _ -> model ! []
+        _ -> {model| styleInfo = styleInfo} ! []
     
     OnAction action -> case action of
       Duplicate ->
@@ -98,28 +98,51 @@ update msg model =
         let newModel = NodeMode.update onMouseMsg model in
         if model /= newModel then newModel ! [Utils.reflectSvgData newModel]
         else model ! []
-      PolygonMode ->
-        let newModel = ShapeMode.updatePolygon onMouseMsg model in
-        if model /= newModel then newModel ! [Utils.reflectSvgData newModel]
-        else model ! []
-      PathMode ->
-        let newModel = ShapeMode.updatePath onMouseMsg model in
-        if model /= newModel then newModel ! [Utils.reflectSvgData newModel]
-        else model ! []
       _ ->
-        let newModel = ShapeMode.update onMouseMsg model in
-        if model /= newModel then newModel ! [Utils.reflectSvgData newModel]
-        else model ! []
+        case onMouseMsg of
+          -- マウス押しはここではなく、svgの枠で判定する
+          MouseDownLeft pos -> model ! []
+          MouseDownRight pos -> model ! []
+          _ -> case model.mode of
+            PolygonMode ->
+              let newModel = ShapeMode.updatePolygon onMouseMsg model in
+              if model /= newModel then newModel ! [Utils.reflectSvgData newModel]
+              else model ! []
+            PathMode ->
+              let newModel = ShapeMode.updatePath onMouseMsg model in
+              if model /= newModel then newModel ! [Utils.reflectSvgData newModel]
+              else model ! []
+            _ ->
+              let newModel = ShapeMode.update onMouseMsg model in
+              if model /= newModel then newModel ! [Utils.reflectSvgData newModel]
+              else model ! []
     
     OnSelect ident isAdd pos -> case model.mode of
       HandMode -> (HandMode.select ident isAdd pos model) ! [Utils.getStyle ("svgeditor" ++ (toString ident))]
       NodeMode -> (NodeMode.select ident pos model) ! [Utils.getStyle ("svgeditor" ++ (toString ident))]
       _ -> model ! []
     
-    NoSelect -> case model.mode of
+    FieldSelect (button, pos) -> case model.mode of
       HandMode -> (HandMode.noSelect model) ! []
       NodeMode -> (NodeMode.noSelect model) ! []
-      _ -> model ! []
+      _ ->
+        let
+          onMouseMsg = case button of
+            0 -> MouseDownLeft pos
+            _ -> MouseDownRight pos
+        in case model.mode of
+          PolygonMode ->
+            let newModel = ShapeMode.updatePolygon onMouseMsg model in
+            if model /= newModel then newModel ! [Utils.reflectSvgData newModel]
+            else model ! []
+          PathMode ->
+            let newModel = ShapeMode.updatePath onMouseMsg model in
+            if model /= newModel then newModel ! [Utils.reflectSvgData newModel]
+            else model ! []
+          _ ->
+            let newModel = ShapeMode.update onMouseMsg model in
+            if model /= newModel then newModel ! [Utils.reflectSvgData newModel]
+            else model ! []
     
     OnVertex fixed mpos -> case model.mode of
       HandMode -> (HandMode.scale fixed mpos model) ! []
@@ -165,13 +188,17 @@ view model =
   let styleInfo = model.styleInfo in
   div []
     [ div [] [
+        let
+          isSelected mode =
+            if mode == model.mode then [attribute "selected" "true"] else []
+        in
         p [] [
-          button [ Utils.onPush <| OnProperty <| SwichMode HandMode ] [text "hand mode"],
-          button [ Utils.onPush <| OnProperty <| SwichMode NodeMode ] [text "node mode"],        
-          button [ Utils.onPush <| OnProperty <| SwichMode RectMode ] [text "rectangle mode"],
-          button [ Utils.onPush <| OnProperty <| SwichMode EllipseMode ] [text "ellispe mode"],
-          button [ Utils.onPush <| OnProperty <| SwichMode PolygonMode ] [text "polygon mode"],
-          button [ Utils.onPush <| OnProperty <| SwichMode PathMode ] [text "path mode"]          
+          button ([ Utils.onPush <| OnProperty <| SwichMode HandMode ] ++ isSelected HandMode) [text "hand mode"],
+          button ([ Utils.onPush <| OnProperty <| SwichMode NodeMode ] ++ isSelected NodeMode) [text "node mode"],        
+          button ([ Utils.onPush <| OnProperty <| SwichMode RectMode ] ++ isSelected RectMode) [text "rectangle mode"],
+          button ([ Utils.onPush <| OnProperty <| SwichMode EllipseMode ] ++ isSelected EllipseMode) [text "ellispe mode"],
+          button ([ Utils.onPush <| OnProperty <| SwichMode PolygonMode ] ++ isSelected PolygonMode) [text "polygon mode"],
+          button ([ Utils.onPush <| OnProperty <| SwichMode PathMode ] ++ isSelected PathMode) [text "path mode"]          
         ],
         p [] [
           button [ Utils.onPush <| OnAction <| Duplicate ] [text "duplicate"],
@@ -190,7 +217,7 @@ view model =
         svg [
           width (toString <| Tuple.first <| Utils.getSvgSize model),
           height (toString <| Tuple.second <| Utils.getSvgSize model),
-          onMouseDown NoSelect
+          Utils.onFieldMouseDown FieldSelect
         ]
         ((List.map (ViewBuilder.build model) (Utils.getElems model)) ++ (case model.mode of
           NodeMode -> ViewBuilder.buildNodes model

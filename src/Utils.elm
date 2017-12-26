@@ -104,6 +104,17 @@ onMouseDown2: (Int -> msg) -> Attribute msg
 onMouseDown2 tagger =
   on "mousedown" (Json.map tagger button)
 
+onFieldMouseDown: ((Int, Vec2) -> msg) -> Attribute msg
+onFieldMouseDown tagger =
+  let
+    clientPos: Json.Decoder Vec2
+    clientPos = Json.map2 (\x -> \y -> (toFloat x, toFloat y)) clientX clientY
+
+    mouseEvent: Json.Decoder (Int, Vec2)
+    mouseEvent = Json.map2 (\x -> \y -> (x, y)) button clientPos
+  in
+  onWithOptions "mousedown" { stopPropagation = True , preventDefault = False } (Json.map tagger mouseEvent)
+
 -- フィルターで除いた要素の代わりに別リストの要素を順番に入れていく
 replace : (a -> Bool) -> List a -> List a -> List a
 replace filter replacer lst = case lst of

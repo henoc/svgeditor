@@ -146,6 +146,12 @@ colorPicker: String -> Model -> List (Html Msg)
 colorPicker sty model =
   [
     select [
+      -- selectの状態もfillが管理している
+      value <| case Dict.get sty model.styleInfo of
+        Nothing -> "none"
+        Just "none" -> "none"
+        Just "" -> "none"
+        _ -> "single color",
       onInput <| \v -> case v of
         "none" -> OnProperty <| Style (Dict.insert sty "none" model.styleInfo)
         _ -> OnProperty <| Style (Dict.insert sty "#000000" model.styleInfo)

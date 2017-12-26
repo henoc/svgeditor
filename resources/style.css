@@ -8,6 +8,9 @@ button {
 button:hover {
   background: rgba(255,200,200,0.3);
 }
+button[selected] {
+  background: rgba(200,255,200,0.3);
+}
 select {
   -webkit-appearance: none;
 	-moz-appearance: none;
