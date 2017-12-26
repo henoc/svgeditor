@@ -25,8 +25,6 @@ build model svg =
     attrList = Dict.insert "id" rdomId svg.attr |> Dict.toList |> List.map (\(x, y) -> attribute x y)
     styleStr =
       Dict.insert "opacity" "0" svg.style |>
-      Dict.insert "fill" "#000000" |>
-      Dict.insert "stroke" "#000000" |>
       Dict.toList |> List.map (\(x, y) -> x ++ ":" ++ y) |> String.join ";"
     -- HandMode, NodeModeのときだけ図形にクリック判定を与える
     itemClick = case model.mode of

@@ -1,11 +1,12 @@
-button {
+button, input[type="color"] {
   background: rgba(255,200,200,0.2);
   border: none;
   color: currentColor;
   font-weight: bold;
   border-radius: 3px;
+  padding: 5px;
 }
-button:hover {
+button:hover, input[type="color"]:hover {
   background: rgba(255,200,200,0.3);
 }
 button[selected] {
@@ -19,7 +20,7 @@ select {
   color: currentColor;
   font-weight: bold;
   border-radius: 3px;
-  padding: 3px;
+  padding: 5px;
 }
 select:hover {
   background: rgba(255,200,200,0.3);
