@@ -2,7 +2,8 @@ module ViewBuilder exposing (..)
 
 import Types exposing (..)
 import Html exposing (..)
-import Html.Attributes exposing (attribute)
+import Html.Attributes exposing (attribute, value)
+import Html.Events exposing (..)
 import Svg exposing (svg, ellipse, rect, circle, polygon, polyline, path)
 import Svg.Attributes exposing (..)
 import Vec2 exposing (..)
@@ -139,3 +140,23 @@ buildNodes model =
         Utils.onItemMouseDown <| \(shift, pos) -> OnNode pos nodeId
       ] [])
     positions nodeIds
+  
+
+colorPicker: String -> Model -> List (Html Msg)
+colorPicker sty model =
+  [
+    select [
+      onInput <| \v -> case v of
+        "none" -> OnProperty <| Style (Dict.insert sty "none" model.styleInfo)
+        _ -> OnProperty <| Style (Dict.insert sty "#000000" model.styleInfo)
+    ] [
+      option [] [text "single color"],
+      option [] [text "none"]
+    ]
+  ] ++ (
+    case Dict.get sty model.styleInfo of
+      Nothing -> []
+      Just "none" -> []
+      Just "" -> []
+      Just others -> [Html.input [ type_ "color", value <| Maybe.withDefault "#000000" (Dict.get sty model.styleInfo), onInput <| \c -> OnProperty <| Style (Dict.insert sty c model.styleInfo) ] []]
+  )

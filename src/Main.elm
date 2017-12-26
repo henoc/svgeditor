@@ -203,15 +203,14 @@ view model =
           Nothing -> 1
           Just x -> Result.withDefault 1 <| String.toFloat x
       in
-      p [] [
-        text "fill:",
-        Html.input [ type_ "color", value <| Maybe.withDefault "#000000" (Dict.get "fill" model.styleInfo) , onInput <| \c -> OnProperty <| Style (Dict.insert "fill" c styleInfo) ] [],
-        button [ checked True, onClick <| OnProperty <| Style (Dict.insert "fill" "none" styleInfo) ] [text "none"],
+      p [] ([
+        text "fill:"
+      ] ++ ViewBuilder.colorPicker "fill" model ++ [
         text <| "opacity:",
         button [ onClick <| OnProperty <| Style (Dict.insert "fill-opacity" (toString <| Utils.limit 0 1 (fo + 0.125)) styleInfo)] [text "+"],
         button [ onClick <| OnProperty <| Style (Dict.insert "fill-opacity" (toString <| Utils.limit 0 1 (fo - 0.125)) styleInfo)] [text "-"],
         text <| toString fo ++ " "
-      ],
+      ]),
       let
         so = case Dict.get "stroke-opacity" model.styleInfo of
           Nothing -> 1
@@ -220,10 +219,9 @@ view model =
           Nothing -> 1
           Just x -> Result.withDefault 1 <| String.toInt x
       in
-      p [] [
-        text " stroke:",
-        Html.input [ type_ "color", value <| Maybe.withDefault "#000000" (Dict.get "stroke" model.styleInfo) ,onInput <| \c -> OnProperty <| Style (Dict.insert "stroke" c styleInfo) ] [],
-        button [ checked True, onClick <| OnProperty <| Style (Dict.insert "stroke" "none" styleInfo) ] [text "none"],
+      p [] ([
+        text " stroke:"
+    ] ++ ViewBuilder.colorPicker "stroke" model ++ [
         text <| "opacity:",
         button [ onClick <| OnProperty <| Style (Dict.insert "stroke-opacity" (toString <| Utils.limit 0 1 (so + 0.125)) styleInfo)] [text "+"],
         button [ onClick <| OnProperty <| Style (Dict.insert "stroke-opacity" (toString <| Utils.limit 0 1 (so - 0.125)) styleInfo)] [text "-"],
@@ -232,7 +230,7 @@ view model =
         button [ onClick <| OnProperty <| Style (Dict.insert "stroke-width" (toString <| Utils.lowerLimit 1 (sw + 1)) styleInfo)] [text "+"],
         button [ onClick <| OnProperty <| Style (Dict.insert "stroke-width" (toString <| Utils.lowerLimit 1 (sw - 1)) styleInfo)] [text "-"],
         text <| toString sw ++ " "
-      ]
+      ])
     ]
 
 
