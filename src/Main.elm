@@ -207,7 +207,13 @@ view model =
           button [ Utils.onPush <| OnAction <| SendBackward ][text "send backward"]
         ]
       ],
-      div [id "root"] [
+      div [
+        id "root",
+        Html.Attributes.style [
+          ("width", (toString <| Tuple.first <| Utils.getSvgSize model) ++ "px"),
+          ("height", (toString <| Tuple.second <| Utils.getSvgSize model) ++ "px")
+        ]
+      ] [
         -- 画像としてのsvg
         img [
           id "svgimage",
