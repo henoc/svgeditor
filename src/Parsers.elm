@@ -29,7 +29,7 @@ normalizeColor data = case data of
     ParseFailure r i -> Nothing
 
 stylePairParser: Parser (String, String)
-stylePairParser = andThen (regexParser "[^\\s:]+") (regexParser "[^\\s;]+")
+stylePairParser = andThen (regexParser "[^:]+") (regexParser "[^;]+")
 
 styleParser: Parser (Dict String String)
 styleParser = Combinators.map Dict.fromList <| rep stylePairParser
@@ -59,14 +59,14 @@ getAttr name attrs =
 getStyleAttr: String -> List XmlParser.Attribute -> Maybe String
 getStyleAttr name attrs = case getAttr "style" attrs of
   Nothing -> Nothing
-  Just style -> case styleParser <| input style "[\\s:;]+" of
+  Just style -> case styleParser <| input style "[:;]" of
     ParseSuccess d i -> Dict.get name d
     _ -> Nothing
 
 getStyle: List XmlParser.Attribute -> StyleInfo
 getStyle attrs = case getAttr "style" attrs of
   Nothing -> Dict.empty
-  Just style -> case styleParser <| input style "[\\s:;]+" of
+  Just style -> case styleParser <| input style "[:;]" of
     ParseSuccess dict i -> dict
     _ -> Dict.empty
 

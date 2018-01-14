@@ -3,6 +3,8 @@ module Types exposing (..)
 import Vec2 exposing (Vec2)
 import Set exposing (Set)
 import Dict exposing (Dict)
+import Material
+import Color exposing (Color)
 
 type Mode = HandMode | NodeMode | RectMode | EllipseMode | PolygonMode | PathMode
 type alias StyleInfo = Dict String String
@@ -26,6 +28,7 @@ type alias StyledSVGElement = {
 }
 
 type alias Model = {
+  mdl: Material.Model,
   mode: Mode,
   dragBegin: Maybe Vec2,
   isMouseDown: Bool,
@@ -38,11 +41,13 @@ type alias Model = {
   selectedRef: List StyledSVGElement,
   clientLeft: Float,
   clientTop: Float,
-  encoded: String
+  encoded: String,
+  colorPicker: ColorPickerStates
 }
 
-type Msg = OnProperty ChangePropertyMsg | OnAction Action | OnMouse MouseMsg | OnSelect Int Bool Vec2 | FieldSelect (Int, Vec2) | OnVertex Vec2 Vec2 | OnNode Vec2 Int
+type Msg = Mdl (Material.Msg Msg) | OnProperty ChangePropertyMsg | OnAction Action | OnMouse MouseMsg | OnSelect Int Bool Vec2 | FieldSelect (Int, Vec2) | OnVertex Vec2 Vec2 | OnNode Vec2 Int
   | SvgData String | EncodedSvgData String | SvgRootRect ClientRect | ComputedStyle (Maybe StyleObject)
+  | ColorPickerMsg ColorPickerStates
 type ChangePropertyMsg = SwichMode Mode | Style StyleInfo
 type MouseMsg = MouseDownLeft Vec2 | MouseDownRight Vec2 | MouseUp Vec2 | MouseMove Vec2
 type Action = Duplicate | Delete | BringForward | SendBackward
@@ -63,3 +68,11 @@ type alias ClientRect = {
   left: Float,
   top: Float
 }
+
+type alias ColorPickerStates = Dict String ColorPickerState
+type alias ColorPickerState = {
+  colorMode: ColorMode,
+  singleColor: Color
+}
+
+type ColorMode = NoneColor | SingleColor
