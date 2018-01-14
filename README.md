@@ -42,6 +42,7 @@ You can create shapes using the SVG's coder or directly creating shapes with the
 
 ## ChangeLog
 
+- 0.6.0 Use elm-mdl
 - 0.5.3 Fix display size
 - 0.5.2 Fix color in hand mode
 - 0.5.1 Got better
