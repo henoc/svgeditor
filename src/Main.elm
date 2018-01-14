@@ -1,10 +1,21 @@
 module Main exposing (..)
 
+import Material
+import Material.Scheme
+import Material.Button as Button
+import Material.Toggles as Toggles
+import Material.Options as Options
+import Material.Slider as Slider
+import Material.Typography as Typo
+import Material.Elevation as Elevation
 import Html exposing (Html, button, div, text, node, p, img)
 import Svg exposing (svg, ellipse, rect)
 import Svg.Attributes exposing (..)
 import Html.Events exposing (onClick, onInput, onMouseDown)
 import Html.Attributes exposing (value, checked, src, attribute)
+import Color
+import Color.Convert exposing (..)
+import Tuple exposing (first, second)
 import Vec2 exposing (..)
 import Set exposing (Set)
 import Types exposing (..)
@@ -28,11 +39,12 @@ main =
 init : ( Model, Cmd Msg )
 init =
     {
+      mdl = Material.model,
       mode = HandMode,
       dragBegin = Nothing,
       isMouseDown = False,
       svg = {style = Dict.empty, id = -1, attr = Dict.empty, shape = SVG {elems = [], size = (400, 400)}},
-      styleInfo = Dict.fromList [("fill", "#883333"), ("stroke", "#223366")],
+      styleInfo = Dict.fromList [("fill", "hsla(0, 0.5, 0.5, 1)"), ("stroke", "hsla(180, 0.5, 0.5, 1)")],
       idGen = 0,
       selected = Set.empty,
       fixedPoint = Nothing,
@@ -40,7 +52,11 @@ init =
       selectedRef = [],
       clientLeft = 0,
       clientTop = 0,
-      encoded = ""
+      encoded = "",
+      colorPicker = Dict.fromList [
+        ("fill", { colorMode = SingleColor, singleColor = Color.hsl (degrees 0) 0.5 0.5}),
+        ("stroke", { colorMode = SingleColor, singleColor = Color.hsl (degrees 180) 0.5 0.5})
+      ]
     } ! [Utils.getSvgData ()]
 
 
@@ -49,6 +65,9 @@ init =
 update : Msg -> Model -> (Model, Cmd Msg)
 update msg model =
   case msg of
+    Mdl msg_ ->
+      Material.update Mdl msg_ model
+ 
     OnProperty changePropertyMsg -> case changePropertyMsg of
       SwichMode HandMode ->
         {model | mode = HandMode} ! []
@@ -178,7 +197,27 @@ update msg model =
           Nothing -> model.styleInfo
       in
       {model| styleInfo = newStyleInfo} ! []
-
+    
+    ColorPickerMsg colorPickerStates ->
+      let
+        -- カラーピッカーの状態をもとに styleInfo を更新
+        loop : List (String, ColorPickerState) -> StyleInfo -> StyleInfo
+        loop cols styleInfo = case cols of
+          hd :: tl ->
+            let
+              part = first hd
+              colorState = second hd
+              newStyleInfo = case colorState.colorMode of
+                  NoneColor -> Dict.insert part "none" styleInfo
+                  SingleColor -> Dict.insert part (colorToCssHsla colorState.singleColor) styleInfo
+            in
+            loop tl newStyleInfo
+          [] -> styleInfo
+        colorPickerStatesList = Dict.toList colorPickerStates
+        newStyleInfo = loop colorPickerStatesList model.styleInfo
+        newModel = {model | colorPicker = colorPickerStates}
+      in
+      update (OnProperty (Style newStyleInfo)) newModel
 
 -- VIEW
 
@@ -187,32 +226,37 @@ view : Model -> Html Msg
 view model =
   let styleInfo = model.styleInfo in
   div []
-    [ div [] [
+    [
+      let
+        -- ボタンの追加CSS
+        buttonCss =
+          Options.css "color" "currentColor"
+      in
+      div [] [
         let
           isSelected mode =
-            if mode == model.mode then [attribute "selected" "true"] else []
+            if mode == model.mode then [Button.colored, Button.raised] else []
         in
-        p [] [
-          button ([ Utils.onPush <| OnProperty <| SwichMode HandMode ] ++ isSelected HandMode) [text "hand mode"],
-          button ([ Utils.onPush <| OnProperty <| SwichMode NodeMode ] ++ isSelected NodeMode) [text "node mode"],        
-          button ([ Utils.onPush <| OnProperty <| SwichMode RectMode ] ++ isSelected RectMode) [text "rectangle mode"],
-          button ([ Utils.onPush <| OnProperty <| SwichMode EllipseMode ] ++ isSelected EllipseMode) [text "ellispe mode"],
-          button ([ Utils.onPush <| OnProperty <| SwichMode PolygonMode ] ++ isSelected PolygonMode) [text "polygon mode"],
-          button ([ Utils.onPush <| OnProperty <| SwichMode PathMode ] ++ isSelected PathMode) [text "path mode"]          
+        div [] [
+          Button.render Mdl [0] model.mdl ([buttonCss, Options.onClick <| OnProperty <| SwichMode HandMode] ++ isSelected HandMode) [text "hand"],
+          Button.render Mdl [1] model.mdl ([buttonCss, Options.onClick <| OnProperty <| SwichMode NodeMode] ++ isSelected NodeMode) [text "node"],
+          Button.render Mdl [2] model.mdl ([buttonCss, Options.onClick <| OnProperty <| SwichMode RectMode] ++ isSelected RectMode) [text "rectangle"],
+          Button.render Mdl [3] model.mdl ([buttonCss, Options.onClick <| OnProperty <| SwichMode EllipseMode] ++ isSelected EllipseMode) [text "ellipse"],
+          Button.render Mdl [4] model.mdl ([buttonCss, Options.onClick <| OnProperty <| SwichMode PolygonMode] ++ isSelected PolygonMode) [text "polygon"],
+          Button.render Mdl [5] model.mdl ([buttonCss, Options.onClick <| OnProperty <| SwichMode PathMode] ++ isSelected PathMode) [text "path"]
         ],
-        p [] [
-          button [ Utils.onPush <| OnAction <| Duplicate ] [text "duplicate"],
-          button [ Utils.onPush <| OnAction <| Delete ] [text "delete"],
-          button [ Utils.onPush <| OnAction <| BringForward ][text "bring forward"],
-          button [ Utils.onPush <| OnAction <| SendBackward ][text "send backward"]
+        div [] [
+          Button.render Mdl [6] model.mdl [buttonCss, Options.onClick <| OnAction <| Duplicate] [text "duplicate"],
+          Button.render Mdl [7] model.mdl [buttonCss, Options.onClick <| OnAction <| Delete] [text "delete"],
+          Button.render Mdl [8] model.mdl [buttonCss, Options.onClick <| OnAction <| BringForward] [text "bring forward"],
+          Button.render Mdl [9] model.mdl [buttonCss, Options.onClick <| OnAction <| SendBackward] [text "send backward"]
         ]
       ],
-      div [
-        id "root",
-        Html.Attributes.style [
-          ("width", (toString <| Tuple.first <| Utils.getSvgSize model) ++ "px"),
-          ("height", (toString <| Tuple.second <| Utils.getSvgSize model) ++ "px")
-        ]
+      Options.div [
+        Elevation.e8,
+        Options.attribute <| Html.Attributes.id "root",
+        Options.css "width" <| (toString <| Tuple.first <| Utils.getSvgSize model) ++ "px",
+        Options.css "height" <| (toString <| Tuple.second <| Utils.getSvgSize model) ++ "px"
       ] [
         -- 画像としてのsvg
         img [
@@ -231,40 +275,15 @@ view model =
           _ -> []
         ))
       ],
+      div [] <| ViewBuilder.colorPicker "fill" model,
       let
-        fo = case Dict.get "fill-opacity" model.styleInfo of
-          Nothing -> 1
-          Just x -> Result.withDefault 1 <| String.toFloat x
-      in
-      p [] ([
-        text "fill:"
-      ] ++ ViewBuilder.colorPicker "fill" model ++ [
-        text <| "opacity:",
-        button [ onClick <| OnProperty <| Style (Dict.insert "fill-opacity" (toString <| Utils.limit 0 1 (fo + 0.125)) styleInfo)] [text "+"],
-        button [ onClick <| OnProperty <| Style (Dict.insert "fill-opacity" (toString <| Utils.limit 0 1 (fo - 0.125)) styleInfo)] [text "-"],
-        text <| toString fo ++ " "
-      ]),
-      let
-        so = case Dict.get "stroke-opacity" model.styleInfo of
-          Nothing -> 1
-          Just x -> Result.withDefault 1 <| String.toFloat x
         sw = case Dict.get "stroke-width" model.styleInfo of
           Nothing -> 1
           Just x -> Result.withDefault 1 <| String.toInt x
       in
-      p [] ([
-        text " stroke:"
-    ] ++ ViewBuilder.colorPicker "stroke" model ++ [
-        text <| "opacity:",
-        button [ onClick <| OnProperty <| Style (Dict.insert "stroke-opacity" (toString <| Utils.limit 0 1 (so + 0.125)) styleInfo)] [text "+"],
-        button [ onClick <| OnProperty <| Style (Dict.insert "stroke-opacity" (toString <| Utils.limit 0 1 (so - 0.125)) styleInfo)] [text "-"],
-        text <| toString so ++ " ",
-        text <| "width:",
-        button [ onClick <| OnProperty <| Style (Dict.insert "stroke-width" (toString <| Utils.lowerLimit 1 (sw + 1)) styleInfo)] [text "+"],
-        button [ onClick <| OnProperty <| Style (Dict.insert "stroke-width" (toString <| Utils.lowerLimit 1 (sw - 1)) styleInfo)] [text "-"],
-        text <| toString sw ++ " "
-      ])
+      div [] <| ViewBuilder.colorPicker "stroke" model
     ]
+  |> Material.Scheme.top
 
 
 

@@ -6,6 +6,12 @@ import Html.Attributes exposing (attribute, value)
 import Html.Events exposing (..)
 import Svg exposing (svg, ellipse, rect, circle, polygon, polyline, path)
 import Svg.Attributes exposing (..)
+import Material.Toggles as Toggles
+import Material.Slider as Slider
+import Material.Options as Options
+import Material.Typography as Typo
+import Material.Grid exposing (grid, noSpacing, cell, size, Device(..))
+import Color.Convert exposing (..)
 import Vec2 exposing (..)
 import Utils
 import Set exposing (Set)
@@ -13,6 +19,7 @@ import ShapeList exposing (..)
 import Tuple exposing (first, second)
 import Dict exposing (Dict)
 import Shape
+import Color
 
 -- モデル所有のSVGモデルのDOMを構築する
 build : Model -> StyledSVGElement -> Html Msg
@@ -138,29 +145,51 @@ buildNodes model =
         Utils.onItemMouseDown <| \(shift, pos) -> OnNode pos nodeId
       ] [])
     positions nodeIds
-  
 
 colorPicker: String -> Model -> List (Html Msg)
 colorPicker sty model =
+  let
+    colorPickerState = Maybe.withDefault {colorMode = NoneColor, singleColor = Color.black} <| Dict.get sty model.colorPicker
+    noneInserted = Dict.insert sty {colorPickerState | colorMode = NoneColor} model.colorPicker
+    singleInserted = Dict.insert sty {colorPickerState | colorMode = SingleColor} model.colorPicker
+    hsl = Color.toHsl colorPickerState.singleColor
+    cgHue hue = Dict.insert sty {colorPickerState | singleColor = Color.hsla hue hsl.saturation hsl.lightness hsl.alpha} model.colorPicker
+    cgSat sat = Dict.insert sty {colorPickerState | singleColor = Color.hsla hsl.hue sat hsl.lightness hsl.alpha} model.colorPicker
+    cgLig lig = Dict.insert sty {colorPickerState | singleColor = Color.hsla hsl.hue hsl.saturation lig hsl.alpha} model.colorPicker
+    cgAlp alp = Dict.insert sty {colorPickerState | singleColor = Color.hsla hsl.hue hsl.saturation hsl.lightness alp} model.colorPicker
+  in
   [
-    select [
-      -- selectの状態もfillが管理している
-      value <| case Dict.get sty model.styleInfo of
-        Nothing -> "none"
-        Just "none" -> "none"
-        Just "" -> "none"
-        _ -> "single color",
-      onInput <| \v -> case v of
-        "none" -> OnProperty <| Style (Dict.insert sty "none" model.styleInfo)
-        _ -> OnProperty <| Style (Dict.insert sty "#000000" model.styleInfo)
-    ] [
-      option [] [text "single color"],
-      option [] [text "none"]
+    grid [] [
+      cell [size All 1] [
+        Options.styled p [Typo.subhead] [text <| sty ++ ":"]
+      ],
+      cell [size All 1] [
+        Toggles.checkbox Mdl [0] model.mdl [
+          Options.onToggle <| ColorPickerMsg noneInserted,
+          Toggles.value (colorPickerState.colorMode == NoneColor)
+        ] [text "none"],
+        Toggles.checkbox Mdl [1] model.mdl [
+          Options.onToggle <| ColorPickerMsg singleInserted,
+          Toggles.value (colorPickerState.colorMode == SingleColor)
+        ] [text "single"]
+      ],
+      cell [size All 5] [
+        grid [noSpacing] [
+            cell [size All 1] [ Options.styled p [Typo.body1] [text "H: "] ],
+            cell [size All 3] [ Slider.view [Slider.value (hsl.hue * 180 / pi), Slider.min 0, Slider.max 359, Slider.step 1, Slider.onChange (\f -> ColorPickerMsg <| cgHue (degrees f))] ]
+        ],
+        grid [noSpacing] [
+            cell [size All 1] [ Options.styled p [Typo.body1] [text "S: "] ],
+            cell [size All 3] [ Slider.view [Slider.value (hsl.saturation * 100), Slider.min 0, Slider.max 100, Slider.step 1, Slider.onChange (\f -> ColorPickerMsg <| cgSat (f / 100))] ]
+        ],
+        grid [noSpacing] [
+            cell [size All 1] [ Options.styled p [Typo.body1] [text "L: "] ],
+            cell [size All 3] [ Slider.view [Slider.value (hsl.lightness * 100), Slider.min 0, Slider.max 100, Slider.step 1, Slider.onChange (\f -> ColorPickerMsg <| cgLig (f / 100))] ]
+        ],
+        grid [noSpacing] [
+            cell [size All 1] [ Options.styled p [Typo.body1] [text "A: "] ],
+            cell [size All 3] [ Slider.view [Slider.value hsl.alpha, Slider.min 0, Slider.max 1, Slider.step 0.01, Slider.onChange (\f -> ColorPickerMsg <| cgAlp f)] ]
+        ]
+      ]
     ]
-  ] ++ (
-    case Dict.get sty model.styleInfo of
-      Nothing -> []
-      Just "none" -> []
-      Just "" -> []
-      Just others -> [Html.input [ type_ "color", value <| Maybe.withDefault "#000000" (Dict.get sty model.styleInfo), onInput <| \c -> OnProperty <| Style (Dict.insert sty c model.styleInfo) ] []]
-  )
+  ]
