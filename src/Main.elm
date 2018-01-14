@@ -8,6 +8,7 @@ import Material.Options as Options
 import Material.Slider as Slider
 import Material.Typography as Typo
 import Material.Elevation as Elevation
+import Material.Grid exposing (grid, noSpacing, cell, size, Device(..))
 import Html exposing (Html, button, div, text, node, p, img)
 import Svg exposing (svg, ellipse, rect)
 import Svg.Attributes exposing (..)
@@ -44,7 +45,7 @@ init =
       dragBegin = Nothing,
       isMouseDown = False,
       svg = {style = Dict.empty, id = -1, attr = Dict.empty, shape = SVG {elems = [], size = (400, 400)}},
-      styleInfo = Dict.fromList [("fill", "hsla(0, 0.5, 0.5, 1)"), ("stroke", "hsla(180, 0.5, 0.5, 1)")],
+      styleInfo = Dict.fromList [("fill", "hsla(0, 50%, 50%, 1)"), ("stroke", "none")],
       idGen = 0,
       selected = Set.empty,
       fixedPoint = Nothing,
@@ -55,7 +56,7 @@ init =
       encoded = "",
       colorPicker = Dict.fromList [
         ("fill", { colorMode = SingleColor, singleColor = Color.hsl (degrees 0) 0.5 0.5}),
-        ("stroke", { colorMode = SingleColor, singleColor = Color.hsl (degrees 180) 0.5 0.5})
+        ("stroke", { colorMode = NoneColor, singleColor = Color.hsl (degrees 180) 0.5 0.5})
       ]
     } ! [Utils.getSvgData ()]
 
@@ -276,12 +277,20 @@ view model =
         ))
       ],
       div [] <| ViewBuilder.colorPicker "fill" model,
+      div [] <| ViewBuilder.colorPicker "stroke" model,
       let
         sw = case Dict.get "stroke-width" model.styleInfo of
           Nothing -> 1
           Just x -> Result.withDefault 1 <| String.toInt x
       in
-      div [] <| ViewBuilder.colorPicker "stroke" model
+      grid [] [
+        cell [size All 2] [
+          Options.styled p [Typo.subhead] [text <| "stroke-width:"]
+        ],
+        cell [size All 2] [
+          Slider.view [Slider.value (toFloat sw), Slider.min 0, Slider.max 100, Slider.step 1, Slider.onChange (\n -> OnProperty <| Style <| Dict.insert "stroke-width" (toString n) styleInfo)]
+        ]
+      ]
     ]
   |> Material.Scheme.top
 

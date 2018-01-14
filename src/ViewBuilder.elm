@@ -10,6 +10,7 @@ import Material.Toggles as Toggles
 import Material.Slider as Slider
 import Material.Options as Options
 import Material.Typography as Typo
+import Material.Elevation as Elevation
 import Material.Grid exposing (grid, noSpacing, cell, size, Device(..))
 import Color.Convert exposing (..)
 import Vec2 exposing (..)
@@ -159,9 +160,22 @@ colorPicker sty model =
     cgAlp alp = Dict.insert sty {colorPickerState | singleColor = Color.hsla hsl.hue hsl.saturation hsl.lightness alp} model.colorPicker
   in
   [
-    grid [] [
+    grid [] ([
       cell [size All 1] [
         Options.styled p [Typo.subhead] [text <| sty ++ ":"]
+      ],
+      cell [size All 1] [
+        Options.div [
+          Elevation.e8,
+          Options.css "width" "48px",
+          Options.css "height" "48px",
+          Options.css "background" (colorToCssHsla colorPickerState.singleColor),
+          Options.center
+        ] (
+          case colorPickerState.colorMode of
+            NoneColor -> [text "none"]
+            SingleColor -> []
+        )
       ],
       cell [size All 1] [
         Toggles.checkbox Mdl [0] model.mdl [
@@ -172,24 +186,29 @@ colorPicker sty model =
           Options.onToggle <| ColorPickerMsg singleInserted,
           Toggles.value (colorPickerState.colorMode == SingleColor)
         ] [text "single"]
-      ],
-      cell [size All 5] [
-        grid [noSpacing] [
-            cell [size All 1] [ Options.styled p [Typo.body1] [text "H: "] ],
-            cell [size All 3] [ Slider.view [Slider.value (hsl.hue * 180 / pi), Slider.min 0, Slider.max 359, Slider.step 1, Slider.onChange (\f -> ColorPickerMsg <| cgHue (degrees f))] ]
-        ],
-        grid [noSpacing] [
-            cell [size All 1] [ Options.styled p [Typo.body1] [text "S: "] ],
-            cell [size All 3] [ Slider.view [Slider.value (hsl.saturation * 100), Slider.min 0, Slider.max 100, Slider.step 1, Slider.onChange (\f -> ColorPickerMsg <| cgSat (f / 100))] ]
-        ],
-        grid [noSpacing] [
-            cell [size All 1] [ Options.styled p [Typo.body1] [text "L: "] ],
-            cell [size All 3] [ Slider.view [Slider.value (hsl.lightness * 100), Slider.min 0, Slider.max 100, Slider.step 1, Slider.onChange (\f -> ColorPickerMsg <| cgLig (f / 100))] ]
-        ],
-        grid [noSpacing] [
-            cell [size All 1] [ Options.styled p [Typo.body1] [text "A: "] ],
-            cell [size All 3] [ Slider.view [Slider.value hsl.alpha, Slider.min 0, Slider.max 1, Slider.step 0.01, Slider.onChange (\f -> ColorPickerMsg <| cgAlp f)] ]
-        ]
       ]
-    ]
+    ] ++ (
+        case colorPickerState.colorMode of
+          NoneColor -> []
+          SingleColor -> [
+            cell [size All 5] [
+              grid [noSpacing] [
+                  cell [size All 1] [ Options.styled p [Typo.body1] [text "H: "] ],
+                  cell [size All 3] [ Slider.view [Slider.value (hsl.hue * 180 / pi), Slider.min 0, Slider.max 359, Slider.step 1, Slider.onChange (\f -> ColorPickerMsg <| cgHue (degrees f))] ]
+              ],
+              grid [noSpacing] [
+                  cell [size All 1] [ Options.styled p [Typo.body1] [text "S: "] ],
+                  cell [size All 3] [ Slider.view [Slider.value (hsl.saturation * 100), Slider.min 0, Slider.max 100, Slider.step 1, Slider.onChange (\f -> ColorPickerMsg <| cgSat (f / 100))] ]
+              ],
+              grid [noSpacing] [
+                  cell [size All 1] [ Options.styled p [Typo.body1] [text "L: "] ],
+                  cell [size All 3] [ Slider.view [Slider.value (hsl.lightness * 100), Slider.min 0, Slider.max 100, Slider.step 1, Slider.onChange (\f -> ColorPickerMsg <| cgLig (f / 100))] ]
+              ],
+              grid [noSpacing] [
+                  cell [size All 1] [ Options.styled p [Typo.body1] [text "A: "] ],
+                  cell [size All 3] [ Slider.view [Slider.value hsl.alpha, Slider.min 0, Slider.max 1, Slider.step 0.01, Slider.onChange (\f -> ColorPickerMsg <| cgAlp f)] ]
+              ]
+            ]
+          ]
+      ))
   ]
