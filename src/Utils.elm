@@ -238,6 +238,12 @@ colorToCssHsla2 c =
   if rgba.red == 255 && rgba.green == 255 && rgba.blue == 255 then "hsla(0, 0%, 100%, " ++ (toString rgba.alpha) ++ ")"
   else colorToCssHsla c
 
+colorTypeToStr : ColorType -> String
+colorTypeToStr ctype = case ctype of
+  NoneColorType -> "none"
+  SingleColorType c -> colorToCssHsla2 c
+  AnyColorType ident -> "url(#" ++ ident ++ ")"
+
 port getSvgData: () -> Cmd msg
 port getSvgDataFromJs: (String -> msg) -> Sub msg
 

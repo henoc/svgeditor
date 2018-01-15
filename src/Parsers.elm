@@ -19,14 +19,20 @@ intParser = \input -> case (regexParser "[0-9]+") input of
 rgbParser: Parser (Int, Int, Int)
 rgbParser = onlyRight (stringParser "rgb") (andThen (andThen intParser intParser) intParser) |> map (\((x,y),z) -> (x,y,z))
 
+urlParser: Parser String
+urlParser = onlyRight (stringParser "url") (regexParser "^#[a-zA-Z0-9_\\-.]+")
+
 -- rgb(x,y,z) & opacity を Color にする
-rgbToColor: String -> Float -> Maybe Color
-rgbToColor data a = case data of
-  "none" -> Nothing
-  "" -> Nothing
+rgbToColorType: String -> Float -> ColorType
+rgbToColorType data a = case data of
+  "none" -> NoneColorType
+  "" -> NoneColorType
   _ -> case rgbParser (input data "[\\(\\),\\s]+" ) of
-    ParseSuccess (r,g,b) i -> Just (Color.rgba r g b a)
-    ParseFailure r i -> Nothing
+    ParseSuccess (r,g,b) i -> SingleColorType (Color.rgba r g b a)
+    ParseFailure r i ->
+      case urlParser (input data "[\\(\\)\\s\"]+") of
+        ParseSuccess identifier i -> AnyColorType identifier
+        ParseFailure r i -> NoneColorType
 
 stylePairParser: Parser (String, String)
 stylePairParser = andThen (regexParser "[^:]+") (regexParser "[^;]+")

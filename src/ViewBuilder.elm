@@ -23,24 +23,34 @@ import Shape
 import Color
 
 -- モデル所有のSVGモデルのDOMを構築する
-build : Model -> StyledSVGElement -> Html Msg
-build model svg =
+build : LayerType -> Model -> StyledSVGElement -> Html Msg
+build layerType model svg =
   let
-    rdomId = "svgeditor" ++ (toString svg.id)
+    layerPrefix = case layerType of
+      ColorLayer -> "c"
+      PhysicsLayer -> "p"
+    rdomId = "svgeditor" ++ (toString svg.id) ++ layerPrefix
     -- 元からあったunknownな属性はそのまま入れる
     -- idだけは一時的に上書きする
-    -- styleは適当に上書きして当たり判定のある透明な物体にする
     attrList = Dict.insert "id" rdomId svg.attr |> Dict.toList |> List.map (\(x, y) -> attribute x y)
     styleStr =
       Dict.insert "opacity" "0" svg.style |>
+      (
+        case layerType of
+          ColorLayer -> \x -> x                         -- 色レイヤでは透明だが色を保持する
+          PhysicsLayer -> Dict.insert "fill" "#000000"  -- 物理レイヤでは黒色かつ透明にする
+      ) |>
       Dict.toList |> List.map (\(x, y) -> x ++ ":" ++ y) |> String.join ";"
-    -- HandMode, NodeModeのときだけ図形にクリック判定を与える
-    itemClick = case model.mode of
-      HandMode ->
-        [Utils.onItemMouseDown <| \(shift, pos) -> OnSelect svg.id shift pos]
-      NodeMode ->
-        [Utils.onItemMouseDown <| \(shift, pos) -> OnSelect svg.id shift pos]
-      _ -> []
+    -- 物理レイヤでは HandMode, NodeModeのときだけ図形にクリック判定を与える
+    itemClick = case layerType of
+      ColorLayer -> []
+      PhysicsLayer ->
+        case model.mode of
+          HandMode ->
+            [Utils.onItemMouseDown <| \(shift, pos) -> OnSelect svg.id shift pos]
+          NodeMode ->
+            [Utils.onItemMouseDown <| \(shift, pos) -> OnSelect svg.id shift pos]
+          _ -> []
   in
   case svg.shape of
   Rectangle {leftTop, size} ->
@@ -87,13 +97,13 @@ build model svg =
     Svg.svg (attrList ++ [
       width (toString <| Tuple.first size),
       height (toString <| Tuple.second size)
-    ]) (List.map (build model) elems)
+    ]) (List.map (build layerType model) elems)
   Defs {elems} ->
-    Svg.defs attrList (List.map (build model) elems)
+    Svg.defs attrList (List.map (build layerType model) elems)
   LinearGradient {stops} ->
-    Svg.linearGradient attrList (List.map (build model) stops)
+    Svg.linearGradient attrList (List.map (build layerType model) stops)
   Unknown {name, elems} ->
-    node name attrList (List.map (build model) elems) -- unknownは編集できないのでstyleStrはいらないはずである
+    node name attrList (List.map (build layerType model) elems) -- unknownは編集できないのでstyleStrはいらないはずである
 
 -- handModeでの選択頂点などを与える
 buildVertexes : Model -> List (Html Msg)
@@ -163,7 +173,7 @@ colorPicker sty model =
     singleInserted = Dict.insert sty {colorPickerState | colorMode = SingleColor} model.colorPicker
     anyInserted url = Dict.insert sty {colorPickerState | colorMode = AnyColor url} model.colorPicker
     isOpenToggled = Dict.insert sty {colorPickerState | isOpen = not colorPickerState.isOpen} model.colorPicker
-    hsl = Color.toHsl colorPickerState.singleColor
+    hsl = Utils.toHsl2 colorPickerState.singleColor
     cgHue hue = Dict.insert sty {colorPickerState | singleColor = Color.hsla hue hsl.saturation hsl.lightness hsl.alpha} model.colorPicker
     cgSat sat = Dict.insert sty {colorPickerState | singleColor = Color.hsla hsl.hue sat hsl.lightness hsl.alpha} model.colorPicker
     cgLig lig = Dict.insert sty {colorPickerState | singleColor = Color.hsla hsl.hue hsl.saturation lig hsl.alpha} model.colorPicker
@@ -180,14 +190,18 @@ colorPicker sty model =
         Elevation.transition 300,
         Options.css "width" "48px",
         Options.css "height" "48px",
-        Options.css "background" (colorToCssHsla colorPickerState.singleColor),
+        Options.css "background" (case colorPickerState.colorMode of    -- 色表示の四角形
+          NoneColor -> "hsla(0, 0%, 100%, 0.1)"
+          SingleColor -> Utils.colorToCssHsla2 colorPickerState.singleColor
+          AnyColor url -> "hsla(0, 0%, 100%, 0.1)"
+        ),
         Options.center,
         Options.onClick <| ColorPickerMsg isOpenToggled
       ] (
         case colorPickerState.colorMode of
           NoneColor -> [text "none"]
           SingleColor -> []
-          AnyColor url -> []
+          AnyColor url -> [text "other"]
       )
     ] ++ (
       case colorPickerState.isOpen of

@@ -138,8 +138,8 @@ update msg model =
               else model ! []
     
     OnSelect ident isAdd pos -> case model.mode of
-      HandMode -> (HandMode.select ident isAdd pos model) ! [Utils.getStyle ("svgeditor" ++ (toString ident))]
-      NodeMode -> (NodeMode.select ident pos model) ! [Utils.getStyle ("svgeditor" ++ (toString ident))]
+      HandMode -> (HandMode.select ident isAdd pos model) ! [Utils.getStyle ("svgeditor" ++ (toString ident) ++ "c")]
+      NodeMode -> (NodeMode.select ident pos model) ! [Utils.getStyle ("svgeditor" ++ (toString ident) ++ "c")]
       _ -> model ! []
     
     FieldSelect (button, pos) -> case model.mode of
@@ -183,25 +183,41 @@ update msg model =
     SvgRootRect rect ->
       {model| clientLeft = rect.left, clientTop = rect.top} ! []
     
-    -- 選択されたオブジェクトのスタイルを計算してcolorPickerStatesを更新する
+    -- 選択されたオブジェクトのスタイルを計算してcolorPickerStatesとstyleInfoを更新
     ComputedStyle maybeStyle ->
       let
         colorPickerStates = model.colorPicker
-        newColorPickerStates = case maybeStyle of
+        styleInfo = model.styleInfo
+        (newColorPickerStates, newStyleInfo) = case maybeStyle of
           Just styleObject ->
             let
-              colorFill = Parsers.rgbToColor styleObject.fill (Result.withDefault 1 <| String.toFloat styleObject.fillOpacity)
-              colorStroke = Parsers.rgbToColor styleObject.stroke (Result.withDefault 1 <| String.toFloat styleObject.strokeOpacity)
-              hslaFill = Maybe.map Utils.toHsl2 colorFill
-              hslaStroke = Maybe.map Utils.toHsl2 colorStroke
+              _ = Debug.log "stypeObject fill" styleObject.fill
+              colorTypeFill = Parsers.rgbToColorType styleObject.fill (Result.withDefault 1 <| String.toFloat styleObject.fillOpacity)
+              colorTypeStroke = Parsers.rgbToColorType styleObject.stroke (Result.withDefault 1 <| String.toFloat styleObject.strokeOpacity)
+              hslaStrFill = Utils.colorTypeToStr colorTypeFill
+              hslaStrStroke = Utils.colorTypeToStr colorTypeStroke
+
+              _ = Debug.log "colorType fill" colorTypeFill
+
+              pickerFill = Maybe.withDefault {isOpen = False, colorMode = NoneColor, singleColor = Color.black} <| Dict.get "fill" model.colorPicker
+              pickerStroke = Maybe.withDefault {isOpen = False, colorMode = NoneColor, singleColor = Color.black} <| Dict.get "stroke" model.colorPicker
               
-              fillRenewed = case hslaFill of
-                Nothing -> {color | }
+              newPickerFill = case colorTypeFill of
+                NoneColorType -> {pickerFill | colorMode = NoneColor}
+                SingleColorType c -> {pickerFill | colorMode = SingleColor, singleColor = c}
+                AnyColorType ident -> {pickerFill | colorMode = AnyColor ident}
+              newPickerStroke = case colorTypeStroke of
+                NoneColorType -> {pickerStroke | colorMode = NoneColor}
+                SingleColorType c -> {pickerStroke | colorMode = SingleColor, singleColor = c}
+                AnyColorType ident -> {pickerStroke | colorMode = AnyColor ident}
             in
-            
-          Nothing -> model.styleInfo
+            (
+              Dict.insert "fill" newPickerFill << Dict.insert "stroke" newPickerStroke <| colorPickerStates,
+              Dict.insert "fill" hslaStrFill << Dict.insert "stroke" hslaStrStroke <| styleInfo
+            )
+          Nothing -> (colorPickerStates, styleInfo)
       in
-      {model| styleInfo = newStyleInfo} ! []
+      {model | colorPicker = newColorPickerStates, styleInfo = newStyleInfo} ! []
     
     ColorPickerMsg colorPickerStates ->
       let
@@ -214,7 +230,7 @@ update msg model =
               colorState = second hd
               newStyleInfo = case colorState.colorMode of
                   NoneColor -> Dict.insert part "none" styleInfo
-                  SingleColor -> Dict.insert part (colorToCssHsla colorState.singleColor) styleInfo
+                  SingleColor -> Dict.insert part (Utils.colorToCssHsla2 colorState.singleColor) styleInfo
                   AnyColor url -> Dict.insert part ("url(" ++ url ++ ")") styleInfo
             in
             loop tl newStyleInfo
@@ -269,13 +285,19 @@ view model =
           id "svgimage",
           src <| model.encoded
         ] [],
+        -- 色取得用svg
+        svg [
+          width (toString <| Tuple.first <| Utils.getSvgSize model),
+          height (toString <| Tuple.second <| Utils.getSvgSize model)
+        ]
+        (List.map (ViewBuilder.build ColorLayer model) (Utils.getElems model)),
         -- 当たり判定用svg
         svg [
           width (toString <| Tuple.first <| Utils.getSvgSize model),
           height (toString <| Tuple.second <| Utils.getSvgSize model),
           Utils.onFieldMouseDown FieldSelect
         ]
-        ((List.map (ViewBuilder.build model) (Utils.getElems model)) ++ (case model.mode of
+        ((List.map (ViewBuilder.build PhysicsLayer model) (Utils.getElems model)) ++ (case model.mode of
           NodeMode -> ViewBuilder.buildNodes model
           HandMode -> ViewBuilder.buildVertexes model
           _ -> []

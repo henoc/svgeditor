@@ -75,12 +75,17 @@ type alias ClientRect = {
 }
 
 type alias ColorPickerStates = Dict String ColorPickerState
+type ColorMode = NoneColor | SingleColor | AnyColor String    -- カラーピッカーで使用する色の場合分け ex. AnyColor "#MyGradient"
 type alias ColorPickerState = {
   isOpen: Bool,
   colorMode: ColorMode,
   singleColor: Color
 }
 
-type ColorMode = NoneColor | SingleColor | AnyColor String
+-- fill などに指定される色の型（こちらでは単一色情報を常に持つ必要がないなど違いがある）
+type ColorType = NoneColorType | SingleColorType Color | AnyColorType String
+
 
 type alias Gradiation = List (Float, String)
+
+type LayerType = ColorLayer | PhysicsLayer
