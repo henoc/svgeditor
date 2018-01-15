@@ -105,6 +105,16 @@ convertNode id node = case node of
           attr = attrMap,
           shape = SVG {elems = subElems, size = (w, h)}
         })
+      "defs" ->
+        let
+          (nextId, subElems) = loop id subNodes []          
+        in
+        (nextId+1, {
+          style = styleMap,
+          id = nextId,
+          attr = attrMap,
+          shape = Defs {elems = subElems}
+        })
       "rect" ->
         let
           x = getFloatAttr "x" 0 attrs

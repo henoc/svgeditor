@@ -84,6 +84,8 @@ build model svg =
       width (toString <| Tuple.first size),
       height (toString <| Tuple.second size)
     ]) (List.map (build model) elems)
+  Defs {elems} ->
+    Svg.defs attrList (List.map (build model) elems)
   Unknown {name, elems} ->
     node name attrList (List.map (build model) elems) -- unknownは編集できないのでstyleStrはいらないはずである
 

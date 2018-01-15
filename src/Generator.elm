@@ -24,6 +24,14 @@ generateNode elem =
       xmlElem = XmlParser.Element "svg" attrs xmlSubNodes
     in
     xmlElem
+  Defs {elems} ->
+    let
+      xmlSubNodes = List.map generateNode elems
+      newAttr = maybeInsert "style" styleAttr elem.attr      
+      attrs = Dict.toList newAttr |> List.map (\(x, y) -> {name = x, value = y})       
+      xmlElem = XmlParser.Element "defs" attrs xmlSubNodes      
+    in
+    xmlElem
   Unknown {name, elems} ->
     let
       xmlSubNodes = List.map generateNode elems

@@ -19,6 +19,7 @@ type SVGElement =
   | Polygon { points: List Vec2, enclosed: Bool}
   | Path { operators: List PathOperator }    -- このリストは新しい方が左
   | SVG {elems: List StyledSVGElement, size: Vec2}
+  | Defs {elems: List StyledSVGElement}
   | Unknown { name: String, elems: List StyledSVGElement }
 type alias StyledSVGElement = {
   style: StyleInfo,
