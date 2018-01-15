@@ -284,13 +284,9 @@ view model =
           Nothing -> 1
           Just x -> Result.withDefault 1 <| String.toInt x
       in
-      grid [] [
-        cell [size All 2] [
-          Options.styled p [Typo.subhead] [text <| "stroke-width:"]
-        ],
-        cell [size All 2] [
-          Slider.view [Slider.value (toFloat sw), Slider.min 0, Slider.max 100, Slider.step 1, Slider.onChange (\n -> OnProperty <| Style <| Dict.insert "stroke-width" (toString n) styleInfo)]
-        ]
+      div [ style "display: flex" ] [
+        Options.styled p [Typo.subhead] [text <| "stroke-width:"],
+        Slider.view [Slider.value (toFloat sw), Slider.min 0, Slider.max 100, Slider.step 1, Slider.onChange (\n -> OnProperty <| Style <| Dict.insert "stroke-width" (toString n) styleInfo)]
       ]
     ]
   |> Material.Scheme.top
