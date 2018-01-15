@@ -20,6 +20,8 @@ type SVGElement =
   | Path { operators: List PathOperator }    -- このリストは新しい方が左
   | SVG {elems: List StyledSVGElement, size: Vec2}
   | Defs {elems: List StyledSVGElement}
+  | LinearGradient {stops: List StyledSVGElement}
+  | Stop
   | Unknown { name: String, elems: List StyledSVGElement }
 type alias StyledSVGElement = {
   style: StyleInfo,
@@ -77,4 +79,6 @@ type alias ColorPickerState = {
   singleColor: Color
 }
 
-type ColorMode = NoneColor | SingleColor
+type ColorMode = NoneColor | SingleColor | AnyColor String
+
+type alias Gradiation = List (Float, String)

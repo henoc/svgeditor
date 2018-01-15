@@ -115,6 +115,23 @@ convertNode id node = case node of
           attr = attrMap,
           shape = Defs {elems = subElems}
         })
+      "linearGradient" ->
+        let
+          (nextId, subElems) = loop id subNodes []
+        in
+        (nextId+1, {
+          style = styleMap,
+          id = nextId,
+          attr = attrMap,
+          shape = LinearGradient {stops = subElems}
+        })
+      "stop" ->
+        (id+1, {
+          style = styleMap,
+          id = id,
+          attr = attrMap,
+          shape = Stop
+        })
       "rect" ->
         let
           x = getFloatAttr "x" 0 attrs

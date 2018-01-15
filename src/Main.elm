@@ -211,6 +211,7 @@ update msg model =
               newStyleInfo = case colorState.colorMode of
                   NoneColor -> Dict.insert part "none" styleInfo
                   SingleColor -> Dict.insert part (colorToCssHsla colorState.singleColor) styleInfo
+                  AnyColor url -> Dict.insert part ("url(" ++ url ++ ")") styleInfo
             in
             loop tl newStyleInfo
           [] -> styleInfo

@@ -54,6 +54,32 @@ getSvgSize model = case model.svg.shape of
   SVG {elems, size} -> size
   _ -> (400, 400)
 
+getDefsElems: Model -> List StyledSVGElement
+getDefsElems model =
+  let
+    elems = getElems model
+    loop : (List StyledSVGElement) -> (List StyledSVGElement) -> (List StyledSVGElement)
+    loop es acc = case es of
+      hd :: tl -> case hd.shape of
+        Defs {elems} -> loop tl (acc ++ elems)
+        _ -> loop tl acc
+      [] -> acc
+  in
+  loop elems []
+
+getGradients: Model -> List StyledSVGElement
+getGradients model =
+  let
+    elems = getDefsElems model
+    loop : (List StyledSVGElement) -> (List StyledSVGElement) -> (List StyledSVGElement)
+    loop es acc = case es of
+      hd :: tl -> case hd.shape of
+        LinearGradient {stops} -> loop tl (hd :: acc)
+        _ -> loop tl acc
+      [] -> List.reverse acc
+  in
+  loop elems []
+
 getById : Int -> Model -> Maybe StyledSVGElement
 getById ident model =
   let

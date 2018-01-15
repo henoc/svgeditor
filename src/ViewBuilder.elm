@@ -79,6 +79,10 @@ build model svg =
       d pathopstr,
       style styleStr   
     ]) []
+  Stop ->
+    Svg.stop (attrList ++ [
+      style styleStr
+    ]) []
   SVG {elems, size} ->
     Svg.svg (attrList ++ [
       width (toString <| Tuple.first size),
@@ -86,6 +90,8 @@ build model svg =
     ]) (List.map (build model) elems)
   Defs {elems} ->
     Svg.defs attrList (List.map (build model) elems)
+  LinearGradient {stops} ->
+    Svg.linearGradient attrList (List.map (build model) stops)
   Unknown {name, elems} ->
     node name attrList (List.map (build model) elems) -- unknownは編集できないのでstyleStrはいらないはずである
 
@@ -155,12 +161,15 @@ colorPicker sty model =
     colorPickerState = Maybe.withDefault {isOpen = False, colorMode = NoneColor, singleColor = Color.black} <| Dict.get sty model.colorPicker
     noneInserted = Dict.insert sty {colorPickerState | colorMode = NoneColor} model.colorPicker
     singleInserted = Dict.insert sty {colorPickerState | colorMode = SingleColor} model.colorPicker
+    anyInserted url = Dict.insert sty {colorPickerState | colorMode = AnyColor url} model.colorPicker
     isOpenToggled = Dict.insert sty {colorPickerState | isOpen = not colorPickerState.isOpen} model.colorPicker
     hsl = Color.toHsl colorPickerState.singleColor
     cgHue hue = Dict.insert sty {colorPickerState | singleColor = Color.hsla hue hsl.saturation hsl.lightness hsl.alpha} model.colorPicker
     cgSat sat = Dict.insert sty {colorPickerState | singleColor = Color.hsla hsl.hue sat hsl.lightness hsl.alpha} model.colorPicker
     cgLig lig = Dict.insert sty {colorPickerState | singleColor = Color.hsla hsl.hue hsl.saturation lig hsl.alpha} model.colorPicker
     cgAlp alp = Dict.insert sty {colorPickerState | singleColor = Color.hsla hsl.hue hsl.saturation hsl.lightness alp} model.colorPicker
+    gradients = Utils.getGradients model
+    gradientUrls = List.map .attr gradients |> List.map (Dict.get "id") |> Utils.flatten |> List.map (\x -> "#" ++ x)
   in
   [
     grid [] ([
@@ -180,6 +189,7 @@ colorPicker sty model =
           case colorPickerState.colorMode of
             NoneColor -> [text "none"]
             SingleColor -> []
+            AnyColor url -> []
         )
       ]
     ] ++ (
@@ -187,20 +197,31 @@ colorPicker sty model =
         False -> []
         True ->
           [
-            cell [size All 1] [
-              Toggles.radio Mdl [0] model.mdl [
-                Options.onToggle <| ColorPickerMsg noneInserted,
-                Toggles.value (colorPickerState.colorMode == NoneColor)
-              ] [text "none"],
-              Toggles.radio Mdl [1] model.mdl [
-                Options.onToggle <| ColorPickerMsg singleInserted,
-                Toggles.value (colorPickerState.colorMode == SingleColor)
-              ] [text "single"]
-            ]
+            cell [size All 1] 
+              (
+                [
+                  Toggles.radio Mdl [0] model.mdl [
+                    Options.onToggle <| ColorPickerMsg noneInserted,
+                    Toggles.value (colorPickerState.colorMode == NoneColor)
+                  ] [text "none"],
+                  Toggles.radio Mdl [1] model.mdl [
+                    Options.onToggle <| ColorPickerMsg singleInserted,
+                    Toggles.value (colorPickerState.colorMode == SingleColor)
+                  ] [text "single"]
+                ] ++ List.indexedMap
+                  (
+                    \index -> \url ->
+                      Toggles.radio Mdl [2 + index] model.mdl [
+                        Options.onToggle <| ColorPickerMsg <| anyInserted url, Toggles.value (colorPickerState.colorMode == AnyColor url)
+                      ] [text url]
+                  )
+                  gradientUrls
+              )
           ]
         ++ (
           case colorPickerState.colorMode of
             NoneColor -> []
+            AnyColor url -> []
             SingleColor -> [
               cell [size All 5] [
                 grid [noSpacing] [
