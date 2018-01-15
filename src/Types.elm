@@ -71,6 +71,7 @@ type alias ClientRect = {
 
 type alias ColorPickerStates = Dict String ColorPickerState
 type alias ColorPickerState = {
+  isOpen: Bool,
   colorMode: ColorMode,
   singleColor: Color
 }

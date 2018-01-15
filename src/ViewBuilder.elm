@@ -150,9 +150,10 @@ buildNodes model =
 colorPicker: String -> Model -> List (Html Msg)
 colorPicker sty model =
   let
-    colorPickerState = Maybe.withDefault {colorMode = NoneColor, singleColor = Color.black} <| Dict.get sty model.colorPicker
+    colorPickerState = Maybe.withDefault {isOpen = False, colorMode = NoneColor, singleColor = Color.black} <| Dict.get sty model.colorPicker
     noneInserted = Dict.insert sty {colorPickerState | colorMode = NoneColor} model.colorPicker
     singleInserted = Dict.insert sty {colorPickerState | colorMode = SingleColor} model.colorPicker
+    isOpenToggled = Dict.insert sty {colorPickerState | isOpen = not colorPickerState.isOpen} model.colorPicker
     hsl = Color.toHsl colorPickerState.singleColor
     cgHue hue = Dict.insert sty {colorPickerState | singleColor = Color.hsla hue hsl.saturation hsl.lightness hsl.alpha} model.colorPicker
     cgSat sat = Dict.insert sty {colorPickerState | singleColor = Color.hsla hsl.hue sat hsl.lightness hsl.alpha} model.colorPicker
@@ -166,49 +167,57 @@ colorPicker sty model =
       ],
       cell [size All 1] [
         Options.div [
-          Elevation.e8,
+          if colorPickerState.isOpen then Elevation.e0 else Elevation.e4,
+          Elevation.transition 300,
           Options.css "width" "48px",
           Options.css "height" "48px",
           Options.css "background" (colorToCssHsla colorPickerState.singleColor),
-          Options.center
+          Options.center,
+          Options.onClick <| ColorPickerMsg isOpenToggled
         ] (
           case colorPickerState.colorMode of
             NoneColor -> [text "none"]
             SingleColor -> []
         )
-      ],
-      cell [size All 1] [
-        Toggles.checkbox Mdl [0] model.mdl [
-          Options.onToggle <| ColorPickerMsg noneInserted,
-          Toggles.value (colorPickerState.colorMode == NoneColor)
-        ] [text "none"],
-        Toggles.checkbox Mdl [1] model.mdl [
-          Options.onToggle <| ColorPickerMsg singleInserted,
-          Toggles.value (colorPickerState.colorMode == SingleColor)
-        ] [text "single"]
       ]
     ] ++ (
-        case colorPickerState.colorMode of
-          NoneColor -> []
-          SingleColor -> [
-            cell [size All 5] [
-              grid [noSpacing] [
-                  cell [size All 1] [ Options.styled p [Typo.body1] [text "H: "] ],
-                  cell [size All 3] [ Slider.view [Slider.value (hsl.hue * 180 / pi), Slider.min 0, Slider.max 359, Slider.step 1, Slider.onChange (\f -> ColorPickerMsg <| cgHue (degrees f))] ]
-              ],
-              grid [noSpacing] [
-                  cell [size All 1] [ Options.styled p [Typo.body1] [text "S: "] ],
-                  cell [size All 3] [ Slider.view [Slider.value (hsl.saturation * 100), Slider.min 0, Slider.max 100, Slider.step 1, Slider.onChange (\f -> ColorPickerMsg <| cgSat (f / 100))] ]
-              ],
-              grid [noSpacing] [
-                  cell [size All 1] [ Options.styled p [Typo.body1] [text "L: "] ],
-                  cell [size All 3] [ Slider.view [Slider.value (hsl.lightness * 100), Slider.min 0, Slider.max 100, Slider.step 1, Slider.onChange (\f -> ColorPickerMsg <| cgLig (f / 100))] ]
-              ],
-              grid [noSpacing] [
-                  cell [size All 1] [ Options.styled p [Typo.body1] [text "A: "] ],
-                  cell [size All 3] [ Slider.view [Slider.value hsl.alpha, Slider.min 0, Slider.max 1, Slider.step 0.01, Slider.onChange (\f -> ColorPickerMsg <| cgAlp f)] ]
-              ]
+      case colorPickerState.isOpen of
+        False -> []
+        True ->
+          [
+            cell [size All 1] [
+              Toggles.radio Mdl [0] model.mdl [
+                Options.onToggle <| ColorPickerMsg noneInserted,
+                Toggles.value (colorPickerState.colorMode == NoneColor)
+              ] [text "none"],
+              Toggles.radio Mdl [1] model.mdl [
+                Options.onToggle <| ColorPickerMsg singleInserted,
+                Toggles.value (colorPickerState.colorMode == SingleColor)
+              ] [text "single"]
             ]
           ]
-      ))
+        ++ (
+          case colorPickerState.colorMode of
+            NoneColor -> []
+            SingleColor -> [
+              cell [size All 5] [
+                grid [noSpacing] [
+                    cell [size All 1] [ Options.styled p [Typo.body1] [text "H: "] ],
+                    cell [size All 3] [ Slider.view [Slider.value (hsl.hue * 180 / pi), Slider.min 0, Slider.max 359, Slider.step 1, Slider.onChange (\f -> ColorPickerMsg <| cgHue (degrees f))] ]
+                ],
+                grid [noSpacing] [
+                    cell [size All 1] [ Options.styled p [Typo.body1] [text "S: "] ],
+                    cell [size All 3] [ Slider.view [Slider.value (hsl.saturation * 100), Slider.min 0, Slider.max 100, Slider.step 1, Slider.onChange (\f -> ColorPickerMsg <| cgSat (f / 100))] ]
+                ],
+                grid [noSpacing] [
+                    cell [size All 1] [ Options.styled p [Typo.body1] [text "L: "] ],
+                    cell [size All 3] [ Slider.view [Slider.value (hsl.lightness * 100), Slider.min 0, Slider.max 100, Slider.step 1, Slider.onChange (\f -> ColorPickerMsg <| cgLig (f / 100))] ]
+                ],
+                grid [noSpacing] [
+                    cell [size All 1] [ Options.styled p [Typo.body1] [text "A: "] ],
+                    cell [size All 3] [ Slider.view [Slider.value hsl.alpha, Slider.min 0, Slider.max 1, Slider.step 0.01, Slider.onChange (\f -> ColorPickerMsg <| cgAlp f)] ]
+                ]
+              ]
+            ]
+        )))
   ]

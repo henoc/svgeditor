@@ -55,8 +55,8 @@ init =
       clientTop = 0,
       encoded = "",
       colorPicker = Dict.fromList [
-        ("fill", { colorMode = SingleColor, singleColor = Color.hsl (degrees 0) 0.5 0.5}),
-        ("stroke", { colorMode = NoneColor, singleColor = Color.hsl (degrees 180) 0.5 0.5})
+        ("fill", {isOpen = False, colorMode = SingleColor, singleColor = Color.hsl (degrees 0) 0.5 0.5}),
+        ("stroke", {isOpen = False, colorMode = NoneColor, singleColor = Color.hsl (degrees 180) 0.5 0.5})
       ]
     } ! [Utils.getSvgData ()]
 
