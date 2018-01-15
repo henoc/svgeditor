@@ -63,7 +63,9 @@ type alias Box = {
 -- portのgetCoumputedStyle用
 type alias StyleObject = {
   fill: String,
-  stroke: String
+  stroke: String,
+  fillOpacity: String,
+  strokeOpacity: String
 }
 
 -- portのgetBoundingClientRect用

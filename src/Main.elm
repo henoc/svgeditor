@@ -183,18 +183,22 @@ update msg model =
     SvgRootRect rect ->
       {model| clientLeft = rect.left, clientTop = rect.top} ! []
     
+    -- 選択されたオブジェクトのスタイルを計算してcolorPickerStatesを更新する
     ComputedStyle maybeStyle ->
       let
-        selectedStyle = case model.selectedRef of -- 選択中のオブジェクトのスタイル
-          hd :: tl -> hd.style
-          [] -> Dict.empty
-        newStyleInfo = case maybeStyle of
+        colorPickerStates = model.colorPicker
+        newColorPickerStates = case maybeStyle of
           Just styleObject ->
             let
-              hexFill = Parsers.normalizeColor styleObject.fill
-              hexStroke = Parsers.normalizeColor styleObject.stroke
+              colorFill = Parsers.rgbToColor styleObject.fill (Result.withDefault 1 <| String.toFloat styleObject.fillOpacity)
+              colorStroke = Parsers.rgbToColor styleObject.stroke (Result.withDefault 1 <| String.toFloat styleObject.strokeOpacity)
+              hslaFill = Maybe.map Utils.toHsl2 colorFill
+              hslaStroke = Maybe.map Utils.toHsl2 colorStroke
+              
+              fillRenewed = case hslaFill of
+                Nothing -> {color | }
             in
-            Utils.maybeInsert "fill" hexFill << Utils.maybeInsert "stroke" hexStroke <| selectedStyle
+            
           Nothing -> model.styleInfo
       in
       {model| styleInfo = newStyleInfo} ! []

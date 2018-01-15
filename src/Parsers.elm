@@ -19,13 +19,13 @@ intParser = \input -> case (regexParser "[0-9]+") input of
 rgbParser: Parser (Int, Int, Int)
 rgbParser = onlyRight (stringParser "rgb") (andThen (andThen intParser intParser) intParser) |> map (\((x,y),z) -> (x,y,z))
 
--- rgb(x,y,z)をhexにする
-normalizeColor: String -> Maybe String
-normalizeColor data = case data of
+-- rgb(x,y,z) & opacity を Color にする
+rgbToColor: String -> Float -> Maybe Color
+rgbToColor data a = case data of
   "none" -> Nothing
   "" -> Nothing
   _ -> case rgbParser (input data "[\\(\\),\\s]+" ) of
-    ParseSuccess (r,g,b) i -> Just (colorToHex (Color.rgb r g b))
+    ParseSuccess (r,g,b) i -> Just (Color.rgba r g b a)
     ParseFailure r i -> Nothing
 
 stylePairParser: Parser (String, String)

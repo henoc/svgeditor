@@ -7,6 +7,8 @@ import Vec2 exposing (..)
 import Tuple exposing (first, second)
 import Generator
 import Dict exposing (Dict)
+import Color exposing (Color)
+import Color.Convert exposing (..)
 
 last : List a -> Maybe a
 last lst =
@@ -218,6 +220,23 @@ limit lower upper value =
 lowerLimit: comparable -> comparable -> comparable
 lowerLimit lower value =
   if lower > value then lower else value
+
+-- elm-coreのバグへの対処
+toHsl2 : Color -> { hue : Float, saturation : Float, lightness : Float, alpha : Float }
+toHsl2 c =
+  let
+    rgba = Color.toRgb c
+  in
+  if rgba.red == 255 && rgba.green == 255 && rgba.blue == 255 then {hue = 0, saturation = 0, lightness = 1, alpha = rgba.alpha}
+  else Color.toHsl c
+
+colorToCssHsla2 : Color -> String
+colorToCssHsla2 c =
+  let
+    rgba = Color.toRgb c
+  in
+  if rgba.red == 255 && rgba.green == 255 && rgba.blue == 255 then "hsla(0, 0%, 100%, " ++ (toString rgba.alpha) ++ ")"
+  else colorToCssHsla c
 
 port getSvgData: () -> Cmd msg
 port getSvgDataFromJs: (String -> msg) -> Sub msg
