@@ -50,11 +50,18 @@ type alias Model = {
   encoded: String,
   openedPicker: String,
   colorPicker: ColorPickerStates,
-  colorPanel: Ui.ColorPanel.Model
+  colorPanel: Ui.ColorPanel.Model,
+  gradients: Dict String GradientInfo  -- 定義されているすべての Gradient要素のid, 色の列
+}
+
+type GradientType = Linear | Radial
+type alias GradientInfo = {
+  gradientType: GradientType,
+  stops: Dict Float Color
 }
 
 type Msg = Mdl (Material.Msg Msg) | OnProperty ChangePropertyMsg | OnAction Action | OnMouse MouseMsg | OnSelect Int Bool Vec2 | FieldSelect (Int, Vec2) | OnVertex Vec2 Vec2 | OnNode Vec2 Int
-  | SvgData String | EncodedSvgData String | SvgRootRect ClientRect | ComputedStyle (Maybe StyleObject)
+  | SvgData String | EncodedSvgData String | SvgRootRect ClientRect | ComputedStyle (Maybe StyleObject) | GradientStyles (List GradientElementInfo)
   | OpenedPickerMsg String | ColorPickerMsg ColorPickerStates | ColorPanelMsg Ui.ColorPanel.Msg | ColorPanelChanged Ext.Color.Hsv
 type ChangePropertyMsg = SwichMode Mode | Style StyleInfo
 type MouseMsg = MouseDownLeft Vec2 | MouseDownRight Vec2 | MouseUp Vec2 | MouseMove Vec2
@@ -73,10 +80,22 @@ type alias StyleObject = {
   strokeOpacity: String
 }
 
+type alias StopStyleObject = {
+  stopColor: String,
+  stopOpacity: String,
+  offset: String
+}
+
 -- portのgetBoundingClientRect用
 type alias ClientRect = {
   left: Float,
   top: Float
+}
+
+type alias GradientElementInfo = {
+  ident: String,
+  tagName: String,
+  styles: List StopStyleObject
 }
 
 type alias ColorPickerStates = Dict String ColorPickerState

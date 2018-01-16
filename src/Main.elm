@@ -61,7 +61,8 @@ init =
         ("fill", {colorMode = SingleColor, singleColor = Color.hsl (degrees 0) 0.5 0.5}),
         ("stroke", {colorMode = NoneColor, singleColor = Color.hsl (degrees 180) 0.5 0.5})
       ],
-      colorPanel = Ui.ColorPanel.init ()
+      colorPanel = Ui.ColorPanel.init (),
+      gradients = Dict.empty
     } ! [Utils.getSvgData ()]
 
 
@@ -142,10 +143,15 @@ update msg model =
               if model /= newModel then newModel ! [Utils.reflectSvgData newModel]
               else model ! []
     
-    OnSelect ident isAdd pos -> case model.mode of
-      HandMode -> (HandMode.select ident isAdd pos model) ! [Utils.getStyle ("svgeditor" ++ (toString ident) ++ "c")]
-      NodeMode -> (NodeMode.select ident pos model) ! [Utils.getStyle ("svgeditor" ++ (toString ident) ++ "c")]
-      _ -> model ! []
+    OnSelect ident isAdd pos ->
+      let
+        gradients = Utils.getGradients model
+        gradientIds = List.map .attr gradients |> List.map (Dict.get "id") |> Utils.flatten
+      in
+      case model.mode of
+      HandMode -> (HandMode.select ident isAdd pos model) ! [Utils.getStyle (ident, "color"), Utils.getGradientStyles gradientIds]
+      NodeMode -> (NodeMode.select ident pos model) ! [Utils.getStyle (ident, "color"), Utils.getGradientStyles gradientIds]
+      _ -> model ! [Utils.getGradientStyles gradientIds]
     
     -- svg枠内のクリックについて
     FieldSelect (button, pos) ->
@@ -190,7 +196,7 @@ update msg model =
     SvgRootRect rect ->
       {model| clientLeft = rect.left, clientTop = rect.top} ! []
     
-    -- 選択されたオブジェクトのスタイルを計算してcolorPickerStatesとstyleInfoを更新
+    -- 選択されたオブジェクトのスタイルを計算してcolorPickerStates, styleInfoを更新
     ComputedStyle maybeStyle ->
       let
         colorPickerStates = model.colorPicker
@@ -225,6 +231,37 @@ update msg model =
     
     OpenedPickerMsg styleName ->
       {model | openedPicker = styleName} ! []
+
+    GradientStyles stopStyles ->
+      let
+        dict = stopStyles
+          |> List.map (\ginfo ->
+              let
+                ident = ginfo.ident
+                tagName = ginfo.tagName
+                styleObjects = ginfo.styles
+                stopColorDicts =
+                  styleObjects
+                  |> List.map (\obj ->
+                      (
+                        Parsers.percentToFloat obj.offset,
+                        Parsers.rgbToColor obj.stopColor (Result.withDefault 1 <| String.toFloat obj.stopOpacity)
+                      )
+                    )
+                  |> Dict.fromList
+              in
+              (
+                ident,
+                {
+                  gradientType = if tagName == "linearGradient" then Linear else Radial,
+                  stops = stopColorDicts
+                }
+              )
+            )
+          |> Dict.fromList
+        merged = Dict.union dict model.gradients
+      in
+      {model | gradients = merged} ! []
 
     ColorPickerMsg colorPickerStates ->
       let
@@ -353,6 +390,7 @@ subscriptions model =
           Utils.getMouseMoveFromJs <| OnMouse << MouseMove,
           Utils.getBoundingClientRectFromJs SvgRootRect,
           Utils.getStyleFromJs ComputedStyle,
+          Utils.getGradientStylesFromJs GradientStyles,
           Sub.map ColorPanelMsg (Ui.ColorPanel.subscriptions model.colorPanel),
           Ui.ColorPanel.onChange ColorPanelChanged model.colorPanel
         ]

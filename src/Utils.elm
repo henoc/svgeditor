@@ -245,6 +245,30 @@ colorTypeToStr ctype = case ctype of
   SingleColorType c -> colorToCssHsla2 c
   AnyColorType ident -> "url(" ++ ident ++ ")"
 
+toCssGradientName: GradientType -> String
+toCssGradientName gradientType = case gradientType of
+  Linear -> "linear-gradient"
+  Radial -> "radial-gradient"
+
+toCssGradient: String -> GradientInfo -> String
+toCssGradient sharpedUrl ginfo =
+  let
+    urlNoSharp = String.right 1 sharpedUrl
+    expandStops stops = case stops of
+      hd :: tl ->
+        let
+          percent = (toString <| floor (first hd * 100)) ++ "%"
+          colorString = colorToCssHsla2 (second hd)
+        in
+        (colorString ++ " " ++ percent) :: expandStops tl
+      [] -> []
+    leftOrNone gType = case gType of
+      Linear -> "to right, "
+      Radial -> ""
+  in
+  toCssGradientName ginfo.gradientType ++ "(" ++ (leftOrNone ginfo.gradientType) ++ (String.join "," (expandStops <| Dict.toList ginfo.stops)) ++ ")"
+
+
 port getSvgData: () -> Cmd msg
 port getSvgDataFromJs: (String -> msg) -> Sub msg
 
@@ -253,7 +277,8 @@ port sendSvgData: String -> Cmd msg
 port getBoundingClientRect: String -> Cmd msg
 port getBoundingClientRectFromJs: (ClientRect -> msg) -> Sub msg
 
-port getStyle: String -> Cmd msg
+-- (svgeditor-id, svgeditor-layer) で指定したDOM要素を取得する
+port getStyle: (Int, String) -> Cmd msg
 port getStyleFromJs: (Maybe StyleObject -> msg) -> Sub msg
 
 port getMouseDownLeftFromJs: (Vec2 -> msg) -> Sub msg
@@ -263,3 +288,6 @@ port getMouseMoveFromJs: (Vec2 -> msg) -> Sub msg
 
 port encodeURIComponent: String -> Cmd msg
 port encodeURIComponentFromJs: (String -> msg) -> Sub msg
+
+port getGradientStyles: List String -> Cmd msg
+port getGradientStylesFromJs: (List GradientElementInfo -> msg) -> Sub msg

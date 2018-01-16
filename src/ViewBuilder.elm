@@ -26,13 +26,16 @@ import Color
 build : LayerType -> Model -> StyledSVGElement -> Html Msg
 build layerType model svg =
   let
-    layerPrefix = case layerType of
-      ColorLayer -> "c"
-      PhysicsLayer -> "p"
-    rdomId = "svgeditor" ++ (toString svg.id) ++ layerPrefix
+    layerName = case layerType of
+      ColorLayer -> "color"
+      PhysicsLayer -> "physics"
+    rdomId = toString svg.id
     -- 元からあったunknownな属性はそのまま入れる
-    -- idだけは一時的に上書きする
-    attrList = Dict.insert "id" rdomId svg.attr |> Dict.toList |> List.map (\(x, y) -> attribute x y)
+    -- svgeditor-id属性を新たに加える
+    attrList =
+      Dict.insert "svgeditor-id" rdomId svg.attr
+      |> Dict.insert "svgeditor-layer" layerName
+      |> Dict.toList |> List.map (\(x, y) -> attribute x y)
     styleStr =
       Dict.insert "opacity" "0" svg.style |>
       (
@@ -180,7 +183,9 @@ colorPicker sty model =
     cgLig lig = Dict.insert sty {colorPickerState | singleColor = Color.hsla hsl.hue hsl.saturation lig hsl.alpha} model.colorPicker
     cgAlp alp = Dict.insert sty {colorPickerState | singleColor = Color.hsla hsl.hue hsl.saturation hsl.lightness alp} model.colorPicker
     gradients = Utils.getGradients model
-    gradientUrls = List.map .attr gradients |> List.map (Dict.get "id") |> Utils.flatten |> List.map (\x -> "#" ++ x)
+    gradientUrlsNoSharp = List.map .attr gradients |> List.map (Dict.get "id") |> Utils.flatten
+    gradientUrls = gradientUrlsNoSharp |> List.map (\x -> "#" ++ x)
+    noSharp url = String.dropLeft 1 url
     flex = "display: flex"
   in
   [
@@ -194,7 +199,9 @@ colorPicker sty model =
         Options.css "background" (case colorPickerState.colorMode of    -- 色表示の四角形
           NoneColor -> "hsla(0, 0%, 100%, 0.1)"
           SingleColor -> Utils.colorToCssHsla2 colorPickerState.singleColor
-          AnyColor url -> "hsla(0, 0%, 100%, 0.1)"
+          AnyColor url ->
+            Maybe.map (Utils.toCssGradient url) (Dict.get (noSharp url) model.gradients)
+            |> Maybe.withDefault "hsla(0, 0%, 100%, 0.1)"
         ),
         Options.center,
         Options.onClick <| OpenedPickerMsg ( if model.openedPicker == sty then "none" else sty)
@@ -202,7 +209,7 @@ colorPicker sty model =
         case colorPickerState.colorMode of
           NoneColor -> [text "none"]
           SingleColor -> []
-          AnyColor url -> [text "other"]
+          AnyColor url -> []
       )
     ] ++ (
       case model.openedPicker == sty of

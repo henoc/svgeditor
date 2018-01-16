@@ -22,7 +22,7 @@ rgbParser = onlyRight (stringParser "rgb") (andThen (andThen intParser intParser
 urlParser: Parser String
 urlParser = onlyRight (stringParser "url") (regexParser "^#[a-zA-Z0-9_\\-.]+")
 
--- rgb(x,y,z) & opacity を Color にする
+-- rgb(x,y,z) & opacity を ColorType にする
 rgbToColorType: String -> Float -> ColorType
 rgbToColorType data a = case data of
   "none" -> NoneColorType
@@ -34,6 +34,17 @@ rgbToColorType data a = case data of
         ParseSuccess identifier i -> AnyColorType identifier
         ParseFailure r i -> NoneColorType
 
+-- rgb(x,y,z) & opacity を Color にする
+rgbToColor: String -> Float -> Color
+rgbToColor data a = case rgbParser (input data "[\\(\\),\\s]+") of
+  ParseSuccess (r,g,b) i -> Color.rgba r g b a
+  ParseFailure r i -> Color.black
+
+percentToFloat: String -> Float
+percentToFloat percent = case floatOrPercentParser (input percent "[\\s]+") of
+  ParseSuccess f i -> f
+  ParseFailure r i -> 0
+
 stylePairParser: Parser (String, String)
 stylePairParser = andThen (regexParser "[^:]+") (regexParser "[^;]+")
 
@@ -42,6 +53,12 @@ styleParser = Combinators.map Dict.fromList <| rep stylePairParser
 
 floatParser: Parser Float
 floatParser = regexParser "[+-]?[0-9]+(\\.[0-9]*)?([eE][+-]?[0-9]+)?" |> Combinators.map (\x -> Result.withDefault 0 <| String.toFloat x)
+
+percentParser: Parser Int
+percentParser = onlyLeft intParser (stringParser "%")
+
+floatOrPercentParser: Parser Float
+floatOrPercentParser = or (Combinators.map (\x -> (toFloat x) / 100) percentParser) floatParser
 
 pointPairParser: Parser (Float, Float)
 pointPairParser = andThen floatParser floatParser

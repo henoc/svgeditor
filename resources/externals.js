@@ -21,13 +21,55 @@ app.ports.getBoundingClientRect.subscribe(function(id){
   app.ports.getBoundingClientRectFromJs.send(elem.getBoundingClientRect());
 });
 
-app.ports.getStyle.subscribe(function(id){
-  const elem = document.getElementById(id);
+/**
+ * 
+ * @param {HTMLElement} gradient 
+ */
+function getGradientColors(gradient) {
+  const cstyles = [];
+  for (let i = 0; i < gradient.children.length; i++) {
+    const element = gradient.children.item(i);
+    if (element.tagName === "stop") {
+      const cstyle = window.getComputedStyle(element);
+      const minimunStyle = {
+        stopColor: cstyle.stopColor,
+        stopOpacity: cstyle.stopOpacity,
+        offset: element.getAttribute("offset")     // offsetは計算後の値が参考にできないので属性を取ってくる
+      }
+      cstyles.push(minimunStyle);
+    }
+  }
+  return cstyles;
+}
+
+/**
+ * id: number, layer: string
+ */
+function getSvgEditorElement(id, layer) {
+  return document.querySelector('*[svgeditor-id="' + id + '"][svgeditor-layer="' + layer +'"]');
+}
+
+app.ports.getStyle.subscribe(function([id, layer]){
+  const elem = getSvgEditorElement(id, layer);
   if (elem == null) {
     app.ports.getStyleFromJs.send(null);
   } else {
-    app.ports.getStyleFromJs.send(window.getComputedStyle(elem));
+    let styleObject = window.getComputedStyle(elem);
+    app.ports.getStyleFromJs.send(styleObject);
   }
+});
+
+app.ports.getGradientStyles.subscribe(function(idents) {
+  const ret = idents.map(ident => {
+    const elem = document.getElementById(ident);
+    const tagName = elem.tagName;
+    return {
+      ident: ident,
+      tagName: tagName,
+      styles: getGradientColors(elem)
+    };
+  });
+  app.ports.getGradientStylesFromJs.send(ret);
 });
 
 app.ports.encodeURIComponent.subscribe(function(str){
