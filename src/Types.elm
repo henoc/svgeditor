@@ -21,6 +21,7 @@ type SVGElement =
   | SVG {elems: List StyledSVGElement, size: Vec2}
   | Defs {elems: List StyledSVGElement}
   | LinearGradient {stops: List StyledSVGElement}
+  | RadialGradient {stops: List StyledSVGElement}
   | Stop
   | Unknown { name: String, elems: List StyledSVGElement }
 type alias StyledSVGElement = {

@@ -40,6 +40,14 @@ generateNode elem =
       xmlElem = XmlParser.Element "linearGradient" attrs xmlSubNodes
     in
     xmlElem
+  RadialGradient {stops} ->
+    let
+      xmlSubNodes = List.map generateNode stops
+      newAttr = maybeInsert "style" styleAttr elem.attr
+      attrs = Dict.toList newAttr |> List.map (\(x, y) -> {name = x, value = y}) 
+      xmlElem = XmlParser.Element "radialGradient" attrs xmlSubNodes
+    in
+    xmlElem
   Stop ->
     let
       newAttr = maybeInsert "style" styleAttr elem.attr

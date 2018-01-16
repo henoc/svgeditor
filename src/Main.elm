@@ -191,13 +191,10 @@ update msg model =
         (newColorPickerStates, newStyleInfo) = case maybeStyle of
           Just styleObject ->
             let
-              _ = Debug.log "stypeObject fill" styleObject.fill
               colorTypeFill = Parsers.rgbToColorType styleObject.fill (Result.withDefault 1 <| String.toFloat styleObject.fillOpacity)
               colorTypeStroke = Parsers.rgbToColorType styleObject.stroke (Result.withDefault 1 <| String.toFloat styleObject.strokeOpacity)
               hslaStrFill = Utils.colorTypeToStr colorTypeFill
               hslaStrStroke = Utils.colorTypeToStr colorTypeStroke
-
-              _ = Debug.log "colorType fill" colorTypeFill
 
               pickerFill = Maybe.withDefault {isOpen = False, colorMode = NoneColor, singleColor = Color.black} <| Dict.get "fill" model.colorPicker
               pickerStroke = Maybe.withDefault {isOpen = False, colorMode = NoneColor, singleColor = Color.black} <| Dict.get "stroke" model.colorPicker

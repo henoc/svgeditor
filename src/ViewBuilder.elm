@@ -102,6 +102,8 @@ build layerType model svg =
     Svg.defs attrList (List.map (build layerType model) elems)
   LinearGradient {stops} ->
     Svg.linearGradient attrList (List.map (build layerType model) stops)
+  RadialGradient {stops} ->
+    Svg.radialGradient attrList (List.map (build layerType model) stops)
   Unknown {name, elems} ->
     node name attrList (List.map (build layerType model) elems) -- unknownは編集できないのでstyleStrはいらないはずである
 

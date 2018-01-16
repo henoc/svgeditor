@@ -131,6 +131,16 @@ convertNode id node = case node of
           attr = attrMap,
           shape = LinearGradient {stops = subElems}
         })
+      "radialGradient" ->
+        let
+          (nextId, subElems) = loop id subNodes []
+        in
+        (nextId+1, {
+          style = styleMap,
+          id = nextId,
+          attr = attrMap,
+          shape = RadialGradient {stops = subElems}
+        })
       "stop" ->
         (id+1, {
           style = styleMap,

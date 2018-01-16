@@ -77,6 +77,7 @@ getGradients model =
     loop es acc = case es of
       hd :: tl -> case hd.shape of
         LinearGradient {stops} -> loop tl (hd :: acc)
+        RadialGradient {stops} -> loop tl (hd :: acc)
         _ -> loop tl acc
       [] -> List.reverse acc
   in
@@ -242,7 +243,7 @@ colorTypeToStr : ColorType -> String
 colorTypeToStr ctype = case ctype of
   NoneColorType -> "none"
   SingleColorType c -> colorToCssHsla2 c
-  AnyColorType ident -> "url(#" ++ ident ++ ")"
+  AnyColorType ident -> "url(" ++ ident ++ ")"
 
 port getSvgData: () -> Cmd msg
 port getSvgDataFromJs: (String -> msg) -> Sub msg
