@@ -11,7 +11,7 @@ import Material.Slider as Slider
 import Material.Options as Options
 import Material.Typography as Typo
 import Material.Elevation as Elevation
-import Material.Grid exposing (grid, noSpacing, cell, size, Device(..))
+import Ui.ColorPanel
 import Color.Convert exposing (..)
 import Vec2 exposing (..)
 import Utils
@@ -170,11 +170,10 @@ buildNodes model =
 colorPicker: String -> Model -> List (Html Msg)
 colorPicker sty model =
   let
-    colorPickerState = Maybe.withDefault {isOpen = False, colorMode = NoneColor, singleColor = Color.black} <| Dict.get sty model.colorPicker
+    colorPickerState = Maybe.withDefault {colorMode = NoneColor, singleColor = Color.black} <| Dict.get sty model.colorPicker
     noneInserted = Dict.insert sty {colorPickerState | colorMode = NoneColor} model.colorPicker
     singleInserted = Dict.insert sty {colorPickerState | colorMode = SingleColor} model.colorPicker
     anyInserted url = Dict.insert sty {colorPickerState | colorMode = AnyColor url} model.colorPicker
-    isOpenToggled = Dict.insert sty {colorPickerState | isOpen = not colorPickerState.isOpen} model.colorPicker
     hsl = Utils.toHsl2 colorPickerState.singleColor
     cgHue hue = Dict.insert sty {colorPickerState | singleColor = Color.hsla hue hsl.saturation hsl.lightness hsl.alpha} model.colorPicker
     cgSat sat = Dict.insert sty {colorPickerState | singleColor = Color.hsla hsl.hue sat hsl.lightness hsl.alpha} model.colorPicker
@@ -188,7 +187,7 @@ colorPicker sty model =
     div [style flex] ([
       Options.styled p [Typo.subhead, Options.css "width" "60px"] [text <| sty ++ ":"],
       Options.div [
-        if colorPickerState.isOpen then Elevation.e0 else Elevation.e4,
+        if model.openedPicker == sty then Elevation.e0 else Elevation.e4,
         Elevation.transition 300,
         Options.css "width" "48px",
         Options.css "height" "48px",
@@ -198,7 +197,7 @@ colorPicker sty model =
           AnyColor url -> "hsla(0, 0%, 100%, 0.1)"
         ),
         Options.center,
-        Options.onClick <| ColorPickerMsg isOpenToggled
+        Options.onClick <| OpenedPickerMsg ( if model.openedPicker == sty then "none" else sty)
       ] (
         case colorPickerState.colorMode of
           NoneColor -> [text "none"]
@@ -206,7 +205,7 @@ colorPicker sty model =
           AnyColor url -> [text "other"]
       )
     ] ++ (
-      case colorPickerState.isOpen of
+      case model.openedPicker == sty of
         False -> []
         True ->
           [
@@ -236,24 +235,7 @@ colorPicker sty model =
             NoneColor -> []
             AnyColor url -> []
             SingleColor -> [
-              div [] [
-                div [ style flex ] [
-                  Options.styled p [Typo.body1] [text "H: "],
-                  Slider.view [Slider.value (hsl.hue * 180 / pi), Slider.min 0, Slider.max 359, Slider.step 1, Slider.onChange (\f -> ColorPickerMsg <| cgHue (degrees f))]
-                ],
-                div [ style flex ] [
-                    Options.styled p [Typo.body1] [text "S: "],
-                    Slider.view [Slider.value (hsl.saturation * 100), Slider.min 0, Slider.max 100, Slider.step 1, Slider.onChange (\f -> ColorPickerMsg <| cgSat (f / 100))]
-                ],
-                div [ style flex ] [
-                    Options.styled p [Typo.body1] [text "L: "],
-                    Slider.view [Slider.value (hsl.lightness * 100), Slider.min 0, Slider.max 100, Slider.step 1, Slider.onChange (\f -> ColorPickerMsg <| cgLig (f / 100))]
-                ],
-                div [ style flex ] [
-                    Options.styled p [Typo.body1] [text "A: "],
-                    Slider.view [Slider.value hsl.alpha, Slider.min 0, Slider.max 1, Slider.step 0.01, Slider.onChange (\f -> ColorPickerMsg <| cgAlp f)]
-                ]
-              ]
+              Html.map ColorPanelMsg <| Ui.ColorPanel.view model.colorPanel
             ]
         )))
   ]

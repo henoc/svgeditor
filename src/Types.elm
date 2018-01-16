@@ -5,6 +5,8 @@ import Set exposing (Set)
 import Dict exposing (Dict)
 import Material
 import Color exposing (Color)
+import Ui.ColorPanel
+import Ext.Color
 
 type Mode = HandMode | NodeMode | RectMode | EllipseMode | PolygonMode | PathMode
 type alias StyleInfo = Dict String String
@@ -46,12 +48,14 @@ type alias Model = {
   clientLeft: Float,
   clientTop: Float,
   encoded: String,
-  colorPicker: ColorPickerStates
+  openedPicker: String,
+  colorPicker: ColorPickerStates,
+  colorPanel: Ui.ColorPanel.Model
 }
 
 type Msg = Mdl (Material.Msg Msg) | OnProperty ChangePropertyMsg | OnAction Action | OnMouse MouseMsg | OnSelect Int Bool Vec2 | FieldSelect (Int, Vec2) | OnVertex Vec2 Vec2 | OnNode Vec2 Int
   | SvgData String | EncodedSvgData String | SvgRootRect ClientRect | ComputedStyle (Maybe StyleObject)
-  | ColorPickerMsg ColorPickerStates
+  | OpenedPickerMsg String | ColorPickerMsg ColorPickerStates | ColorPanelMsg Ui.ColorPanel.Msg | ColorPanelChanged Ext.Color.Hsv
 type ChangePropertyMsg = SwichMode Mode | Style StyleInfo
 type MouseMsg = MouseDownLeft Vec2 | MouseDownRight Vec2 | MouseUp Vec2 | MouseMove Vec2
 type Action = Duplicate | Delete | BringForward | SendBackward
@@ -78,7 +82,6 @@ type alias ClientRect = {
 type alias ColorPickerStates = Dict String ColorPickerState
 type ColorMode = NoneColor | SingleColor | AnyColor String    -- カラーピッカーで使用する色の場合分け ex. AnyColor "#MyGradient"
 type alias ColorPickerState = {
-  isOpen: Bool,
   colorMode: ColorMode,
   singleColor: Color
 }

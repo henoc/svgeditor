@@ -9,6 +9,8 @@ import Material.Slider as Slider
 import Material.Typography as Typo
 import Material.Elevation as Elevation
 import Material.Grid exposing (grid, noSpacing, cell, size, Device(..))
+import Ui.ColorPanel
+import Ext.Color
 import Html exposing (Html, button, div, text, node, p, img)
 import Svg exposing (svg, ellipse, rect)
 import Svg.Attributes exposing (..)
@@ -54,10 +56,12 @@ init =
       clientLeft = 0,
       clientTop = 0,
       encoded = "",
+      openedPicker = "none",
       colorPicker = Dict.fromList [
-        ("fill", {isOpen = False, colorMode = SingleColor, singleColor = Color.hsl (degrees 0) 0.5 0.5}),
-        ("stroke", {isOpen = False, colorMode = NoneColor, singleColor = Color.hsl (degrees 180) 0.5 0.5})
-      ]
+        ("fill", {colorMode = SingleColor, singleColor = Color.hsl (degrees 0) 0.5 0.5}),
+        ("stroke", {colorMode = NoneColor, singleColor = Color.hsl (degrees 180) 0.5 0.5})
+      ],
+      colorPanel = Ui.ColorPanel.init ()
     } ! [Utils.getSvgData ()]
 
 
@@ -109,7 +113,8 @@ update msg model =
       SendBackward ->
         (Actions.sendBackward model) ! []
 
-    OnMouse onMouseMsg -> case model.mode of
+    OnMouse onMouseMsg ->
+      case model.mode of
       HandMode ->
         let newModel = HandMode.update onMouseMsg model in
         if model /= newModel then newModel ! [Utils.reflectSvgData newModel]
@@ -142,27 +147,29 @@ update msg model =
       NodeMode -> (NodeMode.select ident pos model) ! [Utils.getStyle ("svgeditor" ++ (toString ident) ++ "c")]
       _ -> model ! []
     
-    FieldSelect (button, pos) -> case model.mode of
-      HandMode -> (HandMode.noSelect model) ! []
-      NodeMode -> (NodeMode.noSelect model) ! []
-      _ ->
-        let
-          onMouseMsg = case button of
-            0 -> MouseDownLeft pos
-            _ -> MouseDownRight pos
-        in case model.mode of
-          PolygonMode ->
-            let newModel = ShapeMode.updatePolygon onMouseMsg model in
-            if model /= newModel then newModel ! [Utils.reflectSvgData newModel]
-            else model ! []
-          PathMode ->
-            let newModel = ShapeMode.updatePath onMouseMsg model in
-            if model /= newModel then newModel ! [Utils.reflectSvgData newModel]
-            else model ! []
-          _ ->
-            let newModel = ShapeMode.update onMouseMsg model in
-            if model /= newModel then newModel ! [Utils.reflectSvgData newModel]
-            else model ! []
+    -- svg枠内のクリックについて
+    FieldSelect (button, pos) ->
+      case model.mode of
+        HandMode -> (HandMode.noSelect model) ! []
+        NodeMode -> (NodeMode.noSelect model) ! []
+        _ ->
+          let
+            onMouseMsg = case button of
+              0 -> MouseDownLeft pos
+              _ -> MouseDownRight pos
+          in case model.mode of
+            PolygonMode ->
+              let newModel = ShapeMode.updatePolygon onMouseMsg model in
+              if model /= newModel then newModel ! [Utils.reflectSvgData newModel]
+              else model ! []
+            PathMode ->
+              let newModel = ShapeMode.updatePath onMouseMsg model in
+              if model /= newModel then newModel ! [Utils.reflectSvgData newModel]
+              else model ! []
+            _ ->
+              let newModel = ShapeMode.update onMouseMsg model in
+              if model /= newModel then newModel ! [Utils.reflectSvgData newModel]
+              else model ! []
     
     OnVertex fixed mpos -> case model.mode of
       HandMode -> (HandMode.scale fixed mpos model) ! []
@@ -196,8 +203,8 @@ update msg model =
               hslaStrFill = Utils.colorTypeToStr colorTypeFill
               hslaStrStroke = Utils.colorTypeToStr colorTypeStroke
 
-              pickerFill = Maybe.withDefault {isOpen = False, colorMode = NoneColor, singleColor = Color.black} <| Dict.get "fill" model.colorPicker
-              pickerStroke = Maybe.withDefault {isOpen = False, colorMode = NoneColor, singleColor = Color.black} <| Dict.get "stroke" model.colorPicker
+              pickerFill = Maybe.withDefault {colorMode = NoneColor, singleColor = Color.black} <| Dict.get "fill" model.colorPicker
+              pickerStroke = Maybe.withDefault {colorMode = NoneColor, singleColor = Color.black} <| Dict.get "stroke" model.colorPicker
               
               newPickerFill = case colorTypeFill of
                 NoneColorType -> {pickerFill | colorMode = NoneColor}
@@ -216,6 +223,9 @@ update msg model =
       in
       {model | colorPicker = newColorPickerStates, styleInfo = newStyleInfo} ! []
     
+    OpenedPickerMsg styleName ->
+      {model | openedPicker = styleName} ! []
+
     ColorPickerMsg colorPickerStates ->
       let
         -- カラーピッカーの状態をもとに styleInfo を更新
@@ -237,7 +247,20 @@ update msg model =
         newModel = {model | colorPicker = colorPickerStates}
       in
       update (OnProperty (Style newStyleInfo)) newModel
-
+    
+    ColorPanelMsg msg_ ->
+      let
+        (updated, cmd) = Ui.ColorPanel.update msg_ model.colorPanel
+      in
+      {model | colorPanel = updated} ! [Cmd.map ColorPanelMsg cmd]
+    
+    ColorPanelChanged uiColor ->
+      let
+        normalColor = Ext.Color.hsvToRgb uiColor
+        colorPickerState = Maybe.withDefault {colorMode = NoneColor, singleColor = Color.black} <| Dict.get model.openedPicker model.colorPicker
+        renewedPickers =  Dict.insert model.openedPicker {colorPickerState | singleColor = normalColor} model.colorPicker
+      in
+      update (ColorPickerMsg renewedPickers) model
 -- VIEW
 
 
@@ -329,5 +352,7 @@ subscriptions model =
           Utils.getMouseUpFromJs <| OnMouse << MouseUp,
           Utils.getMouseMoveFromJs <| OnMouse << MouseMove,
           Utils.getBoundingClientRectFromJs SvgRootRect,
-          Utils.getStyleFromJs ComputedStyle
+          Utils.getStyleFromJs ComputedStyle,
+          Sub.map ColorPanelMsg (Ui.ColorPanel.subscriptions model.colorPanel),
+          Ui.ColorPanel.onChange ColorPanelChanged model.colorPanel
         ]
