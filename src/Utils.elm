@@ -234,14 +234,17 @@ toHsl2 c =
     rgba = Color.toRgb c
   in
   if rgba.red == 255 && rgba.green == 255 && rgba.blue == 255 then {hue = 0, saturation = 0, lightness = 1, alpha = rgba.alpha}
+  else if rgba.red == 0 && rgba.green == 0 && rgba.blue == 0 then {hue = 0, saturation = 0, lightness = 0, alpha = rgba.alpha}
   else Color.toHsl c
 
+-- elm-coreのバグへの対処
 colorToCssHsla2 : Color -> String
 colorToCssHsla2 c =
   let
     rgba = Color.toRgb c
   in
   if rgba.red == 255 && rgba.green == 255 && rgba.blue == 255 then "hsla(0, 0%, 100%, " ++ (toString rgba.alpha) ++ ")"
+  else if rgba.red == 0 && rgba.green == 0 && rgba.blue == 0 then "hsla(0, 0%, 0%, " ++ (toString rgba.alpha) ++ ")"
   else colorToCssHsla c
 
 colorTypeToStr : ColorType -> String

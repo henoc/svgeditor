@@ -12,6 +12,7 @@ import Material.Options as Options
 import Material.Typography as Typo
 import Material.Elevation as Elevation
 import Ui.ColorPanel
+import Ext.Color exposing (hsvToRgb)
 import Color.Convert exposing (..)
 import Vec2 exposing (..)
 import Utils
@@ -184,6 +185,7 @@ colorPicker paintType model =
     getGradInfo ident = Dict.get ident model.gradients |> Maybe.withDefault {gradientType = Linear, stops = Dict.empty}
     colorPickerCursor = model.colorPickerCursor
     mkOpenCursor paintType contentName offset = ColorPickerOpen paintType contentName offset
+    panelColor = hsvToRgb model.colorPanel.value
   in
   [
     div [style flex] ([
@@ -197,10 +199,12 @@ colorPicker paintType model =
         Elevation.transition 300,
         Options.css "width" "48px",
         Options.css "height" "48px",
-        Options.css "background" <| ColorPicker.colorExToStr colorEx,
+        Options.css "background" <| case colorEx of
+          NoneColor -> "hsla(0, 0%, 100%, 0.1)"
+          _ -> ColorPicker.colorExToStr colorEx,     -- 箱
         Options.center,
         Options.onClick <|
-          ColorPickerCursorMsg <| ColorPicker.toggleCursor paintType (ColorPicker.colorExToContentName model.gradients colorEx) model.colorPickerCursor
+          ColorPickerOpenCloseMsg <| ColorPicker.toggleCursor colorEx model.gradients paintType model.colorPickerCursor
       ] (
         case colorEx of
           NoneColor -> [text "none"]
@@ -213,21 +217,21 @@ colorPicker paintType model =
         False -> []
         True ->
           [
-              (
+              ( -- ラジオボタン
                 div [style "display: flex; flex-direction: column; margin: 0px 10px"] ([
                   Toggles.radio Mdl [0] model.mdl [
-                    Options.onToggle <| ColorPickerCursorMsg <| mkOpenCursor paintType "none" 0,
+                    Options.onToggle <| ColorPickerCursorMsg (mkOpenCursor paintType "none" 0) paintType NoneColor,
                     Toggles.value (contentName == "none")
                   ] [text "none"],
                   Toggles.radio Mdl [1] model.mdl [
-                    Options.onToggle <| ColorPickerCursorMsg <| mkOpenCursor paintType "single" 0,
+                    Options.onToggle <| ColorPickerCursorMsg (mkOpenCursor paintType "single" 0) paintType (SingleColor panelColor),
                     Toggles.value (contentName == "single")
                   ] [text "single"]
                 ] ++ List.indexedMap
                   (
                     \index -> \ident ->
                       Toggles.radio Mdl [2 + index] model.mdl [
-                        Options.onToggle <| ColorPickerCursorMsg <| mkOpenCursor paintType ("#" ++ contentName) 0,
+                        Options.onToggle <| ColorPickerCursorMsg (mkOpenCursor paintType ("#" ++ ident) 0) paintType (GradientColor (getGradInfo ident)),
                         Toggles.value (contentName == "#" ++ ident)
                       ] [text ("#" ++ ident)]
                   )

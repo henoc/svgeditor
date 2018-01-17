@@ -14,11 +14,20 @@ paintTypeToStr ptype = case ptype of
   Fill -> "fill"
   Stroke -> "stroke"
 
+-- cssグラデーション形式
 colorExToStr: ColorEx -> String
 colorExToStr colorEx = case colorEx of
   GradientColor gradientInfo -> Utils.toCssGradient gradientInfo
   SingleColor color -> Utils.colorToCssHsla2 color
   NoneColor -> "none"
+
+-- urlグラデーション形式
+colorExToStr2: (Dict String GradientInfo) -> ColorEx -> String
+colorExToStr2 gradients colorEx = case colorEx of
+  GradientColor ginfo -> (ginfoToIdent gradients ginfo) |> Maybe.withDefault "NotFound" |> \x -> ("url(#" ++ x ++ ")")
+  SingleColor color -> Utils.colorToCssHsla2 color
+  NoneColor -> "none"
+
 
 colorToColorEx: String -> (Dict String GradientInfo) -> Float -> Color -> ColorEx
 colorToColorEx contentName gradients offset color = case contentName of
@@ -33,10 +42,10 @@ colorToColorEx contentName gradients offset color = case contentName of
       Nothing -> NoneColor
       Just ginfo -> GradientColor {ginfo| stops = Dict.insert offset color ginfo.stops}
 
-toggleCursor: PaintType -> String -> ColorPickerCursor -> ColorPickerCursor
-toggleCursor paintType contentName cursor = case cursor of
+toggleCursor: ColorEx -> (Dict String GradientInfo) -> PaintType -> ColorPickerCursor -> ColorPickerCursor
+toggleCursor colorex gradients paintType cursor = case cursor of
   ColorPickerOpen paintType contentName offset -> ColorPickerClosed
-  ColorPickerClosed -> ColorPickerOpen paintType contentName 0
+  ColorPickerClosed -> ColorPickerOpen paintType (colorExToContentName gradients colorex) 0
 
 colorExToContentName: (Dict String GradientInfo) -> ColorEx -> String
 colorExToContentName gradients colorex = case colorex of

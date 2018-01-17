@@ -63,10 +63,6 @@ init =
         ("stroke", NoneColor)
       ],
       colorPickerCursor = ColorPickerClosed,
-      savedColors = Dict.fromList [
-        ("fill", Dict.empty),
-        ("stroke", Dict.empty)
-      ],
       colorPanel = Ui.ColorPanel.init (),
       gradients = Dict.empty
     } ! [Utils.getSvgData ()]
@@ -279,7 +275,7 @@ update msg model =
         loop colorPicker styleInfo = case colorPicker of
           (paintType, colorex) :: tl ->
             let
-              colorName = ColorPicker.colorExToStr colorex
+              colorName = ColorPicker.colorExToStr2 model.gradients colorex
             in
             loop tl (Dict.insert paintType colorName styleInfo)
           [] -> styleInfo
@@ -288,24 +284,12 @@ update msg model =
       in
       update (OnProperty (Style newStyleInfo)) newModel     -- handModeなどでstyleInfoを反映
     
-    -- カーソルが変わるのでcolorPickerを変える
-    ColorPickerCursorMsg colorPickerCursor ->
-      let
-        model2 = {model | colorPickerCursor = colorPickerCursor}
-      in
-      case colorPickerCursor of
-        ColorPickerClosed -> model2 ! []
-        ColorPickerOpen paintType contentName offset ->
-          let
-            paintTypeStr = ColorPicker.paintTypeToStr paintType
-            renew colorex = Dict.insert paintTypeStr colorex model.colorPicker
-            savedColors = Dict.get paintTypeStr model.savedColors |> Maybe.withDefault Dict.empty
-            savedColor = Dict.get contentName savedColors |> Maybe.withDefault NoneColor
-          in
-          case contentName of
-            "none" -> let newColorPicker = renew NoneColor in {model2 | colorPicker = newColorPicker} ! []
-            "single" -> let newColorPicker = renew savedColor in {model2 | colorPicker = newColorPicker} ! []
-            _ -> let newColorPicker = renew savedColor in {model2 | colorPicker = newColorPicker} ! []
+    ColorPickerOpenCloseMsg colorPickerCursor ->
+      {model | colorPickerCursor = colorPickerCursor} ! []
+
+    -- colorPickerを更新する
+    ColorPickerCursorMsg colorPickerCursor ptype colorex ->
+      update (ColorPickerMsg (Dict.insert (ColorPicker.paintTypeToStr ptype) colorex model.colorPicker)) {model | colorPickerCursor = colorPickerCursor}
 
     ColorPanelMsg msg_ ->
       let
@@ -322,15 +306,8 @@ update msg model =
         ColorPickerOpen paintType contentName ofs ->
           let
             newColorPicker = Dict.insert (ColorPicker.paintTypeToStr paintType) (ColorPicker.colorToColorEx contentName model.gradients ofs normalColor) model.colorPicker
-            colorex = case contentName of
-              "none" -> NoneColor
-              "single" -> SingleColor normalColor
-              _ -> Dict.get (String.dropLeft 1 contentName) model.gradients |> Maybe.map GradientColor |> Maybe.withDefault (SingleColor normalColor)
-            savedColorContent = Dict.get (ColorPicker.paintTypeToStr paintType) model.savedColors |> Maybe.withDefault Dict.empty
-            newSavedColorContent = Dict.insert contentName (ColorPicker.renew ofs normalColor colorex) savedColorContent
-            newSavedColors = Dict.insert (ColorPicker.paintTypeToStr paintType) newSavedColorContent model.savedColors 
           in
-          update (ColorPickerMsg newColorPicker) {model | savedColors = newSavedColors}
+          update (ColorPickerMsg newColorPicker) model
 
 -- VIEW
 
