@@ -21,7 +21,7 @@ import ShapeList exposing (..)
 import Tuple exposing (first, second)
 import Dict exposing (Dict)
 import Shape
-import Color
+import Color exposing (Color)
 import ColorPicker
 
 -- モデル所有のSVGモデルのDOMを構築する
@@ -186,6 +186,13 @@ colorPicker paintType model =
     colorPickerCursor = model.colorPickerCursor
     mkOpenCursor paintType contentName offset = ColorPickerOpen paintType contentName offset
     panelColor = hsvToRgb model.colorPanel.value
+
+    orderedGradColors: String -> List (Float, Color)
+    orderedGradColors contentName = case Dict.get (String.dropLeft 1 contentName) model.gradients of
+      Nothing -> []
+      Just ginfo -> ginfo.stops |> Dict.toList |> List.sortBy first
+    smallBox: msg -> Color -> Html msg
+    smallBox m clr = Options.div [Options.onClick m, Elevation.e4, Options.css "width" "32px", Options.css "height" "32px", Options.css "background" (Utils.colorToCssHsla2 clr)] []
   in
   [
     div [style flex] ([
@@ -220,24 +227,29 @@ colorPicker paintType model =
               ( -- ラジオボタン
                 div [style "display: flex; flex-direction: column; margin: 0px 10px"] ([
                   Toggles.radio Mdl [0] model.mdl [
-                    Options.onToggle <| ColorPickerCursorMsg (mkOpenCursor paintType "none" 0) paintType NoneColor,
+                    Options.onToggle <| ColorPickerCursorMsg (mkOpenCursor paintType "none" -1) paintType NoneColor,
                     Toggles.value (contentName == "none")
                   ] [text "none"],
                   Toggles.radio Mdl [1] model.mdl [
-                    Options.onToggle <| ColorPickerCursorMsg (mkOpenCursor paintType "single" 0) paintType (SingleColor panelColor),
+                    Options.onToggle <| ColorPickerCursorMsg (mkOpenCursor paintType "single" -1) paintType (SingleColor panelColor),
                     Toggles.value (contentName == "single")
                   ] [text "single"]
                 ] ++ List.indexedMap
                   (
                     \index -> \ident ->
                       Toggles.radio Mdl [2 + index] model.mdl [
-                        Options.onToggle <| ColorPickerCursorMsg (mkOpenCursor paintType ("#" ++ ident) 0) paintType (GradientColor (getGradInfo ident)),
+                        Options.onToggle <| ColorPickerCursorMsg (mkOpenCursor paintType ("#" ++ ident) -1) paintType (GradientColor (getGradInfo ident)),
                         Toggles.value (contentName == "#" ++ ident)
                       ] [text ("#" ++ ident)]
                   )
                   gradientIdents
                 )
-              )
+              ),
+              -- グラデーションの箱
+              let
+                makeMsg ofs = ColorPickerCursorMsg (mkOpenCursor paintType contentName ofs) paintType colorEx
+              in
+              div [style flex] (orderedGradColors contentName |> List.map (\(f, c) -> smallBox (makeMsg f) c))
           ]
         ++ (
           case contentName of

@@ -265,7 +265,7 @@ update msg model =
         definedGradients = Dict.union dict model.gradients
 
         -- 新しい definedGradients で全ての XXGradient を更新
-        newModelSvg = Traverse.traverse model.svg <| Utils.updateGradient definedGradients
+        newModelSvg = Traverse.traverse (Utils.updateGradient definedGradients) model.svg 
       in
       {model | gradients = definedGradients, svg = newModelSvg} ! []
 
@@ -295,7 +295,7 @@ update msg model =
       let
         (updated, cmd) = Ui.ColorPanel.update msg_ model.colorPanel
       in
-      {model | colorPanel = updated} ! [Cmd.map ColorPanelMsg cmd]
+      {model | colorPanel = updated} ! [Cmd.map ColorPanelMsg cmd, Utils.reflectSvgData model]
     
     ColorPanelChanged uiColor ->
       let
@@ -306,8 +306,19 @@ update msg model =
         ColorPickerOpen paintType contentName ofs ->
           let
             newColorPicker = Dict.insert (ColorPicker.paintTypeToStr paintType) (ColorPicker.colorToColorEx contentName model.gradients ofs normalColor) model.colorPicker
+            ident = String.dropLeft 1 contentName
+            maybeGinfo = Dict.get ident model.gradients
           in
-          update (ColorPickerMsg newColorPicker) model
+          case maybeGinfo of
+            Just ginfo ->
+              let
+                newGinfo = {ginfo | stops = ginfo.stops |> Dict.insert ofs normalColor}
+                newGradients = model.gradients |> Dict.insert ident newGinfo
+                newModelSvg = Traverse.traverse (Utils.updateGradient newGradients) model.svg
+              in
+              update (ColorPickerMsg newColorPicker) {model | svg = newModelSvg, gradients = newGradients}
+            Nothing ->
+              update (ColorPickerMsg newColorPicker) model
 
 -- VIEW
 

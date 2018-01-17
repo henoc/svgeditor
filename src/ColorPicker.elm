@@ -40,7 +40,7 @@ colorToColorEx contentName gradients offset color = case contentName of
     in
     case maybeGradientInfo of
       Nothing -> NoneColor
-      Just ginfo -> GradientColor {ginfo| stops = Dict.insert offset color ginfo.stops}
+      Just ginfo -> GradientColor {ginfo| stops = if offset >= 0 then Dict.insert offset color ginfo.stops else ginfo.stops}
 
 toggleCursor: ColorEx -> (Dict String GradientInfo) -> PaintType -> ColorPickerCursor -> ColorPickerCursor
 toggleCursor colorex gradients paintType cursor = case cursor of

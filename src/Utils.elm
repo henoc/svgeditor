@@ -287,7 +287,8 @@ updateGradient definedGradients gradElem =
       _ -> stops
   in
   case gradElem.shape of
-    LinearGradient {identifier, stops} -> case Dict.get identifier definedGradients of
+    LinearGradient {identifier, stops} ->
+      case Dict.get identifier definedGradients of
       Just ginfo ->
         {gradElem | shape = LinearGradient {identifier = identifier, stops = loop stops (getOrderedGradInfo ginfo)}}
       Nothing ->
