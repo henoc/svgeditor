@@ -30,6 +30,7 @@ import NodeMode
 import ViewBuilder
 import Parsers
 import Actions
+import Traverse
 import Dict exposing (Dict)
 
 main : Program Never Model Msg
@@ -259,9 +260,12 @@ update msg model =
               )
             )
           |> Dict.fromList
-        merged = Dict.union dict model.gradients
+        definedGradients = Dict.union dict model.gradients
+
+        -- 新しい definedGradients で全ての XXGradient を更新
+        newModelSvg = Traverse.traverse model.svg <| Utils.updateGradient definedGradients
       in
-      {model | gradients = merged} ! []
+      {model | gradients = definedGradients, svg = newModelSvg} ! []
 
     ColorPickerMsg colorPickerStates ->
       let

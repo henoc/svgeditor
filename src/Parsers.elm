@@ -146,7 +146,7 @@ convertNode id node = case node of
           style = styleMap,
           id = nextId,
           attr = attrMap,
-          shape = LinearGradient {stops = subElems}
+          shape = LinearGradient {identifier = Dict.get "id" attrMap |> Maybe.withDefault "NoId", stops = subElems}
         })
       "radialGradient" ->
         let
@@ -156,14 +156,14 @@ convertNode id node = case node of
           style = styleMap,
           id = nextId,
           attr = attrMap,
-          shape = RadialGradient {stops = subElems}
+          shape = RadialGradient {identifier = Dict.get "id" attrMap |> Maybe.withDefault "NoId", stops = subElems}
         })
       "stop" ->
         (id+1, {
           style = styleMap,
           id = id,
           attr = attrMap,
-          shape = Stop
+          shape = Stop {offset = Nothing, color = Nothing}
         })
       "rect" ->
         let

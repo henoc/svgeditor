@@ -22,9 +22,9 @@ type SVGElement =
   | Path { operators: List PathOperator }    -- このリストは新しい方が左
   | SVG {elems: List StyledSVGElement, size: Vec2}
   | Defs {elems: List StyledSVGElement}
-  | LinearGradient {stops: List StyledSVGElement}
-  | RadialGradient {stops: List StyledSVGElement}
-  | Stop
+  | LinearGradient {identifier: String, stops: List StyledSVGElement}
+  | RadialGradient {identifier: String, stops: List StyledSVGElement}
+  | Stop {offset: Maybe Float, color: Maybe Color}
   | Unknown { name: String, elems: List StyledSVGElement }
 type alias StyledSVGElement = {
   style: StyleInfo,
@@ -112,3 +112,4 @@ type ColorType = NoneColorType | SingleColorType Color | AnyColorType String
 type alias Gradiation = List (Float, String)
 
 type LayerType = ColorLayer | PhysicsLayer
+

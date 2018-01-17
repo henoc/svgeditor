@@ -92,8 +92,11 @@ build layerType model svg =
       d pathopstr,
       style styleStr   
     ]) []
-  Stop ->
-    Svg.stop (attrList ++ [
+  Stop stp ->
+    Svg.stop (attrList ++
+      (stp.offset |> Maybe.map toString |> Maybe.map offset |> Utils.maybeToList) ++
+      (stp.color |> Maybe.map Utils.colorToCssHsla2 |> Maybe.map stopColor |> Utils.maybeToList) ++
+    [
       style styleStr
     ]) []
   SVG {elems, size} ->

@@ -5,11 +5,23 @@ import Dict exposing (Dict)
 import Types exposing (..)
 import Debug
 import Tuple exposing (first, second)
+import Color exposing (Color)
+import Color.Convert exposing (..)
+
 
 maybeInsert: String -> Maybe String -> Dict String String -> Dict String String
 maybeInsert key maybeValue dict = case maybeValue of
   Just x -> Dict.insert key x dict
   Nothing -> dict
+
+colorToCssHsla2 : Color -> String
+colorToCssHsla2 c =
+  let
+    rgba = Color.toRgb c
+  in
+  if rgba.red == 255 && rgba.green == 255 && rgba.blue == 255 then "hsla(0, 0%, 100%, " ++ (toString rgba.alpha) ++ ")"
+  else colorToCssHsla c
+
 
 generateNode: StyledSVGElement -> XmlParser.Node
 generateNode elem =
@@ -48,9 +60,12 @@ generateNode elem =
       xmlElem = XmlParser.Element "radialGradient" attrs xmlSubNodes
     in
     xmlElem
-  Stop ->
+  Stop stp ->
     let
-      newAttr = maybeInsert "style" styleAttr elem.attr
+      newAttr =
+        maybeInsert "offset" (Maybe.map (\x -> x * 100 |> floor |> toString |> \y -> y ++ "%") stp.offset) <<
+        maybeInsert "stop-color" (Maybe.map colorToCssHsla2 stp.color) <<
+        maybeInsert "style" styleAttr <| elem.attr
       attrs = Dict.toList newAttr |> List.map (\(x, y) -> {name = x, value = y}) 
       xmlElem = XmlParser.Element "stop" attrs []
     in

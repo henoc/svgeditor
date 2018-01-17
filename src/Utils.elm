@@ -46,6 +46,11 @@ flattenList lst = case lst of
   hd :: tl -> hd ++ flattenList tl
   [] -> []
 
+maybeToList: Maybe a -> List a
+maybeToList m = case m of
+  Just x -> [x]
+  Nothing -> []
+
 getElems: Model -> List StyledSVGElement
 getElems model = case model.svg.shape of
   SVG {elems} -> elems
@@ -267,6 +272,30 @@ toCssGradient sharpedUrl ginfo =
       Radial -> ""
   in
   toCssGradientName ginfo.gradientType ++ "(" ++ (leftOrNone ginfo.gradientType) ++ (String.join "," (expandStops <| Dict.toList ginfo.stops)) ++ ")"
+
+-- 与えられたgradElemがグラデーション要素ならば、idの一致したGradientInfoで更新する
+updateGradient: Dict String GradientInfo -> StyledSVGElement -> StyledSVGElement
+updateGradient definedGradients gradElem =
+  let
+    getOrderedGradInfo ginfo = ginfo.stops |> Dict.toList |> List.sortBy first
+    loop stops orderedInfo = case (stops, orderedInfo) of
+      (stopHd :: stopTl, orderedInfoHd :: orderedInfoTl) -> case stopHd.shape of
+        Stop _ -> {stopHd | shape = Stop {offset = Just <| first orderedInfoHd, color = Just <| second orderedInfoHd}} :: loop stopTl orderedInfoTl
+        _ -> stopHd :: loop stopTl orderedInfo
+      _ -> stops
+  in
+  case gradElem.shape of
+    LinearGradient {identifier, stops} -> case Dict.get identifier definedGradients of
+      Just ginfo ->
+        {gradElem | shape = LinearGradient {identifier = identifier, stops = loop stops (getOrderedGradInfo ginfo)}}
+      Nothing ->
+        gradElem
+    RadialGradient {identifier, stops} -> case Dict.get identifier definedGradients of
+      Just ginfo ->
+        {gradElem | shape = RadialGradient {identifier = identifier, stops = loop stops (getOrderedGradInfo ginfo)}}
+      Nothing ->
+        gradElem
+    other -> gradElem
 
 
 port getSvgData: () -> Cmd msg
