@@ -10,7 +10,7 @@ import Material.Typography as Typo
 import Material.Elevation as Elevation
 import Material.Grid exposing (grid, noSpacing, cell, size, Device(..))
 import Ui.ColorPanel
-import Ext.Color
+import Ext.Color exposing (hsvToRgb)
 import Html exposing (Html, button, div, text, node, p, img)
 import Svg exposing (svg, ellipse, rect)
 import Svg.Attributes exposing (..)
@@ -31,6 +31,7 @@ import ViewBuilder
 import Parsers
 import Actions
 import Traverse
+import ColorPicker
 import Dict exposing (Dict)
 
 main : Program Never Model Msg
@@ -57,10 +58,14 @@ init =
       clientLeft = 0,
       clientTop = 0,
       encoded = "",
-      openedPicker = "none",
       colorPicker = Dict.fromList [
-        ("fill", {colorMode = SingleColor, singleColor = Color.hsl (degrees 0) 0.5 0.5}),
-        ("stroke", {colorMode = NoneColor, singleColor = Color.hsl (degrees 180) 0.5 0.5})
+        ("fill", NoneColor),
+        ("stroke", NoneColor)
+      ],
+      colorPickerCursor = ColorPickerClosed,
+      savedColors = Dict.fromList [
+        ("fill", Dict.empty),
+        ("stroke", Dict.empty)
       ],
       colorPanel = Ui.ColorPanel.init (),
       gradients = Dict.empty
@@ -210,17 +215,21 @@ update msg model =
               hslaStrFill = Utils.colorTypeToStr colorTypeFill
               hslaStrStroke = Utils.colorTypeToStr colorTypeStroke
 
-              pickerFill = Maybe.withDefault {colorMode = NoneColor, singleColor = Color.black} <| Dict.get "fill" model.colorPicker
-              pickerStroke = Maybe.withDefault {colorMode = NoneColor, singleColor = Color.black} <| Dict.get "stroke" model.colorPicker
+              pickerFill = Maybe.withDefault NoneColor <| Dict.get "fill" model.colorPicker
+              pickerStroke = Maybe.withDefault NoneColor <| Dict.get "stroke" model.colorPicker
               
               newPickerFill = case colorTypeFill of
-                NoneColorType -> {pickerFill | colorMode = NoneColor}
-                SingleColorType c -> {pickerFill | colorMode = SingleColor, singleColor = c}
-                AnyColorType ident -> {pickerFill | colorMode = AnyColor ident}
+                NoneColorType -> NoneColor
+                SingleColorType c -> SingleColor c
+                AnyColorType ident -> GradientColor (
+                  model.gradients |> Dict.get ident |> Maybe.withDefault {gradientType = Linear, stops = Dict.empty}
+                )
               newPickerStroke = case colorTypeStroke of
-                NoneColorType -> {pickerStroke | colorMode = NoneColor}
-                SingleColorType c -> {pickerStroke | colorMode = SingleColor, singleColor = c}
-                AnyColorType ident -> {pickerStroke | colorMode = AnyColor ident}
+                NoneColorType -> NoneColor
+                SingleColorType c -> SingleColor c
+                AnyColorType ident -> GradientColor (
+                  model.gradients |> Dict.get ident |> Maybe.withDefault {gradientType = Linear, stops = Dict.empty}
+                )
             in
             (
               Dict.insert "fill" newPickerFill << Dict.insert "stroke" newPickerStroke <| colorPickerStates,
@@ -229,9 +238,6 @@ update msg model =
           Nothing -> (colorPickerStates, styleInfo)
       in
       {model | colorPicker = newColorPickerStates, styleInfo = newStyleInfo} ! []
-    
-    OpenedPickerMsg styleName ->
-      {model | openedPicker = styleName} ! []
 
     GradientStyles stopStyles ->
       let
@@ -267,28 +273,40 @@ update msg model =
       in
       {model | gradients = definedGradients, svg = newModelSvg} ! []
 
-    ColorPickerMsg colorPickerStates ->
+    ColorPickerMsg colorPicker ->
       let
-        -- カラーピッカーの状態をもとに styleInfo を更新
-        loop : List (String, ColorPickerState) -> StyleInfo -> StyleInfo
-        loop cols styleInfo = case cols of
-          hd :: tl ->
+        loop: List (String, ColorEx) -> StyleInfo -> StyleInfo
+        loop colorPicker styleInfo = case colorPicker of
+          (paintType, colorex) :: tl ->
             let
-              part = first hd
-              colorState = second hd
-              newStyleInfo = case colorState.colorMode of
-                  NoneColor -> Dict.insert part "none" styleInfo
-                  SingleColor -> Dict.insert part (Utils.colorToCssHsla2 colorState.singleColor) styleInfo
-                  AnyColor url -> Dict.insert part ("url(" ++ url ++ ")") styleInfo
+              colorName = ColorPicker.colorExToStr colorex
             in
-            loop tl newStyleInfo
+            loop tl (Dict.insert paintType colorName styleInfo)
           [] -> styleInfo
-        colorPickerStatesList = Dict.toList colorPickerStates
-        newStyleInfo = loop colorPickerStatesList model.styleInfo
-        newModel = {model | colorPicker = colorPickerStates}
+        newStyleInfo = loop (Dict.toList colorPicker) model.styleInfo     -- styleInfo更新
+        newModel = {model | colorPicker = colorPicker}      -- colorPicker更新
       in
-      update (OnProperty (Style newStyleInfo)) newModel
+      update (OnProperty (Style newStyleInfo)) newModel     -- handModeなどでstyleInfoを反映
     
+    -- カーソルが変わるのでcolorPickerを変える
+    ColorPickerCursorMsg colorPickerCursor ->
+      let
+        model2 = {model | colorPickerCursor = colorPickerCursor}
+      in
+      case colorPickerCursor of
+        ColorPickerClosed -> model2 ! []
+        ColorPickerOpen paintType contentName offset ->
+          let
+            paintTypeStr = ColorPicker.paintTypeToStr paintType
+            renew colorex = Dict.insert paintTypeStr colorex model.colorPicker
+            savedColors = Dict.get paintTypeStr model.savedColors |> Maybe.withDefault Dict.empty
+            savedColor = Dict.get contentName savedColors |> Maybe.withDefault NoneColor
+          in
+          case contentName of
+            "none" -> let newColorPicker = renew NoneColor in {model2 | colorPicker = newColorPicker} ! []
+            "single" -> let newColorPicker = renew savedColor in {model2 | colorPicker = newColorPicker} ! []
+            _ -> let newColorPicker = renew savedColor in {model2 | colorPicker = newColorPicker} ! []
+
     ColorPanelMsg msg_ ->
       let
         (updated, cmd) = Ui.ColorPanel.update msg_ model.colorPanel
@@ -297,11 +315,23 @@ update msg model =
     
     ColorPanelChanged uiColor ->
       let
-        normalColor = Ext.Color.hsvToRgb uiColor
-        colorPickerState = Maybe.withDefault {colorMode = NoneColor, singleColor = Color.black} <| Dict.get model.openedPicker model.colorPicker
-        renewedPickers =  Dict.insert model.openedPicker {colorPickerState | singleColor = normalColor} model.colorPicker
+        normalColor = hsvToRgb uiColor
       in
-      update (ColorPickerMsg renewedPickers) model
+      case model.colorPickerCursor of
+        ColorPickerClosed -> model ! []
+        ColorPickerOpen paintType contentName ofs ->
+          let
+            newColorPicker = Dict.insert (ColorPicker.paintTypeToStr paintType) (ColorPicker.colorToColorEx contentName model.gradients ofs normalColor) model.colorPicker
+            colorex = case contentName of
+              "none" -> NoneColor
+              "single" -> SingleColor normalColor
+              _ -> Dict.get (String.dropLeft 1 contentName) model.gradients |> Maybe.map GradientColor |> Maybe.withDefault (SingleColor normalColor)
+            savedColorContent = Dict.get (ColorPicker.paintTypeToStr paintType) model.savedColors |> Maybe.withDefault Dict.empty
+            newSavedColorContent = Dict.insert contentName (ColorPicker.renew ofs normalColor colorex) savedColorContent
+            newSavedColors = Dict.insert (ColorPicker.paintTypeToStr paintType) newSavedColorContent model.savedColors 
+          in
+          update (ColorPickerMsg newColorPicker) {model | savedColors = newSavedColors}
+
 -- VIEW
 
 
@@ -364,8 +394,8 @@ view model =
           _ -> []
         ))
       ],
-      div [] <| ViewBuilder.colorPicker "fill" model,
-      div [] <| ViewBuilder.colorPicker "stroke" model,
+      div [] <| ViewBuilder.colorPicker Fill model,
+      div [] <| ViewBuilder.colorPicker Stroke model,
       let
         sw = case Dict.get "stroke-width" model.styleInfo of
           Nothing -> 1

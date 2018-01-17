@@ -34,6 +34,7 @@ rgbToColorType data a = case data of
         ParseSuccess identifier i -> AnyColorType identifier
         ParseFailure r i -> NoneColorType
 
+
 -- rgb(x,y,z) & opacity を Color にする
 rgbToColor: String -> Float -> Color
 rgbToColor data a = case rgbParser (input data "[\\(\\),\\s]+") of

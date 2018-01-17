@@ -48,9 +48,10 @@ type alias Model = {
   clientLeft: Float,
   clientTop: Float,
   encoded: String,
-  openedPicker: String,
-  colorPicker: ColorPickerStates,
+  colorPicker: ColorPicker,
+  colorPickerCursor: ColorPickerCursor,
   colorPanel: Ui.ColorPanel.Model,
+  savedColors: Dict String (Dict String ColorEx),
   gradients: Dict String GradientInfo  -- 定義されているすべての Gradient要素のid, 色の列
 }
 
@@ -62,7 +63,7 @@ type alias GradientInfo = {
 
 type Msg = Mdl (Material.Msg Msg) | OnProperty ChangePropertyMsg | OnAction Action | OnMouse MouseMsg | OnSelect Int Bool Vec2 | FieldSelect (Int, Vec2) | OnVertex Vec2 Vec2 | OnNode Vec2 Int
   | SvgData String | EncodedSvgData String | SvgRootRect ClientRect | ComputedStyle (Maybe StyleObject) | GradientStyles (List GradientElementInfo)
-  | OpenedPickerMsg String | ColorPickerMsg ColorPickerStates | ColorPanelMsg Ui.ColorPanel.Msg | ColorPanelChanged Ext.Color.Hsv
+  | ColorPickerMsg ColorPicker | ColorPickerCursorMsg ColorPickerCursor | ColorPanelMsg Ui.ColorPanel.Msg | ColorPanelChanged Ext.Color.Hsv
 type ChangePropertyMsg = SwichMode Mode | Style StyleInfo
 type MouseMsg = MouseDownLeft Vec2 | MouseDownRight Vec2 | MouseUp Vec2 | MouseMove Vec2
 type Action = Duplicate | Delete | BringForward | SendBackward
@@ -98,18 +99,16 @@ type alias GradientElementInfo = {
   styles: List StopStyleObject
 }
 
-type alias ColorPickerStates = Dict String ColorPickerState
-type ColorMode = NoneColor | SingleColor | AnyColor String    -- カラーピッカーで使用する色の場合分け ex. AnyColor "#MyGradient"
-type alias ColorPickerState = {
-  colorMode: ColorMode,
-  singleColor: Color
-}
+type alias ColorPicker = Dict String ColorEx
 
--- fill などに指定される色の型（こちらでは単一色情報を常に持つ必要がないなど違いがある）
-type ColorType = NoneColorType | SingleColorType Color | AnyColorType String
+type PaintType = Fill | Stroke
 
+type ColorEx = GradientColor GradientInfo | SingleColor Color | NoneColor
+
+type ColorPickerCursor = ColorPickerClosed | ColorPickerOpen PaintType String Float
 
 type alias Gradiation = List (Float, String)
 
 type LayerType = ColorLayer | PhysicsLayer
 
+type ColorType = NoneColorType | SingleColorType Color | AnyColorType String

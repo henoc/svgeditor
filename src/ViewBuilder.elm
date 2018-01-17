@@ -21,6 +21,7 @@ import Tuple exposing (first, second)
 import Dict exposing (Dict)
 import Shape
 import Color
+import ColorPicker
 
 -- モデル所有のSVGモデルのDOMを構築する
 build : LayerType -> Model -> StyledSVGElement -> Html Msg
@@ -173,79 +174,73 @@ buildNodes model =
       ] [])
     positions nodeIds
 
-colorPicker: String -> Model -> List (Html Msg)
-colorPicker sty model =
+colorPicker: PaintType -> Model -> List (Html Msg)
+colorPicker paintType model = 
   let
-    colorPickerState = Maybe.withDefault {colorMode = NoneColor, singleColor = Color.black} <| Dict.get sty model.colorPicker
-    noneInserted = Dict.insert sty {colorPickerState | colorMode = NoneColor} model.colorPicker
-    singleInserted = Dict.insert sty {colorPickerState | colorMode = SingleColor} model.colorPicker
-    anyInserted url = Dict.insert sty {colorPickerState | colorMode = AnyColor url} model.colorPicker
-    hsl = Utils.toHsl2 colorPickerState.singleColor
-    cgHue hue = Dict.insert sty {colorPickerState | singleColor = Color.hsla hue hsl.saturation hsl.lightness hsl.alpha} model.colorPicker
-    cgSat sat = Dict.insert sty {colorPickerState | singleColor = Color.hsla hsl.hue sat hsl.lightness hsl.alpha} model.colorPicker
-    cgLig lig = Dict.insert sty {colorPickerState | singleColor = Color.hsla hsl.hue hsl.saturation lig hsl.alpha} model.colorPicker
-    cgAlp alp = Dict.insert sty {colorPickerState | singleColor = Color.hsla hsl.hue hsl.saturation hsl.lightness alp} model.colorPicker
-    gradients = Utils.getGradients model
-    gradientUrlsNoSharp = List.map .attr gradients |> List.map (Dict.get "id") |> Utils.flatten
-    gradientUrls = gradientUrlsNoSharp |> List.map (\x -> "#" ++ x)
-    noSharp url = String.dropLeft 1 url
     flex = "display: flex"
+    paintTypeStr = ColorPicker.paintTypeToStr paintType
+    colorEx = model.colorPicker |> Dict.get paintTypeStr |> Maybe.withDefault NoneColor
+    gradientIdents = Dict.keys model.gradients
+    getGradInfo ident = Dict.get ident model.gradients |> Maybe.withDefault {gradientType = Linear, stops = Dict.empty}
+    colorPickerCursor = model.colorPickerCursor
+    mkOpenCursor paintType contentName offset = ColorPickerOpen paintType contentName offset
   in
   [
     div [style flex] ([
-      Options.styled p [Typo.subhead, Options.css "width" "60px"] [text <| sty ++ ":"],
+      Options.styled p [Typo.subhead, Options.css "width" "60px"] [text <| (ColorPicker.paintTypeToStr paintType) ++ ":"],
       Options.div [
-        if model.openedPicker == sty then Elevation.e0 else Elevation.e4,
+        case model.colorPickerCursor of
+          ColorPickerClosed -> Elevation.e4
+          ColorPickerOpen pt _ _ -> case pt == paintType of
+            True -> Elevation.e0
+            False -> Elevation.e4,
         Elevation.transition 300,
         Options.css "width" "48px",
         Options.css "height" "48px",
-        Options.css "background" (case colorPickerState.colorMode of    -- 色表示の四角形
-          NoneColor -> "hsla(0, 0%, 100%, 0.1)"
-          SingleColor -> Utils.colorToCssHsla2 colorPickerState.singleColor
-          AnyColor url ->
-            Maybe.map (Utils.toCssGradient url) (Dict.get (noSharp url) model.gradients)
-            |> Maybe.withDefault "hsla(0, 0%, 100%, 0.1)"
-        ),
+        Options.css "background" <| ColorPicker.colorExToStr colorEx,
         Options.center,
-        Options.onClick <| OpenedPickerMsg ( if model.openedPicker == sty then "none" else sty)
+        Options.onClick <|
+          ColorPickerCursorMsg <| ColorPicker.toggleCursor paintType (ColorPicker.colorExToContentName model.gradients colorEx) model.colorPickerCursor
       ] (
-        case colorPickerState.colorMode of
+        case colorEx of
           NoneColor -> [text "none"]
-          SingleColor -> []
-          AnyColor url -> []
+          _ -> []
       )
     ] ++ (
-      case model.openedPicker == sty of
+      case colorPickerCursor of
+        ColorPickerClosed -> []
+        ColorPickerOpen pt contentName offset -> case pt == paintType of
         False -> []
         True ->
           [
               (
                 div [style "display: flex; flex-direction: column; margin: 0px 10px"] ([
                   Toggles.radio Mdl [0] model.mdl [
-                    Options.onToggle <| ColorPickerMsg noneInserted,
-                    Toggles.value (colorPickerState.colorMode == NoneColor)
+                    Options.onToggle <| ColorPickerCursorMsg <| mkOpenCursor paintType "none" 0,
+                    Toggles.value (contentName == "none")
                   ] [text "none"],
                   Toggles.radio Mdl [1] model.mdl [
-                    Options.onToggle <| ColorPickerMsg singleInserted,
-                    Toggles.value (colorPickerState.colorMode == SingleColor)
+                    Options.onToggle <| ColorPickerCursorMsg <| mkOpenCursor paintType "single" 0,
+                    Toggles.value (contentName == "single")
                   ] [text "single"]
                 ] ++ List.indexedMap
                   (
-                    \index -> \url ->
+                    \index -> \ident ->
                       Toggles.radio Mdl [2 + index] model.mdl [
-                        Options.onToggle <| ColorPickerMsg <| anyInserted url, Toggles.value (colorPickerState.colorMode == AnyColor url)
-                      ] [text url]
+                        Options.onToggle <| ColorPickerCursorMsg <| mkOpenCursor paintType ("#" ++ contentName) 0,
+                        Toggles.value (contentName == "#" ++ ident)
+                      ] [text ("#" ++ ident)]
                   )
-                  gradientUrls
+                  gradientIdents
                 )
               )
           ]
         ++ (
-          case colorPickerState.colorMode of
-            NoneColor -> []
-            AnyColor url -> []
-            SingleColor -> [
+          case contentName of
+            "none" -> []
+            _ -> [
               Html.map ColorPanelMsg <| Ui.ColorPanel.view model.colorPanel
             ]
         )))
   ]
+

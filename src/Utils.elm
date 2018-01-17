@@ -255,10 +255,9 @@ toCssGradientName gradientType = case gradientType of
   Linear -> "linear-gradient"
   Radial -> "radial-gradient"
 
-toCssGradient: String -> GradientInfo -> String
-toCssGradient sharpedUrl ginfo =
+toCssGradient: GradientInfo -> String
+toCssGradient ginfo =
   let
-    urlNoSharp = String.right 1 sharpedUrl
     expandStops stops = case stops of
       hd :: tl ->
         let
