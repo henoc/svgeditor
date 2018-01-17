@@ -3,23 +3,17 @@ module Main exposing (..)
 import Material
 import Material.Scheme
 import Material.Button as Button
-import Material.Toggles as Toggles
 import Material.Options as Options
 import Material.Slider as Slider
 import Material.Typography as Typo
 import Material.Elevation as Elevation
-import Material.Grid exposing (grid, noSpacing, cell, size, Device(..))
 import Ui.ColorPanel
 import Ext.Color exposing (hsvToRgb)
 import Html exposing (Html, button, div, text, node, p, img)
 import Svg exposing (svg, ellipse, rect)
 import Svg.Attributes exposing (..)
-import Html.Events exposing (onClick, onInput, onMouseDown)
 import Html.Attributes exposing (value, checked, src, attribute)
-import Color
-import Color.Convert exposing (..)
 import Tuple exposing (first, second)
-import Vec2 exposing (..)
 import Set exposing (Set)
 import Types exposing (..)
 import Debug exposing (..)
@@ -297,6 +291,7 @@ update msg model =
       in
       {model | colorPanel = updated} ! [Cmd.map ColorPanelMsg cmd, Utils.reflectSvgData model]
     
+    -- colorPanelの更新をうけてcolorPickerを更新、さらにグラデーションに変更があればmodel.gradients, model.svgを更新
     ColorPanelChanged uiColor ->
       let
         normalColor = hsvToRgb uiColor
