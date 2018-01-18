@@ -186,13 +186,6 @@ colorPicker paintType model =
     colorPickerCursor = model.colorPickerCursor
     mkOpenCursor paintType contentName offset = ColorPickerOpen paintType contentName offset
     panelColor = hsvToRgb model.colorPanel.value
-
-    orderedGradColors: String -> List (Float, Color)
-    orderedGradColors contentName = case Dict.get (String.dropLeft 1 contentName) model.gradients of
-      Nothing -> []
-      Just ginfo -> ginfo.stops |> Dict.toList |> List.sortBy first
-    smallBox: msg -> Color -> Html msg
-    smallBox m clr = Options.div [Options.onClick m, Elevation.e4, Options.css "width" "32px", Options.css "height" "32px", Options.css "background" (Utils.colorToCssHsla2 clr)] []
   in
   [
     div [style flex] ([
@@ -206,6 +199,7 @@ colorPicker paintType model =
         Elevation.transition 300,
         Options.css "width" "48px",
         Options.css "height" "48px",
+        Options.css "border-radius" "0.25em",        
         Options.css "background" <| case colorEx of
           NoneColor -> "hsla(0, 0%, 100%, 0.1)"
           _ -> ColorPicker.colorExToStr colorEx,     -- 箱
@@ -217,46 +211,66 @@ colorPicker paintType model =
           NoneColor -> [text "none"]
           _ -> []
       )
-    ] ++ (
-      case colorPickerCursor of
+    ] ++ case colorPickerCursor of
         ColorPickerClosed -> []
         ColorPickerOpen pt contentName offset -> case pt == paintType of
         False -> []
         True ->
-          [
-              ( -- ラジオボタン
-                div [style "display: flex; flex-direction: column; margin: 0px 10px"] ([
-                  Toggles.radio Mdl [0] model.mdl [
-                    Options.onToggle <| ColorPickerCursorMsg (mkOpenCursor paintType "none" -1) paintType NoneColor,
-                    Toggles.value (contentName == "none")
-                  ] [text "none"],
-                  Toggles.radio Mdl [1] model.mdl [
-                    Options.onToggle <| ColorPickerCursorMsg (mkOpenCursor paintType "single" -1) paintType (SingleColor panelColor),
-                    Toggles.value (contentName == "single")
-                  ] [text "single"]
-                ] ++ List.indexedMap
-                  (
-                    \index -> \ident ->
-                      Toggles.radio Mdl [2 + index] model.mdl [
-                        Options.onToggle <| ColorPickerCursorMsg (mkOpenCursor paintType ("#" ++ ident) -1) paintType (GradientColor (getGradInfo ident)),
-                        Toggles.value (contentName == "#" ++ ident)
-                      ] [text ("#" ++ ident)]
-                  )
-                  gradientIdents
+          let
+            orderedGradColors: String -> List (Float, Color)
+            orderedGradColors contentName = case Dict.get (String.dropLeft 1 contentName) model.gradients of
+              Nothing -> []
+              Just ginfo -> ginfo.stops |> Dict.toList |> List.sortBy first
+            smallBox: msg -> Float -> Color -> Html msg
+            smallBox m ofs clr = Options.div ([
+              Options.onClick m,
+              Elevation.e4,
+              Options.css "width" "32px",
+              Options.css "height" "32px",
+              Options.css "background" (Utils.colorToCssHsla2 clr),
+              Options.css "border-radius" "0.25em"
+            ] ++ if ofs == offset then [
+              Options.css "border-style" "solid",
+              Options.css "border-width" "1px",
+              Options.css "border-color" "currentColor"
+            ] else []) []
+            radioButtonsDiv = div [style "display: flex; flex-direction: column; margin: 0px 10px"] ([
+                Toggles.radio Mdl [0] model.mdl [
+                  Options.onToggle <| ColorPickerCursorMsg (mkOpenCursor paintType "none" -1) paintType NoneColor,
+                  Toggles.value (contentName == "none")
+                ] [text "none"],
+                Toggles.radio Mdl [1] model.mdl [
+                  Options.onToggle <| ColorPickerCursorMsg (mkOpenCursor paintType "single" -1) paintType (SingleColor panelColor),
+                  Toggles.value (contentName == "single")
+                ] [text "single"]
+              ] ++ List.indexedMap
+                (
+                  \index -> \ident ->
+                    Toggles.radio Mdl [2 + index] model.mdl [
+                      Options.onToggle <| ColorPickerCursorMsg (mkOpenCursor paintType ("#" ++ ident) -1) paintType (GradientColor (getGradInfo ident)),
+                      Toggles.value (contentName == "#" ++ ident)
+                    ] [text ("#" ++ ident)]
                 )
-              ),
-              -- グラデーションの箱
+                gradientIdents
+              )
+            gradiateBoxesDiv =
               let
                 makeMsg ofs = ColorPickerCursorMsg (mkOpenCursor paintType contentName ofs) paintType colorEx
               in
-              div [style flex] (orderedGradColors contentName |> List.map (\(f, c) -> smallBox (makeMsg f) c))
+              div [style flex] (orderedGradColors contentName |> List.map (\(f, c) -> smallBox (makeMsg f) f c))
+            panelList = case contentName of
+              "none" -> []
+              _ -> [
+                Html.map ColorPanelMsg <| Ui.ColorPanel.view model.colorPanel
+              ]
+            gradPanelDiv = div [] ([gradiateBoxesDiv] ++ panelList)
+          in
+          [
+            -- ラジオボタン
+            radioButtonsDiv,
+            -- グラデーションの箱とカラーパネル
+            gradPanelDiv
           ]
-        ++ (
-          case contentName of
-            "none" -> []
-            _ -> [
-              Html.map ColorPanelMsg <| Ui.ColorPanel.view model.colorPanel
-            ]
-        )))
+    )
   ]
 
