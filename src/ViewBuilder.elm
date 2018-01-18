@@ -24,6 +24,7 @@ import Dict exposing (Dict)
 import Shape
 import Color exposing (Color)
 import ColorPicker
+import Utils2
 
 -- モデル所有のSVGモデルのDOMを構築する
 build : LayerType -> Model -> StyledSVGElement -> Html Msg
@@ -98,7 +99,7 @@ build layerType model svg =
   Stop stp ->
     Svg.stop (attrList ++
       (stp.offset |> Maybe.map toString |> Maybe.map offset |> Utils.maybeToList) ++
-      (stp.color |> Maybe.map Utils.colorToCssHsla2 |> Maybe.map stopColor |> Utils.maybeToList) ++
+      (stp.color |> Maybe.map Utils2.colorToCssHsla2 |> Maybe.map stopColor |> Utils.maybeToList) ++
     [
       style styleStr
     ]) []
@@ -228,7 +229,7 @@ colorPicker paintType model =
               Elevation.e4,
               Options.css "width" "32px",
               Options.css "height" "32px",
-              Options.css "background" (Utils.colorToCssHsla2 clr),
+              Options.css "background" (Utils2.colorToCssHsla2 clr),
               Options.css "border-radius" "0.25em"
             ] ++ if ofs == offset then [
               Options.css "border-style" "solid",

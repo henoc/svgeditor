@@ -7,6 +7,7 @@ import Dict exposing (Dict)
 import Color exposing (Color)
 import Dict.Extra exposing (find)
 import Tuple exposing (..)
+import Utils2
 
 
 paintTypeToStr: PaintType -> String
@@ -18,14 +19,14 @@ paintTypeToStr ptype = case ptype of
 colorExToStr: ColorEx -> String
 colorExToStr colorEx = case colorEx of
   GradientColor gradientInfo -> Utils.toCssGradient gradientInfo
-  SingleColor color -> Utils.colorToCssHsla2 color
+  SingleColor color -> Utils2.colorToCssHsla2 color
   NoneColor -> "none"
 
 -- urlグラデーション形式
 colorExToStr2: (Dict String GradientInfo) -> ColorEx -> String
 colorExToStr2 gradients colorEx = case colorEx of
   GradientColor ginfo -> (ginfoToIdent gradients ginfo) |> Maybe.withDefault "NotFound" |> \x -> ("url(#" ++ x ++ ")")
-  SingleColor color -> Utils.colorToCssHsla2 color
+  SingleColor color -> Utils2.colorToCssHsla2 color
   NoneColor -> "none"
 
 
