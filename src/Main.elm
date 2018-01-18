@@ -58,7 +58,8 @@ init =
       ],
       colorPickerCursor = ColorPickerClosed,
       colorPanel = Ui.ColorPanel.init (),
-      gradients = Dict.empty
+      gradients = Dict.empty,
+      gradientIdGen = 0
     } ! [Utils.getSvgData ()]
 
 
@@ -229,6 +230,7 @@ update msg model =
       in
       {model | colorPicker = newColorPickerStates, styleInfo = newStyleInfo} ! []
 
+    -- computedしてきたグラデーション情報を追加
     GradientStyles stopStyles ->
       let
         dict = stopStyles
@@ -262,6 +264,31 @@ update msg model =
         newModelSvg = Traverse.traverse (Utils.updateGradient definedGradients) model.svg 
       in
       {model | gradients = definedGradients, svg = newModelSvg} ! []
+
+    -- 普通にグラデーション情報を更新
+    GradientUpdate ident ginfo -> case Dict.get ident model.gradients of
+      Just _ ->
+        let
+          newGradients = Dict.insert ident ginfo model.gradients
+          newModelSvg = Traverse.traverse (Utils.updateGradient newGradients) model.svg
+          newModel =  {model | gradients = newGradients, svg = newModelSvg}
+        in
+        newModel ! [Utils.reflectSvgData newModel]
+      Nothing ->    -- 新規作成
+        let
+          (newStops, nextId) = Utils.makeStops model.idGen ginfo.stops
+          newGradients = Dict.insert ident ginfo model.gradients
+          newGradientElem = {
+            style = Dict.empty,
+            attr = Dict.fromList [("id", ident)],
+            id = nextId,
+            shape = case ginfo.gradientType of
+              Linear -> LinearGradient {identifier = ident, stops = newStops}
+              Radial -> RadialGradient {identifier = ident, stops = newStops}
+          }
+          newModel = Utils.setElemInDefs newGradientElem model
+        in
+        {newModel | gradients = newGradients, idGen = nextId + 1, gradientIdGen = model.gradientIdGen + 1} ! [Utils.reflectSvgData newModel]
 
     ColorPickerMsg colorPicker ->
       let

@@ -61,6 +61,55 @@ getSvgSize model = case model.svg.shape of
   SVG {elems, size} -> size
   _ -> (400, 400)
 
+setElem: StyledSVGElement -> Model -> Model
+setElem elem model =
+  let
+    newShape = case model.svg.shape of
+      SVG {elems, size} -> SVG {elems = elems ++ [elem], size = size}
+      _ -> model.svg.shape
+    modelSvg = model.svg
+  in
+  {model | svg = {modelSvg | shape = newShape}}
+
+setElemInDefs: StyledSVGElement -> Model -> Model
+setElemInDefs elem model =
+  let
+    model2 = setElem {style = Dict.empty, attr = Dict.empty, id = model.idGen, shape = Defs {elems = [elem]}} {model | idGen = model.idGen + 1}
+  in
+  mergeAllDefs model2
+
+replaceElems: List StyledSVGElement -> Model -> Model
+replaceElems elemlst model =
+  let
+    newShape = case model.svg.shape of
+      SVG {elems, size} -> SVG {elems = elemlst, size = size}
+      _ -> model.svg.shape
+    modelSvg = model.svg
+  in
+  {model | svg = {modelSvg | shape = newShape}}
+
+mergeAllDefs: Model -> Model
+mergeAllDefs model =
+  let
+    defsElems = getDefsElems model
+    model2 = removeAllDefs model
+  in
+  setElem {style = Dict.empty, attr = Dict.empty, id = model.idGen, shape = Defs {elems = defsElems}} {model2 | idGen = model2.idGen + 1}
+
+removeAllDefs: Model -> Model
+removeAllDefs model =
+  let
+    elems = getElems model
+    loop: List StyledSVGElement -> List StyledSVGElement
+    loop lst = case lst of
+      hd :: tl -> case hd.shape of
+        Defs _ -> loop tl
+        _ -> hd :: loop tl
+      [] -> []
+    newElems = loop elems
+  in
+  replaceElems newElems model
+
 getDefsElems: Model -> List StyledSVGElement
 getDefsElems model =
   let
@@ -73,6 +122,26 @@ getDefsElems model =
       [] -> acc
   in
   loop elems []
+
+-- Defsがなければ作成する
+-- makeDefs: Model -> Model
+-- makeDefs model =
+--   let
+--     elems = getElems model
+--     isDefExist: Bool
+--     isDefExist = List.filter (\x -> case x.shape of
+--       Defs _ -> True
+--       _ -> False
+--     ) elems |> List.length |> \len -> len > 0
+--   in
+--   case isDefExist of
+--     True -> model
+--     False ->
+--       let
+--         modelSvg = model.svg
+--         newDefs = {style = Dict.empty, attr = Dict.empty, id = model.idGen, shape = Defs {elems = []}}
+--       in
+--       setElem newDefs model
 
 getGradients: Model -> List StyledSVGElement
 getGradients model =
@@ -87,6 +156,20 @@ getGradients model =
       [] -> List.reverse acc
   in
   loop elems []
+
+-- intはsvgeditor-id
+makeStops: Int -> Dict Float Color -> (List StyledSVGElement, Int)
+makeStops i dict =
+  let
+    lst = dict |> Dict.toList |> List.sortBy first
+      |> List.indexedMap (\index (offset, color) -> {
+      style = Dict.empty,
+      attr = Dict.empty,
+      id = i + index,
+      shape = Stop {offset = Just offset, color = Just color}
+    })
+  in
+  (lst, List.length lst + i)
 
 getById : Int -> Model -> Maybe StyledSVGElement
 getById ident model =

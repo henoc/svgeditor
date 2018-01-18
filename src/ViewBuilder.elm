@@ -11,6 +11,7 @@ import Material.Slider as Slider
 import Material.Options as Options
 import Material.Typography as Typo
 import Material.Elevation as Elevation
+import Material.Button as Button
 import Ui.ColorPanel
 import Ext.Color exposing (hsvToRgb)
 import Color.Convert exposing (..)
@@ -252,6 +253,23 @@ colorPicker paintType model =
                     ] [text ("#" ++ ident)]
                 )
                 gradientIdents
+                -- グラデーション追加ボタン
+                ++ [
+                    Button.render Mdl [100] model.mdl [
+                      Options.css "color" "currentColor",
+                      Options.onClick <| GradientUpdate ("Linear" ++ toString model.gradientIdGen) {
+                        gradientType = Linear,
+                        stops = Dict.fromList [(0, Color.blue), (1, Color.yellow)]
+                      }
+                    ] [text "linear gradients"],
+                    Button.render Mdl [100] model.mdl [
+                      Options.css "color" "currentColor",
+                      Options.onClick <| GradientUpdate ("Radial" ++ toString model.gradientIdGen) {
+                        gradientType = Radial,
+                        stops = Dict.fromList [(0, Color.blue), (1, Color.yellow)]
+                      }
+                    ] [text "radial gradients"]
+                  ]
               )
             gradiateBoxesDiv =
               let

@@ -51,7 +51,8 @@ type alias Model = {
   colorPicker: ColorPicker,
   colorPickerCursor: ColorPickerCursor,
   colorPanel: Ui.ColorPanel.Model,
-  gradients: Dict String GradientInfo  -- 定義されているすべての Gradient要素のid, 色の列
+  gradients: Dict String GradientInfo,  -- 定義されているすべての Gradient要素のid, 色の列
+  gradientIdGen: Int
 }
 
 type GradientType = Linear | Radial
@@ -63,6 +64,7 @@ type alias GradientInfo = {
 type Msg = Mdl (Material.Msg Msg) | OnProperty ChangePropertyMsg | OnAction Action | OnMouse MouseMsg | OnSelect Int Bool Vec2 | FieldSelect (Int, Vec2) | OnVertex Vec2 Vec2 | OnNode Vec2 Int
   | SvgData String | EncodedSvgData String | SvgRootRect ClientRect | ComputedStyle (Maybe StyleObject) | GradientStyles (List GradientElementInfo)
   | ColorPickerMsg ColorPicker | ColorPickerOpenCloseMsg ColorPickerCursor | ColorPickerCursorMsg ColorPickerCursor PaintType ColorEx | ColorPanelMsg Ui.ColorPanel.Msg | ColorPanelChanged Ext.Color.Hsv
+  | GradientUpdate String GradientInfo
 type ChangePropertyMsg = SwichMode Mode | Style StyleInfo
 type MouseMsg = MouseDownLeft Vec2 | MouseDownRight Vec2 | MouseUp Vec2 | MouseMove Vec2
 type Action = Duplicate | Delete | BringForward | SendBackward
