@@ -17,7 +17,7 @@ toCssGradient sharpedUrl ginfo =
     expandStops stops = case stops of
       hd :: tl ->
         let
-          percent = (toString <| floor (first hd * 100)) ++ "%"
+          percent = (toString <| first hd) ++ "%"
           colorString = Utils2.colorToCssHsla2 (second hd)
         in
         (colorString ++ " " ++ percent) :: expandStops tl
@@ -26,13 +26,13 @@ toCssGradient sharpedUrl ginfo =
       Linear -> "to right, "
       Radial -> ""
   in
-  toCssGradientName ginfo.gradientType ++ "(" ++ (leftOrNone ginfo.gradientType) ++ (String.join "," (expandStops <| Dict.toList ginfo.stops)) ++ ")"
+  toCssGradientName ginfo.gradientType ++ "(" ++ (leftOrNone ginfo.gradientType) ++ (String.join "," (expandStops ginfo.stops)) ++ ")"
 
 -- 与えられたgradElemがグラデーション要素ならば、idの一致したGradientInfoで更新する
 updateGradient: Dict String GradientInfo -> StyledSVGElement -> StyledSVGElement
 updateGradient definedGradients gradElem =
   let
-    getOrderedGradInfo ginfo = ginfo.stops |> Dict.toList |> List.sortBy first
+    getOrderedGradInfo ginfo = ginfo.stops |> List.sortBy first
     loop stops orderedInfo = case (stops, orderedInfo) of
       (stopHd :: stopTl, orderedInfoHd :: orderedInfoTl) -> case stopHd.shape of
         Stop _ -> {stopHd | shape = Stop {offset = Just <| first orderedInfoHd, color = Just <| second orderedInfoHd}} :: loop stopTl orderedInfoTl

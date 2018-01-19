@@ -18,7 +18,7 @@ app.ports.sendSvgData.subscribe(function(svgData) {
 
 app.ports.getBoundingClientRect.subscribe(function(id){
   const elem = document.getElementById(id);
-  app.ports.getBoundingClientRectFromJs.send(elem.getBoundingClientRect());
+  setTimeout(() => app.ports.getBoundingClientRectFromJs.send(elem.getBoundingClientRect()), 100);
 });
 
 /**

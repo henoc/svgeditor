@@ -40,8 +40,8 @@ rgbToColor data a = case rgbParser (input data "[\\(\\),\\s]+") of
   ParseSuccess (r,g,b) i -> Color.rgba r g b a
   ParseFailure r i -> Color.black
 
-percentToFloat: String -> Float
-percentToFloat percent = case floatOrPercentParser (input percent "[\\s]+") of
+percentAsInt: String -> Int
+percentAsInt percent = case percentParser (input percent "[\\s]+") of
   ParseSuccess f i -> f
   ParseFailure r i -> 0
 
@@ -56,9 +56,6 @@ floatParser = regexParser "[+-]?[0-9]+(\\.[0-9]*)?([eE][+-]?[0-9]+)?" |> Combina
 
 percentParser: Parser Int
 percentParser = onlyLeft intParser (stringParser "%")
-
-floatOrPercentParser: Parser Float
-floatOrPercentParser = or (Combinators.map (\x -> (toFloat x) / 100) percentParser) floatParser
 
 pointPairParser: Parser (Float, Float)
 pointPairParser = andThen floatParser floatParser

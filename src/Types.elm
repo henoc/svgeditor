@@ -8,7 +8,7 @@ import Color exposing (Color)
 import Ui.ColorPanel
 import Ext.Color
 
-type Mode = HandMode | NodeMode | RectMode | EllipseMode | PolygonMode | PathMode
+type Mode = HandMode | NodeMode | RectMode | EllipseMode | PolygonMode | PathMode | GradientMode
 type alias StyleInfo = Dict String String
 type alias AttributeInfo = Dict String String
 
@@ -24,7 +24,7 @@ type SVGElement =
   | Defs {elems: List StyledSVGElement}
   | LinearGradient {identifier: String, stops: List StyledSVGElement}
   | RadialGradient {identifier: String, stops: List StyledSVGElement}
-  | Stop {offset: Maybe Float, color: Maybe Color}
+  | Stop {offset: Maybe Int, color: Maybe Color}
   | Unknown { name: String, elems: List StyledSVGElement }
 type alias StyledSVGElement = {
   style: StyleInfo,
@@ -51,18 +51,20 @@ type alias Model = {
   openedPicker: String,
   colorPicker: ColorPickerStates,
   colorPanel: Ui.ColorPanel.Model,
-  gradients: Dict String GradientInfo  -- 定義されているすべての Gradient要素のid, 色の列
+  gradients: Dict String GradientInfo,  -- 定義されているすべての Gradient要素のid, 色の列
+  gradIdGen: Int
 }
 
 type GradientType = Linear | Radial
 type alias GradientInfo = {
   gradientType: GradientType,
-  stops: Dict Float Color
+  stops: List (Int, Color)
 }
 
 type Msg = Mdl (Material.Msg Msg) | OnProperty ChangePropertyMsg | OnAction Action | OnMouse MouseMsg | OnSelect Int Bool Vec2 | FieldSelect (Int, Vec2) | OnVertex Vec2 Vec2 | OnNode Vec2 Int
   | SvgData String | EncodedSvgData String | SvgRootRect ClientRect | ComputedStyle (Maybe StyleObject) | GradientStyles (List GradientElementInfo)
   | OpenedPickerMsg String | ColorPickerMsg ColorPickerStates | ColorPanelMsg Ui.ColorPanel.Msg | ColorPanelChanged Ext.Color.Hsv
+  | MakeNewGradient | ChangeStop String Int Int Color
 type ChangePropertyMsg = SwichMode Mode | Style StyleInfo
 type MouseMsg = MouseDownLeft Vec2 | MouseDownRight Vec2 | MouseUp Vec2 | MouseMove Vec2
 type Action = Duplicate | Delete | BringForward | SendBackward

@@ -12,3 +12,16 @@ svg {
   left: 0px;
   top: 0px;
 }
+.circle {
+  width: 56px;
+  height: 56px;
+  border-radius: 56px;
+  margin: 1em;
+}
+
+.mini-circle {
+  width: 36px;
+  height: 36px;
+  border-radius: 36px;
+  margin: 1em;
+}

@@ -50,7 +50,7 @@ generateNode elem =
   Stop stp ->
     let
       newAttr =
-        maybeInsert "offset" (Maybe.map (\x -> x * 100 |> floor |> toString |> \y -> y ++ "%") stp.offset) <<
+        maybeInsert "offset" (Maybe.map (\x -> x |> toString |> \y -> y ++ "%") stp.offset) <<
         maybeInsert "stop-color" (Maybe.map colorToCssHsla2 stp.color) <<
         maybeInsert "style" styleAttr <| elem.attr
       attrs = Dict.toList newAttr |> List.map (\(x, y) -> {name = x, value = y}) 

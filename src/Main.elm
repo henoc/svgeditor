@@ -13,10 +13,10 @@ import Ui.ColorPanel
 import Ext.Color
 import Html exposing (Html, button, div, text, node, p, img)
 import Svg exposing (svg, ellipse, rect)
-import Svg.Attributes exposing (..)
+import Svg.Attributes exposing (width, height, style)
 import Html.Events exposing (onClick, onInput, onMouseDown)
-import Html.Attributes exposing (value, checked, src, attribute)
-import Color
+import Html.Attributes exposing (value, checked, src, attribute, class, id)
+import Color exposing (Color)
 import Color.Convert exposing (..)
 import Tuple exposing (first, second)
 import Vec2 exposing (..)
@@ -34,6 +34,7 @@ import Actions
 import Traverse
 import Dict exposing (Dict)
 import Gradients
+import List.Extra exposing (find)
 
 main : Program Never Model Msg
 main =
@@ -65,7 +66,8 @@ init =
         ("stroke", {colorMode = NoneColor, singleColor = Color.hsl (degrees 180) 0.5 0.5})
       ],
       colorPanel = Ui.ColorPanel.init (),
-      gradients = Dict.empty
+      gradients = Dict.empty,
+      gradIdGen = 0
     } ! [Utils.getSvgData ()]
 
 
@@ -94,7 +96,10 @@ update msg model =
         {model | mode = PolygonMode} ! [Utils.getBoundingClientRect "root"]
       
       SwichMode PathMode ->
-        {model | mode = PathMode} ! [Utils.getBoundingClientRect "root"]        
+        {model | mode = PathMode} ! [Utils.getBoundingClientRect "root"]   
+      
+      SwichMode GradientMode ->
+        {model | mode = GradientMode} ! [] 
 
       Style styleInfo -> case model.mode of
         HandMode ->
@@ -243,21 +248,20 @@ update msg model =
                 ident = ginfo.ident
                 tagName = ginfo.tagName
                 styleObjects = ginfo.styles
-                stopColorDicts =
+                stopColorList =
                   styleObjects
                   |> List.map (\obj ->
                       (
-                        Parsers.percentToFloat obj.offset,
+                        Parsers.percentAsInt obj.offset,
                         Parsers.rgbToColor obj.stopColor (Result.withDefault 1 <| String.toFloat obj.stopOpacity)
                       )
                     )
-                  |> Dict.fromList
               in
               (
                 ident,
                 {
                   gradientType = if tagName == "linearGradient" then Linear else Radial,
-                  stops = stopColorDicts
+                  stops = stopColorList
                 }
               )
             )
@@ -265,7 +269,30 @@ update msg model =
         definedGradients = Dict.union dict model.gradients
 
         -- 新しい definedGradients で全ての XXGradient を更新
-        newModelSvg = Traverse.traverse model.svg <| Gradients.updateGradient definedGradients
+        newModelSvg = Traverse.traverse (Gradients.updateGradient definedGradients) model.svg
+      in
+      {model | gradients = definedGradients, svg = newModelSvg} ! []
+    
+    MakeNewGradient ->
+      let
+        definedGradients =
+          Dict.insert
+            ("Gradient" ++ toString model.gradIdGen)
+            {gradientType = Linear, stops = [(0, Color.blue), (100, Color.yellow)]}
+            model.gradients
+        newModelSvg = Traverse.traverse (Gradients.updateGradient definedGradients) model.svg
+      in
+      {model | gradients = definedGradients, svg = newModelSvg, gradIdGen = model.gradIdGen + 1} ! []
+
+    ChangeStop ident index ofs clr ->
+      let
+        oldStops: List (Int, Color)
+        oldStops = model.gradients |> Dict.get ident |> Maybe.map .stops |> Maybe.withDefault []
+        newStops = oldStops |> List.indexedMap (\i  pair -> if i == index then (ofs, clr) else pair)
+        definedGradients = case Dict.get ident model.gradients of
+          Just ginfo -> model.gradients |> Dict.insert ident {ginfo | stops = newStops}
+          Nothing -> model.gradients
+        newModelSvg = Traverse.traverse (Gradients.updateGradient definedGradients) model.svg
       in
       {model | gradients = definedGradients, svg = newModelSvg} ! []
 
@@ -316,8 +343,9 @@ view model =
       Options.css "color" "currentColor"
     
     -- メニュー以外の部分
-    rootDiv =
+    rootDiv hide =
       Options.div [
+        if hide then Options.css "display" "none" else Options.css "display" "block",
         Elevation.e8,
         Options.attribute <| Html.Attributes.id "root",
         Options.css "width" <| (toString <| Tuple.first <| Utils.getSvgSize model) ++ "px",
@@ -361,7 +389,35 @@ view model =
         ]
       ]
     
+    gradientItem: String -> GradientInfo -> Html Msg
+    gradientItem ident ginfo =
+      let
+        cssString = Gradients.toCssGradient ("#" ++ ident) ginfo
+        stops = ginfo.stops
+      in
+      Options.div [
+        Elevation.e4
+      ] [
+        div [style "display: flex"]
+          [
+            div [] [
+              div [class "circle", style ("background: " ++ cssString)] [],
+              Options.styled p [Typo.subhead] [text ("#" ++ ident)]
+            ],
+            div [style "display: flex"]
+              (
+                stops
+                |> List.indexedMap (\index (ofs, clr) -> (Slider.view [Slider.onChange (\f -> ChangeStop ident index (floor f) clr), Slider.value <| toFloat ofs, Slider.min 0, Slider.max 100, Slider.step 10], clr))
+                |> List.map (\(slider, clr) -> div [style "display:flex"] [div [class "mini-circle", style ("background: " ++ (colorToCssRgba clr))] [], slider])
+              )
+          ]
+      ]
 
+    gradientsEditor =
+      (model.gradients
+      |> Dict.toList
+      |> List.map (\(ident, ginfo) -> gradientItem ident ginfo))
+      ++ [Button.render Mdl [200] model.mdl [buttonCss, MakeNewGradient |> Options.onClick, Button.raised] [text "add gradients"]]
   in
   div []
     ([
@@ -376,17 +432,20 @@ view model =
           Button.render Mdl [2] model.mdl ([buttonCss, Options.onClick <| OnProperty <| SwichMode RectMode] ++ isSelected RectMode) [text "rectangle"],
           Button.render Mdl [3] model.mdl ([buttonCss, Options.onClick <| OnProperty <| SwichMode EllipseMode] ++ isSelected EllipseMode) [text "ellipse"],
           Button.render Mdl [4] model.mdl ([buttonCss, Options.onClick <| OnProperty <| SwichMode PolygonMode] ++ isSelected PolygonMode) [text "polygon"],
-          Button.render Mdl [5] model.mdl ([buttonCss, Options.onClick <| OnProperty <| SwichMode PathMode] ++ isSelected PathMode) [text "path"]
+          Button.render Mdl [5] model.mdl ([buttonCss, Options.onClick <| OnProperty <| SwichMode PathMode] ++ isSelected PathMode) [text "path"],
+          Button.render Mdl [6] model.mdl ([buttonCss, Options.onClick <| OnProperty <| SwichMode GradientMode] ++ isSelected GradientMode) [text "gradient"]          
         ],
         div [] [
-          Button.render Mdl [6] model.mdl [buttonCss, Options.onClick <| OnAction <| Duplicate] [text "duplicate"],
-          Button.render Mdl [7] model.mdl [buttonCss, Options.onClick <| OnAction <| Delete] [text "delete"],
-          Button.render Mdl [8] model.mdl [buttonCss, Options.onClick <| OnAction <| BringForward] [text "bring forward"],
-          Button.render Mdl [9] model.mdl [buttonCss, Options.onClick <| OnAction <| SendBackward] [text "send backward"]
+          Button.render Mdl [100] model.mdl [buttonCss, Options.onClick <| OnAction <| Duplicate] [text "duplicate"],
+          Button.render Mdl [101] model.mdl [buttonCss, Options.onClick <| OnAction <| Delete] [text "delete"],
+          Button.render Mdl [102] model.mdl [buttonCss, Options.onClick <| OnAction <| BringForward] [text "bring forward"],
+          Button.render Mdl [103] model.mdl [buttonCss, Options.onClick <| OnAction <| SendBackward] [text "send backward"]
         ]
-      ],
-      rootDiv
-    ] ++ colorPickers)
+      ]
+    ] ++ case model.mode of
+      GradientMode -> [rootDiv True] ++ gradientsEditor
+      _ -> [rootDiv False] ++ colorPickers
+    )
   |> Material.Scheme.top
 
 
