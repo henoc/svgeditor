@@ -15,6 +15,7 @@ import Ui.ColorPanel
 import Color.Convert exposing (..)
 import Vec2 exposing (..)
 import Utils
+import Utils2
 import Set exposing (Set)
 import ShapeList exposing (..)
 import Tuple exposing (first, second)
@@ -95,7 +96,7 @@ build layerType model svg =
   Stop stp ->
     Svg.stop (attrList ++
       (stp.offset |> Maybe.map toString |> Maybe.map offset |> Utils.maybeToList) ++
-      (stp.color |> Maybe.map Utils.colorToCssHsla2 |> Maybe.map stopColor |> Utils.maybeToList) ++
+      (stp.color |> Maybe.map Utils2.colorToCssHsla2 |> Maybe.map stopColor |> Utils.maybeToList) ++
     [
       style styleStr
     ]) []
@@ -180,7 +181,7 @@ colorPicker sty model =
     noneInserted = Dict.insert sty {colorPickerState | colorMode = NoneColor} model.colorPicker
     singleInserted = Dict.insert sty {colorPickerState | colorMode = SingleColor} model.colorPicker
     anyInserted url = Dict.insert sty {colorPickerState | colorMode = AnyColor url} model.colorPicker
-    hsl = Utils.toHsl2 colorPickerState.singleColor
+    hsl = Utils2.toHsl2 colorPickerState.singleColor
     cgHue hue = Dict.insert sty {colorPickerState | singleColor = Color.hsla hue hsl.saturation hsl.lightness hsl.alpha} model.colorPicker
     cgSat sat = Dict.insert sty {colorPickerState | singleColor = Color.hsla hsl.hue sat hsl.lightness hsl.alpha} model.colorPicker
     cgLig lig = Dict.insert sty {colorPickerState | singleColor = Color.hsla hsl.hue hsl.saturation lig hsl.alpha} model.colorPicker
@@ -201,7 +202,7 @@ colorPicker sty model =
         Options.css "height" "48px",
         Options.css "background" (case colorPickerState.colorMode of    -- 色表示の四角形
           NoneColor -> "hsla(0, 0%, 100%, 0.1)"
-          SingleColor -> Utils.colorToCssHsla2 colorPickerState.singleColor
+          SingleColor -> Utils2.colorToCssHsla2 colorPickerState.singleColor
           AnyColor url ->
             Maybe.map (Utils.toCssGradient url) (Dict.get (noSharp url) model.gradients)
             |> Maybe.withDefault "hsla(0, 0%, 100%, 0.1)"

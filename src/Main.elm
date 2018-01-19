@@ -24,6 +24,7 @@ import Set exposing (Set)
 import Types exposing (..)
 import Debug exposing (..)
 import Utils
+import Utils2
 import ShapeMode
 import HandMode
 import NodeMode
@@ -278,7 +279,7 @@ update msg model =
               colorState = second hd
               newStyleInfo = case colorState.colorMode of
                   NoneColor -> Dict.insert part "none" styleInfo
-                  SingleColor -> Dict.insert part (Utils.colorToCssHsla2 colorState.singleColor) styleInfo
+                  SingleColor -> Dict.insert part (Utils2.colorToCssHsla2 colorState.singleColor) styleInfo
                   AnyColor url -> Dict.insert part ("url(" ++ url ++ ")") styleInfo
             in
             loop tl newStyleInfo

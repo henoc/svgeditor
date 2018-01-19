@@ -7,20 +7,7 @@ import Debug
 import Tuple exposing (first, second)
 import Color exposing (Color)
 import Color.Convert exposing (..)
-
-
-maybeInsert: String -> Maybe String -> Dict String String -> Dict String String
-maybeInsert key maybeValue dict = case maybeValue of
-  Just x -> Dict.insert key x dict
-  Nothing -> dict
-
-colorToCssHsla2 : Color -> String
-colorToCssHsla2 c =
-  let
-    rgba = Color.toRgb c
-  in
-  if rgba.red == 255 && rgba.green == 255 && rgba.blue == 255 then "hsla(0, 0%, 100%, " ++ (toString rgba.alpha) ++ ")"
-  else colorToCssHsla c
+import Utils2 exposing (..)
 
 
 generateNode: StyledSVGElement -> XmlParser.Node

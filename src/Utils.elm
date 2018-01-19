@@ -9,6 +9,7 @@ import Generator
 import Dict exposing (Dict)
 import Color exposing (Color)
 import Color.Convert exposing (..)
+import Utils2
 
 last : List a -> Maybe a
 last lst =
@@ -214,11 +215,6 @@ replacePathNth n fn ops =
       else
         hd :: replacePathNth (n - List.length hd.points) fn tl
 
-maybeInsert: String -> Maybe String -> Dict String String -> Dict String String
-maybeInsert key maybeValue dict = case maybeValue of
-  Just x -> Dict.insert key x dict
-  Nothing -> dict
-
 limit: comparable -> comparable -> comparable -> comparable
 limit lower upper value =
   if lower > value then lower else if upper < value then upper else value
@@ -227,27 +223,10 @@ lowerLimit: comparable -> comparable -> comparable
 lowerLimit lower value =
   if lower > value then lower else value
 
--- elm-coreのバグへの対処
-toHsl2 : Color -> { hue : Float, saturation : Float, lightness : Float, alpha : Float }
-toHsl2 c =
-  let
-    rgba = Color.toRgb c
-  in
-  if rgba.red == 255 && rgba.green == 255 && rgba.blue == 255 then {hue = 0, saturation = 0, lightness = 1, alpha = rgba.alpha}
-  else Color.toHsl c
-
-colorToCssHsla2 : Color -> String
-colorToCssHsla2 c =
-  let
-    rgba = Color.toRgb c
-  in
-  if rgba.red == 255 && rgba.green == 255 && rgba.blue == 255 then "hsla(0, 0%, 100%, " ++ (toString rgba.alpha) ++ ")"
-  else colorToCssHsla c
-
 colorTypeToStr : ColorType -> String
 colorTypeToStr ctype = case ctype of
   NoneColorType -> "none"
-  SingleColorType c -> colorToCssHsla2 c
+  SingleColorType c -> Utils2.colorToCssHsla2 c
   AnyColorType ident -> "url(" ++ ident ++ ")"
 
 toCssGradientName: GradientType -> String
@@ -263,7 +242,7 @@ toCssGradient sharpedUrl ginfo =
       hd :: tl ->
         let
           percent = (toString <| floor (first hd * 100)) ++ "%"
-          colorString = colorToCssHsla2 (second hd)
+          colorString = Utils2.colorToCssHsla2 (second hd)
         in
         (colorString ++ " " ++ percent) :: expandStops tl
       [] -> []
