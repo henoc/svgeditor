@@ -33,6 +33,7 @@ import Parsers
 import Actions
 import Traverse
 import Dict exposing (Dict)
+import Gradients
 
 main : Program Never Model Msg
 main =
@@ -264,7 +265,7 @@ update msg model =
         definedGradients = Dict.union dict model.gradients
 
         -- 新しい definedGradients で全ての XXGradient を更新
-        newModelSvg = Traverse.traverse model.svg <| Utils.updateGradient definedGradients
+        newModelSvg = Traverse.traverse model.svg <| Gradients.updateGradient definedGradients
       in
       {model | gradients = definedGradients, svg = newModelSvg} ! []
 
@@ -309,33 +310,13 @@ update msg model =
 view : Model -> Html Msg
 view model =
   let styleInfo = model.styleInfo in
-  div []
-    [
-      let
-        -- ボタンの追加CSS
-        buttonCss =
-          Options.css "color" "currentColor"
-      in
-      div [] [
-        let
-          isSelected mode =
-            if mode == model.mode then [Button.colored, Button.raised] else []
-        in
-        div [] [
-          Button.render Mdl [0] model.mdl ([buttonCss, Options.onClick <| OnProperty <| SwichMode HandMode] ++ isSelected HandMode) [text "hand"],
-          Button.render Mdl [1] model.mdl ([buttonCss, Options.onClick <| OnProperty <| SwichMode NodeMode] ++ isSelected NodeMode) [text "node"],
-          Button.render Mdl [2] model.mdl ([buttonCss, Options.onClick <| OnProperty <| SwichMode RectMode] ++ isSelected RectMode) [text "rectangle"],
-          Button.render Mdl [3] model.mdl ([buttonCss, Options.onClick <| OnProperty <| SwichMode EllipseMode] ++ isSelected EllipseMode) [text "ellipse"],
-          Button.render Mdl [4] model.mdl ([buttonCss, Options.onClick <| OnProperty <| SwichMode PolygonMode] ++ isSelected PolygonMode) [text "polygon"],
-          Button.render Mdl [5] model.mdl ([buttonCss, Options.onClick <| OnProperty <| SwichMode PathMode] ++ isSelected PathMode) [text "path"]
-        ],
-        div [] [
-          Button.render Mdl [6] model.mdl [buttonCss, Options.onClick <| OnAction <| Duplicate] [text "duplicate"],
-          Button.render Mdl [7] model.mdl [buttonCss, Options.onClick <| OnAction <| Delete] [text "delete"],
-          Button.render Mdl [8] model.mdl [buttonCss, Options.onClick <| OnAction <| BringForward] [text "bring forward"],
-          Button.render Mdl [9] model.mdl [buttonCss, Options.onClick <| OnAction <| SendBackward] [text "send backward"]
-        ]
-      ],
+  let
+    -- ボタンの追加CSS
+    buttonCss =
+      Options.css "color" "currentColor"
+    
+    -- メニュー以外の部分
+    rootDiv =
       Options.div [
         Elevation.e8,
         Options.attribute <| Html.Attributes.id "root",
@@ -364,19 +345,48 @@ view model =
           HandMode -> ViewBuilder.buildVertexes model
           _ -> []
         ))
-      ],
-      div [] <| ViewBuilder.colorPicker "fill" model,
-      div [] <| ViewBuilder.colorPicker "stroke" model,
-      let
-        sw = case Dict.get "stroke-width" model.styleInfo of
-          Nothing -> 1
-          Just x -> Result.withDefault 1 <| String.toInt x
-      in
-      div [ style "display: flex" ] [
-        Options.styled p [Typo.subhead] [text <| "stroke-width:"],
-        Slider.view [Slider.value (toFloat sw), Slider.min 0, Slider.max 100, Slider.step 1, Slider.onChange (\n -> OnProperty <| Style <| Dict.insert "stroke-width" (toString n) styleInfo)]
       ]
-    ]
+    
+    colorPickers = [
+        div [] <| ViewBuilder.colorPicker "fill" model,
+        div [] <| ViewBuilder.colorPicker "stroke" model,
+        let
+          sw = case Dict.get "stroke-width" model.styleInfo of
+            Nothing -> 1
+            Just x -> Result.withDefault 1 <| String.toInt x
+        in
+        div [ style "display: flex" ] [
+          Options.styled p [Typo.subhead] [text <| "stroke-width:"],
+          Slider.view [Slider.value (toFloat sw), Slider.min 0, Slider.max 100, Slider.step 1, Slider.onChange (\n -> OnProperty <| Style <| Dict.insert "stroke-width" (toString n) styleInfo)]
+        ]
+      ]
+    
+
+  in
+  div []
+    ([
+      div [] [
+        let
+          isSelected mode =
+            if mode == model.mode then [Button.colored, Button.raised] else []
+        in
+        div [] [
+          Button.render Mdl [0] model.mdl ([buttonCss, Options.onClick <| OnProperty <| SwichMode HandMode] ++ isSelected HandMode) [text "hand"],
+          Button.render Mdl [1] model.mdl ([buttonCss, Options.onClick <| OnProperty <| SwichMode NodeMode] ++ isSelected NodeMode) [text "node"],
+          Button.render Mdl [2] model.mdl ([buttonCss, Options.onClick <| OnProperty <| SwichMode RectMode] ++ isSelected RectMode) [text "rectangle"],
+          Button.render Mdl [3] model.mdl ([buttonCss, Options.onClick <| OnProperty <| SwichMode EllipseMode] ++ isSelected EllipseMode) [text "ellipse"],
+          Button.render Mdl [4] model.mdl ([buttonCss, Options.onClick <| OnProperty <| SwichMode PolygonMode] ++ isSelected PolygonMode) [text "polygon"],
+          Button.render Mdl [5] model.mdl ([buttonCss, Options.onClick <| OnProperty <| SwichMode PathMode] ++ isSelected PathMode) [text "path"]
+        ],
+        div [] [
+          Button.render Mdl [6] model.mdl [buttonCss, Options.onClick <| OnAction <| Duplicate] [text "duplicate"],
+          Button.render Mdl [7] model.mdl [buttonCss, Options.onClick <| OnAction <| Delete] [text "delete"],
+          Button.render Mdl [8] model.mdl [buttonCss, Options.onClick <| OnAction <| BringForward] [text "bring forward"],
+          Button.render Mdl [9] model.mdl [buttonCss, Options.onClick <| OnAction <| SendBackward] [text "send backward"]
+        ]
+      ],
+      rootDiv
+    ] ++ colorPickers)
   |> Material.Scheme.top
 
 

@@ -22,6 +22,7 @@ import Tuple exposing (first, second)
 import Dict exposing (Dict)
 import Shape
 import Color
+import Gradients
 
 -- モデル所有のSVGモデルのDOMを構築する
 build : LayerType -> Model -> StyledSVGElement -> Html Msg
@@ -204,7 +205,7 @@ colorPicker sty model =
           NoneColor -> "hsla(0, 0%, 100%, 0.1)"
           SingleColor -> Utils2.colorToCssHsla2 colorPickerState.singleColor
           AnyColor url ->
-            Maybe.map (Utils.toCssGradient url) (Dict.get (noSharp url) model.gradients)
+            Maybe.map (Gradients.toCssGradient url) (Dict.get (noSharp url) model.gradients)
             |> Maybe.withDefault "hsla(0, 0%, 100%, 0.1)"
         ),
         Options.center,
