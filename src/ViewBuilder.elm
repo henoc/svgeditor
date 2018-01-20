@@ -12,6 +12,7 @@ import Material.Options as Options
 import Material.Typography as Typo
 import Material.Elevation as Elevation
 import Material.Button as Button
+import Material.Icon as Icon
 import Material.Card as Card
 import Ui.ColorPanel
 import Color.Convert exposing (..)
@@ -210,6 +211,7 @@ colorPicker sty model =
             Maybe.map (Gradients.toCssGradient url) (Dict.get (noSharp url) model.gradients)
             |> Maybe.withDefault "hsla(0, 0%, 100%, 0.1)"
         ),
+        Options.css "cursor" "pointer",
         Options.center,
         Options.onClick <| OpenedPickerMsg ( if model.openedPicker == sty then "none" else sty)
       ] (
@@ -254,13 +256,13 @@ colorPicker sty model =
         )))
   ]
 
-buttonCss = Options.css "color" "currentColor"
 
 gradientItem: String -> GradientInfo -> Model -> Html Msg
 gradientItem ident ginfo model =
   let
     cssString = Gradients.toCssGradient ("#" ++ ident) ginfo
     stops = ginfo.stops
+    buttonCss = [Button.icon, Button.colored]
   in
   Options.div [
     Elevation.e4
@@ -287,7 +289,7 @@ gradientItem ident ginfo model =
                 [
                   div [
                     class "mini-circle",
-                    style ("background: " ++ (colorToCssRgba clr)),
+                    style ("cursor: pointer; background: " ++ (colorToCssRgba clr)),
                     onClick <| FocusToStop ident index
                   ] [],
                   case model.gradientPanelLink of
@@ -295,9 +297,9 @@ gradientItem ident ginfo model =
                     Just (idt, idx) ->
                       if idt == ident && idx == index then Html.map GradientPanelMsg <| Ui.ColorPanel.view model.gradientPanel
                       else slider,
-                  Button.render Mdl [200] model.mdl [buttonCss, RemoveStop ident index |> Options.onClick] [text "remove"]
+                  Button.render Mdl [200] model.mdl (buttonCss ++ [RemoveStop ident index |> Options.onClick]) [Icon.i "clear"]
                 ])
           ),
-        Button.render Mdl [200] model.mdl [buttonCss, AddNewStop ident |> Options.onClick] [text "add"]
+        Button.render Mdl [200] model.mdl (buttonCss ++ [AddNewStop ident |> Options.onClick]) [Icon.i "add"]
       ]
   ]

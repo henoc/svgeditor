@@ -27,7 +27,7 @@ update msg model = case msg of
     
     MouseDownRight pos -> model
     MouseUp pos ->
-      {model | dragBegin = Nothing }
+      {model | dragBegin = Nothing, mode = HandMode }
     
     MouseMove pos ->
       let
@@ -52,7 +52,8 @@ updatePolygon : MouseMsg -> Model -> Model
 updatePolygon msg model = case msg of
   MouseDownRight pos ->
     {model|
-      dragBegin = Nothing
+      dragBegin = Nothing,
+      mode = HandMode
     }
   MouseDownLeft pos ->
     let
@@ -118,19 +119,12 @@ updatePolygon msg model = case msg of
   MouseUp pos ->
     model
 
-stopPolygon: Model -> Model
-stopPolygon model = case model.dragBegin of
-  Nothing -> model
-  Just dragBegin ->
-    {model|
-      dragBegin = Nothing
-    }
-
 updatePath: MouseMsg -> Model -> Model
 updatePath msg model = case msg of
   MouseDownRight pos ->
     {model|
-      dragBegin = Nothing
+      dragBegin = Nothing,
+      mode = HandMode
     }
   MouseDownLeft pos ->
     let

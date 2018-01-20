@@ -146,6 +146,8 @@ update msg model =
         let newModel = NodeMode.update onMouseMsg model in
         if model /= newModel then newModel ! [Utils.reflectSvgData newModel]
         else model ! []
+      GradientMode ->
+        model ! []
       _ ->
         case onMouseMsg of
           -- マウス押しはここではなく、svgの枠で判定する
