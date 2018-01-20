@@ -44,12 +44,13 @@ You can create shapes using the SVG's coder or directly creating shapes with the
 
 ## ChangeLog
 
+- 0.8.1 Get better
 - 0.8.0 Renewal gradient features as gradient mode
 - 0.7.0 Support linear and radial gradients
 - 0.6.0 Use elm-mdl
 - 0.5.3 Fix display size
 - 0.5.2 Fix color in hand mode
-- 0.5.1 Got better
+- 0.5.1 Get better
 - 0.5.0 Enable to resolve reference. Elements filled with linearGradient are recognized correct for example.
 - 0.4.5 Fix bug of new file command
 - 0.4.4 Add path mode again
