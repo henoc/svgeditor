@@ -277,14 +277,27 @@ update msg model =
     
     MakeNewGradient gtype ->
       let
+        ident = "Gradient" ++ toString model.gradIdGen
+        stops =  [(10, Color.blue), (100, Color.yellow)]
+
+        -- model.gradients更新
         definedGradients =
-          Dict.insert
-            ("Gradient" ++ toString model.gradIdGen)
-            {gradientType = gtype, stops = [(10, Color.blue), (100, Color.yellow)]}
-            model.gradients
-        newModelSvg = Traverse.traverse (Gradients.updateGradient definedGradients) model.svg
+          Dict.insert ident {gradientType = gtype, stops = stops} model.gradients
+        
+        -- model.svg更新
+        (stopElems, nextId) = Gradients.makeStops model.idGen stops
+        newGradientElem = {
+          style = Dict.empty,
+          attr = Dict.fromList [("id", ident)],
+          id = nextId,
+          shape = case gtype of
+            Linear -> LinearGradient {identifier = ident, stops = stopElems}
+            Radial -> RadialGradient {identifier = ident, stops = stopElems}
+        }
+        model2 = Gradients.addElemInDefs newGradientElem model
+        model3 = {model2 | gradients = definedGradients, gradIdGen = model.gradIdGen + 1, idGen = nextId + 1}
       in
-      {model | gradients = definedGradients, svg = newModelSvg, gradIdGen = model.gradIdGen + 1} ! []
+      model3 ! [Utils.reflectSvgData model3]
 
     ChangeStop ident index ofs clr ->
       let
@@ -295,8 +308,9 @@ update msg model =
           Just ginfo -> model.gradients |> Dict.insert ident {ginfo | stops = newStops}
           Nothing -> model.gradients
         newModelSvg = Traverse.traverse (Gradients.updateGradient definedGradients) model.svg
+        newModel = {model | gradients = definedGradients, svg = newModelSvg}
       in
-      {model | gradients = definedGradients, svg = newModelSvg} ! []
+      newModel ! [Utils.reflectSvgData newModel]
 
     FocusToStop ident index ->
       let
@@ -359,8 +373,9 @@ update msg model =
           Just ginfo -> model.gradients |> Dict.insert ident {ginfo | stops = newStops}
           Nothing -> model.gradients
         newModelSvg = Traverse.traverse (Gradients.updateGradient definedGradients) model.svg
+        newModel = {model | gradients = definedGradients, svg = newModelSvg}
       in
-      {model | gradients = definedGradients, svg = newModelSvg} ! []
+      newModel ! [Utils.reflectSvgData newModel]
 
 -- VIEW
 

@@ -62,6 +62,16 @@ getSvgSize model = case model.svg.shape of
   SVG {elems, size} -> size
   _ -> (400, 400)
 
+addElem: StyledSVGElement -> Model -> Model
+addElem elem model =
+  let
+    newShape = case model.svg.shape of
+      SVG {elems, size} -> SVG {elems = elems ++ [elem], size = size}
+      _ -> model.svg.shape
+    modelSvg = model.svg
+  in
+  {model | svg = {modelSvg | shape = newShape}}
+
 getDefsElems: Model -> List StyledSVGElement
 getDefsElems model =
   let
