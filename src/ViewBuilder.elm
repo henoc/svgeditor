@@ -11,6 +11,7 @@ import Material.Slider as Slider
 import Material.Options as Options
 import Material.Typography as Typo
 import Material.Elevation as Elevation
+import Material.Button as Button
 import Ui.ColorPanel
 import Color.Convert exposing (..)
 import Vec2 exposing (..)
@@ -252,6 +253,8 @@ colorPicker sty model =
         )))
   ]
 
+buttonCss = Options.css "color" "currentColor"
+
 gradientItem: String -> GradientInfo -> Model -> Html Msg
 gradientItem ident ginfo model =
   let
@@ -261,13 +264,13 @@ gradientItem ident ginfo model =
   Options.div [
     Elevation.e4
   ] [
-    div [style "display: flex"]
+    div [style "display: flex; flex-wrap: wrap"]
       [
         div [] [
           div [class "circle", style ("background: " ++ cssString)] [],
           Options.styled p [Typo.subhead] [text ("#" ++ ident)]
         ],
-        div [style "display: flex"]
+        div [style "display: flex; flex-wrap: wrap"]
           (
             stops
             |> List.indexedMap (\index (ofs, clr) -> (Slider.view [Slider.onChange (\f -> ChangeStop ident index (floor f) clr), Slider.value <| toFloat ofs, Slider.min 0, Slider.max 100, Slider.step 10], clr))
@@ -292,6 +295,7 @@ gradientItem ident ginfo model =
                       if idt == ident && idx == index then Html.map GradientPanelMsg <| Ui.ColorPanel.view model.gradientPanel
                       else slider
                 ])
-          )
+          ),
+        Button.render Mdl [200] model.mdl [buttonCss, AddNewStop ident |> Options.onClick] [text "add"]
       ]
   ]

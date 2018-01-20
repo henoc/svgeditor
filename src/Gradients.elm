@@ -6,6 +6,7 @@ import Utils
 import Tuple exposing (..)
 import Dict exposing (Dict)
 import Color exposing (Color)
+import Debug
 
 toCssGradientName: GradientType -> String
 toCssGradientName gradientType = case gradientType of
@@ -75,6 +76,28 @@ addElemInDefs elem model =
   in
   mergeAllDefs model2
 
+-- identの一致するlinear or radial要素をelemに置換
+replaceElemInDefs: String -> StyledSVGElement -> Model -> Model
+replaceElemInDefs ident elem model =
+  let
+    defsElems = Utils.getDefsElems model
+    loop defsElems = case defsElems of
+      hd :: tl -> case hd.shape of
+        LinearGradient {identifier, stops} -> if ident == identifier then elem :: loop tl else hd :: loop tl
+        RadialGradient {identifier, stops} -> if ident == identifier then elem :: loop tl else hd :: loop tl
+        other -> hd :: loop tl
+      [] -> []
+    newDefsElems = loop defsElems
+    newDefs = {
+      style = Dict.empty,
+      attr = Dict.empty,
+      id = model.idGen,
+      shape = Defs {elems = newDefsElems}
+    }
+    newElems = newDefs :: (model |> removeAllDefs |> Utils.getElems) 
+  in
+  model |> replaceElems newElems |> \mdl -> {mdl|idGen=mdl.idGen+1}
+
 mergeAllDefs: Model -> Model
 mergeAllDefs model =
   let
@@ -106,3 +129,29 @@ replaceElems elemlst model =
     modelSvg = model.svg
   in
   {model | svg = {modelSvg | shape = newShape}}
+
+addNewStopElems: String -> List StyledSVGElement -> Model -> Model
+addNewStopElems ident stops model =
+  let
+    maybeGradElem = findGradElem ident model
+  in
+  maybeGradElem |> Maybe.map (addNewStopToGradElem stops) |> Maybe.map (\k -> replaceElemInDefs ident k model)
+  |> Maybe.withDefault model
+
+findGradElem: String -> Model -> Maybe StyledSVGElement
+findGradElem ident model =
+  let
+    loop elems = case elems of
+      hd :: tl -> case hd.shape of
+        LinearGradient {identifier, stops} -> if identifier == ident then Just hd else loop tl
+        RadialGradient {identifier, stops} -> if identifier == ident then Just hd else loop tl
+        _ -> loop tl
+      [] -> Nothing
+  in
+  loop (Utils.getDefsElems model)
+
+addNewStopToGradElem: List StyledSVGElement -> StyledSVGElement -> StyledSVGElement
+addNewStopToGradElem newStops gradElem = let gradElemShape = gradElem.shape in case gradElemShape of
+  LinearGradient {identifier, stops} -> {gradElem | shape = LinearGradient{identifier = identifier, stops = stops ++ newStops}}
+  RadialGradient {identifier, stops} -> {gradElem | shape = RadialGradient{identifier = identifier, stops = stops ++ newStops}}
+  other -> gradElem

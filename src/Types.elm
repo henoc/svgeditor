@@ -67,6 +67,7 @@ type Msg = Mdl (Material.Msg Msg) | OnProperty ChangePropertyMsg | OnAction Acti
   | SvgData String | EncodedSvgData String | SvgRootRect ClientRect | ComputedStyle (Maybe StyleObject) | GradientStyles (List GradientElementInfo)
   | OpenedPickerMsg String | ColorPickerMsg ColorPickerStates | ColorPanelMsg Ui.ColorPanel.Msg | ColorPanelChanged Ext.Color.Hsv
   | MakeNewGradient GradientType | ChangeStop String Int Int Color | FocusToStop String Int | GradientPanelMsg Ui.ColorPanel.Msg | GradientPanelChanged Ext.Color.Hsv
+  | AddNewStop String
 type ChangePropertyMsg = SwichMode Mode | Style StyleInfo
 type MouseMsg = MouseDownLeft Vec2 | MouseDownRight Vec2 | MouseUp Vec2 | MouseMove Vec2
 type Action = Duplicate | Delete | BringForward | SendBackward
