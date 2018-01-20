@@ -15,12 +15,14 @@ You can create shapes using the SVG's coder or directly creating shapes with the
 
 ## Kinds of operation
 
-- Hand mode
+- Select mode
   - Scale and translate.
 - Node mode
   - Edit node of polyline, polygon.
 - Rectangle, ellipse, polygon, path mode
-  - Make new object.
+  - Make new objects.
+- Gradient mode
+  - Define linear or radial gradients.
 
 ## Future plans
 
@@ -32,16 +34,18 @@ You can create shapes using the SVG's coder or directly creating shapes with the
 - [ ] Attributes output style options
 - [ ] Line cap, marker
 - [ ] Scale objects with fixed aspect ratio mode
-- [ ] `defs` tag
+- [x] `defs` tag
 - [ ] `use` tag
 - [ ] unit
-- [ ] Gradation colors
-- [ ] No fixed transform attribute
+- [x] Gradation colors
+- [ ] Transform attribute
 - [ ] Zoom
 - [ ] Handle images
 
 ## ChangeLog
 
+- 0.8.0 Renewal gradient features as gradient mode
+- 0.7.0 Support linear and radial gradients
 - 0.6.0 Use elm-mdl
 - 0.5.3 Fix display size
 - 0.5.2 Fix color in hand mode
