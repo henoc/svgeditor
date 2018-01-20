@@ -116,13 +116,25 @@ update msg model =
     
     OnAction action -> case action of
       Duplicate ->
-        (Actions.duplicate model) ! []
+        let
+          newModel = Actions.duplicate model
+        in
+        newModel ! [Utils.reflectSvgData newModel]
       Delete ->
-        (Actions.delete model) ! []
+        let
+          newModel = Actions.delete model
+        in
+        newModel ! [Utils.reflectSvgData newModel]
       BringForward ->
-        (Actions.bringForward model) ! []
+        let
+          newModel = Actions.bringForward model
+        in
+        newModel ! [Utils.reflectSvgData newModel]
       SendBackward ->
-        (Actions.sendBackward model) ! []
+        let
+          newModel = Actions.sendBackward model
+        in
+        newModel ! [Utils.reflectSvgData newModel]
 
     OnMouse onMouseMsg ->
       case model.mode of
