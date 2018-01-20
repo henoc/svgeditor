@@ -326,6 +326,19 @@ update msg model =
         model3 = {model2 | gradients = definedGradients, idGen = nextId}
       in
       model3 ! [Utils.reflectSvgData model3]
+    
+    RemoveStop ident index ->
+      let
+        oldStops: List (Int, Color)
+        oldStops = model.gradients |> Dict.get ident |> Maybe.map .stops |> Maybe.withDefault []
+        newStops = List.Extra.removeAt index oldStops
+        definedGradients = case Dict.get ident model.gradients of
+          Just ginfo -> model.gradients |> Dict.insert ident {ginfo | stops = newStops}
+          Nothing -> model.gradients
+        newModelSvg = Traverse.traverse (Gradients.removeAt ident index) model.svg
+        newModel = {model | gradients = definedGradients, svg = newModelSvg}
+      in
+      newModel ! [Utils.reflectSvgData newModel]
 
     FocusToStop ident index ->
       let

@@ -55,6 +55,23 @@ updateGradient definedGradients gradElem =
         gradElem
     other -> gradElem
 
+removeAt: String -> Int -> StyledSVGElement -> StyledSVGElement
+removeAt ident index gradElem =
+  let
+    helper: Int -> Int -> List StyledSVGElement -> List StyledSVGElement
+    helper index cnt lst = case lst of
+      hd :: tl -> case hd.shape of
+        Stop stp -> case index == cnt of
+          True -> tl
+          False -> hd :: helper index (cnt + 1) tl
+        _ -> hd :: helper index cnt tl
+      [] -> []
+  in
+  case gradElem.shape of
+  LinearGradient {identifier, stops} -> if ident == identifier then {gradElem | shape = LinearGradient {identifier = identifier, stops = helper index 0 stops}} else gradElem
+  RadialGradient {identifier, stops} -> if ident == identifier then {gradElem | shape = RadialGradient {identifier = identifier, stops = helper index 0 stops}} else gradElem
+  _ -> gradElem
+
 -- intはsvgeditor-id
 makeStops: Int -> List (Int, Color) -> (List StyledSVGElement, Int)
 makeStops i colors =

@@ -295,9 +295,9 @@ gradientItem ident ginfo model =
                     Just (idt, idx) ->
                       if idt == ident && idx == index then Html.map GradientPanelMsg <| Ui.ColorPanel.view model.gradientPanel
                       else slider,
-                  Button.render Mdl [200] model.mdl [buttonCss] [text "×"]
+                  Button.render Mdl [200] model.mdl [buttonCss, RemoveStop ident index |> Options.onClick] [text "remove"]
                 ])
           ),
-        Button.render Mdl [200] model.mdl [buttonCss, AddNewStop ident |> Options.onClick] [text "＋"]
+        Button.render Mdl [200] model.mdl [buttonCss, AddNewStop ident |> Options.onClick] [text "add"]
       ]
   ]
