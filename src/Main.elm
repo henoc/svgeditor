@@ -67,7 +67,9 @@ init =
       ],
       colorPanel = Ui.ColorPanel.init (),
       gradients = Dict.empty,
-      gradIdGen = 0
+      gradIdGen = 0,
+      gradientPanel = Ui.ColorPanel.init (),
+      gradientPanelLink = Nothing
     } ! [Utils.getSvgData ()]
 
 
@@ -273,12 +275,12 @@ update msg model =
       in
       {model | gradients = definedGradients, svg = newModelSvg} ! []
     
-    MakeNewGradient ->
+    MakeNewGradient gtype ->
       let
         definedGradients =
           Dict.insert
             ("Gradient" ++ toString model.gradIdGen)
-            {gradientType = Linear, stops = [(0, Color.blue), (100, Color.yellow)]}
+            {gradientType = gtype, stops = [(10, Color.blue), (100, Color.yellow)]}
             model.gradients
         newModelSvg = Traverse.traverse (Gradients.updateGradient definedGradients) model.svg
       in
@@ -295,6 +297,14 @@ update msg model =
         newModelSvg = Traverse.traverse (Gradients.updateGradient definedGradients) model.svg
       in
       {model | gradients = definedGradients, svg = newModelSvg} ! []
+
+    FocusToStop ident index ->
+      let
+        newGradientPanelLink = case model.gradientPanelLink of
+          Nothing -> Just (ident, index)
+          Just (idt, idx) -> if idt == ident && idx == index then Nothing else Just (ident, index)
+      in
+      {model | gradientPanelLink = newGradientPanelLink} ! []
 
     ColorPickerMsg colorPickerStates ->
       let
@@ -331,6 +341,27 @@ update msg model =
         renewedPickers =  Dict.insert model.openedPicker {colorPickerState | singleColor = normalColor} model.colorPicker
       in
       update (ColorPickerMsg renewedPickers) model
+    
+    GradientPanelMsg msg_ ->
+      let
+        (updated, cmd) = Ui.ColorPanel.update msg_ model.gradientPanel
+      in
+      {model | gradientPanel = updated} ! [Cmd.map GradientPanelMsg cmd]
+    
+    GradientPanelChanged uiColor ->
+      let
+        clr = Ext.Color.hsvToRgb uiColor
+        (ident, index) = model.gradientPanelLink |> Maybe.withDefault ("", -1)
+        oldStops: List (Int, Color)
+        oldStops = model.gradients |> Dict.get ident |> Maybe.map .stops |> Maybe.withDefault []
+        newStops = oldStops |> List.indexedMap (\i  pair -> if i == index then (first pair, clr) else pair)
+        definedGradients = case Dict.get ident model.gradients of
+          Just ginfo -> model.gradients |> Dict.insert ident {ginfo | stops = newStops}
+          Nothing -> model.gradients
+        newModelSvg = Traverse.traverse (Gradients.updateGradient definedGradients) model.svg
+      in
+      {model | gradients = definedGradients, svg = newModelSvg} ! []
+
 -- VIEW
 
 
@@ -388,36 +419,17 @@ view model =
           Slider.view [Slider.value (toFloat sw), Slider.min 0, Slider.max 100, Slider.step 1, Slider.onChange (\n -> OnProperty <| Style <| Dict.insert "stroke-width" (toString n) styleInfo)]
         ]
       ]
-    
-    gradientItem: String -> GradientInfo -> Html Msg
-    gradientItem ident ginfo =
-      let
-        cssString = Gradients.toCssGradient ("#" ++ ident) ginfo
-        stops = ginfo.stops
-      in
-      Options.div [
-        Elevation.e4
-      ] [
-        div [style "display: flex"]
-          [
-            div [] [
-              div [class "circle", style ("background: " ++ cssString)] [],
-              Options.styled p [Typo.subhead] [text ("#" ++ ident)]
-            ],
-            div [style "display: flex"]
-              (
-                stops
-                |> List.indexedMap (\index (ofs, clr) -> (Slider.view [Slider.onChange (\f -> ChangeStop ident index (floor f) clr), Slider.value <| toFloat ofs, Slider.min 0, Slider.max 100, Slider.step 10], clr))
-                |> List.map (\(slider, clr) -> div [style "display:flex"] [div [class "mini-circle", style ("background: " ++ (colorToCssRgba clr))] [], slider])
-              )
-          ]
-      ]
 
     gradientsEditor =
       (model.gradients
       |> Dict.toList
-      |> List.map (\(ident, ginfo) -> gradientItem ident ginfo))
-      ++ [Button.render Mdl [200] model.mdl [buttonCss, MakeNewGradient |> Options.onClick, Button.raised] [text "add gradients"]]
+      |> List.map (\(ident, ginfo) -> ViewBuilder.gradientItem ident ginfo model))
+      ++ [
+        div [style "display: flex"] [
+          Button.render Mdl [200] model.mdl [buttonCss, MakeNewGradient Linear |> Options.onClick, Button.raised] [text "add linear gradient"],
+          Button.render Mdl [200] model.mdl [buttonCss, MakeNewGradient Radial |> Options.onClick, Button.raised] [text "add radial gradient"]
+        ]
+      ]
   in
   div []
     ([
@@ -466,5 +478,7 @@ subscriptions model =
           Utils.getStyleFromJs ComputedStyle,
           Utils.getGradientStylesFromJs GradientStyles,
           Sub.map ColorPanelMsg (Ui.ColorPanel.subscriptions model.colorPanel),
-          Ui.ColorPanel.onChange ColorPanelChanged model.colorPanel
+          Ui.ColorPanel.onChange ColorPanelChanged model.colorPanel,
+          Sub.map GradientPanelMsg (Ui.ColorPanel.subscriptions model.gradientPanel),
+          Ui.ColorPanel.onChange GradientPanelChanged model.gradientPanel
         ]

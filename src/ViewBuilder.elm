@@ -251,3 +251,47 @@ colorPicker sty model =
             ]
         )))
   ]
+
+gradientItem: String -> GradientInfo -> Model -> Html Msg
+gradientItem ident ginfo model =
+  let
+    cssString = Gradients.toCssGradient ("#" ++ ident) ginfo
+    stops = ginfo.stops
+  in
+  Options.div [
+    Elevation.e4
+  ] [
+    div [style "display: flex"]
+      [
+        div [] [
+          div [class "circle", style ("background: " ++ cssString)] [],
+          Options.styled p [Typo.subhead] [text ("#" ++ ident)]
+        ],
+        div [style "display: flex"]
+          (
+            stops
+            |> List.indexedMap (\index (ofs, clr) -> (Slider.view [Slider.onChange (\f -> ChangeStop ident index (floor f) clr), Slider.value <| toFloat ofs, Slider.min 0, Slider.max 100, Slider.step 10], clr))
+            |> List.indexedMap (\index (slider, clr) ->
+              Options.div
+                [
+                  Options.css "display" "flex",
+                  Options.css "flex-direction" "column",
+                  Options.css "margin" "1em",
+                  Options.css "padding" "0.5em",
+                  Elevation.e4
+                ]
+                [
+                  div [
+                    class "mini-circle",
+                    style ("background: " ++ (colorToCssRgba clr)),
+                    onClick <| FocusToStop ident index
+                  ] [],
+                  case model.gradientPanelLink of
+                    Nothing -> slider
+                    Just (idt, idx) ->
+                      if idt == ident && idx == index then Html.map GradientPanelMsg <| Ui.ColorPanel.view model.gradientPanel
+                      else slider
+                ])
+          )
+      ]
+  ]
