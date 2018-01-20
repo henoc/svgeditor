@@ -156,13 +156,13 @@ update msg model =
     OnSelect ident isAdd pos ->
       let
         gradients = Utils.getGradients model
-        gradientIds = List.map .attr gradients |> List.map (Dict.get "id") |> Utils.flatten
+        gradientIds = gradients |> List.map .id
       in
       case model.mode of
       HandMode -> (HandMode.select ident isAdd pos model) ! [Utils.getStyle (ident, "color"), Utils.getGradientStyles gradientIds]
       NodeMode -> (NodeMode.select ident pos model) ! [Utils.getStyle (ident, "color"), Utils.getGradientStyles gradientIds]
       _ -> model ! [Utils.getGradientStyles gradientIds]
-    
+  
     -- svg枠内のクリックについて
     FieldSelect (button, pos) ->
       case model.mode of

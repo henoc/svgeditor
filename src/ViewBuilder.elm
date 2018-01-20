@@ -12,6 +12,7 @@ import Material.Options as Options
 import Material.Typography as Typo
 import Material.Elevation as Elevation
 import Material.Button as Button
+import Material.Card as Card
 import Ui.ColorPanel
 import Color.Convert exposing (..)
 import Vec2 exposing (..)
@@ -97,7 +98,7 @@ build layerType model svg =
     ]) []
   Stop stp ->
     Svg.stop (attrList ++
-      (stp.offset |> Maybe.map toString |> Maybe.map offset |> Utils.maybeToList) ++
+      (stp.offset |> Maybe.map toString |> Maybe.map (\k -> k ++ "%") |> Maybe.map offset |> Utils.maybeToList) ++
       (stp.color |> Maybe.map Utils2.colorToCssHsla2 |> Maybe.map stopColor |> Utils.maybeToList) ++
     [
       style styleStr
@@ -293,9 +294,10 @@ gradientItem ident ginfo model =
                     Nothing -> slider
                     Just (idt, idx) ->
                       if idt == ident && idx == index then Html.map GradientPanelMsg <| Ui.ColorPanel.view model.gradientPanel
-                      else slider
+                      else slider,
+                  Button.render Mdl [200] model.mdl [buttonCss] [text "×"]
                 ])
           ),
-        Button.render Mdl [200] model.mdl [buttonCss, AddNewStop ident |> Options.onClick] [text "add"]
+        Button.render Mdl [200] model.mdl [buttonCss, AddNewStop ident |> Options.onClick] [text "＋"]
       ]
   ]

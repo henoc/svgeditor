@@ -283,5 +283,5 @@ port getMouseMoveFromJs: (Vec2 -> msg) -> Sub msg
 port encodeURIComponent: String -> Cmd msg
 port encodeURIComponentFromJs: (String -> msg) -> Sub msg
 
-port getGradientStyles: List String -> Cmd msg
+port getGradientStyles: List Int -> Cmd msg
 port getGradientStylesFromJs: (List GradientElementInfo -> msg) -> Sub msg
