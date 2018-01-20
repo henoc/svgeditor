@@ -18,7 +18,7 @@ app.ports.sendSvgData.subscribe(function(svgData) {
 
 app.ports.getBoundingClientRect.subscribe(function(id){
   const elem = document.getElementById(id);
-  setTimeout(() => app.ports.getBoundingClientRectFromJs.send(elem.getBoundingClientRect()), 100);
+  setTimeout(() => app.ports.getBoundingClientRectFromJs.send(elem.getBoundingClientRect()), 1000);
 });
 
 /**
@@ -60,19 +60,18 @@ app.ports.getStyle.subscribe(function([id, layer]){
 });
 
 app.ports.getGradientStyles.subscribe(function(ids) {
-  setTimeout(() => {
-    const ret = ids.map(id => {
-      const elem = getSvgEditorElement(id, "color")
-      const tagName = elem.tagName;
-      return {
-        ident: elem.id,
-        tagName: tagName,
-        styles: getGradientColors(elem)
-      };
-    });
-    app.ports.getGradientStylesFromJs.send(ret);
-  },
-  100);
+    setTimeout(() => {
+      const ret = ids.map(id => {
+        const elem = getSvgEditorElement(id, "color")
+        const tagName = elem.tagName;
+        return {
+          ident: elem.id,
+          tagName: tagName,
+          styles: getGradientColors(elem)
+        };
+      });
+      app.ports.getGradientStylesFromJs.send(ret);
+    }, 500);    // TODO: 500ms以上で elem = null からのエラーになるのでなんとかする
 });
 
 app.ports.encodeURIComponent.subscribe(function(str){

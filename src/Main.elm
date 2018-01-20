@@ -283,7 +283,14 @@ update msg model =
     
     MakeNewGradient gtype ->
       let
-        ident = "Gradient" ++ toString model.gradIdGen
+        gradIdGen =
+          let
+            loop i = case Dict.keys model.gradients |> find (\k -> k == "Gradient" ++ toString i) of
+              Just _ -> loop (i + 1)
+              Nothing -> i
+          in
+          loop model.gradIdGen
+        ident = "Gradient" ++ toString gradIdGen
         stops =  [(10, Color.blue), (100, Color.yellow)]
 
         -- model.gradients更新
@@ -301,7 +308,7 @@ update msg model =
             Radial -> RadialGradient {identifier = ident, stops = stopElems}
         }
         model2 = Gradients.addElemInDefs newGradientElem model
-        model3 = {model2 | gradients = definedGradients, gradIdGen = model.gradIdGen + 1, idGen = nextId + 1}
+        model3 = {model2 | gradients = definedGradients, gradIdGen = gradIdGen + 1, idGen = nextId + 1}
       in
       model3 ! [Utils.reflectSvgData model3]
 
