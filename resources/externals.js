@@ -60,17 +60,19 @@ app.ports.getStyle.subscribe(function([id, layer]){
 });
 
 app.ports.getGradientStyles.subscribe(function(ids) {
-  const ret = ids.map(id => {
-    const elem = getSvgEditorElement(id, "color");
-    const tagName = elem.tagName;
-    console.log(getGradientColors(elem))
-    return {
-      ident: elem.id,
-      tagName: tagName,
-      styles: getGradientColors(elem)
-    };
-  });
-  app.ports.getGradientStylesFromJs.send(ret);
+  setTimeout(() => {
+    const ret = ids.map(id => {
+      const elem = getSvgEditorElement(id, "color")
+      const tagName = elem.tagName;
+      return {
+        ident: elem.id,
+        tagName: tagName,
+        styles: getGradientColors(elem)
+      };
+    });
+    app.ports.getGradientStylesFromJs.send(ret);
+  },
+  100);
 });
 
 app.ports.encodeURIComponent.subscribe(function(str){

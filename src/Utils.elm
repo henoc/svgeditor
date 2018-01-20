@@ -99,6 +99,30 @@ getGradients model =
   in
   loop elems []
 
+-- gradElemsToDefinedGradients: Model -> Dict String GradientInfo
+-- gradElemsToDefinedGradients model =
+--   let
+--     elems = getDefsElems model
+--     mkGinfo: GradientType -> List StyledSVGElement -> GradientInfo
+--     mkGinfo gType lst = {
+--       gradientType = gType,
+--       stops = lst |> List.map (\elem -> case elem.shape of
+--         Stop {offset, color} -> case (offset, color) of
+--           (Just ofs, Just clr) -> Just (ofs, clr)
+--           _ -> Nothing
+--         _ -> Nothing
+--       ) |> flatten
+--     }
+--     loop : List StyledSVGElement -> Dict String GradientInfo -> Dict String GradientInfo
+--     loop es acc = case es of
+--       hd :: tl -> case hd.shape of
+--         LinearGradient {identifier, stops} -> loop tl (acc |> Dict.insert identifier (mkGinfo Linear stops))
+--         RadialGradient {identifier, stops} -> loop tl (acc |> Dict.insert identifier (mkGinfo Radial stops))
+--         _ -> loop tl acc
+--       [] -> acc
+--   in
+--   loop elems Dict.empty
+
 getById : Int -> Model -> Maybe StyledSVGElement
 getById ident model =
   let

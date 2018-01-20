@@ -197,7 +197,13 @@ update msg model =
     
     SvgData svgData ->
       case Parsers.parseSvg svgData of
-        Just (nextId, data) -> {model| svg = data, idGen = nextId} ! [Utils.encodeURIComponent svgData]
+        Just (nextId, data) ->
+          let
+            newModel = {model| svg = data, idGen = nextId}
+            gradients = Utils.getGradients newModel
+            gradientIds = gradients |> List.map .id
+          in
+          newModel ! [Utils.encodeURIComponent svgData, Utils.getGradientStyles gradientIds]
         Nothing -> model ! []
     
     EncodedSvgData encoded ->
