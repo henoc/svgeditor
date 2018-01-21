@@ -169,10 +169,6 @@ onItemMouseDown tagger =
   in
   onWithOptions "mousedown" { stopPropagation = True , preventDefault = False } (Json.map tagger mouseEvent)
 
-onMouseDown2: (Int -> msg) -> Attribute msg
-onMouseDown2 tagger =
-  on "mousedown" (Json.map tagger button)
-
 onFieldMouseDown: ((Int, Vec2) -> msg) -> Attribute msg
 onFieldMouseDown tagger =
   let

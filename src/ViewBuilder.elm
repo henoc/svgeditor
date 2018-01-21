@@ -271,7 +271,8 @@ gradientItem ident ginfo model =
       [
         div [] [
           div [class "circle", style ("background: " ++ cssString)] [],
-          Options.styled p [Typo.subhead] [text ("#" ++ ident)]
+          Options.styled p [Typo.subhead] [text ("#" ++ ident)],
+          Button.render Mdl [200] model.mdl (buttonCss ++ [RemoveGradient ident |> Options.onClick]) [Icon.i "clear"]
         ],
         div [style "display: flex; flex-wrap: wrap"]
           (
@@ -297,9 +298,9 @@ gradientItem ident ginfo model =
                     Just (idt, idx) ->
                       if idt == ident && idx == index then Html.map GradientPanelMsg <| Ui.ColorPanel.view model.gradientPanel
                       else slider,
-                  Button.render Mdl [200] model.mdl (buttonCss ++ [RemoveStop ident index |> Options.onClick]) [Icon.i "clear"]
+                  Button.render Mdl [201] model.mdl (buttonCss ++ [RemoveStop ident index |> Options.onClick]) [Icon.i "clear"]
                 ])
           ),
-        Button.render Mdl [200] model.mdl (buttonCss ++ [AddNewStop ident |> Options.onClick]) [Icon.i "add"]
+        Button.render Mdl [202] model.mdl (buttonCss ++ [AddNewStop ident |> Options.onClick]) [Icon.i "add"]
       ]
   ]

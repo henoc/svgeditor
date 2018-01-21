@@ -367,6 +367,13 @@ update msg model =
       in
       newModel ! [Utils.reflectSvgData newModel]
 
+    RemoveGradient ident ->
+      let
+        definedGradients = Dict.remove ident model.gradients
+        newModel = Gradients.remove ident model
+      in
+      {newModel | gradients = definedGradients} ! [Utils.reflectSvgData newModel]
+
     FocusToStop ident index ->
       let
         newGradientPanelLink = case model.gradientPanelLink of

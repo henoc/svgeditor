@@ -137,6 +137,32 @@ removeAllDefs model =
   in
   replaceElems newElems model
 
+remove: String -> Model -> Model
+remove ident model =
+  let
+    defsElems = Utils.getDefsElems model
+    loop: List StyledSVGElement -> List StyledSVGElement
+    loop lst = case lst of
+      hd :: tl -> case hd.shape of
+        LinearGradient {identifier, stops} ->
+          if identifier == ident then loop tl
+          else hd :: loop tl
+        RadialGradient {identifier, stops} ->
+          if identifier == ident then loop tl
+          else hd :: loop tl
+        _ -> hd :: loop tl
+      [] -> []
+    newDefsElems = loop defsElems
+    newDefs = {
+      style = Dict.empty,
+      attr = Dict.empty,
+      id = model.idGen,
+      shape = Defs {elems = newDefsElems}
+    }
+    newElems = newDefs :: (model |> removeAllDefs |> Utils.getElems)     
+  in
+  model |> replaceElems newElems |> \mdl -> {mdl|idGen=mdl.idGen+1}  
+
 replaceElems: List StyledSVGElement -> Model -> Model
 replaceElems elemlst model =
   let
