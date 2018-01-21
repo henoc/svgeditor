@@ -15,7 +15,7 @@ import XmlParser
 
 
 rgbToColorType : String -> Float -> ColorType
-rgbToColorType data a =
+rgbToColorType data opacity =
     case data of
         "none" ->
             NoneColorType
@@ -25,8 +25,11 @@ rgbToColorType data a =
 
         _ ->
             case rgbParser (input data "[\\(\\),\\s]+") of
-                ParseSuccess ( r, g, b ) i ->
-                    SingleColorType (Color.rgba r g b a)
+                ParseSuccess ( r, g, b, Just a ) i ->
+                    SingleColorType (Color.rgba r g b (a * opacity))
+
+                ParseSuccess ( r, g, b, Nothing ) i ->
+                    SingleColorType (Color.rgba r g b opacity)
 
                 ParseFailure r i ->
                     case urlParser (input data "[\\(\\)\\s\"]+") of
@@ -42,10 +45,13 @@ rgbToColorType data a =
 
 
 rgbToColor : String -> Float -> Color
-rgbToColor data a =
+rgbToColor data opacity =
     case rgbParser (input data "[\\(\\),\\s]+") of
-        ParseSuccess ( r, g, b ) i ->
-            Color.rgba r g b a
+        ParseSuccess ( r, g, b, Just a ) i ->
+            Color.rgba r g b (a * opacity)
+
+        ParseSuccess ( r, g, b, Nothing ) i ->
+            Color.rgba r g b opacity
 
         ParseFailure r i ->
             Color.black
@@ -100,9 +106,20 @@ intParser =
                 ParseFailure r i
 
 
-rgbParser : Parser ( Int, Int, Int )
+
+-- rgb or rgba
+
+
+rgbParser : Parser ( Int, Int, Int, Maybe Float )
 rgbParser =
-    onlyRight (stringParser "rgb") (andThen (andThen intParser intParser) intParser) |> map (\( ( x, y ), z ) -> ( x, y, z ))
+    let
+        rgba =
+            onlyRight (stringParser "rgba") (andThen (andThen (andThen intParser intParser) intParser) floatParser) |> map (\( ( ( x, y ), z ), w ) -> ( x, y, z, Just w ))
+
+        rgb =
+            onlyRight (stringParser "rgb") (andThen (andThen intParser intParser) intParser) |> map (\( ( x, y ), z ) -> ( x, y, z, Nothing ))
+    in
+    or rgba rgb
 
 
 urlParser : Parser String
