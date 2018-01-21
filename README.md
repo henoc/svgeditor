@@ -32,10 +32,10 @@ You can create shapes using the SVG's coder or directly creating shapes with the
 - [ ] Reimplement group and ungroup
 - [x] Reflect embedded CSS in SVG
 - [ ] Attributes output style options
-- [ ] Line cap, marker
 - [ ] Scale objects with fixed aspect ratio mode
 - [x] `defs` tag
 - [ ] `use` tag
+- [ ] `marker` tag
 - [ ] unit
 - [x] Gradation colors
 - [ ] Transform attribute
@@ -44,6 +44,7 @@ You can create shapes using the SVG's coder or directly creating shapes with the
 
 ## ChangeLog
 
+- 0.10.1 Fix opacity bug
 - 0.10.0 Introduce SVGO for each output
 - 0.9.0 Support some stroke attributes
 - 0.8.1 Get better
