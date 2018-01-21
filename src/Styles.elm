@@ -1,4 +1,5 @@
 module Style exposing (..)
 
+
 buttonStyle =
-  [ ("color", "#fff")]
+    [ ( "color", "#fff" ) ]
