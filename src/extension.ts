@@ -4,7 +4,8 @@ import * as vscode from "vscode";
 import * as fs from "fs";
 import * as path from "path";
 import {render} from "ejs";
-let htmlPretty = require("html");
+let Svgoc = require("svgo");
+let svgo = new Svgoc();
 
 export function activate(context: vscode.ExtensionContext) {
 
@@ -99,8 +100,10 @@ export function activate(context: vscode.ExtensionContext) {
    * Call only by previewer
    */
   vscode.commands.registerCommand("svgeditor.reflectToEditor", (text: string) => {
-    provider.editor!.edit(editbuilder => {
-      editbuilder.replace(allRange(provider.editor!), htmlPretty.prettyPrint(text, {indent_size: 2, max_char: 0}));
+    svgo.optimize(text).then(result => {
+      provider.editor!.edit(editbuilder => {
+        editbuilder.replace(allRange(provider.editor!), result.data);
+      });
     });
   });
 }
