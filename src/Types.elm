@@ -82,7 +82,11 @@ type alias StyleObject = {
   fill: String,
   stroke: String,
   fillOpacity: String,
-  strokeOpacity: String
+  strokeOpacity: String,
+  strokeWidth: String,
+  strokeLinecap: String,
+  strokeLinejoin: String,
+  strokeDasharray: String
 }
 
 type alias StopStyleObject = {
@@ -118,3 +122,5 @@ type alias Gradiation = List (Float, String)
 
 type LayerType = ColorLayer | PhysicsLayer
 
+-- 単位は computedStyle では px or % が取れる
+type ValueUnit = Px | Percent

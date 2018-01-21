@@ -259,29 +259,10 @@ colorTypeToStr ctype = case ctype of
   SingleColorType c -> Utils2.colorToCssHsla2 c
   AnyColorType ident -> "url(" ++ ident ++ ")"
 
-getByValue: a -> List (comparable, a) -> Maybe comparable
-getByValue value lst =
-  let
-    loop lst = case lst of
-      (k, v) :: tl -> if v == value then Just k else loop tl
-      [] -> Nothing
-  in
-  loop lst
-
--- 値が等しい別のペアがあれば消して、新しいペアを入れる
-insertByValue: comparable -> a -> List (comparable, a) -> List (comparable, a)
-insertByValue key value lst =
-  let
-    maybeOldKey = getByValue value lst
-  in
-  case maybeOldKey of
-    Nothing -> (key, value) :: lst
-    Just k -> removeByKey k lst |> \p -> (key, value) :: p
-
-removeByKey: comparable -> List (comparable, a) -> List (comparable, a)
-removeByKey key lst = case lst of
-  (k, v) :: tl -> if (key == k) then tl else (k, v) :: (removeByKey key tl)
-  [] -> []
+valueUnitToStr: ValueUnit -> String
+valueUnitToStr vu = case vu of
+  Px -> "px"
+  Percent -> "%"
 
 port getSvgData: () -> Cmd msg
 port getSvgDataFromJs: (String -> msg) -> Sub msg

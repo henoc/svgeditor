@@ -227,6 +227,7 @@ update msg model =
       {model| clientLeft = rect.left, clientTop = rect.top} ! []
     
     -- 選択されたオブジェクトのスタイルを計算してcolorPickerStates, styleInfoを更新
+    -- computedを使うのはcssによる定義に対応するため
     ComputedStyle maybeStyle ->
       let
         colorPickerStates = model.colorPicker
@@ -234,6 +235,7 @@ update msg model =
         (newColorPickerStates, newStyleInfo) = case maybeStyle of
           Just styleObject ->
             let
+              _ = Debug.log "Selected object style (only use in svg-editor): " styleObject
               colorTypeFill = Parsers.rgbToColorType styleObject.fill (Result.withDefault 1 <| String.toFloat styleObject.fillOpacity)
               colorTypeStroke = Parsers.rgbToColorType styleObject.stroke (Result.withDefault 1 <| String.toFloat styleObject.strokeOpacity)
               hslaStrFill = Utils.colorTypeToStr colorTypeFill
@@ -253,7 +255,13 @@ update msg model =
             in
             (
               Dict.insert "fill" newPickerFill << Dict.insert "stroke" newPickerStroke <| colorPickerStates,
-              Dict.insert "fill" hslaStrFill << Dict.insert "stroke" hslaStrStroke <| styleInfo
+              Dict.insert "fill" hslaStrFill
+              << Dict.insert "stroke" hslaStrStroke
+              << Dict.insert "stroke-width" styleObject.strokeWidth     -- 単位がないとpxで取れる "1em" としてもpxで取れる "1%" にすると%で取れる ...
+              << Dict.insert "stroke-linecap" styleObject.strokeLinecap
+              << Dict.insert "stroke-linejoin" styleObject.strokeLinejoin
+              << Dict.insert "stroke-dasharray" styleObject.strokeDasharray
+              <| styleInfo
             )
           Nothing -> (colorPickerStates, styleInfo)
       in
@@ -483,17 +491,41 @@ view model =
         ))
       ]
     
-    colorPickers = [
+    colorPickers =
+      let
+        sw: (Float, ValueUnit)
+        sw = case Dict.get "stroke-width" model.styleInfo of
+          Nothing -> (1, Px)
+          Just x -> Parsers.floatWithUnit x |> Maybe.withDefault (1, Px)
+        sc = Dict.get "stroke-linecap" model.styleInfo
+          |> Maybe.withDefault "butt"
+        sl = Dict.get "stroke-linejoin" model.styleInfo
+          |> Maybe.withDefault "miter"
+        sd: (Float, ValueUnit)
+        sd = Dict.get "stroke-dasharray" model.styleInfo |> Maybe.map (Parsers.floatWithUnit >> Maybe.withDefault (0, Px)) |> Maybe.withDefault (0, Px)
+      in
+      [
         div [] <| ViewBuilder.colorPicker "fill" model,
         div [] <| ViewBuilder.colorPicker "stroke" model,
-        let
-          sw = case Dict.get "stroke-width" model.styleInfo of
-            Nothing -> 1
-            Just x -> Result.withDefault 1 <| String.toInt x
-        in
         div [ style "display: flex" ] [
           Options.styled p [Typo.subhead] [text <| "stroke-width:"],
-          Slider.view [Slider.value (toFloat sw), Slider.min 0, Slider.max 100, Slider.step 1, Slider.onChange (\n -> OnProperty <| Style <| Dict.insert "stroke-width" (toString n) styleInfo)]
+          Slider.view [Slider.value (first sw), Slider.min 0, Slider.max 100, Slider.step 1, Slider.onChange (\n -> OnProperty <| Style <| Dict.insert "stroke-width" (toString n ++ Utils.valueUnitToStr (second sw)) styleInfo)]
+        ],
+        div [ style "display: flex" ] [
+          Options.styled p [Typo.subhead] [text <| "stroke-linecap:"],
+          Toggles.radio Mdl [100] model.mdl [Toggles.value (sc == "butt"),   Toggles.group "stroke-linecap", Options.onToggle <| OnProperty <| Style <| Dict.insert "stroke-linecap" "butt"   styleInfo] [text "butt"],
+          Toggles.radio Mdl [101] model.mdl [Toggles.value (sc == "square"), Toggles.group "stroke-linecap", Options.onToggle <| OnProperty <| Style <| Dict.insert "stroke-linecap" "square" styleInfo] [text "square"],
+          Toggles.radio Mdl [102] model.mdl [Toggles.value (sc == "round"),  Toggles.group "stroke-linecap", Options.onToggle <| OnProperty <| Style <| Dict.insert "stroke-linecap" "round"  styleInfo] [text "round"]
+        ],
+        div [ style "display: flex" ] [
+          Options.styled p [Typo.subhead] [text <| "stroke-linejoin:"],
+          Toggles.radio Mdl [103] model.mdl [Toggles.value (sl == "miter"), Toggles.group "stroke-linejoin", Options.onToggle <| OnProperty <| Style <| Dict.insert "stroke-linejoin" "miter" styleInfo] [text "miter"],
+          Toggles.radio Mdl [104] model.mdl [Toggles.value (sl == "round"), Toggles.group "stroke-linejoin", Options.onToggle <| OnProperty <| Style <| Dict.insert "stroke-linejoin" "round" styleInfo] [text "round"],
+          Toggles.radio Mdl [105] model.mdl [Toggles.value (sl == "bevel"), Toggles.group "stroke-linejoin", Options.onToggle <| OnProperty <| Style <| Dict.insert "stroke-linejoin" "bevel" styleInfo] [text "bevel"]
+        ],
+        div [ style "display: flex" ] [
+          Options.styled p [Typo.subhead] [text <| "stroke-dasharray:"],
+          Slider.view [Slider.value (first sd), Slider.min 0, Slider.max 100, Slider.step 1, Slider.onChange (\n -> OnProperty <| Style <| Dict.insert "stroke-dasharray" (toString n ++ Utils.valueUnitToStr (second sw)) styleInfo)]
         ]
       ]
 

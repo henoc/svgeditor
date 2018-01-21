@@ -9,18 +9,7 @@ import Debug
 import Color.Convert exposing (..)
 import Color exposing (Color)
 
-intParser: Parser Int
-intParser = \input -> case (regexParser "[0-9]+") input of
-  ParseSuccess r i -> case String.toInt r of
-    Ok k -> ParseSuccess k i
-    Err _ -> ParseFailure "unreached" i
-  ParseFailure r i -> ParseFailure r i
-
-rgbParser: Parser (Int, Int, Int)
-rgbParser = onlyRight (stringParser "rgb") (andThen (andThen intParser intParser) intParser) |> map (\((x,y),z) -> (x,y,z))
-
-urlParser: Parser String
-urlParser = onlyRight (stringParser "url") (regexParser "^#[a-zA-Z0-9_\\-.]+")
+-- Non-Parsers
 
 -- rgb(x,y,z) & opacity を ColorType にする
 rgbToColorType: String -> Float -> ColorType
@@ -42,8 +31,31 @@ rgbToColor data a = case rgbParser (input data "[\\(\\),\\s]+") of
 
 percentAsInt: String -> Int
 percentAsInt percent = case percentParser (input percent "[\\s]+") of
-  ParseSuccess f i -> f
+  ParseSuccess f i -> floor f
   ParseFailure r i -> 0
+
+-- 単位(px or %)付き値のパース
+floatWithUnit: String -> Maybe (Float, ValueUnit)
+floatWithUnit valueWithUnit = case percentParser (input valueWithUnit "[\\s]+") of
+  ParseSuccess f i -> Just (f, Percent)
+  ParseFailure r i -> case pixelParser (input valueWithUnit "[\\s]+") of
+    ParseSuccess f i -> Just (f, Px)
+    ParseFailure r i -> Nothing
+
+-- Parsers
+
+intParser: Parser Int
+intParser = \input -> case (regexParser "[0-9]+") input of
+  ParseSuccess r i -> case String.toInt r of
+    Ok k -> ParseSuccess k i
+    Err _ -> ParseFailure "unreached" i
+  ParseFailure r i -> ParseFailure r i
+
+rgbParser: Parser (Int, Int, Int)
+rgbParser = onlyRight (stringParser "rgb") (andThen (andThen intParser intParser) intParser) |> map (\((x,y),z) -> (x,y,z))
+
+urlParser: Parser String
+urlParser = onlyRight (stringParser "url") (regexParser "^#[a-zA-Z0-9_\\-.]+")
 
 stylePairParser: Parser (String, String)
 stylePairParser = andThen (regexParser "[^:]+") (regexParser "[^;]+")
@@ -54,8 +66,11 @@ styleParser = Combinators.map Dict.fromList <| rep stylePairParser
 floatParser: Parser Float
 floatParser = regexParser "[+-]?[0-9]+(\\.[0-9]*)?([eE][+-]?[0-9]+)?" |> Combinators.map (\x -> Result.withDefault 0 <| String.toFloat x)
 
-percentParser: Parser Int
-percentParser = onlyLeft intParser (stringParser "%")
+percentParser: Parser Float
+percentParser = onlyLeft floatParser (stringParser "%")
+
+pixelParser: Parser Float
+pixelParser = onlyLeft floatParser (stringParser "px")
 
 pointPairParser: Parser (Float, Float)
 pointPairParser = andThen floatParser floatParser
