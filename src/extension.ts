@@ -3,20 +3,26 @@
 import * as vscode from "vscode";
 import * as fs from "fs";
 import * as path from "path";
+import * as yaml from "js-yaml";
 import {render} from "ejs";
-let Svgoc = require("svgo");
-let svgo = new Svgoc();
+let SvgoConstructor = require("svgo");
 
 export function activate(context: vscode.ExtensionContext) {
 
   let previewUri = vscode.Uri.parse("svgeditor://authority/svgeditor");
   let readResource =
     (filename: string) => fs.readFileSync(path.join(__dirname, "..", "resources", filename), "UTF-8");
+  let readOthers =
+    (filename: string) => fs.readFileSync(path.join(__dirname, "..", filename), "UTF-8");
   let viewer = readResource("viewer.ejs");
   let mainJs = readResource("main.js");
   let externalJs = readResource("externals.js");
   let templateSvg = readResource("template.svg");
   let style = readResource("style.css");
+  let svgoConfig = yaml.safeLoad(readOthers(".svgo.yml"));
+
+  // svgo instance
+  let svgo = new SvgoConstructor(svgoConfig);
 
   class TextDocumentContentProvider implements vscode.TextDocumentContentProvider {
     public editor: vscode.TextEditor;
@@ -100,6 +106,7 @@ export function activate(context: vscode.ExtensionContext) {
    * Call only by previewer
    */
   vscode.commands.registerCommand("svgeditor.reflectToEditor", (text: string) => {
+    // svgo optimization
     svgo.optimize(text).then(result => {
       provider.editor!.edit(editbuilder => {
         editbuilder.replace(allRange(provider.editor!), result.data);
