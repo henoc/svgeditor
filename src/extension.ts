@@ -5,7 +5,7 @@ import * as fs from "fs";
 import * as path from "path";
 import * as yaml from "js-yaml";
 import {render} from "ejs";
-let SvgoConstructor = require("svgo");
+import * as SvgoConstructor from "svgo";
 
 export function activate(context: vscode.ExtensionContext) {
 
