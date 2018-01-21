@@ -44,6 +44,7 @@ You can create shapes using the SVG's coder or directly creating shapes with the
 
 ## ChangeLog
 
+- 0.9.0 Support some stroke attributes
 - 0.8.1 Get better
 - 0.8.0 Renewal gradient features as gradient mode
 - 0.7.0 Support linear and radial gradients
