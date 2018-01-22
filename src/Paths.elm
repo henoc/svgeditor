@@ -239,7 +239,7 @@ genericDrawTo cfn drawto =
 
 genericEarg : (Coordinate -> Coordinate) -> EllipticalArcArgument -> EllipticalArcArgument
 genericEarg cfn earg =
-    { earg | radii = cfn earg.radii, target = cfn earg.target }
+    { earg | target = cfn earg.target }
 
 
 type alias TripleCoord =
@@ -429,6 +429,7 @@ shapeToPath svg =
                 _ ->
                     svg
 
+        -- https://stackoverflow.com/questions/2172798/how-to-draw-an-oval-in-html5-canvas
         Ellipse { center, size } ->
             let
                 cx =
@@ -437,21 +438,49 @@ shapeToPath svg =
                 cy =
                     second center
 
-                rx =
-                    first size / 2
+                w =
+                    first size
 
-                ry =
-                    second size / 2
+                h =
+                    second size
+
+                x =
+                    cx - w / 2
+
+                y =
+                    cy - h / 2
+
+                kappa =
+                    0.5522848
+
+                ox =
+                    (w / 2) * kappa
+
+                oy =
+                    (h / 2) * kappa
+
+                xe =
+                    x + w
+
+                ye =
+                    y + h
+
+                xm =
+                    x + w / 2
+
+                ym =
+                    y + h / 2
             in
             Path
                 { subPaths =
-                    [ { moveto = MoveTo Absolute ( cx, cy - ry )
+                    [ { moveto = MoveTo Absolute ( x, ym )
                       , drawtos =
-                            [ EllipticalArc Absolute
-                                [ { radii = ( rx, ry ), xAxisRotate = 0, arcFlag = LargestArc, direction = CounterClockwise, target = ( cx, cy + ry ) }
-                                , { radii = ( rx, ry ), xAxisRotate = 0, arcFlag = LargestArc, direction = CounterClockwise, target = ( cx, cy - ry ) }
+                            [ CurveTo Absolute
+                                [ ( ( x, ym - oy ), ( xm - ox, y ), ( xm, y ) )
+                                , ( ( xm + ox, y ), ( xe, ym - oy ), ( xe, ym ) )
+                                , ( ( xe, ym + oy ), ( xm + ox, ye ), ( xm, ye ) )
+                                , ( ( xm - ox, ye ), ( x, ym + oy ), ( x, ym ) )
                                 ]
-                            , ClosePath
                             ]
                       }
                     ]
