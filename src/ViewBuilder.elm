@@ -145,10 +145,10 @@ build layerType model svg =
                 )
                 []
 
-        Path { subPathes } ->
+        Path { subPaths } ->
             let
                 pathopstr =
-                    Path.LowLevel.toString subPathes
+                    Path.LowLevel.toString subPaths
             in
             Svg.path
                 (attrList

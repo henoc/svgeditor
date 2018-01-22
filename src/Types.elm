@@ -36,7 +36,7 @@ type SVGElement
     = Rectangle { leftTop : Vec2, size : Vec2 }
     | Ellipse { center : Vec2, size : Vec2 }
     | Polygon { points : List Vec2, enclosed : Bool }
-    | Path { subPathes : List SubPath }
+    | Path { subPaths : List SubPath }
     | SVG { elems : List StyledSVGElement, size : Vec2 }
     | Defs { elems : List StyledSVGElement }
     | LinearGradient { identifier : String, stops : List StyledSVGElement }

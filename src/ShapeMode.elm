@@ -3,7 +3,7 @@ module ShapeMode exposing (..)
 import Dict exposing (Dict)
 import List.Extra
 import Path.LowLevel exposing (..)
-import Pathes
+import Paths
 import Types exposing (..)
 import Utils
 import Vec2 exposing (..)
@@ -217,7 +217,7 @@ updatePath msg model =
                                         (Utils.getElems model
                                             ++ { shape =
                                                     Path
-                                                        { subPathes =
+                                                        { subPaths =
                                                             [ { moveto = MoveTo Absolute correctedPos, drawtos = [ CurveTo Absolute [ ( correctedPos, correctedPos, correctedPos ) ] ] }
                                                             ]
                                                         }
@@ -239,7 +239,7 @@ updatePath msg model =
 
                                 Just ( init, last ) ->
                                     case last.shape of
-                                        Path { subPathes } ->
+                                        Path { subPaths } ->
                                             { model
                                                 | dragBegin = Just <| correctedPos
                                                 , svg =
@@ -248,7 +248,7 @@ updatePath msg model =
                                                             ++ { last
                                                                 | shape =
                                                                     Path
-                                                                        { subPathes = Pathes.add (CurveTo Absolute [ ( dragBegin, correctedPos, correctedPos ) ]) subPathes
+                                                                        { subPaths = Paths.add (CurveTo Absolute [ ( dragBegin, correctedPos, correctedPos ) ]) subPaths
                                                                         }
                                                                }
                                                             :: []
@@ -282,7 +282,7 @@ updatePath msg model =
 
                         Just ( init, last ) ->
                             case last.shape of
-                                Path { subPathes } ->
+                                Path { subPaths } ->
                                     { model
                                         | svg =
                                             Utils.changeContains
@@ -290,7 +290,7 @@ updatePath msg model =
                                                     ++ { last
                                                         | shape =
                                                             Path
-                                                                { subPathes = operatorsFn dragBegin correctedPos correctedPos subPathes
+                                                                { subPaths = operatorsFn dragBegin correctedPos correctedPos subPaths
                                                                 }
                                                        }
                                                     :: []
@@ -322,7 +322,7 @@ updatePath msg model =
 
                                 Just ( init, last ) ->
                                     case last.shape of
-                                        Path { subPathes } ->
+                                        Path { subPaths } ->
                                             { model
                                                 | dragBegin = Just <| correctedPos
                                                 , svg =
@@ -331,7 +331,7 @@ updatePath msg model =
                                                             ++ { last
                                                                 | shape =
                                                                     Path
-                                                                        { subPathes = updateLast dragBegin correctedPos correctedPos subPathes
+                                                                        { subPaths = updateLast dragBegin correctedPos correctedPos subPaths
                                                                         }
                                                                }
                                                             :: []
@@ -349,8 +349,8 @@ updatePath msg model =
 
 
 updateLast : Vec2 -> Vec2 -> Vec2 -> List SubPath -> List SubPath
-updateLast adjustBegin adjustEnd endPoint subPathes =
-    case List.Extra.splitAt (List.length subPathes - 1) subPathes of
+updateLast adjustBegin adjustEnd endPoint subPaths =
+    case List.Extra.splitAt (List.length subPaths - 1) subPaths of
         ( initSubPath, lastSubPathLst ) ->
             case lastSubPathLst of
                 lastSubPath :: [] ->
@@ -372,13 +372,13 @@ updateLast adjustBegin adjustEnd endPoint subPathes =
                                                     initSubPath ++ [ newSubPath ]
 
                                         _ ->
-                                            subPathes
+                                            subPaths
 
                                 _ ->
-                                    subPathes
+                                    subPaths
 
                 _ ->
-                    subPathes
+                    subPaths
 
 
 
@@ -386,11 +386,11 @@ updateLast adjustBegin adjustEnd endPoint subPathes =
 
 
 updateLast2 : Vec2 -> Vec2 -> Vec2 -> List SubPath -> List SubPath
-updateLast2 adjustBegin adjustEnd endPoint subPathes =
-    Pathes.recurve
-        ((List.map Pathes.opcount subPathes |> List.sum) - 2)
+updateLast2 adjustBegin adjustEnd endPoint subPaths =
+    Paths.recurve
+        ((List.map Paths.opcount subPaths |> List.sum) - 2)
         (\( p, q, r ) -> ( p, symmetry r endPoint, r ))
-        subPathes
+        subPaths
 
 
 

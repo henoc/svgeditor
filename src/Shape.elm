@@ -1,6 +1,6 @@
 module Shape exposing (..)
 
-import Pathes
+import Paths
 import Tuple exposing (first, second)
 import Types exposing (..)
 import Utils
@@ -32,10 +32,10 @@ getBBox elem =
             in
             { leftTop = ( left, top ), rightBottom = ( right, bottom ) }
 
-        Path { subPathes } ->
+        Path { subPaths } ->
             let
                 points =
-                    Pathes.points subPathes
+                    Paths.points subPaths
 
                 left =
                     List.map first points |> List.minimum |> Maybe.withDefault 0
@@ -73,9 +73,9 @@ translate delta elem =
                 Polygon { points, enclosed } ->
                     Polygon { points = List.map ((+#) delta) points, enclosed = enclosed }
 
-                Path { subPathes } ->
+                Path { subPaths } ->
                     Path
-                        { subPathes = Pathes.generic ((+#) delta) subPathes
+                        { subPaths = Paths.generic ((+#) delta) subPaths
                         }
 
                 others ->
@@ -103,7 +103,7 @@ getCenter elem =
             in
             (bbox.leftTop +# bbox.rightBottom) /# ( 2, 2 )
 
-        Path { subPathes } ->
+        Path { subPaths } ->
             let
                 bbox =
                     getBBox elem
@@ -174,9 +174,9 @@ scale ratio elem =
                         Polygon { points, enclosed } ->
                             Polygon { points = List.map ((*#) ratio) points, enclosed = enclosed }
 
-                        Path { subPathes } ->
+                        Path { subPaths } ->
                             Path
-                                { subPathes = Pathes.generic ((*#) ratio) subPathes
+                                { subPaths = Paths.generic ((*#) ratio) subPaths
                                 }
 
                         others ->
@@ -212,8 +212,8 @@ replaceNode n fn elem =
         Polygon { points, enclosed } ->
             { elem | shape = Polygon { points = Utils.replaceNth n fn points, enclosed = enclosed } }
 
-        Path { subPathes } ->
-            { elem | shape = Path { subPathes = Pathes.replaceNth n fn subPathes } }
+        Path { subPaths } ->
+            { elem | shape = Path { subPaths = Paths.replaceNth n fn subPaths } }
 
         others ->
             elem
@@ -229,8 +229,8 @@ getPoints elem =
         Polygon { points, enclosed } ->
             points
 
-        Path { subPathes } ->
-            Pathes.points subPathes
+        Path { subPaths } ->
+            Paths.points subPaths
 
         others ->
             []

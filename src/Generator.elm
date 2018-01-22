@@ -167,10 +167,10 @@ generateNode elem =
                 attrs
                 []
 
-        Path { subPathes } ->
+        Path { subPaths } ->
             let
                 pathopstr =
-                    Path.LowLevel.toString subPathes
+                    Path.LowLevel.toString subPaths
 
                 newAttr =
                     Dict.insert "d" pathopstr

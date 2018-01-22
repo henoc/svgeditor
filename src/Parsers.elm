@@ -402,7 +402,7 @@ convertNode id node =
                         , { style = styleMap
                           , id = id
                           , attr = attrMap
-                          , shape = Path { subPathes = pathOps }
+                          , shape = Path { subPaths = pathOps }
                           }
                         )
 
