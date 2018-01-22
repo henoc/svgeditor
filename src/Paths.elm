@@ -2,9 +2,10 @@ module Paths exposing (..)
 
 import List.Extra
 import Path.LowLevel exposing (..)
+import Tuple exposing (..)
+import Types exposing (..)
 import Utils
 import Vec2 exposing (..)
-import Tuple exposing (..)
 
 
 movetoToPoint : MoveTo -> Coordinate
@@ -238,7 +239,7 @@ genericDrawTo cfn drawto =
 
 genericEarg : (Coordinate -> Coordinate) -> EllipticalArcArgument -> EllipticalArcArgument
 genericEarg cfn earg =
-    { earg | radii = cfn earg.radii, target = cfn earg.target }
+    { earg | target = cfn earg.target }
 
 
 type alias TripleCoord =
@@ -377,3 +378,113 @@ add drawto subPaths =
         _ ->
             subPaths
 
+
+
+-- 基本図形をパスへ
+
+
+shapeToPath : SVGElement -> SVGElement
+shapeToPath svg =
+    case svg of
+        Rectangle { leftTop, size } ->
+            let
+                x =
+                    first leftTop
+
+                y =
+                    second leftTop
+            in
+            Path
+                { subPaths =
+                    [ { moveto = MoveTo Absolute ( x, y )
+                      , drawtos =
+                            [ LineTo Absolute
+                                [ ( x + first size, y )
+                                , ( x + first size, y + second size )
+                                , ( x, y + second size )
+                                ]
+                            , ClosePath
+                            ]
+                      }
+                    ]
+                }
+
+        Polygon { points, enclosed } ->
+            case points of
+                hd1 :: hd2 :: tl ->
+                    Path
+                        { subPaths =
+                            [ { moveto = MoveTo Absolute hd1
+                              , drawtos =
+                                    [ LineTo Absolute (hd2 :: tl) ]
+                                        ++ (if enclosed then
+                                                [ ClosePath ]
+                                            else
+                                                []
+                                           )
+                              }
+                            ]
+                        }
+
+                _ ->
+                    svg
+
+        -- https://stackoverflow.com/questions/2172798/how-to-draw-an-oval-in-html5-canvas
+        Ellipse { center, size } ->
+            let
+                cx =
+                    first center
+
+                cy =
+                    second center
+
+                w =
+                    first size
+
+                h =
+                    second size
+
+                x =
+                    cx - w / 2
+
+                y =
+                    cy - h / 2
+
+                kappa =
+                    0.5522848
+
+                ox =
+                    (w / 2) * kappa
+
+                oy =
+                    (h / 2) * kappa
+
+                xe =
+                    x + w
+
+                ye =
+                    y + h
+
+                xm =
+                    x + w / 2
+
+                ym =
+                    y + h / 2
+            in
+            Path
+                { subPaths =
+                    [ { moveto = MoveTo Absolute ( x, ym )
+                      , drawtos =
+                            [ CurveTo Absolute
+                                [ ( ( x, ym - oy ), ( xm - ox, y ), ( xm, y ) )
+                                , ( ( xm + ox, y ), ( xe, ym - oy ), ( xe, ym ) )
+                                , ( ( xe, ym + oy ), ( xm + ox, ye ), ( xm, ye ) )
+                                , ( ( xm - ox, ye ), ( x, ym + oy ), ( x, ym ) )
+                                ]
+                            ]
+                      }
+                    ]
+                }
+
+        _ ->
+            svg

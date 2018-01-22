@@ -6,11 +6,11 @@ import Combinators exposing (..)
 import Debug
 import Dict exposing (Dict)
 import Path.LowLevel.Parser as PathParser
+import Paths
+import Tuple exposing (..)
 import Types exposing (..)
 import Utils
 import XmlParser
-import Paths
-import Tuple exposing (..)
 
 
 -- Non-Parsers

@@ -1,6 +1,8 @@
 module Actions exposing (..)
 
+import Paths
 import Set exposing (Set)
+import Traverse
 import Types exposing (..)
 import Utils
 
@@ -80,3 +82,19 @@ bringForward model =
     { model
         | svg = Utils.changeContains (List.reverse (loop (List.reverse elems))) model.svg
     }
+
+
+shapeToPath : Model -> Model
+shapeToPath model =
+    let
+        process : StyledSVGElement -> StyledSVGElement
+        process elem =
+            if Set.member elem.id model.selected then
+                { elem | shape = Paths.shapeToPath elem.shape }
+            else
+                elem
+
+        newSvg =
+            Traverse.traverse process model.svg
+    in
+    { model | svg = newSvg }
