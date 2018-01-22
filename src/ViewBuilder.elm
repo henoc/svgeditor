@@ -15,6 +15,7 @@ import Material.Options as Options
 import Material.Slider as Slider
 import Material.Toggles as Toggles
 import Material.Typography as Typo
+import Path.LowLevel
 import Set exposing (Set)
 import Shape
 import ShapeList exposing (..)
@@ -144,14 +145,10 @@ build layerType model svg =
                 )
                 []
 
-        Path { operators } ->
+        Path { subPathes } ->
             let
-                opstr : PathOperator -> String
-                opstr op =
-                    op.kind ++ " " ++ String.join "," (List.map (\( x, y ) -> toString x ++ " " ++ toString y) op.points)
-
                 pathopstr =
-                    List.map opstr (List.reverse operators) |> String.join " "
+                    Path.LowLevel.toString subPathes
             in
             Svg.path
                 (attrList

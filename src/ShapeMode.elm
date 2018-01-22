@@ -1,6 +1,9 @@
 module ShapeMode exposing (..)
 
 import Dict exposing (Dict)
+import List.Extra
+import Path.LowLevel exposing (..)
+import Pathes
 import Types exposing (..)
 import Utils
 import Vec2 exposing (..)
@@ -214,9 +217,8 @@ updatePath msg model =
                                         (Utils.getElems model
                                             ++ { shape =
                                                     Path
-                                                        { operators =
-                                                            [ { kind = "C", points = [ correctedPos, correctedPos, correctedPos ] }
-                                                            , { kind = "M", points = [ correctedPos ] }
+                                                        { subPathes =
+                                                            [ { moveto = MoveTo Absolute correctedPos, drawtos = [ CurveTo Absolute [ ( correctedPos, correctedPos, correctedPos ) ] ] }
                                                             ]
                                                         }
                                                , style = model.styleInfo
@@ -237,7 +239,7 @@ updatePath msg model =
 
                                 Just ( init, last ) ->
                                     case last.shape of
-                                        Path { operators } ->
+                                        Path { subPathes } ->
                                             { model
                                                 | dragBegin = Just <| correctedPos
                                                 , svg =
@@ -246,11 +248,7 @@ updatePath msg model =
                                                             ++ { last
                                                                 | shape =
                                                                     Path
-                                                                        { operators =
-                                                                            { kind = "C"
-                                                                            , points = [ dragBegin, correctedPos, correctedPos ]
-                                                                            }
-                                                                                :: operators
+                                                                        { subPathes = Pathes.add (CurveTo Absolute [ ( dragBegin, correctedPos, correctedPos ) ]) subPathes
                                                                         }
                                                                }
                                                             :: []
@@ -284,7 +282,7 @@ updatePath msg model =
 
                         Just ( init, last ) ->
                             case last.shape of
-                                Path { operators } ->
+                                Path { subPathes } ->
                                     { model
                                         | svg =
                                             Utils.changeContains
@@ -292,7 +290,7 @@ updatePath msg model =
                                                     ++ { last
                                                         | shape =
                                                             Path
-                                                                { operators = operatorsFn dragBegin correctedPos correctedPos operators
+                                                                { subPathes = operatorsFn dragBegin correctedPos correctedPos subPathes
                                                                 }
                                                        }
                                                     :: []
@@ -324,7 +322,7 @@ updatePath msg model =
 
                                 Just ( init, last ) ->
                                     case last.shape of
-                                        Path { operators } ->
+                                        Path { subPathes } ->
                                             { model
                                                 | dragBegin = Just <| correctedPos
                                                 , svg =
@@ -333,7 +331,7 @@ updatePath msg model =
                                                             ++ { last
                                                                 | shape =
                                                                     Path
-                                                                        { operators = updateLast dragBegin correctedPos correctedPos operators
+                                                                        { subPathes = updateLast dragBegin correctedPos correctedPos subPathes
                                                                         }
                                                                }
                                                             :: []
@@ -346,50 +344,53 @@ updatePath msg model =
                                             model
 
 
-updateLast : Vec2 -> Vec2 -> Vec2 -> List PathOperator -> List PathOperator
-updateLast adjustBegin adjustEnd endPoint operators =
-    case operators of
-        hd :: tl ->
-            if hd.kind /= "C" then
-                operators
-            else
-                { kind = "C"
-                , points = adjustBegin :: adjustEnd :: endPoint :: []
-                }
-                    :: tl
 
-        [] ->
-            operators
+-- 最後のオペレータがCであるとき、その制御点などを設定する
 
 
+updateLast : Vec2 -> Vec2 -> Vec2 -> List SubPath -> List SubPath
+updateLast adjustBegin adjustEnd endPoint subPathes =
+    case List.Extra.splitAt (List.length subPathes - 1) subPathes of
+        ( initSubPath, lastSubPathLst ) ->
+            case lastSubPathLst of
+                lastSubPath :: [] ->
+                    case List.Extra.splitAt (List.length lastSubPath.drawtos - 1) lastSubPath.drawtos of
+                        ( initDrawTo, lastDrawToLst ) ->
+                            case lastDrawToLst of
+                                lastDrawTo :: [] ->
+                                    case lastDrawTo of
+                                        CurveTo mode lst ->
+                                            case List.Extra.splitAt (List.length lst - 1) lst of
+                                                ( init, last ) ->
+                                                    let
+                                                        newCurveTo =
+                                                            CurveTo mode <| init ++ [ ( adjustBegin, adjustEnd, endPoint ) ]
 
--- 最後から二番目のC命令の終点の制御点をいい感じに設定する
+                                                        newSubPath =
+                                                            { lastSubPath | drawtos = initDrawTo ++ [ newCurveTo ] }
+                                                    in
+                                                    initSubPath ++ [ newSubPath ]
+
+                                        _ ->
+                                            subPathes
+
+                                _ ->
+                                    subPathes
+
+                _ ->
+                    subPathes
 
 
-updateLast2 : Vec2 -> Vec2 -> Vec2 -> List PathOperator -> List PathOperator
-updateLast2 adjustBegin adjustEnd endPoint operators =
-    case operators of
-        last2 :: last1 :: tl ->
-            if last1.kind /= "C" then
-                operators
-            else
-                case last1.points of
-                    last1adjustBegin :: last1adjustEnd :: last1endPoint :: [] ->
-                        let
-                            newLast1AdjustEnd =
-                                symmetry last1endPoint endPoint
-                        in
-                        last2
-                            :: { kind = "C"
-                               , points = last1adjustBegin :: newLast1AdjustEnd :: last1endPoint :: []
-                               }
-                            :: tl
 
-                    others ->
-                        operators
+-- 最後から2番目のC命令の終点の制御点をいい感じに設定する
 
-        others ->
-            operators
+
+updateLast2 : Vec2 -> Vec2 -> Vec2 -> List SubPath -> List SubPath
+updateLast2 adjustBegin adjustEnd endPoint subPathes =
+    Pathes.recurve
+        ((List.map Pathes.opcount subPathes |> List.sum) - 2)
+        (\( p, q, r ) -> ( p, symmetry r endPoint, r ))
+        subPathes
 
 
 

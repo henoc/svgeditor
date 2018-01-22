@@ -4,6 +4,7 @@ import Color exposing (Color)
 import Dict exposing (Dict)
 import Ext.Color
 import Material
+import Path.LowLevel exposing (..)
 import Set exposing (Set)
 import Ui.ColorPanel
 import Vec2 exposing (Vec2)
@@ -27,10 +28,6 @@ type alias AttributeInfo =
     Dict String String
 
 
-type alias PathOperator =
-    { kind : String, points : List Vec2 }
-
-
 
 -- モデルが所有するSVGの形
 
@@ -39,7 +36,7 @@ type SVGElement
     = Rectangle { leftTop : Vec2, size : Vec2 }
     | Ellipse { center : Vec2, size : Vec2 }
     | Polygon { points : List Vec2, enclosed : Bool }
-    | Path { operators : List PathOperator } -- このリストは新しい方が左
+    | Path { subPathes : List SubPath }
     | SVG { elems : List StyledSVGElement, size : Vec2 }
     | Defs { elems : List StyledSVGElement }
     | LinearGradient { identifier : String, stops : List StyledSVGElement }

@@ -4,6 +4,7 @@ import Color exposing (Color)
 import Color.Convert exposing (..)
 import Debug
 import Dict exposing (Dict)
+import Path.LowLevel
 import Tuple exposing (first, second)
 import Types exposing (..)
 import Utils2 exposing (..)
@@ -166,14 +167,10 @@ generateNode elem =
                 attrs
                 []
 
-        Path { operators } ->
+        Path { subPathes } ->
             let
-                opstr : PathOperator -> String
-                opstr op =
-                    op.kind ++ " " ++ String.join "," (List.map (\( x, y ) -> toString x ++ " " ++ toString y) op.points)
-
                 pathopstr =
-                    List.map opstr (List.reverse operators) |> String.join " "
+                    Path.LowLevel.toString subPathes
 
                 newAttr =
                     Dict.insert "d" pathopstr
