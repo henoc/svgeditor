@@ -377,36 +377,3 @@ add drawto subPaths =
         _ ->
             subPaths
 
--- h, H, v, V を含まない, 相対表示を含まない
-
-normalize: List SubPath -> List SubPath
-normalize subPaths = List.map normalizeSubPath subPaths
-
-normalizeSubPath: SubPath -> SubPath
-normalizeSubPath subpath = normalizeDrawTos subpath.moveto subpath.drawtos
-
-normalizeDrawTos: Vec2 -> List DrawTo
-normalizeDrawTos pos drawtos = case drawtos of
-    hd :: tl -> 
-        let
-            (newPos, newDrawTo) = normalizeDrawTo hd
-        in
-        newDrawTo :: normalizeDrawTos newPos tl
-    [] -> []
-
-normalizeDrawTo: Vec2 -> DrawTo -> (Vec2, DrawTo)
-normalizeDrawTo pos drawto =
-    let 
-        px = first pos
-        py = second pos
-        apdm mode vec2 = case mode of
-            Absolute -> vec2
-            Relative -> pos +# vec2
-    in
-    case drawto of
-        LineTo mode lst -> (List.Extra.last lst |> Maybe.map (apdm mode) |> Maybe.withDefault pos, LineTo Absolute (lst |> List.map (apdm mode)))
-        Horizontal mode lst -> case mode of
-            Absolute -> (List.Extra.last lst |> Maybe.map (\x -> (x, py)) |> Maybe.withDefault pos, LineTo Absolute <| List.map (\x -> (x, py)) lst)
-            Relative -> 
-        Vertical mode lst -> (List.Extra.last lst |> Maybe.map (\y -> (px, y)) |> Maybe.withDefault pos, LineTo Absolute <| List.map (\y -> (px, y)) lst)
-

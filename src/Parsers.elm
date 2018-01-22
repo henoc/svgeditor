@@ -9,6 +9,8 @@ import Path.LowLevel.Parser as PathParser
 import Types exposing (..)
 import Utils
 import XmlParser
+import Paths
+import Tuple exposing (..)
 
 
 -- Non-Parsers

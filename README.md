@@ -44,6 +44,7 @@ You can create shapes using the SVG's coder or directly creating shapes with the
 
 ## ChangeLog
 
+- 0.10.2 Fix path bug
 - 0.10.1 Fix opacity bug
 - 0.10.0 Introduce SVGO for each output
 - 0.9.0 Support some stroke attributes
