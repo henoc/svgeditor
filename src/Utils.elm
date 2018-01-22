@@ -88,6 +88,36 @@ flattenList lst =
             []
 
 
+flattenMaybe : Maybe (Maybe a) -> Maybe a
+flattenMaybe maybemaybe =
+    case maybemaybe of
+        Just (Just x) ->
+            Just x
+
+        _ ->
+            Nothing
+
+
+flattenTuple : List ( a, a ) -> List a
+flattenTuple lst =
+    case lst of
+        ( hd1, hd2 ) :: tl ->
+            hd1 :: hd2 :: flattenTuple tl
+
+        [] ->
+            []
+
+
+flattenTriple : List ( a, a, a ) -> List a
+flattenTriple lst =
+    case lst of
+        ( hd1, hd2, hd3 ) :: tl ->
+            hd1 :: hd2 :: hd3 :: flattenTriple tl
+
+        [] ->
+            []
+
+
 maybeToList : Maybe a -> List a
 maybeToList m =
     case m of
@@ -398,21 +428,74 @@ replaceNth n fn lst =
                 lst
 
 
+replaceNthTuple : Int -> (a -> a) -> List ( a, a ) -> List ( a, a )
+replaceNthTuple n fn lst =
+    if n < 2 then
+        case lst of
+            ( p, q ) :: tl ->
+                if n == 0 then
+                    ( fn p, q ) :: tl
+                else
+                    ( p, fn q ) :: tl
 
--- pathOperatorsのn番目の座標をfnに置き換える
+            [] ->
+                []
+    else
+        case lst of
+            hd :: tl ->
+                hd :: replaceNthTuple (n - 2) fn tl
+
+            [] ->
+                lst
 
 
-replacePathNth : Int -> (Vec2 -> Vec2) -> List PathOperator -> List PathOperator
-replacePathNth n fn ops =
-    case ops of
-        [] ->
-            []
+replaceNthTriple : Int -> (a -> a) -> List ( a, a, a ) -> List ( a, a, a )
+replaceNthTriple n fn lst =
+    if n < 3 then
+        case lst of
+            ( p, q, r ) :: tl ->
+                if n == 0 then
+                    ( fn p, q, r ) :: tl
+                else if n == 1 then
+                    ( p, fn q, r ) :: tl
+                else
+                    ( p, q, fn r ) :: tl
 
-        hd :: tl ->
-            if List.length hd.points > n then
-                { kind = hd.kind, points = replaceNth n fn hd.points } :: tl
-            else
-                hd :: replacePathNth (n - List.length hd.points) fn tl
+            [] ->
+                []
+    else
+        case lst of
+            hd :: tl ->
+                hd :: replaceNthTriple (n - 3) fn tl
+
+            [] ->
+                lst
+
+
+tupleMap : (a -> a) -> List ( a, a ) -> List ( a, a )
+tupleMap fn lst =
+    List.map
+        (\k ->
+            case k of
+                ( p, q ) ->
+                    ( fn p, fn q )
+        )
+        lst
+
+
+tripleMap : (a -> a) -> List ( a, a, a ) -> List ( a, a, a )
+tripleMap fn lst =
+    List.map
+        (\k ->
+            case k of
+                ( p, q, r ) ->
+                    ( fn p, fn q, fn r )
+        )
+        lst
+
+third : (a,a,a) -> a
+third triple = case triple of
+    (p,q,r) -> r
 
 
 limit : comparable -> comparable -> comparable -> comparable

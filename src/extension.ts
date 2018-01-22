@@ -6,6 +6,7 @@ import * as path from "path";
 import * as yaml from "js-yaml";
 import {render} from "ejs";
 import * as SvgoConstructor from "svgo";
+import * as svgpath from "svgpath";
 
 export function activate(context: vscode.ExtensionContext) {
 
@@ -41,8 +42,12 @@ export function activate(context: vscode.ExtensionContext) {
     }
 
     private createCssSnippet(): string {
-      const svg = this.editor.document.getText();
-      const external2 = externalJs.replace("{{svg}}", svg.replace(/`/g, ""));
+      // 前処理
+      const svg = this.editor.document.getText()
+        .replace(/`/g, "")
+        // パス文字列について、絶対座標にしてHとVをLに変換（乱暴）
+        .replace(/\s+d\s*=\s*"([^"]+)"/g, (match, p1) => " d=\"" + <any>svgpath(p1).abs().rotate(0.00001).toString() + "\"");
+      const external2 = externalJs.replace("{{svg}}", svg);
       const html = render(viewer, {
         main: mainJs,
         externals: external2,

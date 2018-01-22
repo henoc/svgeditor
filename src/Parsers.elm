@@ -5,9 +5,12 @@ import Color.Convert exposing (..)
 import Combinators exposing (..)
 import Debug
 import Dict exposing (Dict)
+import Path.LowLevel.Parser as PathParser
 import Types exposing (..)
 import Utils
 import XmlParser
+import Paths
+import Tuple exposing (..)
 
 
 -- Non-Parsers
@@ -160,16 +163,6 @@ pointPairParser =
 pointsParser : Parser (List ( Float, Float ))
 pointsParser =
     rep pointPairParser
-
-
-pathOpParser : Parser PathOperator
-pathOpParser =
-    andThen (regexParser "[a-zA-Z]") pointsParser |> Combinators.map (\( o, p ) -> { kind = o, points = p })
-
-
-pathOpsParser : Parser (List PathOperator)
-pathOpsParser =
-    rep pathOpParser
 
 
 getAttr : String -> List XmlParser.Attribute -> Maybe String
@@ -405,18 +398,13 @@ convertNode id node =
                     "path" ->
                         let
                             pathOps =
-                                case pathOpsParser <| input (Maybe.withDefault "" (getAttr "d" attrs)) "[\\s,]+" of
-                                    ParseSuccess r i ->
-                                        r
-
-                                    ParseFailure _ _ ->
-                                        []
+                                getAttr "d" attrs |> Maybe.map (PathParser.parse >> Result.withDefault []) |> Maybe.withDefault []
                         in
                         ( id + 1
                         , { style = styleMap
                           , id = id
                           , attr = attrMap
-                          , shape = Path { operators = List.reverse pathOps }
+                          , shape = Path { subPaths = pathOps }
                           }
                         )
 
