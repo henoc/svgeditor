@@ -493,9 +493,12 @@ tripleMap fn lst =
         )
         lst
 
-third : (a,a,a) -> a
-third triple = case triple of
-    (p,q,r) -> r
+
+third : ( a, a, a ) -> a
+third triple =
+    case triple of
+        ( p, q, r ) ->
+            r
 
 
 limit : comparable -> comparable -> comparable -> comparable

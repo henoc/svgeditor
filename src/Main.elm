@@ -165,6 +165,13 @@ update msg model =
                     in
                     newModel ! [ Utils.reflectSvgData newModel ]
 
+                ShapeToPath ->
+                    let
+                        newModel =
+                            Actions.shapeToPath model
+                    in
+                    newModel ! [ Utils.reflectSvgData newModel ]
+
         OnMouse onMouseMsg ->
             case model.mode of
                 HandMode ->
@@ -868,6 +875,7 @@ view model =
                 , Button.render Mdl [ 101 ] model.mdl [ buttonCss, Options.onClick <| OnAction <| Delete ] [ text "delete" ]
                 , Button.render Mdl [ 102 ] model.mdl [ buttonCss, Options.onClick <| OnAction <| BringForward ] [ text "bring forward" ]
                 , Button.render Mdl [ 103 ] model.mdl [ buttonCss, Options.onClick <| OnAction <| SendBackward ] [ text "send backward" ]
+                , Button.render Mdl [ 104 ] model.mdl [ buttonCss, Options.onClick <| OnAction <| ShapeToPath ] [ text "object to path" ]
                 ]
             ]
          ]

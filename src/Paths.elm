@@ -2,9 +2,10 @@ module Paths exposing (..)
 
 import List.Extra
 import Path.LowLevel exposing (..)
+import Tuple exposing (..)
+import Types exposing (..)
 import Utils
 import Vec2 exposing (..)
-import Tuple exposing (..)
 
 
 movetoToPoint : MoveTo -> Coordinate
@@ -377,3 +378,84 @@ add drawto subPaths =
         _ ->
             subPaths
 
+
+
+-- 基本図形をパスへ
+
+
+shapeToPath : SVGElement -> SVGElement
+shapeToPath svg =
+    case svg of
+        Rectangle { leftTop, size } ->
+            let
+                x =
+                    first leftTop
+
+                y =
+                    second leftTop
+            in
+            Path
+                { subPaths =
+                    [ { moveto = MoveTo Absolute ( x, y )
+                      , drawtos =
+                            [ LineTo Absolute
+                                [ ( x + first size, y )
+                                , ( x + first size, y + second size )
+                                , ( x, y + second size )
+                                ]
+                            , ClosePath
+                            ]
+                      }
+                    ]
+                }
+
+        Polygon { points, enclosed } ->
+            case points of
+                hd1 :: hd2 :: tl ->
+                    Path
+                        { subPaths =
+                            [ { moveto = MoveTo Absolute hd1
+                              , drawtos =
+                                    [ LineTo Absolute (hd2 :: tl) ]
+                                        ++ (if enclosed then
+                                                [ ClosePath ]
+                                            else
+                                                []
+                                           )
+                              }
+                            ]
+                        }
+
+                _ ->
+                    svg
+
+        Ellipse { center, size } ->
+            let
+                cx =
+                    first center
+
+                cy =
+                    second center
+
+                rx =
+                    first size / 2
+
+                ry =
+                    second size / 2
+            in
+            Path
+                { subPaths =
+                    [ { moveto = MoveTo Absolute ( cx, cy - ry )
+                      , drawtos =
+                            [ EllipticalArc Absolute
+                                [ { radii = ( rx, ry ), xAxisRotate = 0, arcFlag = LargestArc, direction = CounterClockwise, target = ( cx, cy + ry ) }
+                                , { radii = ( rx, ry ), xAxisRotate = 0, arcFlag = LargestArc, direction = CounterClockwise, target = ( cx, cy - ry ) }
+                                ]
+                            , ClosePath
+                            ]
+                      }
+                    ]
+                }
+
+        _ ->
+            svg

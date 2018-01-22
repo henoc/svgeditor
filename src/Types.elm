@@ -135,6 +135,7 @@ type Action
     | Delete
     | BringForward
     | SendBackward
+    | ShapeToPath
 
 
 type alias Box =
