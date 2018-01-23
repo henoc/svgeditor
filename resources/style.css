@@ -2,16 +2,19 @@
   position: relative;
   margin: 10px;
 }
-svg {
+
+#svg-color-layer,#svg-physics-layer {
   position: absolute;
   left: 0px;
   top: 0px;
 }
+
 #svgimage {
   position: absolute;
   left: 0px;
   top: 0px;
 }
+
 .circle {
   width: 56px;
   height: 56px;
@@ -24,4 +27,23 @@ svg {
   height: 36px;
   border-radius: 36px;
   margin: 1em;
+}
+
+.button {
+  display: inline-block;
+  padding: 0.5em;
+  text-align: center;
+  border-radius: 0.1em;
+}
+
+.button:hover {
+  background-color: rgba(255, 255, 255, 0.1)
+}
+
+.button:active {
+  background-color: rgba(255, 255, 255, 0.2)
+}
+
+.button-toggled,.button-toggled:hover {
+  background-color: #3F51B5;
 }

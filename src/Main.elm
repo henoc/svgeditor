@@ -35,6 +35,7 @@ import Utils
 import Utils2
 import Vec2 exposing (..)
 import ViewBuilder
+import ViewParts
 
 
 main : Program Never Model Msg
@@ -770,13 +771,15 @@ view model =
                     []
                 , -- 色取得用svg
                   svg
-                    [ width (toString <| Tuple.first <| Utils.getSvgSize model)
+                    [ id "svg-color-layer"
+                    , width (toString <| Tuple.first <| Utils.getSvgSize model)
                     , height (toString <| Tuple.second <| Utils.getSvgSize model)
                     ]
                     (List.map (ViewBuilder.build ColorLayer model) (Utils.getElems model))
                 , -- 当たり判定用svg
                   svg
-                    [ width (toString <| Tuple.first <| Utils.getSvgSize model)
+                    [ id "svg-physics-layer"
+                    , width (toString <| Tuple.first <| Utils.getSvgSize model)
                     , height (toString <| Tuple.second <| Utils.getSvgSize model)
                     , Utils.onFieldMouseDown FieldSelect
                     ]
@@ -854,29 +857,22 @@ view model =
     in
     div []
         ([ div []
-            [ let
-                isSelected mode =
-                    if mode == model.mode then
-                        [ Button.colored, Button.raised ]
-                    else
-                        []
-              in
-              div []
-                [ Button.render Mdl [ 0 ] model.mdl ([ buttonCss, Options.onClick <| OnProperty <| SwichMode HandMode ] ++ isSelected HandMode) [ text "select" ]
-                , Button.render Mdl [ 1 ] model.mdl ([ buttonCss, Options.onClick <| OnProperty <| SwichMode NodeMode ] ++ isSelected NodeMode) [ text "node" ]
-                , Button.render Mdl [ 2 ] model.mdl ([ buttonCss, Options.onClick <| OnProperty <| SwichMode RectMode ] ++ isSelected RectMode) [ text "rectangle" ]
-                , Button.render Mdl [ 3 ] model.mdl ([ buttonCss, Options.onClick <| OnProperty <| SwichMode EllipseMode ] ++ isSelected EllipseMode) [ text "ellipse" ]
-                , Button.render Mdl [ 4 ] model.mdl ([ buttonCss, Options.onClick <| OnProperty <| SwichMode PolygonMode ] ++ isSelected PolygonMode) [ text "polygon" ]
-                , Button.render Mdl [ 5 ] model.mdl ([ buttonCss, Options.onClick <| OnProperty <| SwichMode PathMode ] ++ isSelected PathMode) [ text "path" ]
-                , Button.render Mdl [ 6 ] model.mdl ([ buttonCss, Options.onClick <| OnProperty <| SwichMode GradientMode ] ++ isSelected GradientMode) [ text "gradient" ]
-                ]
+            [ div []
+                (Utils.flattenList [ ViewParts.selectButton model
+                , ViewParts.nodeButton model
+                , ViewParts.rectButton  model
+                , ViewParts.ellipseButton  model
+                , ViewParts.polygonButton  model
+                , ViewParts.pathButton  model
+                , ViewParts.gradientButton  model
+                ])
             , div []
-                [ Button.render Mdl [ 100 ] model.mdl [ buttonCss, Options.onClick <| OnAction <| Duplicate ] [ text "duplicate" ]
-                , Button.render Mdl [ 101 ] model.mdl [ buttonCss, Options.onClick <| OnAction <| Delete ] [ text "delete" ]
-                , Button.render Mdl [ 102 ] model.mdl [ buttonCss, Options.onClick <| OnAction <| BringForward ] [ text "bring forward" ]
-                , Button.render Mdl [ 103 ] model.mdl [ buttonCss, Options.onClick <| OnAction <| SendBackward ] [ text "send backward" ]
-                , Button.render Mdl [ 104 ] model.mdl [ buttonCss, Options.onClick <| OnAction <| ShapeToPath ] [ text "object to path" ]
-                ]
+                (Utils.flattenList [ ViewParts.duplicateButton model
+                , ViewParts.deleteButton model
+                , ViewParts.bringForwardButton model
+                , ViewParts.sendBackwardButton model
+                , ViewParts.shapeToPathButton model
+                ])
             ]
          ]
             ++ (case model.mode of
