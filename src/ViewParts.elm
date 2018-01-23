@@ -23,10 +23,10 @@ toggled mode now =
 
 makeMenu : Int -> Mode -> String -> Model -> String -> List (Html Msg)
 makeMenu i mode description model dstring =
-    [Options.div
+    [ Options.div
         ([ Options.attribute (class "button")
-         , Options.onClick <| OnProperty <| SwichMode mode,
-           Tooltip.attach Mdl [i]
+         , Options.onClick <| OnProperty <| SwichMode mode
+         , Tooltip.attach Mdl [ i ]
          ]
             ++ toggled mode model.mode
         )
@@ -34,7 +34,9 @@ makeMenu i mode description model dstring =
             [ path [ fill "currentColor", d dstring ] []
             ]
         ]
-      , Tooltip.render Mdl [i] model.mdl
+    , Tooltip.render Mdl
+        [ i ]
+        model.mdl
         []
         [ text description ]
     ]
@@ -42,16 +44,18 @@ makeMenu i mode description model dstring =
 
 makeAction : Int -> Action -> String -> Model -> String -> List (Html Msg)
 makeAction i action description model dstring =
-    [Options.div
+    [ Options.div
         [ Options.attribute (class "button")
-        , Options.onClick <| OnAction <| action,
-          Tooltip.attach Mdl [i]
+        , Options.onClick <| OnAction <| action
+        , Tooltip.attach Mdl [ i ]
         ]
         [ svg [ width "24", height "24", viewBox "0 0 24 24" ]
             [ path [ fill "currentColor", d dstring ] []
             ]
         ]
-      , Tooltip.render Mdl [i] model.mdl
+    , Tooltip.render Mdl
+        [ i ]
+        model.mdl
         []
         [ text description ]
     ]

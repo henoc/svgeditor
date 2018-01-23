@@ -229,6 +229,9 @@ buildVertexes model =
             , ( (left + right) / 2, bottom )
             , ( right, bottom )
             ]
+
+        rotatePos =
+            ( (left + right) / 2, top - (bottom - top) / 2 )
     in
     if List.length svglst == 0 then
         []
@@ -240,14 +243,24 @@ buildVertexes model =
                         [ cx <| toString (first pos)
                         , cy <| toString (second pos)
                         , r "5"
-                        , fill "#AA5533"
-                        , stroke "#553311"
+                        , fill "#DDDDDD"
+                        , stroke "#000000"
                         , Utils.onItemMouseDown <| \( shift, pos ) -> OnVertex anti pos
                         ]
                         []
             )
             positions
             (List.reverse positions)
+            ++ [ circle
+                    [ cx <| toString <| first rotatePos
+                    , cy <| toString <| second rotatePos
+                    , r "7"
+                    , fill "#DDDDDD"
+                    , stroke "#000000"
+                    , Utils.onItemMouseDown <| \( shift, pos ) -> OnRotateVertex pos
+                    ]
+                    []
+               ]
 
 
 
@@ -279,8 +292,8 @@ buildNodes model =
                     [ cx <| toString (first pos)
                     , cy <| toString (second pos)
                     , r "5"
-                    , fill "#AA5533"
-                    , stroke "#553311"
+                    , fill "#DDDDDD"
+                    , stroke "#000000"
                     , Utils.onItemMouseDown <| \( shift, pos ) -> OnNode pos nodeId
                     ]
                     []

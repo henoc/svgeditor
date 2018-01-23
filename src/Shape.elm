@@ -152,6 +152,39 @@ setOffsettedCenter offsettedCent offset elem =
 
 
 
+-- 回転
+
+
+rotate : Float -> StyledSVGElement -> StyledSVGElement
+rotate angle elem =
+    let
+        center =
+            getCenter elem
+
+        rotated =
+            { elem
+                | shape =
+                    case elem.shape of
+                        Path { subPaths } ->
+                            Path { subPaths = Paths.rotate angle center subPaths }
+
+                        others ->
+                            let
+                                path =
+                                    Paths.shapeToPath elem.shape
+                            in
+                            case path of
+                                Path { subPaths } ->
+                                    Path { subPaths = Paths.rotate angle center subPaths }
+
+                                _ ->
+                                    elem.shape
+            }
+    in
+    rotated
+
+
+
 -- 図形中心を中心として縮尺を変更
 
 

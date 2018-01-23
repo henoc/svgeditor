@@ -5,6 +5,7 @@ import Dict exposing (Dict)
 import Set exposing (Set)
 import Shape
 import ShapeList
+import Tuple exposing (..)
 import Types exposing (..)
 import Utils
 import Vec2 exposing (..)
@@ -19,65 +20,74 @@ update msg model =
                     model
 
                 Just dragBegin ->
-                    case model.fixedPoint of
-                        Nothing ->
-                            -- posとの差分だけ図形を動かす
+                    case model.isRotate of
+                        True ->
                             let
-                                selected =
-                                    model.selected
-
-                                modelsvg =
-                                    model.svg
-
-                                moved =
-                                    List.map (\e -> Shape.translate (pos -# dragBegin) e) model.selectedRef
+                                rotated =
+                                    List.map (Shape.rotate (first (pos -# dragBegin) / 90)) model.selectedRef
 
                                 newElems =
                                     Utils.replace
                                         (\elem -> Set.member elem.id model.selected)
-                                        moved
+                                        rotated
                                         (Utils.getElems model)
                             in
-                            { model
-                                | svg = Utils.changeContains newElems modelsvg
-                            }
+                            { model | svg = Utils.changeContains newElems model.svg }
 
-                        Just fixed ->
-                            -- posとの差分だけ縮尺を変更
-                            let
-                                delta =
-                                    pos -# dragBegin
+                        False ->
+                            case model.fixedPoint of
+                                Nothing ->
+                                    -- posとの差分だけ図形を動かす
+                                    let
+                                        moved =
+                                            List.map (Shape.translate (pos -# dragBegin)) model.selectedRef
 
-                                selectedElems =
-                                    model.selectedRef
+                                        newElems =
+                                            Utils.replace
+                                                (\elem -> Set.member elem.id model.selected)
+                                                moved
+                                                (Utils.getElems model)
+                                    in
+                                    { model
+                                        | svg = Utils.changeContains newElems model.svg
+                                    }
 
-                                cent =
-                                    ShapeList.getCenter selectedElems
+                                Just fixed ->
+                                    -- posとの差分だけ縮尺を変更
+                                    let
+                                        delta =
+                                            pos -# dragBegin
 
-                                antiFixed =
-                                    cent *# ( 2, 2 ) -# fixed
+                                        selectedElems =
+                                            model.selectedRef
 
-                                newAntiFixed =
-                                    antiFixed +# delta
+                                        cent =
+                                            ShapeList.getCenter selectedElems
 
-                                ratio =
-                                    Utils.ratio (newAntiFixed -# fixed) (antiFixed -# fixed)
+                                        antiFixed =
+                                            cent *# ( 2, 2 ) -# fixed
 
-                                newSelectedElems =
-                                    ShapeList.scale2 (fixed -# cent) ratio selectedElems
+                                        newAntiFixed =
+                                            antiFixed +# delta
 
-                                newElems =
-                                    Utils.replace
-                                        (\elem -> Set.member elem.id model.selected)
-                                        newSelectedElems
-                                        (Utils.getElems model)
+                                        ratio =
+                                            Utils.ratio (newAntiFixed -# fixed) (antiFixed -# fixed)
 
-                                modelsvg =
-                                    model.svg
-                            in
-                            { model
-                                | svg = Utils.changeContains newElems modelsvg
-                            }
+                                        newSelectedElems =
+                                            ShapeList.scale2 (fixed -# cent) ratio selectedElems
+
+                                        newElems =
+                                            Utils.replace
+                                                (\elem -> Set.member elem.id model.selected)
+                                                newSelectedElems
+                                                (Utils.getElems model)
+
+                                        modelsvg =
+                                            model.svg
+                                    in
+                                    { model
+                                        | svg = Utils.changeContains newElems modelsvg
+                                    }
 
         MouseUp _ ->
             let
@@ -88,6 +98,7 @@ update msg model =
                 | dragBegin = Nothing
                 , fixedPoint = Nothing
                 , selectedRef = selectedRef
+                , isRotate = False
             }
 
         _ ->
@@ -148,3 +159,8 @@ changeStyle styleInfo model =
         , styleInfo = styleInfo
         , selectedRef = changed
     }
+
+
+rotate : Vec2 -> Model -> Model
+rotate mpos model =
+    { model | isRotate = True, dragBegin = Just mpos }

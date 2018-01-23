@@ -76,6 +76,7 @@ type alias Model =
       gradIdGen : Int
     , gradientPanel : Ui.ColorPanel.Model
     , gradientPanelLink : Maybe ( String, Int ) -- ident, stopsのindex
+    , isRotate : Bool
     }
 
 
@@ -98,6 +99,7 @@ type Msg
     | OnSelect Int Bool Vec2
     | FieldSelect ( Int, Vec2 )
     | OnVertex Vec2 Vec2
+    | OnRotateVertex Vec2
     | OnNode Vec2 Int
     | SvgData String
     | EncodedSvgData String

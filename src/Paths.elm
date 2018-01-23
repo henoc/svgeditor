@@ -1,11 +1,13 @@
 module Paths exposing (..)
 
 import List.Extra
+import Matrix3 exposing (Mat3)
 import Path.LowLevel exposing (..)
 import Tuple exposing (..)
 import Types exposing (..)
 import Utils
 import Vec2 exposing (..)
+import Vector3 exposing (Vec3)
 
 
 movetoToPoint : MoveTo -> Coordinate
@@ -488,3 +490,21 @@ shapeToPath svg =
 
         _ ->
             svg
+
+
+rotate : Float -> Vec2 -> List SubPath -> List SubPath
+rotate angle center subPathes =
+    let
+        translate vec2 =
+            ( ( 1, 0, first vec2 ), ( 0, 1, second vec2 ), ( 0, 0, 1 ) )
+
+        rotate a =
+            ( ( cos a, -(sin a), 0 ), ( sin a, cos a, 0 ), ( 0, 0, 1 ) )
+
+        rotateFn vec2 =
+            Matrix3.mulVector (translate ( -(first center), -(second center) )) ( first vec2, second vec2, 1 )
+                |> Matrix3.mulVector (rotate angle)
+                |> Matrix3.mulVector (translate center)
+                |> (\ret -> ( Vector3.getX ret, Vector3.getY ret ))
+    in
+    generic rotateFn subPathes

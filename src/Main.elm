@@ -74,6 +74,7 @@ init =
     , gradIdGen = 0
     , gradientPanel = Ui.ColorPanel.init ()
     , gradientPanelLink = Nothing
+    , isRotate = False
     }
         ! [ Utils.getSvgData () ]
 
@@ -311,6 +312,14 @@ update msg model =
             case model.mode of
                 HandMode ->
                     HandMode.scale fixed mpos model ! []
+
+                _ ->
+                    model ! []
+
+        OnRotateVertex mpos ->
+            case model.mode of
+                HandMode ->
+                    HandMode.rotate mpos model ! []
 
                 _ ->
                     model ! []
@@ -858,21 +867,25 @@ view model =
     div []
         ([ div []
             [ div []
-                (Utils.flattenList [ ViewParts.selectButton model
-                , ViewParts.nodeButton model
-                , ViewParts.rectButton  model
-                , ViewParts.ellipseButton  model
-                , ViewParts.polygonButton  model
-                , ViewParts.pathButton  model
-                , ViewParts.gradientButton  model
-                ])
+                (Utils.flattenList
+                    [ ViewParts.selectButton model
+                    , ViewParts.nodeButton model
+                    , ViewParts.rectButton model
+                    , ViewParts.ellipseButton model
+                    , ViewParts.polygonButton model
+                    , ViewParts.pathButton model
+                    , ViewParts.gradientButton model
+                    ]
+                )
             , div []
-                (Utils.flattenList [ ViewParts.duplicateButton model
-                , ViewParts.deleteButton model
-                , ViewParts.bringForwardButton model
-                , ViewParts.sendBackwardButton model
-                , ViewParts.shapeToPathButton model
-                ])
+                (Utils.flattenList
+                    [ ViewParts.duplicateButton model
+                    , ViewParts.deleteButton model
+                    , ViewParts.bringForwardButton model
+                    , ViewParts.sendBackwardButton model
+                    , ViewParts.shapeToPathButton model
+                    ]
+                )
             ]
          ]
             ++ (case model.mode of
