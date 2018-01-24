@@ -44,6 +44,7 @@ You can create shapes using the SVG's coder or directly creating shapes with the
 
 ## ChangeLog
 
+- 0.13.0 Support align
 - 0.12.0 Implement rotation again
 - 0.11.0 Support "object to path" operation
 - 0.10.2 Fix path bug
