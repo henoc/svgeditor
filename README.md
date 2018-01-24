@@ -39,11 +39,12 @@ You can create shapes using the SVG's coder or directly creating shapes with the
 - [ ] unit
 - [x] Gradation colors
 - [ ] Transform attribute
-- [ ] Zoom
+- [x] Zoom
 - [ ] Handle images
 
 ## ChangeLog
 
+- 0.14.0 Support scale-up and scale-down
 - 0.13.0 Support align
 - 0.12.0 Implement rotation again
 - 0.11.0 Support "object to path" operation
