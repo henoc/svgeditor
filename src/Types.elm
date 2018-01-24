@@ -138,6 +138,8 @@ type Action
     | BringForward
     | SendBackward
     | ShapeToPath
+    | AlignLeft
+    | AlignRight
 
 
 type alias Box =
