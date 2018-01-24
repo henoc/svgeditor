@@ -119,3 +119,19 @@ sendBackwardButton model =
 shapeToPathButton : Model -> List (Html Msg)
 shapeToPathButton model =
     makeAction 104 ShapeToPath "Object to path" model "M3,8H5V16H3V8M7,8H9V16H7V8M11,8H13V16H11V8M15,19.25V4.75L22.25,12L15,19.25Z"
+
+alignLeftButton: Model -> List (Html Msg)
+alignLeftButton model =
+    makeAction 105 AlignLeft "Align left" model "M3,3H21V5H3V3M3,7H15V9H3V7M3,11H21V13H3V11M3,15H15V17H3V15M3,19H21V21H3V19Z"
+
+alignRightButton: Model -> List (Html Msg)
+alignRightButton model =
+    makeAction 106 AlignRight "Align right" model "M3,3H21V5H3V3M9,7H21V9H9V7M3,11H21V13H3V11M9,15H21V17H9V15M3,19H21V21H3V19Z"
+
+alignTopButton: Model -> List (Html Msg)
+alignTopButton model =
+    makeAction 107 AlignTop "Align top" model "M3 22.4v-18h2v18H3m3.8-6l.1-12h2l-.1 12h-2m4.3 6l-.2-18h2l.2 18h-2m3.7-6l.1-12h2l-.1 12h-2m4.3 6l-.2-18h2l.2 18h-2z"
+
+alignBottomButton: Model -> List (Html Msg)
+alignBottomButton model =
+    makeAction 108 AlignBottom "Align bottom" model "M20.9 4.4l.2 18h-2l-.2-18h2m-3.6 6l-.2 12h-2l.2-12h2m-4.4-6l.2 18h-2l-.2-18h2m-3.6 6l-.2 12h-2l.2-12h2m-4.4-6l.2 18h-2L3 4.5h2z"
