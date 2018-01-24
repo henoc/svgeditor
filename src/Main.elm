@@ -185,6 +185,18 @@ update msg model =
                         newModel = Actions.alignRight model
                     in
                     newModel ! [ Utils.reflectSvgData newModel ]
+                
+                AlignTop ->
+                    let
+                        newModel = Actions.alignTop model
+                    in
+                    newModel ! [ Utils.reflectSvgData newModel ]
+                
+                AlignBottom ->
+                    let
+                        newModel = Actions.alignBottom model
+                    in
+                    newModel ! [ Utils.reflectSvgData newModel ]
 
         OnMouse onMouseMsg ->
             case model.mode of
@@ -897,6 +909,8 @@ view model =
                     , ViewParts.sendBackwardButton model
                     , ViewParts.alignLeftButton model
                     , ViewParts.alignRightButton model
+                    , ViewParts.alignTopButton model
+                    , ViewParts.alignBottomButton model
                     , ViewParts.shapeToPathButton model
                     ]
                 )

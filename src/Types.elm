@@ -140,6 +140,8 @@ type Action
     | ShapeToPath
     | AlignLeft
     | AlignRight
+    | AlignTop
+    | AlignBottom
 
 
 type alias Box =
