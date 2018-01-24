@@ -13,6 +13,10 @@ import Vec2 exposing (..)
 
 update : MouseMsg -> Model -> Model
 update msg model =
+    let
+        scaleRevision vec2 =
+            vec2 /# ( model.scale, model.scale )
+    in
     case msg of
         MouseMove pos ->
             case model.dragBegin of
@@ -24,7 +28,7 @@ update msg model =
                         True ->
                             let
                                 rotated =
-                                    List.map (Shape.rotate (first (pos -# dragBegin) / 90)) model.selectedRef
+                                    List.map (Shape.rotate (((pos -# dragBegin) |> scaleRevision |> first) / 90)) model.selectedRef
 
                                 newElems =
                                     Utils.replace
@@ -40,7 +44,7 @@ update msg model =
                                     -- posとの差分だけ図形を動かす
                                     let
                                         moved =
-                                            List.map (Shape.translate (pos -# dragBegin)) model.selectedRef
+                                            List.map (Shape.translate ((pos -# dragBegin) |> scaleRevision)) model.selectedRef
 
                                         newElems =
                                             Utils.replace
@@ -56,7 +60,7 @@ update msg model =
                                     -- posとの差分だけ縮尺を変更
                                     let
                                         delta =
-                                            pos -# dragBegin
+                                            (pos -# dragBegin) |> scaleRevision
 
                                         selectedElems =
                                             model.selectedRef

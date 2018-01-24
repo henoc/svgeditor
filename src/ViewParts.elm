@@ -120,18 +120,32 @@ shapeToPathButton : Model -> List (Html Msg)
 shapeToPathButton model =
     makeAction 104 ShapeToPath "Object to path" model "M3,8H5V16H3V8M7,8H9V16H7V8M11,8H13V16H11V8M15,19.25V4.75L22.25,12L15,19.25Z"
 
-alignLeftButton: Model -> List (Html Msg)
+
+alignLeftButton : Model -> List (Html Msg)
 alignLeftButton model =
     makeAction 105 AlignLeft "Align left" model "M3,3H21V5H3V3M3,7H15V9H3V7M3,11H21V13H3V11M3,15H15V17H3V15M3,19H21V21H3V19Z"
 
-alignRightButton: Model -> List (Html Msg)
+
+alignRightButton : Model -> List (Html Msg)
 alignRightButton model =
     makeAction 106 AlignRight "Align right" model "M3,3H21V5H3V3M9,7H21V9H9V7M3,11H21V13H3V11M9,15H21V17H9V15M3,19H21V21H3V19Z"
 
-alignTopButton: Model -> List (Html Msg)
+
+alignTopButton : Model -> List (Html Msg)
 alignTopButton model =
     makeAction 107 AlignTop "Align top" model "M3 22.4v-18h2v18H3m3.8-6l.1-12h2l-.1 12h-2m4.3 6l-.2-18h2l.2 18h-2m3.7-6l.1-12h2l-.1 12h-2m4.3 6l-.2-18h2l.2 18h-2z"
 
-alignBottomButton: Model -> List (Html Msg)
+
+alignBottomButton : Model -> List (Html Msg)
 alignBottomButton model =
     makeAction 108 AlignBottom "Align bottom" model "M20.9 4.4l.2 18h-2l-.2-18h2m-3.6 6l-.2 12h-2l.2-12h2m-4.4-6l.2 18h-2l-.2-18h2m-3.6 6l-.2 12h-2l.2-12h2m-4.4-6l.2 18h-2L3 4.5h2z"
+
+
+scaleUpButton : Model -> List (Html Msg)
+scaleUpButton model =
+    makeAction 109 ScaleUp "Scale-up" model "M15.5,14L20.5,19L19,20.5L14,15.5V14.71L13.73,14.43C12.59,15.41 11.11,16 9.5,16A6.5,6.5 0 0,1 3,9.5A6.5,6.5 0 0,1 9.5,3A6.5,6.5 0 0,1 16,9.5C16,11.11 15.41,12.59 14.43,13.73L14.71,14H15.5M9.5,14C12,14 14,12 14,9.5C14,7 12,5 9.5,5C7,5 5,7 5,9.5C5,12 7,14 9.5,14M12,10H10V12H9V10H7V9H9V7H10V9H12V10Z"
+
+
+scaleDownButton : Model -> List (Html Msg)
+scaleDownButton model =
+    makeAction 110 ScaleDown "Scale-down" model "M15.5,14H14.71L14.43,13.73C15.41,12.59 16,11.11 16,9.5A6.5,6.5 0 0,0 9.5,3A6.5,6.5 0 0,0 3,9.5A6.5,6.5 0 0,0 9.5,16C11.11,16 12.59,15.41 13.73,14.43L14,14.71V15.5L19,20.5L20.5,19L15.5,14M9.5,14C7,14 5,12 5,9.5C5,7 7,5 9.5,5C12,5 14,7 14,9.5C14,12 12,14 9.5,14M7,9H12V10H7V9Z"

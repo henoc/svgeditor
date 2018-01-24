@@ -43,6 +43,10 @@ nodeSelect nodeId mpos model =
 
 update : MouseMsg -> Model -> Model
 update msg model =
+    let
+        scaleRevision vec2 =
+            vec2 /# ( model.scale, model.scale )
+    in
     case msg of
         MouseMove pos ->
             case model.nodeId of
@@ -64,7 +68,7 @@ update msg model =
                                     -- selectedRef, selected は handmodeのものを流用
                                     let
                                         nodeMoved =
-                                            Shape.replaceNode nodeId (\pre -> pos -# dragBegin +# pre) selectedRef
+                                            Shape.replaceNode nodeId (\pre -> ((pos -# dragBegin) |> scaleRevision) +# pre) selectedRef
 
                                         newElems =
                                             Utils.replace
