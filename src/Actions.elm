@@ -5,6 +5,9 @@ import Set exposing (Set)
 import Traverse
 import Types exposing (..)
 import Utils
+import Shape
+import Tuple exposing (..)
+import Vec2 exposing (..)
 
 
 duplicate : Model -> Model
@@ -98,3 +101,104 @@ shapeToPath model =
             Traverse.traverse process model.svg
     in
     { model | svg = newSvg }
+
+alignLeft: Model -> Model
+alignLeft model =
+    let
+        elems =
+            Utils.getElems model
+        mostLeft =
+            elems |> List.map Shape.getBBox |> List.map .leftTop |> List.map first |> List.minimum |> Maybe.withDefault 0
+        process : StyledSVGElement -> StyledSVGElement
+        process elem =
+            if Set.member elem.id model.selected then
+                let
+                    elemLeft = Shape.getBBox elem |> .leftTop |> first
+                    delta = (mostLeft - elemLeft, 0)
+                in
+                Shape.translate delta elem
+            else
+                elem
+
+        newSvg =
+            Traverse.traverse process model.svg
+        selectedRef =
+                List.filter (\e -> Set.member e.id model.selected) (Utils.getElems {model | svg = newSvg})
+    in
+    { model | svg = newSvg, selectedRef = selectedRef }
+
+
+alignRight: Model -> Model
+alignRight model =
+    let
+        elems =
+            Utils.getElems model
+        mostRight =
+            elems |> List.map Shape.getBBox |> List.map .rightBottom |> List.map first |> List.maximum |> Maybe.withDefault 0
+        process : StyledSVGElement -> StyledSVGElement
+        process elem =
+            if Set.member elem.id model.selected then
+                let
+                    elemRight = Shape.getBBox elem |> .rightBottom |> first
+                    delta = (mostRight - elemRight, 0)
+                in
+                Shape.translate delta elem
+            else
+                elem
+
+        newSvg =
+            Traverse.traverse process model.svg
+        selectedRef =
+                List.filter (\e -> Set.member e.id model.selected) (Utils.getElems {model | svg = newSvg})
+    in
+    { model | svg = newSvg, selectedRef = selectedRef }
+
+alignTop: Model -> Model
+alignTop model =
+    let
+        elems =
+            Utils.getElems model
+        mostTop =
+            elems |> List.map Shape.getBBox |> List.map .leftTop |> List.map second |> List.minimum |> Maybe.withDefault 0
+        process : StyledSVGElement -> StyledSVGElement
+        process elem =
+            if Set.member elem.id model.selected then
+                let
+                    elemTop = Shape.getBBox elem |> .leftTop |> second
+                    delta = (0, mostTop - elemTop)
+                in
+                Shape.translate delta elem
+            else
+                elem
+
+        newSvg =
+            Traverse.traverse process model.svg
+        selectedRef =
+                List.filter (\e -> Set.member e.id model.selected) (Utils.getElems {model | svg = newSvg})
+    in
+    { model | svg = newSvg, selectedRef = selectedRef }
+
+alignBottom: Model -> Model
+alignBottom model =
+    let
+        elems =
+            Utils.getElems model
+        mostBottom =
+            elems |> List.map Shape.getBBox |> List.map .rightBottom |> List.map second |> List.maximum |> Maybe.withDefault 0
+        process : StyledSVGElement -> StyledSVGElement
+        process elem =
+            if Set.member elem.id model.selected then
+                let
+                    elemBottom = Shape.getBBox elem |> .rightBottom |> second
+                    delta = (0, mostBottom - elemBottom)
+                in
+                Shape.translate delta elem
+            else
+                elem
+
+        newSvg =
+            Traverse.traverse process model.svg
+        selectedRef =
+                List.filter (\e -> Set.member e.id model.selected) (Utils.getElems {model | svg = newSvg})
+    in
+    { model | svg = newSvg, selectedRef = selectedRef }

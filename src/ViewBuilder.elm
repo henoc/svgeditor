@@ -348,7 +348,7 @@ colorPicker sty model =
             "display: flex"
     in
     [ div [ style flex ]
-        ([ Options.styled p [ Typo.subhead, Options.css "width" "60px" ] [ text <| sty ++ ":" ]
+        ([ Options.styled p [ Typo.body2, Options.css "width" "60px" ] [ text <| sty ]
          , Options.div
             [ if model.openedPicker == sty then
                 Elevation.e0

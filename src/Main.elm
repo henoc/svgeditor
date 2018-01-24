@@ -173,6 +173,30 @@ update msg model =
                             Actions.shapeToPath model
                     in
                     newModel ! [ Utils.reflectSvgData newModel ]
+                
+                AlignLeft ->
+                    let
+                        newModel = Actions.alignLeft model
+                    in
+                    newModel ! [ Utils.reflectSvgData newModel ]
+                
+                AlignRight ->
+                    let
+                        newModel = Actions.alignRight model
+                    in
+                    newModel ! [ Utils.reflectSvgData newModel ]
+                
+                AlignTop ->
+                    let
+                        newModel = Actions.alignTop model
+                    in
+                    newModel ! [ Utils.reflectSvgData newModel ]
+                
+                AlignBottom ->
+                    let
+                        newModel = Actions.alignBottom model
+                    in
+                    newModel ! [ Utils.reflectSvgData newModel ]
 
         OnMouse onMouseMsg ->
             case model.mode of
@@ -832,23 +856,23 @@ view model =
             [ div [] <| ViewBuilder.colorPicker "fill" model
             , div [] <| ViewBuilder.colorPicker "stroke" model
             , div [ style "display: flex" ]
-                [ Options.styled p [ Typo.subhead ] [ text <| "stroke-width:" ]
+                [ Options.styled p [ Typo.body2 ] [ text <| "stroke-width" ]
                 , Slider.view [ Slider.value (first sw), Slider.min 0, Slider.max 100, Slider.step 1, Slider.onChange (\n -> OnProperty <| Style <| Dict.insert "stroke-width" (toString n ++ Utils.valueUnitToStr (second sw)) styleInfo) ]
                 ]
             , div [ style "display: flex" ]
-                [ Options.styled p [ Typo.subhead ] [ text <| "stroke-linecap:" ]
+                [ Options.styled p [ Typo.body2 ] [ text <| "stroke-linecap" ]
                 , Toggles.radio Mdl [ 100 ] model.mdl [ Toggles.value (sc == "butt"), Toggles.group "stroke-linecap", Options.onToggle <| OnProperty <| Style <| Dict.insert "stroke-linecap" "butt" styleInfo ] [ text "butt" ]
                 , Toggles.radio Mdl [ 101 ] model.mdl [ Toggles.value (sc == "square"), Toggles.group "stroke-linecap", Options.onToggle <| OnProperty <| Style <| Dict.insert "stroke-linecap" "square" styleInfo ] [ text "square" ]
                 , Toggles.radio Mdl [ 102 ] model.mdl [ Toggles.value (sc == "round"), Toggles.group "stroke-linecap", Options.onToggle <| OnProperty <| Style <| Dict.insert "stroke-linecap" "round" styleInfo ] [ text "round" ]
                 ]
             , div [ style "display: flex" ]
-                [ Options.styled p [ Typo.subhead ] [ text <| "stroke-linejoin:" ]
+                [ Options.styled p [ Typo.body2 ] [ text <| "stroke-linejoin" ]
                 , Toggles.radio Mdl [ 103 ] model.mdl [ Toggles.value (sl == "miter"), Toggles.group "stroke-linejoin", Options.onToggle <| OnProperty <| Style <| Dict.insert "stroke-linejoin" "miter" styleInfo ] [ text "miter" ]
                 , Toggles.radio Mdl [ 104 ] model.mdl [ Toggles.value (sl == "round"), Toggles.group "stroke-linejoin", Options.onToggle <| OnProperty <| Style <| Dict.insert "stroke-linejoin" "round" styleInfo ] [ text "round" ]
                 , Toggles.radio Mdl [ 105 ] model.mdl [ Toggles.value (sl == "bevel"), Toggles.group "stroke-linejoin", Options.onToggle <| OnProperty <| Style <| Dict.insert "stroke-linejoin" "bevel" styleInfo ] [ text "bevel" ]
                 ]
             , div [ style "display: flex" ]
-                [ Options.styled p [ Typo.subhead ] [ text <| "stroke-dasharray:" ]
+                [ Options.styled p [ Typo.body2 ] [ text <| "stroke-dasharray" ]
                 , Slider.view [ Slider.value (first sd), Slider.min 0, Slider.max 100, Slider.step 1, Slider.onChange (\n -> OnProperty <| Style <| Dict.insert "stroke-dasharray" (toString n ++ Utils.valueUnitToStr (second sw)) styleInfo) ]
                 ]
             ]
@@ -883,6 +907,10 @@ view model =
                     , ViewParts.deleteButton model
                     , ViewParts.bringForwardButton model
                     , ViewParts.sendBackwardButton model
+                    , ViewParts.alignLeftButton model
+                    , ViewParts.alignRightButton model
+                    , ViewParts.alignTopButton model
+                    , ViewParts.alignBottomButton model
                     , ViewParts.shapeToPathButton model
                     ]
                 )
