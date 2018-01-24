@@ -9,6 +9,11 @@ import Utils
 import Vec2 exposing (..)
 
 
+scaleRevision : Model -> Vec2 -> Vec2
+scaleRevision model vec2 =
+    vec2 /# ( model.scale, model.scale )
+
+
 update : MouseMsg -> Model -> Model
 update msg model =
     case msg of
@@ -18,7 +23,7 @@ update msg model =
                     model.svg
 
                 correctedPos =
-                    pos -# ( model.clientLeft, model.clientTop )
+                    (pos -# ( model.clientLeft, model.clientTop )) |> scaleRevision model
             in
             { model
                 | dragBegin = Just <| correctedPos
@@ -47,7 +52,7 @@ update msg model =
         MouseMove pos ->
             let
                 correctedPos =
-                    pos -# ( model.clientLeft, model.clientTop )
+                    (pos -# ( model.clientLeft, model.clientTop )) |> scaleRevision model
             in
             case model.dragBegin of
                 Nothing ->
@@ -94,7 +99,7 @@ updatePolygon msg model =
         MouseDownLeft pos ->
             let
                 correctedPos =
-                    pos -# ( model.clientLeft, model.clientTop )
+                    (pos -# ( model.clientLeft, model.clientTop )) |> scaleRevision model
             in
             case model.dragBegin of
                 Nothing ->
@@ -151,7 +156,7 @@ updatePolygon msg model =
         MouseMove pos ->
             let
                 correctedPos =
-                    pos -# ( model.clientLeft, model.clientTop )
+                    (pos -# ( model.clientLeft, model.clientTop )) |> scaleRevision model
             in
             case model.dragBegin of
                 Nothing ->
@@ -200,7 +205,7 @@ updatePath msg model =
         MouseDownLeft pos ->
             let
                 correctedPos =
-                    pos -# ( model.clientLeft, model.clientTop )
+                    (pos -# ( model.clientLeft, model.clientTop )) |> scaleRevision model
             in
             case model.isMouseDown of
                 True ->
@@ -263,7 +268,7 @@ updatePath msg model =
         MouseMove pos ->
             let
                 correctedPos =
-                    pos -# ( model.clientLeft, model.clientTop )
+                    (pos -# ( model.clientLeft, model.clientTop )) |> scaleRevision model
 
                 operatorsFn =
                     if model.isMouseDown then
@@ -304,7 +309,7 @@ updatePath msg model =
         MouseUp pos ->
             let
                 correctedPos =
-                    pos -# ( model.clientLeft, model.clientTop )
+                    (pos -# ( model.clientLeft, model.clientTop )) |> scaleRevision model
             in
             case model.isMouseDown of
                 False ->

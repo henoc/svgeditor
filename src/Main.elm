@@ -23,6 +23,7 @@ import Material.Toggles as Toggles
 import Material.Typography as Typo
 import NodeMode
 import Parsers
+import Round
 import Set exposing (Set)
 import ShapeMode
 import Svg exposing (ellipse, rect, svg)
@@ -75,6 +76,7 @@ init =
     , gradientPanel = Ui.ColorPanel.init ()
     , gradientPanelLink = Nothing
     , isRotate = False
+    , scale = 1
     }
         ! [ Utils.getSvgData () ]
 
@@ -173,30 +175,48 @@ update msg model =
                             Actions.shapeToPath model
                     in
                     newModel ! [ Utils.reflectSvgData newModel ]
-                
+
                 AlignLeft ->
                     let
-                        newModel = Actions.alignLeft model
+                        newModel =
+                            Actions.alignLeft model
                     in
                     newModel ! [ Utils.reflectSvgData newModel ]
-                
+
                 AlignRight ->
                     let
-                        newModel = Actions.alignRight model
+                        newModel =
+                            Actions.alignRight model
                     in
                     newModel ! [ Utils.reflectSvgData newModel ]
-                
+
                 AlignTop ->
                     let
-                        newModel = Actions.alignTop model
+                        newModel =
+                            Actions.alignTop model
                     in
                     newModel ! [ Utils.reflectSvgData newModel ]
-                
+
                 AlignBottom ->
                     let
-                        newModel = Actions.alignBottom model
+                        newModel =
+                            Actions.alignBottom model
                     in
                     newModel ! [ Utils.reflectSvgData newModel ]
+
+                ScaleUp ->
+                    let
+                        newModel =
+                            Actions.scaleUp model
+                    in
+                    newModel ! []
+
+                ScaleDown ->
+                    let
+                        newModel =
+                            Actions.scaleDown model
+                    in
+                    newModel ! []
 
         OnMouse onMouseMsg ->
             case model.mode of
@@ -784,6 +804,16 @@ view model =
         buttonCss =
             Options.css "color" "currentColor"
 
+        svgWidth =
+            Utils.getSvgSize model |> first
+
+        svgHeight =
+            Utils.getSvgSize model |> second
+
+        -- 拡大率
+        scaleCss =
+            "transform-origin: left top; transform: scale(" ++ toString model.scale ++ ");"
+
         -- メニュー以外の部分
         rootDiv hide =
             Options.div
@@ -793,28 +823,38 @@ view model =
                     Options.css "display" "block"
                 , Elevation.e8
                 , Options.attribute <| Html.Attributes.id "root"
-                , Options.css "width" <| (toString <| Tuple.first <| Utils.getSvgSize model) ++ "px"
-                , Options.css "height" <| (toString <| Tuple.second <| Utils.getSvgSize model) ++ "px"
+                , Options.css "width" <| (toString <| (*) model.scale <| svgWidth) ++ "px"
+                , Options.css "height" <| (toString <| (*) model.scale <| svgHeight) ++ "px"
                 ]
                 [ -- 画像としてのsvg
                   img
                     [ id "svgimage"
                     , src <| model.encoded
+                    , style
+                        (if model.scale > 1 then
+                            scaleCss
+                         else
+                            ""
+                        )
+
+                    -- 画像は外側のdivに合わせて縮小されるため、二重に縮小されるのを防止する必要がある
                     ]
                     []
                 , -- 色取得用svg
                   svg
                     [ id "svg-color-layer"
-                    , width (toString <| Tuple.first <| Utils.getSvgSize model)
-                    , height (toString <| Tuple.second <| Utils.getSvgSize model)
+                    , width (toString <| svgWidth)
+                    , height (toString <| svgHeight)
+                    , style scaleCss
                     ]
                     (List.map (ViewBuilder.build ColorLayer model) (Utils.getElems model))
                 , -- 当たり判定用svg
                   svg
                     [ id "svg-physics-layer"
-                    , width (toString <| Tuple.first <| Utils.getSvgSize model)
-                    , height (toString <| Tuple.second <| Utils.getSvgSize model)
+                    , width (toString <| svgWidth)
+                    , height (toString <| svgHeight)
                     , Utils.onFieldMouseDown FieldSelect
+                    , style scaleCss
                     ]
                     (List.map (ViewBuilder.build PhysicsLayer model) (Utils.getElems model)
                         ++ (case model.mode of
@@ -853,7 +893,11 @@ view model =
                 sd =
                     Dict.get "stroke-dasharray" model.styleInfo |> Maybe.map (Parsers.floatWithUnit >> Maybe.withDefault ( 0, Px )) |> Maybe.withDefault ( 0, Px )
             in
-            [ div [] <| ViewBuilder.colorPicker "fill" model
+            [ if model.scale /= 1 then
+                Options.styled p [ Typo.body2 ] [ text <| "x" ++ Round.round 1 model.scale ]
+              else
+                div [] []
+            , div [] <| ViewBuilder.colorPicker "fill" model
             , div [] <| ViewBuilder.colorPicker "stroke" model
             , div [ style "display: flex" ]
                 [ Options.styled p [ Typo.body2 ] [ text <| "stroke-width" ]
@@ -905,6 +949,8 @@ view model =
                 (Utils.flattenList
                     [ ViewParts.duplicateButton model
                     , ViewParts.deleteButton model
+                    , ViewParts.scaleUpButton model
+                    , ViewParts.scaleDownButton model
                     , ViewParts.bringForwardButton model
                     , ViewParts.sendBackwardButton model
                     , ViewParts.alignLeftButton model

@@ -242,7 +242,7 @@ buildVertexes model =
                     circle
                         [ cx <| toString (first pos)
                         , cy <| toString (second pos)
-                        , r "5"
+                        , r (toString (5 / model.scale))
                         , fill "#DDDDDD"
                         , stroke "#000000"
                         , Utils.onItemMouseDown <| \( shift, pos ) -> OnVertex anti pos
@@ -254,7 +254,7 @@ buildVertexes model =
             ++ [ circle
                     [ cx <| toString <| first rotatePos
                     , cy <| toString <| second rotatePos
-                    , r "7"
+                    , r (toString (7 / model.scale))
                     , fill "#DDDDDD"
                     , stroke "#000000"
                     , Utils.onItemMouseDown <| \( shift, pos ) -> OnRotateVertex pos
@@ -291,7 +291,7 @@ buildNodes model =
                 circle
                     [ cx <| toString (first pos)
                     , cy <| toString (second pos)
-                    , r "5"
+                    , r (toString (5 / model.scale))
                     , fill "#DDDDDD"
                     , stroke "#000000"
                     , Utils.onItemMouseDown <| \( shift, pos ) -> OnNode pos nodeId
@@ -425,18 +425,16 @@ colorPicker sty model =
                                     )
                                     gradientUrls
                             )
+                        , case colorPickerState.colorMode of
+                            NoneColor ->
+                                div [] []
+
+                            AnyColor url ->
+                                div [] []
+
+                            SingleColor ->
+                                Html.map ColorPanelMsg <| Ui.ColorPanel.view model.colorPanel
                         ]
-                            ++ (case colorPickerState.colorMode of
-                                    NoneColor ->
-                                        []
-
-                                    AnyColor url ->
-                                        []
-
-                                    SingleColor ->
-                                        [ Html.map ColorPanelMsg <| Ui.ColorPanel.view model.colorPanel
-                                        ]
-                               )
                )
         )
     ]

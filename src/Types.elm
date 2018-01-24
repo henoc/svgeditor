@@ -77,6 +77,7 @@ type alias Model =
     , gradientPanel : Ui.ColorPanel.Model
     , gradientPanelLink : Maybe ( String, Int ) -- ident, stopsのindex
     , isRotate : Bool
+    , scale : Float
     }
 
 
@@ -142,6 +143,8 @@ type Action
     | AlignRight
     | AlignTop
     | AlignBottom
+    | ScaleUp
+    | ScaleDown
 
 
 type alias Box =
