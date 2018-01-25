@@ -146,6 +146,8 @@ type Action
     | AlignBottom
     | ScaleUp
     | ScaleDown
+    | DeleteNode
+    | DuplicateNode
 
 
 type alias Box =

@@ -245,8 +245,7 @@ buildVertexes model =
                         [ cx <| toString (first pos)
                         , cy <| toString (second pos)
                         , r (toString (5 / model.scale))
-                        , fill "#DDDDDD"
-                        , stroke "#000000"
+                        , class "node"
                         , Utils.onItemMouseDown <| \( shift, pos ) -> OnVertex anti pos
                         ]
                         []
@@ -257,8 +256,7 @@ buildVertexes model =
                     [ cx <| toString <| first rotatePos
                     , cy <| toString <| second rotatePos
                     , r (toString (7 / model.scale))
-                    , fill "#DDDDDD"
-                    , stroke "#000000"
+                    , class "node"
                     , Utils.onItemMouseDown <| \( shift, pos ) -> OnRotateVertex pos
                     ]
                     []
@@ -294,8 +292,7 @@ buildNodes model =
                     [ cx <| toString (first pos)
                     , cy <| toString (second pos)
                     , r (toString (5 / model.scale))
-                    , fill "#DDDDDD"
-                    , stroke "#000000"
+                    , class (if nodeId == Maybe.withDefault -1 model.nodeId then "node-toggled" else "node")
                     , Utils.onItemMouseDown <| \( shift, pos ) -> OnNode pos nodeId
                     ]
                     []

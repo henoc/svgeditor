@@ -217,6 +217,20 @@ update msg model =
                             Actions.scaleDown model
                     in
                     newModel ! []
+                
+                DuplicateNode ->
+                    let
+                        newModel =
+                            Actions.duplicateNode model
+                    in
+                    newModel ! []
+                
+                DeleteNode ->
+                    let
+                        newModel =
+                            Actions.deleteNode model
+                    in
+                    newModel ! []
 
         OnMouse onMouseMsg ->
             case model.mode of
@@ -958,6 +972,8 @@ view model =
                     , ViewParts.alignTopButton model
                     , ViewParts.alignBottomButton model
                     , ViewParts.shapeToPathButton model
+                    , ViewParts.duplicateNodeButton model
+                    , ViewParts.deleteNodeButton model
                     ]
                 )
             ]

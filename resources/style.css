@@ -47,3 +47,13 @@
 .button-toggled,.button-toggled:hover {
   background-color: #3F51B5;
 }
+
+.node {
+  fill: currentColor;
+  stroke: black;
+}
+
+.node-toggled {
+  fill: #3F51B5;
+  stroke: currentColor;
+}

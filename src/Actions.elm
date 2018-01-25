@@ -245,3 +245,9 @@ scaleDown model =
         { model | scale = model.scale - 0.2 }
     else
         model
+
+duplicateNode: Model -> Model
+duplicateNode model = model
+
+deleteNode: Model -> Model
+deleteNode model = model
