@@ -85,6 +85,8 @@ build layerType model svg =
                             []
     in
     case svg.shape of
+        TextNode { value } ->
+            text value
         Rectangle { leftTop, size } ->
             let
                 left =

@@ -21,6 +21,9 @@ generateNode elem =
                 Just <| String.join ";" (List.map (\( x, y ) -> x ++ ":" ++ y) <| Dict.toList elem.style)
     in
     case elem.shape of
+        TextNode { value } ->
+            XmlParser.Text value
+        
         SVG { elems, size } ->
             let
                 xmlSubNodes =

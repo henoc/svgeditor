@@ -219,11 +219,16 @@ getFloatAttr name default attrs =
     floatAttr default <| getAttr name attrs
 
 
-convertNode : Int -> XmlParser.Node -> Maybe ( Int, StyledSVGElement )
+convertNode : Int -> XmlParser.Node -> ( Int, StyledSVGElement )
 convertNode id node =
     case node of
         XmlParser.Text text ->
-            Nothing
+            (id + 1, {
+                style = Dict.empty,
+                id = id,
+                attr = Dict.empty,
+                shape = TextNode { value = text }
+            })
 
         XmlParser.Element name attrs subNodes ->
             let
@@ -239,14 +244,9 @@ convertNode id node =
                             ( id, List.reverse acc )
 
                         hd :: tl ->
-                            case convertNode id hd of
-                                Nothing ->
-                                    loop id tl acc
-
-                                Just ( nextId, e ) ->
+                            let (nextId, e) = convertNode id hd in
                                     loop nextId tl (e :: acc)
             in
-            Just <|
                 case name of
                     "svg" ->
                         let
@@ -428,7 +428,7 @@ parseSvg text =
         node =
             case XmlParser.parse text of
                 Ok { processingInstructions, docType, root } ->
-                    convertNode 0 root
+                    Just <| convertNode 0 root
 
                 Err _ ->
                     Nothing
