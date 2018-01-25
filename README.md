@@ -44,6 +44,7 @@ You can create shapes using the SVG's coder or directly creating shapes with the
 
 ## ChangeLog
 
+- 0.14.1 Fix a bug text disappears
 - 0.14.0 Support scale-up and scale-down
 - 0.13.0 Support align
 - 0.12.0 Implement rotation again
