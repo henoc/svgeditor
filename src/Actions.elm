@@ -233,7 +233,7 @@ alignBottom model =
 
 scaleUp : Model -> Model
 scaleUp model =
-    if model.scale < 4 then
+    if model.scale < 64 then
         { model | scale = model.scale + 0.2 }
     else
         model
