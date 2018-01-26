@@ -149,3 +149,13 @@ scaleUpButton model =
 scaleDownButton : Model -> List (Html Msg)
 scaleDownButton model =
     makeAction 110 ScaleDown "Scale-down" model "M15.5,14H14.71L14.43,13.73C15.41,12.59 16,11.11 16,9.5A6.5,6.5 0 0,0 9.5,3A6.5,6.5 0 0,0 3,9.5A6.5,6.5 0 0,0 9.5,16C11.11,16 12.59,15.41 13.73,14.43L14,14.71V15.5L19,20.5L20.5,19L15.5,14M9.5,14C7,14 5,12 5,9.5C5,7 7,5 9.5,5C12,5 14,7 14,9.5C14,12 12,14 9.5,14M7,9H12V10H7V9Z"
+
+
+deleteNodeButton : Model -> List (Html Msg)
+deleteNodeButton model =
+    makeAction 111 DeleteNode "Delete node" model "M8 2.1l8 .2v3h6v2h-6v3l-8-.2v-3l-6 .1v-2h6v-3m2 2v4l4-.1v-4h-4zM6.9 15.9h10.3v2.2H6.9z"
+
+
+duplicateNodeButton : Model -> List (Html Msg)
+duplicateNodeButton model =
+    makeAction 112 DuplicateNode "Duplicate node" model "M8 2.1l8 .2v3h6v2h-6v3L8 10V7l-6 .2v-2L8 5V2m2 2v4l4 .1v-4h-4zM13 12l-.1 4.1h4.3v2.8l-4.1-.1v3.7h-2.6l-.3-4H6.1l.1-2.7 4.1.2.2-4.1"

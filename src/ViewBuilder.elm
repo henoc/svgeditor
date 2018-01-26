@@ -87,6 +87,7 @@ build layerType model svg =
     case svg.shape of
         TextNode { value } ->
             text value
+
         Rectangle { leftTop, size } ->
             let
                 left =
@@ -245,8 +246,7 @@ buildVertexes model =
                         [ cx <| toString (first pos)
                         , cy <| toString (second pos)
                         , r (toString (5 / model.scale))
-                        , fill "#DDDDDD"
-                        , stroke "#000000"
+                        , class "node"
                         , Utils.onItemMouseDown <| \( shift, pos ) -> OnVertex anti pos
                         ]
                         []
@@ -257,8 +257,7 @@ buildVertexes model =
                     [ cx <| toString <| first rotatePos
                     , cy <| toString <| second rotatePos
                     , r (toString (7 / model.scale))
-                    , fill "#DDDDDD"
-                    , stroke "#000000"
+                    , class "node"
                     , Utils.onItemMouseDown <| \( shift, pos ) -> OnRotateVertex pos
                     ]
                     []
@@ -266,7 +265,7 @@ buildVertexes model =
 
 
 
--- ノードモードでのノードを表示する
+-- ノードモードでのノードを表示する 端点が四角で制御点が円
 
 
 buildNodes : Model -> List (Html Msg)
@@ -276,32 +275,60 @@ buildNodes model =
         svglst =
             List.map (\k -> Utils.getById k model) (Set.toList model.selected) |> Utils.flatten
 
-        positions =
+        nodes =
             case List.head svglst of
                 Just selected ->
-                    Shape.getPoints selected
+                    Shape.getNodes selected
 
                 Nothing ->
                     []
 
-        nodeIds =
-            List.range 0 (List.length positions - 1)
+        provideClass nodeId =
+            case model.nodeId of
+                Nothing ->
+                    "node"
+
+                Just x ->
+                    if nodeId == x then
+                        "node-toggled"
+                    else
+                        "node"
     in
-    List.map2
-        (\pos ->
-            \nodeId ->
-                circle
-                    [ cx <| toString (first pos)
-                    , cy <| toString (second pos)
-                    , r (toString (5 / model.scale))
-                    , fill "#DDDDDD"
-                    , stroke "#000000"
-                    , Utils.onItemMouseDown <| \( shift, pos ) -> OnNode pos nodeId
-                    ]
-                    []
+    List.indexedMap
+        (\index node ->
+            let
+                nodeIdEndpoint =
+                    { index = index, member = Endpoint }
+            in
+            [ rect
+                [ x <| toString (first node.endpoint - 5 / model.scale)
+                , y <| toString (second node.endpoint - 5 / model.scale)
+                , width <| toString (10 / model.scale)
+                , height <| toString (10 / model.scale)
+                , class (provideClass nodeIdEndpoint)
+                , Utils.onItemMouseDown <| \( shift, pos ) -> OnNode pos nodeIdEndpoint
+                ]
+                []
+            ]
+                ++ List.indexedMap
+                    (\index2 controlPoint ->
+                        let
+                            nodeIdControlPoint =
+                                { index = index, member = ControlPoint index2 }
+                        in
+                        circle
+                            [ cx <| toString (first controlPoint)
+                            , cy <| toString (second controlPoint)
+                            , r (toString (5 / model.scale))
+                            , class (provideClass nodeIdControlPoint)
+                            , Utils.onItemMouseDown <| \( shift, pos ) -> OnNode pos nodeIdControlPoint
+                            ]
+                            []
+                    )
+                    node.controlPoints
         )
-        positions
-        nodeIds
+        nodes
+        |> Utils.flattenList
 
 
 colorPicker : String -> Model -> List (Html Msg)

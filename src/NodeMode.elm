@@ -32,7 +32,7 @@ noSelect model =
 -- node modeでノードをクリックしたとき
 
 
-nodeSelect : Int -> Vec2 -> Model -> Model
+nodeSelect : NodeId -> Vec2 -> Model -> Model
 nodeSelect nodeId mpos model =
     { model | dragBegin = Just mpos, nodeId = Just nodeId }
 

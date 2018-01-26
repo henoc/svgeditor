@@ -223,12 +223,13 @@ convertNode : Int -> XmlParser.Node -> ( Int, StyledSVGElement )
 convertNode id node =
     case node of
         XmlParser.Text text ->
-            (id + 1, {
-                style = Dict.empty,
-                id = id,
-                attr = Dict.empty,
-                shape = TextNode { value = text }
-            })
+            ( id + 1
+            , { style = Dict.empty
+              , id = id
+              , attr = Dict.empty
+              , shape = TextNode { value = text }
+              }
+            )
 
         XmlParser.Element name attrs subNodes ->
             let
@@ -244,182 +245,185 @@ convertNode id node =
                             ( id, List.reverse acc )
 
                         hd :: tl ->
-                            let (nextId, e) = convertNode id hd in
-                                    loop nextId tl (e :: acc)
+                            let
+                                ( nextId, e ) =
+                                    convertNode id hd
+                            in
+                            loop nextId tl (e :: acc)
             in
-                case name of
-                    "svg" ->
-                        let
-                            ( nextId, subElems ) =
-                                loop id subNodes []
+            case name of
+                "svg" ->
+                    let
+                        ( nextId, subElems ) =
+                            loop id subNodes []
 
-                            w =
-                                getFloatAttr "width" 400 attrs
+                        w =
+                            getFloatAttr "width" 400 attrs
 
-                            h =
-                                getFloatAttr "height" 400 attrs
-                        in
-                        ( nextId + 1
-                        , { style = styleMap
-                          , id = nextId
-                          , attr = attrMap
-                          , shape = SVG { elems = subElems, size = ( w, h ) }
-                          }
-                        )
+                        h =
+                            getFloatAttr "height" 400 attrs
+                    in
+                    ( nextId + 1
+                    , { style = styleMap
+                      , id = nextId
+                      , attr = attrMap
+                      , shape = SVG { elems = subElems, size = ( w, h ) }
+                      }
+                    )
 
-                    "defs" ->
-                        let
-                            ( nextId, subElems ) =
-                                loop id subNodes []
-                        in
-                        ( nextId + 1
-                        , { style = styleMap
-                          , id = nextId
-                          , attr = attrMap
-                          , shape = Defs { elems = subElems }
-                          }
-                        )
+                "defs" ->
+                    let
+                        ( nextId, subElems ) =
+                            loop id subNodes []
+                    in
+                    ( nextId + 1
+                    , { style = styleMap
+                      , id = nextId
+                      , attr = attrMap
+                      , shape = Defs { elems = subElems }
+                      }
+                    )
 
-                    "linearGradient" ->
-                        let
-                            ( nextId, subElems ) =
-                                loop id subNodes []
-                        in
-                        ( nextId + 1
-                        , { style = styleMap
-                          , id = nextId
-                          , attr = attrMap
-                          , shape = LinearGradient { identifier = Dict.get "id" attrMap |> Maybe.withDefault "NoId", stops = subElems }
-                          }
-                        )
+                "linearGradient" ->
+                    let
+                        ( nextId, subElems ) =
+                            loop id subNodes []
+                    in
+                    ( nextId + 1
+                    , { style = styleMap
+                      , id = nextId
+                      , attr = attrMap
+                      , shape = LinearGradient { identifier = Dict.get "id" attrMap |> Maybe.withDefault "NoId", stops = subElems }
+                      }
+                    )
 
-                    "radialGradient" ->
-                        let
-                            ( nextId, subElems ) =
-                                loop id subNodes []
-                        in
-                        ( nextId + 1
-                        , { style = styleMap
-                          , id = nextId
-                          , attr = attrMap
-                          , shape = RadialGradient { identifier = Dict.get "id" attrMap |> Maybe.withDefault "NoId", stops = subElems }
-                          }
-                        )
+                "radialGradient" ->
+                    let
+                        ( nextId, subElems ) =
+                            loop id subNodes []
+                    in
+                    ( nextId + 1
+                    , { style = styleMap
+                      , id = nextId
+                      , attr = attrMap
+                      , shape = RadialGradient { identifier = Dict.get "id" attrMap |> Maybe.withDefault "NoId", stops = subElems }
+                      }
+                    )
 
-                    "stop" ->
-                        ( id + 1
-                        , { style = styleMap
-                          , id = id
-                          , attr = attrMap
-                          , shape = Stop { offset = Nothing, color = Nothing }
-                          }
-                        )
+                "stop" ->
+                    ( id + 1
+                    , { style = styleMap
+                      , id = id
+                      , attr = attrMap
+                      , shape = Stop { offset = Nothing, color = Nothing }
+                      }
+                    )
 
-                    "rect" ->
-                        let
-                            x =
-                                getFloatAttr "x" 0 attrs
+                "rect" ->
+                    let
+                        x =
+                            getFloatAttr "x" 0 attrs
 
-                            y =
-                                getFloatAttr "y" 0 attrs
+                        y =
+                            getFloatAttr "y" 0 attrs
 
-                            w =
-                                getFloatAttr "width" 0 attrs
+                        w =
+                            getFloatAttr "width" 0 attrs
 
-                            h =
-                                getFloatAttr "height" 0 attrs
-                        in
-                        ( id + 1
-                        , { style = styleMap
-                          , id = id
-                          , attr = attrMap
-                          , shape = Rectangle { leftTop = ( x, y ), size = ( w, h ) }
-                          }
-                        )
+                        h =
+                            getFloatAttr "height" 0 attrs
+                    in
+                    ( id + 1
+                    , { style = styleMap
+                      , id = id
+                      , attr = attrMap
+                      , shape = Rectangle { leftTop = ( x, y ), size = ( w, h ) }
+                      }
+                    )
 
-                    "ellipse" ->
-                        let
-                            rx =
-                                getFloatAttr "rx" 0 attrs
+                "ellipse" ->
+                    let
+                        rx =
+                            getFloatAttr "rx" 0 attrs
 
-                            ry =
-                                getFloatAttr "ry" 0 attrs
+                        ry =
+                            getFloatAttr "ry" 0 attrs
 
-                            cx =
-                                getFloatAttr "cx" 0 attrs
+                        cx =
+                            getFloatAttr "cx" 0 attrs
 
-                            cy =
-                                getFloatAttr "cy" 0 attrs
-                        in
-                        ( id + 1
-                        , { style = styleMap
-                          , id = id
-                          , attr = attrMap
-                          , shape = Ellipse { center = ( cx, cy ), size = ( rx * 2, ry * 2 ) }
-                          }
-                        )
+                        cy =
+                            getFloatAttr "cy" 0 attrs
+                    in
+                    ( id + 1
+                    , { style = styleMap
+                      , id = id
+                      , attr = attrMap
+                      , shape = Ellipse { center = ( cx, cy ), size = ( rx * 2, ry * 2 ) }
+                      }
+                    )
 
-                    "polygon" ->
-                        let
-                            points =
-                                case pointsParser <| input (Maybe.withDefault "" (getAttr "points" attrs)) "[\\s,]+" of
-                                    ParseSuccess r i ->
-                                        r
+                "polygon" ->
+                    let
+                        points =
+                            case pointsParser <| input (Maybe.withDefault "" (getAttr "points" attrs)) "[\\s,]+" of
+                                ParseSuccess r i ->
+                                    r
 
-                                    ParseFailure _ _ ->
-                                        []
-                        in
-                        ( id + 1
-                        , { style = styleMap
-                          , id = id
-                          , attr = attrMap
-                          , shape = Polygon { points = points, enclosed = True }
-                          }
-                        )
+                                ParseFailure _ _ ->
+                                    []
+                    in
+                    ( id + 1
+                    , { style = styleMap
+                      , id = id
+                      , attr = attrMap
+                      , shape = Polygon { points = points, enclosed = True }
+                      }
+                    )
 
-                    "polyline" ->
-                        let
-                            points =
-                                case pointsParser <| input (Maybe.withDefault "" (getAttr "points" attrs)) "[\\s,]+" of
-                                    ParseSuccess r i ->
-                                        r
+                "polyline" ->
+                    let
+                        points =
+                            case pointsParser <| input (Maybe.withDefault "" (getAttr "points" attrs)) "[\\s,]+" of
+                                ParseSuccess r i ->
+                                    r
 
-                                    ParseFailure _ _ ->
-                                        []
-                        in
-                        ( id + 1
-                        , { style = styleMap
-                          , id = id
-                          , attr = attrMap
-                          , shape = Polygon { points = points, enclosed = False }
-                          }
-                        )
+                                ParseFailure _ _ ->
+                                    []
+                    in
+                    ( id + 1
+                    , { style = styleMap
+                      , id = id
+                      , attr = attrMap
+                      , shape = Polygon { points = points, enclosed = False }
+                      }
+                    )
 
-                    "path" ->
-                        let
-                            pathOps =
-                                getAttr "d" attrs |> Maybe.map (PathParser.parse >> Result.withDefault []) |> Maybe.withDefault []
-                        in
-                        ( id + 1
-                        , { style = styleMap
-                          , id = id
-                          , attr = attrMap
-                          , shape = Path { subPaths = pathOps }
-                          }
-                        )
+                "path" ->
+                    let
+                        pathOps =
+                            getAttr "d" attrs |> Maybe.map (PathParser.parse >> Result.withDefault []) |> Maybe.withDefault []
+                    in
+                    ( id + 1
+                    , { style = styleMap
+                      , id = id
+                      , attr = attrMap
+                      , shape = Path { subPaths = pathOps }
+                      }
+                    )
 
-                    others ->
-                        let
-                            ( nextId, subElems ) =
-                                loop id subNodes []
-                        in
-                        ( nextId + 1
-                        , { style = styleMap
-                          , id = nextId
-                          , attr = attrMap
-                          , shape = Unknown { name = name, elems = subElems }
-                          }
-                        )
+                others ->
+                    let
+                        ( nextId, subElems ) =
+                            loop id subNodes []
+                    in
+                    ( nextId + 1
+                    , { style = styleMap
+                      , id = nextId
+                      , attr = attrMap
+                      , shape = Unknown { name = name, elems = subElems }
+                      }
+                    )
 
 
 parseSvg : String -> Maybe ( Int, StyledSVGElement )

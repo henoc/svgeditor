@@ -5,6 +5,7 @@ import Tuple exposing (first, second)
 import Types exposing (..)
 import Utils
 import Vec2 exposing (..)
+import List.Extra
 
 
 getBBox : StyledSVGElement -> Box
@@ -34,20 +35,20 @@ getBBox elem =
 
         Path { subPaths } ->
             let
-                points =
-                    Paths.points subPaths
+                nodes =
+                    Paths.nodes subPaths
 
                 left =
-                    List.map first points |> List.minimum |> Maybe.withDefault 0
+                    List.map (.endpoint >> first) nodes |> List.minimum |> Maybe.withDefault 0
 
                 top =
-                    List.map second points |> List.minimum |> Maybe.withDefault 0
+                    List.map (.endpoint >> second) nodes |> List.minimum |> Maybe.withDefault 0
 
                 right =
-                    List.map first points |> List.maximum |> Maybe.withDefault 0
+                    List.map (.endpoint >> first) nodes |> List.maximum |> Maybe.withDefault 0
 
                 bottom =
-                    List.map second points |> List.maximum |> Maybe.withDefault 0
+                    List.map (.endpoint >> second) nodes |> List.maximum |> Maybe.withDefault 0
             in
             { leftTop = ( left, top ), rightBottom = ( right, bottom ) }
 
@@ -236,34 +237,54 @@ scale2 offset ratio elem =
 
 
 
--- n番目のノードの座標をfnにする
+-- ノードの座標をfnにする
 
 
-replaceNode : Int -> (Vec2 -> Vec2) -> StyledSVGElement -> StyledSVGElement
-replaceNode n fn elem =
+replaceNode : NodeId -> (Vec2 -> Vec2) -> StyledSVGElement -> StyledSVGElement
+replaceNode nid fn elem =
     case elem.shape of
         Polygon { points, enclosed } ->
-            { elem | shape = Polygon { points = Utils.replaceNth n fn points, enclosed = enclosed } }
+            { elem | shape = Polygon { points = Utils.replaceNth nid.index fn points, enclosed = enclosed } }
 
         Path { subPaths } ->
-            { elem | shape = Path { subPaths = Paths.replaceNth n fn subPaths } }
+            { elem | shape = Path { subPaths = Paths.replaceNode nid fn subPaths } }
 
         others ->
             elem
 
+-- ノードを消す
 
+removeNode: NodeId -> StyledSVGElement -> StyledSVGElement
+removeNode nid elem =
+    case elem.shape of
+        Polygon {points, enclosed} ->
+            {elem | shape = Polygon {points = List.Extra.removeAt nid.index points, enclosed = enclosed}}
+        Path {subPaths} ->
+            {elem | shape = Path { subPaths = Paths.removeNode nid subPaths}}
+        others ->
+            elem
+
+duplicateNode: NodeId -> StyledSVGElement -> StyledSVGElement
+duplicateNode nid elem =
+    case elem.shape of
+        Polygon {points, enclosed} ->
+            {elem | shape = Polygon {points = Paths.duplicateAt nid.index points, enclosed = enclosed}}
+        Path {subPaths} ->
+            {elem | shape = Path { subPaths = Paths.duplicateNode nid subPaths}}
+        others ->
+            elem
 
 -- ノードのリストを返す
 
 
-getPoints : StyledSVGElement -> List Vec2
-getPoints elem =
+getNodes : StyledSVGElement -> List Node
+getNodes elem =
     case elem.shape of
         Polygon { points, enclosed } ->
-            points
+            List.map (\k -> { endpoint = k, controlPoints = [] }) points
 
         Path { subPaths } ->
-            Paths.points subPaths
+            Paths.nodes subPaths
 
         others ->
             []

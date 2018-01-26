@@ -218,6 +218,20 @@ update msg model =
                     in
                     newModel ! []
 
+                DuplicateNode ->
+                    let
+                        newModel =
+                            Actions.duplicateNode model
+                    in
+                    newModel ! [ Utils.reflectSvgData newModel ]
+
+                DeleteNode ->
+                    let
+                        newModel =
+                            Actions.deleteNode model
+                    in
+                    newModel ! [ Utils.reflectSvgData newModel ]
+
         OnMouse onMouseMsg ->
             case model.mode of
                 HandMode ->
@@ -958,6 +972,8 @@ view model =
                     , ViewParts.alignTopButton model
                     , ViewParts.alignBottomButton model
                     , ViewParts.shapeToPathButton model
+                    , ViewParts.duplicateNodeButton model
+                    , ViewParts.deleteNodeButton model
                     ]
                 )
             ]
