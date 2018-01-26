@@ -264,6 +264,16 @@ removeNode nid elem =
         others ->
             elem
 
+duplicateNode: NodeId -> StyledSVGElement -> StyledSVGElement
+duplicateNode nid elem =
+    case elem.shape of
+        Polygon {points, enclosed} ->
+            {elem | shape = Polygon {points = Paths.duplicateAt nid.index points, enclosed = enclosed}}
+        Path {subPaths} ->
+            {elem | shape = Path { subPaths = Paths.duplicateNode nid subPaths}}
+        others ->
+            elem
+
 -- ノードのリストを返す
 
 
