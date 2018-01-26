@@ -63,7 +63,7 @@ type alias Model =
     , styleInfo : StyleInfo
     , idGen : Int
     , selected : Set Int
-    , nodeId : Maybe Int
+    , nodeId : Maybe NodeId
     , fixedPoint : Maybe Vec2
     , selectedRef : List StyledSVGElement
     , clientLeft : Float
@@ -102,7 +102,7 @@ type Msg
     | FieldSelect ( Int, Vec2 )
     | OnVertex Vec2 Vec2
     | OnRotateVertex Vec2
-    | OnNode Vec2 Int
+    | OnNode Vec2 NodeId
     | SvgData String
     | EncodedSvgData String
     | SvgRootRect ClientRect
@@ -238,3 +238,8 @@ type LayerType
 type ValueUnit
     = Px
     | Percent
+
+
+type alias Node = {endpoint: Vec2, controlPoints: List Vec2}
+type alias NodeId = {index: Int, member: NodeKind}
+type NodeKind = Endpoint | ControlPoint Int

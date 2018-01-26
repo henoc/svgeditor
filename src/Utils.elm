@@ -428,50 +428,6 @@ replaceNth n fn lst =
                 lst
 
 
-replaceNthTuple : Int -> (a -> a) -> List ( a, a ) -> List ( a, a )
-replaceNthTuple n fn lst =
-    if n < 2 then
-        case lst of
-            ( p, q ) :: tl ->
-                if n == 0 then
-                    ( fn p, q ) :: tl
-                else
-                    ( p, fn q ) :: tl
-
-            [] ->
-                []
-    else
-        case lst of
-            hd :: tl ->
-                hd :: replaceNthTuple (n - 2) fn tl
-
-            [] ->
-                lst
-
-
-replaceNthTriple : Int -> (a -> a) -> List ( a, a, a ) -> List ( a, a, a )
-replaceNthTriple n fn lst =
-    if n < 3 then
-        case lst of
-            ( p, q, r ) :: tl ->
-                if n == 0 then
-                    ( fn p, q, r ) :: tl
-                else if n == 1 then
-                    ( p, fn q, r ) :: tl
-                else
-                    ( p, q, fn r ) :: tl
-
-            [] ->
-                []
-    else
-        case lst of
-            hd :: tl ->
-                hd :: replaceNthTriple (n - 3) fn tl
-
-            [] ->
-                lst
-
-
 tupleMap : (a -> a) -> List ( a, a ) -> List ( a, a )
 tupleMap fn lst =
     List.map

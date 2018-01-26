@@ -9,6 +9,56 @@ import Utils
 import Vec2 exposing (..)
 import Vector3 exposing (Vec3)
 
+-- ノードを集める
+
+nodes: List SubPath -> List Node
+nodes subPaths =
+    case subPaths of
+        hd :: tl ->
+            subpathToNode hd ++ nodes tl
+        [] -> []
+
+subpathToNode: SubPath -> List Node
+subpathToNode subpath =
+    movetoToNode subpath.moveto :: (List.map drawtoToNode subpath.drawtos |> Utils.flattenList)
+
+movetoToNode: MoveTo -> Node
+movetoToNode moveto =
+    case moveto of
+        MoveTo mode coordinate ->
+            {endpoint = coordinate, controlPoints = []}
+
+drawtoToNode: DrawTo -> List Node
+drawtoToNode drawto =
+    case drawto of
+        LineTo mode lst -> List.map (\k -> {endpoint = k, controlPoints = []}) lst
+        Horizontal mode lst -> []
+        Vertical mode lst -> []
+        CurveTo mode lst -> List.map (\k -> case k of (c1, c2, e) -> {endpoint = e, controlPoints = [c1, c2]}) lst
+        SmoothCurveTo mode lst -> List.map (\k -> {endpoint = second k, controlPoints = [first k]}) lst
+        QuadraticBezierCurveTo mode lst -> List.map (\k -> {endpoint = second k, controlPoints = [first k]}) lst
+        SmoothQuadraticBezierCurveTo mode lst -> List.map (\k -> {endpoint = k, controlPoints = []}) lst
+        EllipticalArc mode lst -> List.map (\k -> {endpoint = k.target, controlPoints = [k.radii]}) lst
+        ClosePath -> []
+
+
+-- 端点と制御点の集合を集めて返す
+
+
+-- points : List SubPath -> List Coordinate
+-- points subPaths =
+--     case subPaths of
+--         hd :: tl ->
+--             subpathToPoint hd ++ points tl
+
+--         [] ->
+--             []
+
+
+subpathToPoint : SubPath -> List Coordinate
+subpathToPoint subpath =
+    movetoToPoint subpath.moveto :: (List.map drawtoToPoint subpath.drawtos |> Utils.flattenList)
+
 
 movetoToPoint : MoveTo -> Coordinate
 movetoToPoint moveto =
@@ -49,40 +99,21 @@ drawtoToPoint drawto =
 
 
 
--- ノードのリストを集めて返す
+-- ノードに関数cfnをかけて返す
 
 
-points : List SubPath -> List Coordinate
-points subPaths =
-    case subPaths of
-        hd :: tl ->
-            subpathToPoint hd ++ points tl
-
-        [] ->
-            []
-
-
-subpathToPoint : SubPath -> List Coordinate
-subpathToPoint subpath =
-    movetoToPoint subpath.moveto :: (List.map drawtoToPoint subpath.drawtos |> Utils.flattenList)
-
-
-
--- ノードのn番目に関数cfnをかけて返す
-
-
-replaceNth : Int -> (Coordinate -> Coordinate) -> List SubPath -> List SubPath
-replaceNth n cfn subPaths =
+replaceNode : NodeId -> (Coordinate -> Coordinate) -> List SubPath -> List SubPath
+replaceNode n cfn subPaths =
     case subPaths of
         hd :: tl ->
             let
                 k =
-                    n - subPathLength hd
+                    n.index - subPathLength hd
             in
             if k < 0 then
-                replaceSubPathNth n cfn hd :: tl
+                replaceSubPathNode n cfn hd :: tl
             else
-                hd :: replaceNth k cfn tl
+                hd :: replaceNode {n | index = k} cfn tl
 
         [] ->
             []
@@ -90,31 +121,31 @@ replaceNth n cfn subPaths =
 
 subPathLength : SubPath -> Int
 subPathLength subpath =
-    subpathToPoint subpath |> List.length
+    subpathToNode subpath |> List.length
 
 
-replaceSubPathNth : Int -> (Coordinate -> Coordinate) -> SubPath -> SubPath
-replaceSubPathNth n cfn subpath =
-    if n == 0 then
+replaceSubPathNode : NodeId -> (Coordinate -> Coordinate) -> SubPath -> SubPath
+replaceSubPathNode n cfn subpath =
+    if n.index == 0 then
         case subpath.moveto of
             MoveTo mode c ->
                 { subpath | moveto = MoveTo mode (cfn c) }
     else
-        { subpath | drawtos = replaceDrawTosNth (n - 1) cfn subpath.drawtos }
+        { subpath | drawtos = replaceDrawTosNode {n | index = n.index - 1} cfn subpath.drawtos }
 
 
-replaceDrawTosNth : Int -> (Coordinate -> Coordinate) -> List DrawTo -> List DrawTo
-replaceDrawTosNth n cfn drawtos =
+replaceDrawTosNode : NodeId -> (Coordinate -> Coordinate) -> List DrawTo -> List DrawTo
+replaceDrawTosNode n cfn drawtos =
     case drawtos of
         hd :: tl ->
             let
                 k =
-                    n - drawtoLength hd
+                    n.index - drawtoLength hd
             in
             if k < 0 then
-                replaceDrawToNth n cfn hd :: tl
+                replaceDrawToNode n cfn hd :: tl
             else
-                hd :: replaceDrawTosNth k cfn tl
+                hd :: replaceDrawTosNode {n | index = k} cfn tl
 
         [] ->
             []
@@ -122,14 +153,14 @@ replaceDrawTosNth n cfn drawtos =
 
 drawtoLength : DrawTo -> Int
 drawtoLength drawto =
-    drawtoToPoint drawto |> List.length
+    drawtoToNode drawto |> List.length
 
 
-replaceDrawToNth : Int -> (Coordinate -> Coordinate) -> DrawTo -> DrawTo
-replaceDrawToNth n cfn drawto =
+replaceDrawToNode : NodeId -> (Coordinate -> Coordinate) -> DrawTo -> DrawTo
+replaceDrawToNode n cfn drawto =
     case drawto of
         LineTo mode lst ->
-            LineTo mode (Utils.replaceNth n cfn lst)
+            LineTo mode (Utils.replaceNth n.index cfn lst)
 
         Horizontal mode lst ->
             Horizontal mode lst
@@ -138,39 +169,41 @@ replaceDrawToNth n cfn drawto =
             Vertical mode lst
 
         CurveTo mode lst ->
-            CurveTo mode (Utils.replaceNthTriple n cfn lst)
+            CurveTo mode (replaceTriple n cfn lst)
 
         SmoothCurveTo mode lst ->
-            SmoothCurveTo mode (Utils.replaceNthTuple n cfn lst)
+            SmoothCurveTo mode (replaceTuple n cfn lst)
 
         QuadraticBezierCurveTo mode lst ->
-            QuadraticBezierCurveTo mode (Utils.replaceNthTuple n cfn lst)
+            QuadraticBezierCurveTo mode (replaceTuple n cfn lst)
 
         SmoothQuadraticBezierCurveTo mode lst ->
-            SmoothQuadraticBezierCurveTo mode (Utils.replaceNth n cfn lst)
+            SmoothQuadraticBezierCurveTo mode (Utils.replaceNth n.index cfn lst)
 
         EllipticalArc mode args ->
-            EllipticalArc mode <| replaceNthEllipticalArcArg n cfn args
+            EllipticalArc mode args -- 前処理で破棄されているので省略
 
         ClosePath ->
             ClosePath
 
+replaceTuple: NodeId -> (Coordinate -> Coordinate) -> List (Coordinate, Coordinate) -> List (Coordinate, Coordinate)
+replaceTuple nodeId cfn lst = case lst of
+    (h1, h2) :: tl ->
+        if nodeId.index == 0 then case nodeId.member of
+            ControlPoint _ -> (cfn h1, h2) :: tl
+            Endpoint -> (h1, cfn h2) :: tl
+        else (h1, h2) :: replaceTuple {nodeId | index = nodeId.index - 1} cfn tl
+    _ -> []
 
-replaceNthEllipticalArcArg : Int -> (Coordinate -> Coordinate) -> List EllipticalArcArgument -> List EllipticalArcArgument
-replaceNthEllipticalArcArg n cfn earg =
-    case earg of
-        hd :: tl ->
-            let
-                k =
-                    n - eargLength hd
-            in
-            if k < 0 then
-                eargNth n cfn hd :: tl
-            else
-                hd :: replaceNthEllipticalArcArg k cfn tl
-
-        [] ->
-            []
+replaceTriple: NodeId -> (Coordinate -> Coordinate) -> List TripleCoord -> List TripleCoord
+replaceTriple nodeId cfn lst = case lst of
+    (h1, h2, h3) :: tl -> 
+        if nodeId.index == 0 then case nodeId.member of
+            ControlPoint 0 -> (cfn h1, h2, h3) :: tl
+            ControlPoint _ -> (h1, cfn h2, h3) :: tl
+            Endpoint -> (h1, h2, cfn h3) :: tl
+        else (h1,h2,h3) :: replaceTriple {nodeId | index = nodeId.index - 1} cfn tl
+    _ -> []
 
 
 eargLength : EllipticalArcArgument -> Int
