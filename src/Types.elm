@@ -42,7 +42,7 @@ type SVGElement
     | LinearGradient { identifier : String, stops : List StyledSVGElement }
     | RadialGradient { identifier : String, stops : List StyledSVGElement }
     | Stop { offset : Maybe Int, color : Maybe Color }
-    | TextNode { value: String }
+    | TextNode { value : String }
     | Unknown { name : String, elems : List StyledSVGElement }
 
 
@@ -240,6 +240,14 @@ type ValueUnit
     | Percent
 
 
-type alias Node = {endpoint: Vec2, controlPoints: List Vec2}
-type alias NodeId = {index: Int, member: NodeKind}
-type NodeKind = Endpoint | ControlPoint Int
+type alias Node =
+    { endpoint : Vec2, controlPoints : List Vec2 }
+
+
+type alias NodeId =
+    { index : Int, member : NodeKind }
+
+
+type NodeKind
+    = Endpoint
+    | ControlPoint Int

@@ -217,20 +217,20 @@ update msg model =
                             Actions.scaleDown model
                     in
                     newModel ! []
-                
+
                 DuplicateNode ->
                     let
                         newModel =
                             Actions.duplicateNode model
                     in
-                    newModel ! []
-                
+                    newModel ! [ Utils.reflectSvgData newModel ]
+
                 DeleteNode ->
                     let
                         newModel =
                             Actions.deleteNode model
                     in
-                    newModel ! []
+                    newModel ! [ Utils.reflectSvgData newModel ]
 
         OnMouse onMouseMsg ->
             case model.mode of

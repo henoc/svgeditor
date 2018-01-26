@@ -246,8 +246,29 @@ scaleDown model =
     else
         model
 
-duplicateNode: Model -> Model
-duplicateNode model = model
 
-deleteNode: Model -> Model
-deleteNode model = model
+duplicateNode : Model -> Model
+duplicateNode model =
+    model
+
+
+deleteNode : Model -> Model
+deleteNode model =
+    let
+        process: StyledSVGElement -> StyledSVGElement
+        process elem =
+            if Set.member elem.id model.selected then
+                case model.nodeId of
+                    Just nid ->
+                        Shape.removeNode nid elem
+                    Nothing ->
+                        elem
+            else elem
+        
+        newSvg =
+            Traverse.traverse process model.svg
+
+        selectedRef =
+            List.filter (\e -> Set.member e.id model.selected) (Utils.getElems { model | svg = newSvg })
+    in
+    { model | svg = newSvg, selectedRef = selectedRef }

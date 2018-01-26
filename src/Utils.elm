@@ -11,6 +11,7 @@ import Tuple exposing (first, second)
 import Types exposing (..)
 import Utils2
 import Vec2 exposing (..)
+import Set exposing (Set)
 
 
 last : List a -> Maybe a
@@ -497,6 +498,10 @@ valueUnitToStr vu =
         Percent ->
             "%"
 
+selectedOne: Model -> Maybe StyledSVGElement
+selectedOne model =
+    List.filter (\x -> (Set.member x.id model.selected)) (getElems model)
+    |> List.head
 
 port getSvgData : () -> Cmd msg
 

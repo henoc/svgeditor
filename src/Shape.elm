@@ -5,6 +5,7 @@ import Tuple exposing (first, second)
 import Types exposing (..)
 import Utils
 import Vec2 exposing (..)
+import List.Extra
 
 
 getBBox : StyledSVGElement -> Box
@@ -251,7 +252,17 @@ replaceNode nid fn elem =
         others ->
             elem
 
+-- ノードを消す
 
+removeNode: NodeId -> StyledSVGElement -> StyledSVGElement
+removeNode nid elem =
+    case elem.shape of
+        Polygon {points, enclosed} ->
+            {elem | shape = Polygon {points = List.Extra.removeAt nid.index points, enclosed = enclosed}}
+        Path {subPaths} ->
+            {elem | shape = Path { subPaths = Paths.removeNode nid subPaths}}
+        others ->
+            elem
 
 -- ノードのリストを返す
 
@@ -260,7 +271,7 @@ getNodes : StyledSVGElement -> List Node
 getNodes elem =
     case elem.shape of
         Polygon { points, enclosed } ->
-            List.map (\k -> {endpoint = k, controlPoints = []}) points
+            List.map (\k -> { endpoint = k, controlPoints = [] }) points
 
         Path { subPaths } ->
             Paths.nodes subPaths

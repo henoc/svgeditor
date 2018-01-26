@@ -1,6 +1,6 @@
 module Paths exposing (..)
 
-import List.Extra
+import List.Extra exposing (removeAt)
 import Matrix3 exposing (Mat3)
 import Path.LowLevel exposing (..)
 import Tuple exposing (..)
@@ -9,48 +9,76 @@ import Utils
 import Vec2 exposing (..)
 import Vector3 exposing (Vec3)
 
+
 -- ノードを集める
 
-nodes: List SubPath -> List Node
+
+nodes : List SubPath -> List Node
 nodes subPaths =
     case subPaths of
         hd :: tl ->
             subpathToNode hd ++ nodes tl
-        [] -> []
 
-subpathToNode: SubPath -> List Node
+        [] ->
+            []
+
+
+subpathToNode : SubPath -> List Node
 subpathToNode subpath =
     movetoToNode subpath.moveto :: (List.map drawtoToNode subpath.drawtos |> Utils.flattenList)
 
-movetoToNode: MoveTo -> Node
+
+movetoToNode : MoveTo -> Node
 movetoToNode moveto =
     case moveto of
         MoveTo mode coordinate ->
-            {endpoint = coordinate, controlPoints = []}
+            { endpoint = coordinate, controlPoints = [] }
 
-drawtoToNode: DrawTo -> List Node
+
+drawtoToNode : DrawTo -> List Node
 drawtoToNode drawto =
     case drawto of
-        LineTo mode lst -> List.map (\k -> {endpoint = k, controlPoints = []}) lst
-        Horizontal mode lst -> []
-        Vertical mode lst -> []
-        CurveTo mode lst -> List.map (\k -> case k of (c1, c2, e) -> {endpoint = e, controlPoints = [c1, c2]}) lst
-        SmoothCurveTo mode lst -> List.map (\k -> {endpoint = second k, controlPoints = [first k]}) lst
-        QuadraticBezierCurveTo mode lst -> List.map (\k -> {endpoint = second k, controlPoints = [first k]}) lst
-        SmoothQuadraticBezierCurveTo mode lst -> List.map (\k -> {endpoint = k, controlPoints = []}) lst
-        EllipticalArc mode lst -> List.map (\k -> {endpoint = k.target, controlPoints = [k.radii]}) lst
-        ClosePath -> []
+        LineTo mode lst ->
+            List.map (\k -> { endpoint = k, controlPoints = [] }) lst
+
+        Horizontal mode lst ->
+            []
+
+        Vertical mode lst ->
+            []
+
+        CurveTo mode lst ->
+            List.map
+                (\k ->
+                    case k of
+                        ( c1, c2, e ) ->
+                            { endpoint = e, controlPoints = [ c1, c2 ] }
+                )
+                lst
+
+        SmoothCurveTo mode lst ->
+            List.map (\k -> { endpoint = second k, controlPoints = [ first k ] }) lst
+
+        QuadraticBezierCurveTo mode lst ->
+            List.map (\k -> { endpoint = second k, controlPoints = [ first k ] }) lst
+
+        SmoothQuadraticBezierCurveTo mode lst ->
+            List.map (\k -> { endpoint = k, controlPoints = [] }) lst
+
+        EllipticalArc mode lst ->
+            List.map (\k -> { endpoint = k.target, controlPoints = [ k.radii ] }) lst
+
+        ClosePath ->
+            []
+
 
 
 -- 端点と制御点の集合を集めて返す
-
-
 -- points : List SubPath -> List Coordinate
 -- points subPaths =
 --     case subPaths of
 --         hd :: tl ->
 --             subpathToPoint hd ++ points tl
-
 --         [] ->
 --             []
 
@@ -113,7 +141,7 @@ replaceNode n cfn subPaths =
             if k < 0 then
                 replaceSubPathNode n cfn hd :: tl
             else
-                hd :: replaceNode {n | index = k} cfn tl
+                hd :: replaceNode { n | index = k } cfn tl
 
         [] ->
             []
@@ -131,7 +159,7 @@ replaceSubPathNode n cfn subpath =
             MoveTo mode c ->
                 { subpath | moveto = MoveTo mode (cfn c) }
     else
-        { subpath | drawtos = replaceDrawTosNode {n | index = n.index - 1} cfn subpath.drawtos }
+        { subpath | drawtos = replaceDrawTosNode { n | index = n.index - 1 } cfn subpath.drawtos }
 
 
 replaceDrawTosNode : NodeId -> (Coordinate -> Coordinate) -> List DrawTo -> List DrawTo
@@ -145,7 +173,7 @@ replaceDrawTosNode n cfn drawtos =
             if k < 0 then
                 replaceDrawToNode n cfn hd :: tl
             else
-                hd :: replaceDrawTosNode {n | index = k} cfn tl
+                hd :: replaceDrawTosNode { n | index = k } cfn tl
 
         [] ->
             []
@@ -181,29 +209,50 @@ replaceDrawToNode n cfn drawto =
             SmoothQuadraticBezierCurveTo mode (Utils.replaceNth n.index cfn lst)
 
         EllipticalArc mode args ->
-            EllipticalArc mode args -- 前処理で破棄されているので省略
+            EllipticalArc mode args
 
+        -- 前処理で破棄されているので省略
         ClosePath ->
             ClosePath
 
-replaceTuple: NodeId -> (Coordinate -> Coordinate) -> List (Coordinate, Coordinate) -> List (Coordinate, Coordinate)
-replaceTuple nodeId cfn lst = case lst of
-    (h1, h2) :: tl ->
-        if nodeId.index == 0 then case nodeId.member of
-            ControlPoint _ -> (cfn h1, h2) :: tl
-            Endpoint -> (h1, cfn h2) :: tl
-        else (h1, h2) :: replaceTuple {nodeId | index = nodeId.index - 1} cfn tl
-    _ -> []
 
-replaceTriple: NodeId -> (Coordinate -> Coordinate) -> List TripleCoord -> List TripleCoord
-replaceTriple nodeId cfn lst = case lst of
-    (h1, h2, h3) :: tl -> 
-        if nodeId.index == 0 then case nodeId.member of
-            ControlPoint 0 -> (cfn h1, h2, h3) :: tl
-            ControlPoint _ -> (h1, cfn h2, h3) :: tl
-            Endpoint -> (h1, h2, cfn h3) :: tl
-        else (h1,h2,h3) :: replaceTriple {nodeId | index = nodeId.index - 1} cfn tl
-    _ -> []
+replaceTuple : NodeId -> (Coordinate -> Coordinate) -> List ( Coordinate, Coordinate ) -> List ( Coordinate, Coordinate )
+replaceTuple nodeId cfn lst =
+    case lst of
+        ( h1, h2 ) :: tl ->
+            if nodeId.index == 0 then
+                case nodeId.member of
+                    ControlPoint _ ->
+                        ( cfn h1, h2 ) :: tl
+
+                    Endpoint ->
+                        ( h1, cfn h2 ) :: tl
+            else
+                ( h1, h2 ) :: replaceTuple { nodeId | index = nodeId.index - 1 } cfn tl
+
+        _ ->
+            []
+
+
+replaceTriple : NodeId -> (Coordinate -> Coordinate) -> List TripleCoord -> List TripleCoord
+replaceTriple nodeId cfn lst =
+    case lst of
+        ( h1, h2, h3 ) :: tl ->
+            if nodeId.index == 0 then
+                case nodeId.member of
+                    ControlPoint 0 ->
+                        ( cfn h1, h2, h3 ) :: tl
+
+                    ControlPoint _ ->
+                        ( h1, cfn h2, h3 ) :: tl
+
+                    Endpoint ->
+                        ( h1, h2, cfn h3 ) :: tl
+            else
+                ( h1, h2, h3 ) :: replaceTriple { nodeId | index = nodeId.index - 1 } cfn tl
+
+        _ ->
+            []
 
 
 eargLength : EllipticalArcArgument -> Int
@@ -541,3 +590,57 @@ rotate angle center subPathes =
                 |> (\ret -> ( Vector3.getX ret, Vector3.getY ret ))
     in
     generic rotateFn subPathes
+
+
+-- ノードをけす
+
+removeNode: NodeId -> List SubPath -> List SubPath
+removeNode nodeId subPaths =
+    case subPaths of
+        hd :: tl ->
+            let
+                k = nodeId.index - subPathLength hd
+            in
+            if k < 0 then
+                removeSubPathNode nodeId hd :: tl
+            else
+                hd :: removeNode {nodeId | index = k} tl
+        [] -> []
+
+removeSubPathNode: NodeId -> SubPath -> SubPath
+removeSubPathNode nodeId subpath =
+    -- MoveToなので消せない
+    if nodeId.index == 0 then subpath
+    else  {subpath | drawtos = removeDrawTosNode {nodeId | index = nodeId.index - 1} subpath.drawtos}
+
+removeDrawTosNode: NodeId -> List DrawTo -> List DrawTo
+removeDrawTosNode nodeId drawtos =
+    case drawtos of
+        hd :: tl ->
+            let
+                k = nodeId.index - drawtoLength hd
+            in
+            if k < 0 then
+                removeDrawToNode nodeId hd :: tl
+            else
+                hd :: removeDrawTosNode {nodeId | index = k} tl
+        [] -> []
+
+removeDrawToNode: NodeId -> DrawTo -> DrawTo
+removeDrawToNode nodeId drawto = case drawto of
+    LineTo mode lst ->
+        LineTo mode (removeAt nodeId.index lst)
+    Horizontal mode lst -> Horizontal mode lst
+    Vertical mode lst -> Vertical mode lst
+    CurveTo mode lst ->
+        CurveTo mode (removeAt nodeId.index lst)
+    SmoothCurveTo mode lst ->
+        SmoothCurveTo mode (removeAt nodeId.index lst)
+    QuadraticBezierCurveTo mode lst ->
+        QuadraticBezierCurveTo mode (removeAt nodeId.index lst)
+    SmoothQuadraticBezierCurveTo mode lst ->
+        SmoothQuadraticBezierCurveTo mode (removeAt nodeId.index lst)
+    EllipticalArc mode args ->
+        EllipticalArc mode (removeAt nodeId.index args)
+    ClosePath ->
+        ClosePath

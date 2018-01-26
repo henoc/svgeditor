@@ -87,6 +87,7 @@ build layerType model svg =
     case svg.shape of
         TextNode { value } ->
             text value
+
         Rectangle { leftTop, size } ->
             let
                 left =
@@ -264,7 +265,7 @@ buildVertexes model =
 
 
 
--- ノードモードでのノードを表示する
+-- ノードモードでのノードを表示する 端点が四角で制御点が円
 
 
 buildNodes : Model -> List (Html Msg)
@@ -281,44 +282,53 @@ buildNodes model =
 
                 Nothing ->
                     []
-        
-        provideClass nodeId = case model.nodeId of
-            Nothing -> "node"
-            Just x -> if nodeId == x then "node-toggled" else "node"
+
+        provideClass nodeId =
+            case model.nodeId of
+                Nothing ->
+                    "node"
+
+                Just x ->
+                    if nodeId == x then
+                        "node-toggled"
+                    else
+                        "node"
     in
     List.indexedMap
         (\index node ->
             let
-                nodeIdEndpoint = {index = index, member = Endpoint}
+                nodeIdEndpoint =
+                    { index = index, member = Endpoint }
             in
-            ([
-                rect
-                    [ x <| toString (first node.endpoint - 5 / model.scale)
-                    , y <| toString (second node.endpoint - 5 / model.scale)
-                    , width <| toString (10 / model.scale)
-                    , height <| toString (10 / model.scale)
-                    , class (provideClass nodeIdEndpoint)
-                    , Utils.onItemMouseDown <| \( shift, pos ) -> OnNode pos nodeIdEndpoint
-                    ]
-                    []
-            ] ++ (
-                List.indexedMap (\index2 controlPoint ->
-                    let
-                        nodeIdControlPoint = {index = index, member = ControlPoint index2}
-                    in
-                    circle
-                        [ cx <| toString (first controlPoint)
-                        , cy <| toString (second controlPoint)
-                        , r (toString (5 / model.scale))
-                        , class (provideClass nodeIdControlPoint)
-                        , Utils.onItemMouseDown <| \(shift, pos) -> OnNode pos nodeIdControlPoint
-                        ]
-                        []
-                ) node.controlPoints
-            ))
+            [ rect
+                [ x <| toString (first node.endpoint - 5 / model.scale)
+                , y <| toString (second node.endpoint - 5 / model.scale)
+                , width <| toString (10 / model.scale)
+                , height <| toString (10 / model.scale)
+                , class (provideClass nodeIdEndpoint)
+                , Utils.onItemMouseDown <| \( shift, pos ) -> OnNode pos nodeIdEndpoint
+                ]
+                []
+            ]
+                ++ List.indexedMap
+                    (\index2 controlPoint ->
+                        let
+                            nodeIdControlPoint =
+                                { index = index, member = ControlPoint index2 }
+                        in
+                        circle
+                            [ cx <| toString (first controlPoint)
+                            , cy <| toString (second controlPoint)
+                            , r (toString (5 / model.scale))
+                            , class (provideClass nodeIdControlPoint)
+                            , Utils.onItemMouseDown <| \( shift, pos ) -> OnNode pos nodeIdControlPoint
+                            ]
+                            []
+                    )
+                    node.controlPoints
         )
         nodes
-    |> Utils.flattenList
+        |> Utils.flattenList
 
 
 colorPicker : String -> Model -> List (Html Msg)

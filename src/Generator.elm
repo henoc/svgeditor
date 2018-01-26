@@ -23,7 +23,7 @@ generateNode elem =
     case elem.shape of
         TextNode { value } ->
             XmlParser.Text value
-        
+
         SVG { elems, size } ->
             let
                 xmlSubNodes =
