@@ -74,6 +74,13 @@ export function activate(context: vscode.ExtensionContext) {
     }
   });
 
+  vscode.window.onDidChangeActiveTextEditor((e: vscode.TextEditor) => {
+    if (vscode.window.activeTextEditor.document.uri !== previewUri) {
+      provider.editor = vscode.window.activeTextEditor;
+      provider.update(previewUri);
+    }
+  });
+
   disposables.push(vscode.commands.registerCommand("svgeditor.openSvgEditor", () => {
     provider.editor = vscode.window.activeTextEditor;
     return vscode.commands.executeCommand("vscode.previewHtml", previewUri, vscode.ViewColumn.Two, "SVG Editor").then((success) => undefined, (reason) => {

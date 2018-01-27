@@ -44,6 +44,7 @@ You can create shapes using the SVG's coder or directly creating shapes with the
 
 ## ChangeLog
 
+- 0.16.0 It was changed to reference always a content of latest active editor 
 - 0.15.1 Fix align bug
 - 0.15.0 Add node increment and decrement operation
 - 0.14.1 Fix a bug text disappears

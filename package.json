@@ -2,7 +2,7 @@
   "name": "svgeditor",
   "displayName": "SVG Editor",
   "description": "Visual and literal SVG editor for VSCode.",
-  "version": "0.15.1",
+  "version": "0.16.0",
   "publisher": "henoc",
   "icon": "images/SVG_logo.png",
   "galleryBanner": {
@@ -53,8 +53,7 @@
     "vscode:prepublish": "npm run compile",
     "compile": "tsc -p ./ && npm run elm",
     "elm": "elm make src/Main.elm --output resources/main.js",
-    "postinstall": "node ./node_modules/vscode/bin/install",
-    "test": "npm run compile && ava out/test --verbose"
+    "postinstall": "node ./node_modules/vscode/bin/install"
   },
   "devDependencies": {
     "@types/node": "*",
