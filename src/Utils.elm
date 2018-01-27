@@ -498,10 +498,6 @@ valueUnitToStr vu =
         Percent ->
             "%"
 
-selectedOne: Model -> Maybe StyledSVGElement
-selectedOne model =
-    List.filter (\x -> (Set.member x.id model.selected)) (getElems model)
-    |> List.head
 
 port getSvgData : () -> Cmd msg
 

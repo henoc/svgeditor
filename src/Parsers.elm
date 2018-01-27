@@ -6,7 +6,6 @@ import Combinators exposing (..)
 import Debug
 import Dict exposing (Dict)
 import Path.LowLevel.Parser as PathParser
-import Paths
 import Tuple exposing (..)
 import Types exposing (..)
 import Utils
@@ -95,18 +94,7 @@ floatWithUnit valueWithUnit =
 
 intParser : Parser Int
 intParser =
-    \input ->
-        case regexParser "[0-9]+" input of
-            ParseSuccess r i ->
-                case String.toInt r of
-                    Ok k ->
-                        ParseSuccess k i
-
-                    Err _ ->
-                        ParseFailure "unreached" i
-
-            ParseFailure r i ->
-                ParseFailure r i
+    regexParser "[0-9]+" |> Combinators.map (String.toInt >> Result.withDefault 0)
 
 
 
@@ -142,7 +130,7 @@ styleParser =
 
 floatParser : Parser Float
 floatParser =
-    regexParser "[+-]?[0-9]+(\\.[0-9]*)?([eE][+-]?[0-9]+)?" |> Combinators.map (\x -> Result.withDefault 0 <| String.toFloat x)
+    regexParser "[+-]?[0-9]+(\\.[0-9]*)?([eE][+-]?[0-9]+)?" |> Combinators.map (String.toFloat >> Result.withDefault 0)
 
 
 percentParser : Parser Float
@@ -206,12 +194,7 @@ getStyle attrs =
 
 floatAttr : Float -> Maybe String -> Float
 floatAttr default maybeAttr =
-    case maybeAttr of
-        Nothing ->
-            default
-
-        Just x ->
-            Result.withDefault default (String.toFloat x)
+    maybeAttr |> Maybe.map (String.toFloat >> Result.withDefault default) |> Maybe.withDefault default
 
 
 getFloatAttr : String -> Float -> List XmlParser.Attribute -> Float

@@ -1,24 +1,20 @@
-<svg width="400" height="400" xmlns="http://www.w3.org/2000/svg"
-version="1.1" xmlns:xlink="http://www.w3.org/1999/xlink">
+<svg height="400" version="1.1" width="400" xmlns="http://www.w3.org/2000/svg">
   <defs>
-      <linearGradient id="Linear" gradientTransform="rotate(45)">
-          <stop offset="5%"  stop-color="green"/>
-          <stop offset="95%" stop-color="gold"/>
-      </linearGradient>
-      <radialGradient id="Radial">
-          <stop offset="5%"  stop-color="green"/>
-          <stop offset="95%" stop-color="blue"/>
-      </radialGradient>
+    <linearGradient gradientTransform="rotate(45)" id="Linear">
+      <stop offset="5%" stop-color="hsla(120, 100%, 19%, 1)"/>
+      <stop offset="95%" stop-color="hsla(50, 100%, 50%, 1)"/>
+    </linearGradient>
+    <radialGradient id="Radial">
+      <stop offset="5%" stop-color="hsla(120, 100%, 19%, 1)"/>
+      <stop offset="95%" stop-color="hsla(240, 100%, 50%, 1)"/>
+    </radialGradient>
   </defs>
-
-  <rect fill="url(#Linear)"
-        x="10" y="10" width="100" height="100"/>
-
-  <rect height="50" style="fill:#123456;stroke:#999999" width="50" x="100" y="100" />
-  <ellipse cx="200" cy="200" rx="50" ry="30" style="" />
-  <polyline points="18 71,58 71,58 111,98 111,98 151,138 151,138 191" style="fill:white;stroke:red;stroke-width:4" />
-  <path d="M 10 80 C 40 10,65 10,95 80 S 150 150,180 80" style="fill:none;stroke:white" />
-  <text x="0" y="35" font-family="Verdana" font-size="35" fill="white">
+  <rect fill="url(#Linear)" height="100" width="100" x="19" y="52"/>
+  <rect height="50" width="50" x="57" y="129" fill="#123456" stroke="#999"/>
+  <ellipse cx="172" cy="164" rx="50" ry="30"/>
+  <polyline points="192 72 232 72 232 112 272 112 272 152 312 152 312 192" fill="#fff" stroke="red" stroke-width="4"/>
+  <path d="M115 162.2c30.8-69.1 55.8-69.4 85 1s54.2 70.7 85 1" fill="none" stroke="#fff"/>
+  <text fill="#fff" font-family="Verdana" font-size="35" x="0" y="35">
     Hello, out there
   </text>
 </svg>

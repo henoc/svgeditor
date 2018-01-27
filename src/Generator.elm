@@ -88,7 +88,7 @@ generateNode elem =
         Stop stp ->
             let
                 newAttr =
-                    maybeInsert "offset" (Maybe.map (\x -> x |> toString |> (\y -> y ++ "%")) stp.offset)
+                    maybeInsert "offset" (Maybe.map (toString >> (\y -> y ++ "%")) stp.offset)
                         << maybeInsert "stop-color" (Maybe.map colorToCssHsla2 stp.color)
                         << maybeInsert "style" styleAttr
                     <|

@@ -240,8 +240,7 @@ buildVertexes model =
         []
     else
         List.map2
-            (\pos ->
-                \anti ->
+            (\pos anti ->
                     circle
                         [ cx <| toString (first pos)
                         , cy <| toString (second pos)

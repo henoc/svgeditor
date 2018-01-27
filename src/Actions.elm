@@ -106,11 +106,9 @@ shapeToPath model =
 alignLeft : Model -> Model
 alignLeft model =
     let
-        elems =
-            Utils.getElems model
 
         mostLeft =
-            elems |> List.map Shape.getBBox |> List.map .leftTop |> List.map first |> List.minimum |> Maybe.withDefault 0
+            model.selectedRef |> List.map Shape.getBBox |> List.map .leftTop |> List.map first |> List.minimum |> Maybe.withDefault 0
 
         process : StyledSVGElement -> StyledSVGElement
         process elem =
@@ -138,11 +136,9 @@ alignLeft model =
 alignRight : Model -> Model
 alignRight model =
     let
-        elems =
-            Utils.getElems model
 
         mostRight =
-            elems |> List.map Shape.getBBox |> List.map .rightBottom |> List.map first |> List.maximum |> Maybe.withDefault 0
+            model.selectedRef |> List.map Shape.getBBox |> List.map .rightBottom |> List.map first |> List.maximum |> Maybe.withDefault 0
 
         process : StyledSVGElement -> StyledSVGElement
         process elem =
@@ -170,11 +166,8 @@ alignRight model =
 alignTop : Model -> Model
 alignTop model =
     let
-        elems =
-            Utils.getElems model
-
         mostTop =
-            elems |> List.map Shape.getBBox |> List.map .leftTop |> List.map second |> List.minimum |> Maybe.withDefault 0
+            model.selectedRef |> List.map Shape.getBBox |> List.map .leftTop |> List.map second |> List.minimum |> Maybe.withDefault 0
 
         process : StyledSVGElement -> StyledSVGElement
         process elem =
@@ -202,11 +195,8 @@ alignTop model =
 alignBottom : Model -> Model
 alignBottom model =
     let
-        elems =
-            Utils.getElems model
-
         mostBottom =
-            elems |> List.map Shape.getBBox |> List.map .rightBottom |> List.map second |> List.maximum |> Maybe.withDefault 0
+            model.selectedRef |> List.map Shape.getBBox |> List.map .rightBottom |> List.map second |> List.maximum |> Maybe.withDefault 0
 
         process : StyledSVGElement -> StyledSVGElement
         process elem =
