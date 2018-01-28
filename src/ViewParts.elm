@@ -2,8 +2,7 @@ module ViewParts exposing (..)
 
 import Html exposing (..)
 import Html.Attributes exposing (class, id)
-import Material.Options as Options
-import Material.Tooltip as Tooltip
+import Html.Events exposing (onClick)
 import Svg exposing (path, rect, script, svg)
 import Svg.Attributes exposing (d, fill, height, viewBox, width, x, y)
 import Types exposing (..)
@@ -13,20 +12,19 @@ import Types exposing (..)
 -- https://materialdesignicons.com/
 
 
-toggled : Mode -> Mode -> List (Options.Property c m)
+toggled : Mode -> Mode -> List (Html.Attribute msg)
 toggled mode now =
     if now == mode then
-        [ Options.attribute (class "button-toggled") ]
+        [ class "button-toggled" ]
     else
         []
 
 
 makeMenu : Int -> Mode -> String -> Model -> String -> List (Html Msg)
 makeMenu i mode description model dstring =
-    [ Options.div
-        ([ Options.attribute (class "button")
-         , Options.onClick <| OnProperty <| SwichMode mode
-         , Tooltip.attach Mdl [ i ]
+    [ div
+        ([ class "button"
+         , onClick <| OnProperty <| SwichMode mode
          ]
             ++ toggled mode model.mode
         )
@@ -34,30 +32,19 @@ makeMenu i mode description model dstring =
             [ path [ fill "currentColor", d dstring ] []
             ]
         ]
-    , Tooltip.render Mdl
-        [ i ]
-        model.mdl
-        []
-        [ text description ]
     ]
 
 
 makeAction : Int -> Action -> String -> Model -> String -> List (Html Msg)
 makeAction i action description model dstring =
-    [ Options.div
-        [ Options.attribute (class "button")
-        , Options.onClick <| OnAction <| action
-        , Tooltip.attach Mdl [ i ]
+    [ div
+        [ class "button"
+        , onClick <| OnAction <| action
         ]
         [ svg [ width "24", height "24", viewBox "0 0 24 24" ]
             [ path [ fill "currentColor", d dstring ] []
             ]
         ]
-    , Tooltip.render Mdl
-        [ i ]
-        model.mdl
-        []
-        [ text description ]
     ]
 
 

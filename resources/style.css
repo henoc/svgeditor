@@ -1,3 +1,7 @@
+* {
+  --theme-color: #3F51B5;
+}
+
 #root {
   position: relative;
   margin: 10px;
@@ -18,14 +22,14 @@
 .circle {
   width: 56px;
   height: 56px;
-  border-radius: 56px;
+  border-radius: 50%;
   margin: 1em;
 }
 
 .mini-circle {
   width: 36px;
   height: 36px;
-  border-radius: 36px;
+  border-radius: 50%;
   margin: 1em;
 }
 
@@ -45,7 +49,7 @@
 }
 
 .button-toggled,.button-toggled:hover {
-  background-color: #3F51B5;
+  background-color: var(--theme-color);
 }
 
 .node {
@@ -54,6 +58,51 @@
 }
 
 .node-toggled {
-  fill: #3F51B5;
+  fill: var(--theme-color);
   stroke: currentColor;
+}
+
+input[type="range"] {
+  -webkit-appearance: none;
+  appearance: none;
+  background-color: var(--theme-color);
+  height: 3px;
+  border-radius: 6px;
+}
+
+input[type="range"]:focus,
+input[type="range"]:active {
+  outline: none;
+}
+
+input[type="range"]::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  appearance: none;
+  cursor: pointer;
+  position: relative;
+  width: 16px;
+  height: 16px;
+  display: block;
+  background-color: var(--theme-color);
+  border-radius: 50%;
+  -webkit-border-radius: 50%;
+}
+
+input[type="radio"] {
+  display: none;
+}
+input[type="radio"] + span:before {
+  content: "";
+  display: inline-block;
+  width: 0.8em;
+  height: 0.8em;
+  border-radius: 50%;
+  border-color: rgb(59, 59, 59);
+  border-width: 0.2em;
+  border-style: solid;
+}
+input[type="radio"]:checked + span:before {
+  content: "";
+  border-color: var(--theme-color);
+  background-color: var(--theme-color);
 }

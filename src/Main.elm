@@ -8,26 +8,17 @@ import Dict exposing (Dict)
 import Ext.Color
 import Gradients
 import HandMode
-import Html exposing (Html, button, div, img, node, p, text)
-import Html.Attributes exposing (attribute, checked, class, id, src, value)
+import Html exposing (Html, button, div, img, node, p, text, input, label, span)
+import Html.Attributes exposing (attribute, checked, class, id, src, value, type_, name, step, checked, style)
 import Html.Events exposing (onClick, onInput, onMouseDown)
 import List.Extra exposing (find)
-import Material
-import Material.Button as Button
-import Material.Elevation as Elevation
-import Material.Grid exposing (Device(..), cell, grid, noSpacing, size)
-import Material.Options as Options
-import Material.Scheme
-import Material.Slider as Slider
-import Material.Toggles as Toggles
-import Material.Typography as Typo
 import NodeMode
 import Parsers
 import Round
 import Set exposing (Set)
 import ShapeMode
 import Svg exposing (ellipse, rect, svg)
-import Svg.Attributes exposing (height, style, width)
+import Svg.Attributes exposing (height, width)
 import Traverse
 import Tuple exposing (first, second)
 import Types exposing (..)
@@ -51,8 +42,7 @@ main =
 
 init : ( Model, Cmd Msg )
 init =
-    { mdl = Material.model
-    , mode = HandMode
+    { mode = HandMode
     , dragBegin = Nothing
     , isMouseDown = False
     , svg = { style = Dict.empty, id = -1, attr = Dict.empty, shape = SVG { elems = [], size = ( 400, 400 ) } }
@@ -89,9 +79,6 @@ init =
 update : Msg -> Model -> ( Model, Cmd Msg )
 update msg model =
     case msg of
-        Mdl msg_ ->
-            Material.update Mdl msg_ model
-
         OnProperty changePropertyMsg ->
             case changePropertyMsg of
                 SwichMode HandMode ->
@@ -828,7 +815,7 @@ view model =
     let
         -- ボタンの追加CSS
         buttonCss =
-            Options.css "color" "currentColor"
+            style [("color", "currentColor")]
 
         svgWidth =
             Utils.getSvgSize model |> first
@@ -838,19 +825,21 @@ view model =
 
         -- 拡大率
         scaleCss =
-            "transform-origin: left top; transform: scale(" ++ toString model.scale ++ ");"
+            [
+                ("transform-origin", "left top"),
+                ("transform", "scale(" ++ toString model.scale ++ ")")
+            ]
 
         -- メニュー以外の部分
         rootDiv hide =
-            Options.div
-                [ if hide then
-                    Options.css "display" "none"
-                  else
-                    Options.css "display" "block"
-                , Elevation.e8
-                , Options.attribute <| Html.Attributes.id "root"
-                , Options.css "width" <| (toString <| (*) model.scale <| svgWidth) ++ "px"
-                , Options.css "height" <| (toString <| (*) model.scale <| svgHeight) ++ "px"
+            div
+                [ id "root"
+                , style [
+                    ("width", (toString <| (*) model.scale <| svgWidth) ++ "px"),
+                    ("height", (toString <| (*) model.scale <| svgHeight) ++ "px"),
+                    ("display", if hide then "none" else "block"),
+                    ("box-shadow", "4px 4px 16px black")
+                    ]
                 ]
                 [ -- 画像としてのsvg
                   img
@@ -860,7 +849,7 @@ view model =
                         (if model.scale > 1 then
                             scaleCss
                          else
-                            ""
+                            []
                         )
 
                     -- 画像は外側のdivに合わせて縮小されるため、二重に縮小されるのを防止する必要がある
@@ -920,30 +909,30 @@ view model =
                     Dict.get "stroke-dasharray" model.styleInfo |> Maybe.map (Parsers.floatWithUnit >> Maybe.withDefault ( 0, Px )) |> Maybe.withDefault ( 0, Px )
             in
             [ if model.scale /= 1 then
-                Options.styled p [ Typo.body2 ] [ text <| "x" ++ Round.round 1 model.scale ]
+                text <| "x" ++ Round.round 1 model.scale
               else
                 div [] []
             , div [] <| ViewBuilder.colorPicker "fill" model
             , div [] <| ViewBuilder.colorPicker "stroke" model
-            , div [ style "display: flex" ]
-                [ Options.styled p [ Typo.body2 ] [ text <| "stroke-width" ]
-                , Slider.view [ Slider.value (first sw), Slider.min 0, Slider.max 100, Slider.step 1, Slider.onChange (\n -> OnProperty <| Style <| Dict.insert "stroke-width" (toString n ++ Utils.valueUnitToStr (second sw)) styleInfo) ]
+            , div [ style [("display", "flex")] ]
+                [ text <| "stroke-width"
+                , input [ type_ "range", value (first sw |> toString), Html.Attributes.min "0", Html.Attributes.max "100", step "1", onInput (\n -> OnProperty <| Style <| Dict.insert "stroke-width" (n ++ Utils.valueUnitToStr (second sw)) styleInfo) ] []
                 ]
-            , div [ style "display: flex" ]
-                [ Options.styled p [ Typo.body2 ] [ text <| "stroke-linecap" ]
-                , Toggles.radio Mdl [ 100 ] model.mdl [ Toggles.value (sc == "butt"), Toggles.group "stroke-linecap", Options.onToggle <| OnProperty <| Style <| Dict.insert "stroke-linecap" "butt" styleInfo ] [ text "butt" ]
-                , Toggles.radio Mdl [ 101 ] model.mdl [ Toggles.value (sc == "square"), Toggles.group "stroke-linecap", Options.onToggle <| OnProperty <| Style <| Dict.insert "stroke-linecap" "square" styleInfo ] [ text "square" ]
-                , Toggles.radio Mdl [ 102 ] model.mdl [ Toggles.value (sc == "round"), Toggles.group "stroke-linecap", Options.onToggle <| OnProperty <| Style <| Dict.insert "stroke-linecap" "round" styleInfo ] [ text "round" ]
+            , div [ style [("display", "flex")] ]
+                [ text <| "stroke-linecap"
+                , label [] [ input [ type_ "radio", value "butt",   checked (sc == "butt"), name "stroke-linecap", onClick <| OnProperty <| Style <| Dict.insert "stroke-linecap" "butt" styleInfo ] [], span [] [], text "butt" ]
+                , label [] [ input [ type_ "radio", value "square", checked (sc == "square"), name "stroke-linecap", onClick <| OnProperty <| Style <| Dict.insert "stroke-linecap" "square" styleInfo] [], span [] [], text "square" ]
+                , label [] [ input [ type_ "radio", value "round",  checked (sc == "round"), name "stroke-linecap", onClick <| OnProperty <| Style <| Dict.insert "stroke-linecap" "round" styleInfo ] [], span [] [], text "round" ]
                 ]
-            , div [ style "display: flex" ]
-                [ Options.styled p [ Typo.body2 ] [ text <| "stroke-linejoin" ]
-                , Toggles.radio Mdl [ 103 ] model.mdl [ Toggles.value (sl == "miter"), Toggles.group "stroke-linejoin", Options.onToggle <| OnProperty <| Style <| Dict.insert "stroke-linejoin" "miter" styleInfo ] [ text "miter" ]
-                , Toggles.radio Mdl [ 104 ] model.mdl [ Toggles.value (sl == "round"), Toggles.group "stroke-linejoin", Options.onToggle <| OnProperty <| Style <| Dict.insert "stroke-linejoin" "round" styleInfo ] [ text "round" ]
-                , Toggles.radio Mdl [ 105 ] model.mdl [ Toggles.value (sl == "bevel"), Toggles.group "stroke-linejoin", Options.onToggle <| OnProperty <| Style <| Dict.insert "stroke-linejoin" "bevel" styleInfo ] [ text "bevel" ]
+            , div [ style [("display", "flex")] ]
+                [ text <| "stroke-linejoin"
+                , label [] [ input [ type_ "radio", value "round", checked (sl == "round"), name "stroke-linejoin", onClick <| OnProperty <| Style <| Dict.insert "stroke-linejoin" "round" styleInfo ] [], span [] [], text "round" ]
+                , label [] [ input [ type_ "radio", value "bevel", checked (sl == "bevel"), name "stroke-linejoin", onClick <| OnProperty <| Style <| Dict.insert "stroke-linejoin" "bevel" styleInfo ] [], span [] [], text "bevel" ]
+                , label [] [ input [ type_ "radio", value "miter", checked (sl == "miter"), name "stroke-linejoin", onClick <| OnProperty <| Style <| Dict.insert "stroke-linejoin" "miter" styleInfo ] [], span [] [], text "miter" ]
                 ]
-            , div [ style "display: flex" ]
-                [ Options.styled p [ Typo.body2 ] [ text <| "stroke-dasharray" ]
-                , Slider.view [ Slider.value (first sd), Slider.min 0, Slider.max 100, Slider.step 1, Slider.onChange (\n -> OnProperty <| Style <| Dict.insert "stroke-dasharray" (toString n ++ Utils.valueUnitToStr (second sw)) styleInfo) ]
+            , div [ style [("display", "flex")] ]
+                [ text <| "stroke-dasharray"
+                , input [ type_ "range", value (first sd |> toString), Html.Attributes.min "0", Html.Attributes.max "100", step "1", onInput (\n -> OnProperty <| Style <| Dict.insert "stroke-dasharray" (n ++ Utils.valueUnitToStr (second sw)) styleInfo) ] []
                 ]
             ]
 
@@ -952,9 +941,9 @@ view model =
                 |> Dict.toList
                 |> List.map (\( ident, ginfo ) -> ViewBuilder.gradientItem ident ginfo model)
             )
-                ++ [ div [ style "display: flex" ]
-                        [ Button.render Mdl [ 200 ] model.mdl [ buttonCss, MakeNewGradient Linear |> Options.onClick, Button.raised ] [ text "add linear gradient" ]
-                        , Button.render Mdl [ 200 ] model.mdl [ buttonCss, MakeNewGradient Radial |> Options.onClick, Button.raised ] [ text "add radial gradient" ]
+                ++ [ div [ style [("display", "flex")] ]
+                        [ button [ buttonCss, MakeNewGradient Linear |> onClick ] [ text "add linear gradient" ]
+                        , button [ buttonCss, MakeNewGradient Radial |> onClick ] [ text "add radial gradient" ]
                         ]
                    ]
     in
@@ -998,7 +987,6 @@ view model =
                         [ rootDiv False ] ++ colorPickers
                )
         )
-        |> Material.Scheme.top
 
 
 

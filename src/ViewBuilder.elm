@@ -5,16 +5,8 @@ import Color.Convert exposing (..)
 import Dict exposing (Dict)
 import Gradients
 import Html exposing (..)
-import Html.Attributes exposing (attribute, value)
+import Html.Attributes exposing (attribute, value, min, max, step, checked)
 import Html.Events exposing (..)
-import Material.Button as Button
-import Material.Card as Card
-import Material.Elevation as Elevation
-import Material.Icon as Icon
-import Material.Options as Options
-import Material.Slider as Slider
-import Material.Toggles as Toggles
-import Material.Typography as Typo
 import Path.LowLevel
 import Set exposing (Set)
 import Shape
@@ -381,16 +373,9 @@ colorPicker sty model =
             "display: flex"
     in
     [ div [ style flex ]
-        ([ Options.styled p [ Typo.body2, Options.css "width" "60px" ] [ text <| sty ]
-         , Options.div
-            [ if model.openedPicker == sty then
-                Elevation.e0
-              else
-                Elevation.e4
-            , Elevation.transition 300
-            , Options.css "width" "48px"
-            , Options.css "height" "48px"
-            , Options.css "background"
+        ([ text <| sty
+         , div
+            [ style ("cursor: pointer; width: 48px; height: 48px; background: " ++
                 (case colorPickerState.colorMode of
                     -- 色表示の四角形
                     NoneColor ->
@@ -402,10 +387,8 @@ colorPicker sty model =
                     AnyColor url ->
                         Maybe.map (Gradients.toCssGradient url) (Dict.get (noSharp url) model.gradients)
                             |> Maybe.withDefault "hsla(0, 0%, 100%, 0.1)"
-                )
-            , Options.css "cursor" "pointer"
-            , Options.center
-            , Options.onClick <|
+                ))
+            , onClick <|
                 OpenedPickerMsg
                     (if model.openedPicker == sty then
                         "none"
@@ -430,31 +413,43 @@ colorPicker sty model =
 
                     True ->
                         [ div [ style "display: flex; flex-direction: column; margin: 0px 10px" ]
-                            ([ Toggles.radio Mdl
-                                [ 0 ]
-                                model.mdl
-                                [ Options.onToggle <| ColorPickerMsg noneInserted
-                                , Toggles.value (colorPickerState.colorMode == NoneColor)
+                            ([ label []  [
+                                    input
+                                        [ type_ "radio"
+                                        , name "colors"
+                                        , onClick <| ColorPickerMsg noneInserted
+                                        , value "NoneColor"
+                                        , checked (colorPickerState.colorMode == NoneColor)
+                                        ] [],
+                                    span [] [],
+                                    text "none"
                                 ]
-                                [ text "none" ]
-                             , Toggles.radio Mdl
-                                [ 1 ]
-                                model.mdl
-                                [ Options.onToggle <| ColorPickerMsg singleInserted
-                                , Toggles.value (colorPickerState.colorMode == SingleColor)
-                                ]
-                                [ text "single" ]
+                             , label [] [
+                                 input
+                                    [ type_ "radio"
+                                    , name "colors"
+                                    , onClick <| ColorPickerMsg singleInserted
+                                    , value "SingleColor"
+                                    , checked (colorPickerState.colorMode == SingleColor)
+                                    ] [],
+                                 span [] [],
+                                 text "single"
+                               ]
                              ]
                                 ++ List.indexedMap
                                     (\index ->
                                         \url ->
-                                            Toggles.radio Mdl
-                                                [ 2 + index ]
-                                                model.mdl
-                                                [ Options.onToggle <| ColorPickerMsg <| anyInserted url
-                                                , Toggles.value (colorPickerState.colorMode == AnyColor url)
-                                                ]
-                                                [ text url ]
+                                            label [] [
+                                                input
+                                                    [ onClick <| ColorPickerMsg <| anyInserted url
+                                                    , name "colors"
+                                                    , value "AnyColor"
+                                                    , type_ "radio"
+                                                    , checked (colorPickerState.colorMode == AnyColor url)
+                                                    ] [],
+                                                span [] [],
+                                                text url
+                                            ]
                                     )
                                     gradientUrls
                             )
@@ -481,30 +476,22 @@ gradientItem ident ginfo model =
 
         stops =
             ginfo.stops
-
-        buttonCss =
-            [ Button.icon, Button.colored ]
     in
-    Options.div
-        [ Elevation.e4
-        ]
+    div
+        []
         [ div [ style "display: flex; flex-wrap: wrap" ]
             [ div []
                 [ div [ class "circle", style ("background: " ++ cssString) ] []
-                , Options.styled p [ Typo.subhead ] [ text ("#" ++ ident) ]
-                , Button.render Mdl [ 200 ] model.mdl (buttonCss ++ [ RemoveGradient ident |> Options.onClick ]) [ Icon.i "clear" ]
+                , text ("#" ++ ident)
+                , button [ RemoveGradient ident |> onClick ] [ text "clear" ]
                 ]
             , div [ style "display: flex; flex-wrap: wrap" ]
                 (stops
-                    |> List.indexedMap (\index ( ofs, clr ) -> ( Slider.view [ Slider.onChange (\f -> ChangeStop ident index (floor f) clr), Slider.value <| toFloat ofs, Slider.min 0, Slider.max 100, Slider.step 10 ], clr ))
+                    |> List.indexedMap (\index ( ofs, clr ) -> ( input [ type_ "range", onInput (\f -> ChangeStop ident index (floor <| Result.withDefault 0 <| String.toFloat f) clr), value <| toString ofs, Html.Attributes.min "0", Html.Attributes.max "100", step "10" ] [], clr ))
                     |> List.indexedMap
                         (\index ( slider, clr ) ->
-                            Options.div
-                                [ Options.css "display" "flex"
-                                , Options.css "flex-direction" "column"
-                                , Options.css "margin" "1em"
-                                , Options.css "padding" "0.5em"
-                                , Elevation.e4
+                            div
+                                [ style "display: flex; flex-direction: column; margin: 1em; padding: 0.5em"
                                 ]
                                 [ div
                                     [ class "mini-circle"
@@ -521,10 +508,10 @@ gradientItem ident ginfo model =
                                             Html.map GradientPanelMsg <| Ui.ColorPanel.view model.gradientPanel
                                         else
                                             slider
-                                , Button.render Mdl [ 201 ] model.mdl (buttonCss ++ [ RemoveStop ident index |> Options.onClick ]) [ Icon.i "clear" ]
+                                , button [ RemoveStop ident index |> onClick ] [ text "clear" ]
                                 ]
                         )
                 )
-            , Button.render Mdl [ 202 ] model.mdl (buttonCss ++ [ AddNewStop ident |> Options.onClick ]) [ Icon.i "add" ]
+            , button [ AddNewStop ident |> onClick ] [ text "add" ]
             ]
         ]

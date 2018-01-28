@@ -3,7 +3,6 @@ module Types exposing (..)
 import Color exposing (Color)
 import Dict exposing (Dict)
 import Ext.Color
-import Material
 import Path.LowLevel exposing (..)
 import Set exposing (Set)
 import Ui.ColorPanel
@@ -56,8 +55,7 @@ type alias StyledSVGElement =
 
 
 type alias Model =
-    { mdl : Material.Model
-    , mode : Mode
+    { mode : Mode
     , dragBegin : Maybe Vec2
     , isMouseDown : Bool
     , svg : StyledSVGElement
@@ -95,8 +93,7 @@ type alias GradientInfo =
 
 
 type Msg
-    = Mdl (Material.Msg Msg)
-    | OnProperty ChangePropertyMsg
+    = OnProperty ChangePropertyMsg
     | OnAction Action
     | OnMouse MouseMsg
     | OnSelect Int Bool Vec2
