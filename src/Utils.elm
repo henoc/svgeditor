@@ -385,7 +385,7 @@ changeContains elems svgroot =
 
 
 
--- svg文字列をエディタに送信する & エンコードされた文字列を得る
+-- svg文字列をエディタに送信する & エンコード文字列を変更する
 
 
 reflectSvgData : Model -> Cmd msg
@@ -395,6 +395,16 @@ reflectSvgData model =
             Generator.generateXml model.svg
     in
     Cmd.batch [ sendSvgData svgData, encodeURIComponent svgData ]
+
+-- エンコード文字列の変更のみ
+
+updateSvgImage: Model -> Cmd msg
+updateSvgImage model =
+    let
+        svgData =
+            Generator.generateXml model.svg
+    in
+    Cmd.batch [ encodeURIComponent svgData ]
 
 
 updateHead : (a -> a) -> List a -> List a

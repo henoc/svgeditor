@@ -37,6 +37,7 @@ import Utils2
 import Vec2 exposing (..)
 import ViewBuilder
 import ViewParts
+import Generator
 
 
 main : Program Never Model Msg
@@ -233,6 +234,12 @@ update msg model =
                     newModel ! [ Utils.reflectSvgData newModel ]
 
         OnMouse onMouseMsg ->
+            let
+                reflect model = case onMouseMsg of
+                    MouseUp _ -> Utils.reflectSvgData model
+                    MouseMove _ -> Utils.updateSvgImage model
+                    _ -> Cmd.none
+            in
             case model.mode of
                 HandMode ->
                     let
@@ -240,7 +247,7 @@ update msg model =
                             HandMode.update onMouseMsg model
                     in
                     if model /= newModel then
-                        newModel ! [ Utils.reflectSvgData newModel ]
+                        newModel ! [ reflect newModel ]
                     else
                         model ! []
 
@@ -250,7 +257,7 @@ update msg model =
                             NodeMode.update onMouseMsg model
                     in
                     if model /= newModel then
-                        newModel ! [ Utils.reflectSvgData newModel ]
+                        newModel ! [ reflect newModel ]
                     else
                         model ! []
 
@@ -274,7 +281,7 @@ update msg model =
                                             ShapeMode.updatePolygon onMouseMsg model
                                     in
                                     if model /= newModel then
-                                        newModel ! [ Utils.reflectSvgData newModel ]
+                                        newModel ! [ reflect newModel ]
                                     else
                                         model ! []
 
@@ -284,7 +291,7 @@ update msg model =
                                             ShapeMode.updatePath onMouseMsg model
                                     in
                                     if model /= newModel then
-                                        newModel ! [ Utils.reflectSvgData newModel ]
+                                        newModel ! [ reflect newModel ]
                                     else
                                         model ! []
 
@@ -294,7 +301,7 @@ update msg model =
                                             ShapeMode.update onMouseMsg model
                                     in
                                     if model /= newModel then
-                                        newModel ! [ Utils.reflectSvgData newModel ]
+                                        newModel ! [ reflect newModel ]
                                     else
                                         model ! []
 
