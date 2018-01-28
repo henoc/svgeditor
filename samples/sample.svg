@@ -10,11 +10,11 @@
     </radialGradient>
   </defs>
   <rect fill="url(#Linear)" height="100" width="100" x="19" y="52"/>
-  <rect height="50" width="50" x="57" y="129" fill="#123456" stroke="#999"/>
+  <rect fill="#123456" height="50" stroke="#999" width="50" x="57" y="129"/>
   <ellipse cx="172" cy="164" rx="50" ry="30"/>
-  <polyline points="192 72 232 72 232 112 272 112 272 152 312 152 312 192" fill="#fff" stroke="red" stroke-width="4"/>
+  <polyline fill="#fff" points="192 72 232 72 232 112 272 112 272 152 312 152 312 192" stroke="red" stroke-width="4"/>
   <path d="M115 162.2c30.8-69.1 55.8-69.4 85 1s54.2 70.7 85 1" fill="none" stroke="#fff"/>
-  <text fill="#fff" font-family="Verdana" font-size="35" x="0" y="35">
-    Hello, out there
+  <text fill="#fff" font-family="Verdana" font-size="35" x="45" y="54">
+    Hello, <tspan fill="#ff0">out there</tspan>
   </text>
 </svg>

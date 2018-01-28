@@ -88,18 +88,26 @@ build layerType model svg =
         TextNode { value } ->
             text value
 
+        Text { elems, baseline, leftTop, size } ->
+            Svg.text_
+                (attrList
+                    ++ itemClick
+                    ++ [
+                        x (toString <| first baseline),
+                        y (toString <| second baseline),
+                        style styleStr
+                    ]
+                )
+                (List.map (build layerType model) elems)
+
         Rectangle { leftTop, size } ->
-            let
-                left =
-                    leftTop -# size /# ( 2, 2 )
-            in
             rect
                 (attrList
                     ++ itemClick
-                    ++ [ x (toString <| Tuple.first leftTop)
-                       , y (toString <| Tuple.second leftTop)
-                       , width (toString <| Tuple.first size)
-                       , height (toString <| Tuple.second size)
+                    ++ [ x (toString <| first leftTop)
+                       , y (toString <| second leftTop)
+                       , width (toString <| first size)
+                       , height (toString <| second size)
                        , style styleStr
                        ]
                 )
@@ -108,19 +116,19 @@ build layerType model svg =
         Ellipse { center, size } ->
             let
                 centx =
-                    Tuple.first center
+                    first center
             in
             let
                 centy =
-                    Tuple.second center
+                    second center
             in
             let
                 sizex =
-                    Tuple.first size
+                    first size
             in
             let
                 sizey =
-                    Tuple.second size
+                    second size
             in
             ellipse
                 (attrList
@@ -175,8 +183,8 @@ build layerType model svg =
         SVG { elems, size } ->
             Svg.svg
                 (attrList
-                    ++ [ width (toString <| Tuple.first size)
-                       , height (toString <| Tuple.second size)
+                    ++ [ width (toString <| first size)
+                       , height (toString <| second size)
                        ]
                 )
                 (List.map (build layerType model) elems)
@@ -360,11 +368,8 @@ colorPicker sty model =
         cgAlp alp =
             Dict.insert sty { colorPickerState | singleColor = Color.hsla hsl.hue hsl.saturation hsl.lightness alp } model.colorPicker
 
-        gradients =
-            Utils.getGradients model
-
         gradientUrlsNoSharp =
-            List.map .attr gradients |> List.map (Dict.get "id") |> Utils.flatten
+            Dict.keys model.gradients
 
         gradientUrls =
             gradientUrlsNoSharp |> List.map (\x -> "#" ++ x)

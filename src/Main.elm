@@ -306,22 +306,15 @@ update msg model =
                                         model ! []
 
         OnSelect ident isAdd pos ->
-            let
-                gradients =
-                    Utils.getGradients model
-
-                gradientIds =
-                    gradients |> List.map .id
-            in
             case model.mode of
                 HandMode ->
-                    HandMode.select ident isAdd pos model ! [ Utils.getStyle ( ident, "color" ), Utils.getGradientStyles gradientIds ]
+                    HandMode.select ident isAdd pos model ! [ Utils.getStyle ( ident, "color" ) ]
 
                 NodeMode ->
-                    NodeMode.select ident pos model ! [ Utils.getStyle ( ident, "color" ), Utils.getGradientStyles gradientIds ]
+                    NodeMode.select ident pos model ! [ Utils.getStyle ( ident, "color" ) ]
 
                 _ ->
-                    model ! [ Utils.getGradientStyles gradientIds ]
+                    model ! []
 
         -- svg枠内のクリックについて
         FieldSelect ( button, pos ) ->
@@ -403,14 +396,11 @@ update msg model =
                     let
                         newModel =
                             { model | svg = data, idGen = nextId }
-
-                        gradients =
-                            Utils.getGradients newModel
-
-                        gradientIds =
-                            gradients |> List.map .id
+                        
+                        -- Resolve Later parameters
+                        commands = Traverse.accumulateIdents newModel.svg Traverse.zero |> Traverse.genCommands
                     in
-                    newModel ! [ Utils.encodeURIComponent svgData, Utils.getGradientStyles gradientIds ]
+                    newModel ! [ Utils.encodeURIComponent svgData, commands ]
 
                 Nothing ->
                     model ! []
@@ -808,6 +798,21 @@ update msg model =
                     { model | gradients = definedGradients, svg = newModelSvg }
             in
             newModel ! [ Utils.reflectSvgData newModel ]
+        
+        TextSizes lst ->
+            let
+                dict = Dict.fromList lst
+                replacer: StyledSVGElement -> StyledSVGElement
+                replacer = \elem -> case elem.shape of
+                    Text {elems, baseline, leftTop, size} ->
+                        case Dict.get elem.id dict of
+                            Just (lt, sz) -> {elem | shape = Text {elems = elems, baseline = baseline, leftTop = Just lt, size = Just sz}}
+                            Nothing -> elem
+                    _ -> elem
+                newModelSvg =
+                    Traverse.traverse replacer model.svg
+            in
+            {model | svg = newModelSvg} ! []
 
 
 
@@ -1012,6 +1017,7 @@ subscriptions model =
         , Utils.getBoundingClientRectFromJs SvgRootRect
         , Utils.getStyleFromJs ComputedStyle
         , Utils.getGradientStylesFromJs GradientStyles
+        , Utils.getTextSizesFromJs TextSizes
         , Sub.map ColorPanelMsg (Ui.ColorPanel.subscriptions model.colorPanel)
         , Ui.ColorPanel.onChange ColorPanelChanged model.colorPanel
         , Sub.map GradientPanelMsg (Ui.ColorPanel.subscriptions model.gradientPanel)

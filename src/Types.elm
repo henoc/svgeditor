@@ -27,7 +27,7 @@ type alias StyleInfo =
 type alias AttributeInfo =
     Dict String String
 
-
+type alias Later a = Maybe a
 
 -- モデルが所有するSVGの形
 
@@ -41,7 +41,8 @@ type SVGElement
     | Defs { elems : List StyledSVGElement }
     | LinearGradient { identifier : String, stops : List StyledSVGElement }
     | RadialGradient { identifier : String, stops : List StyledSVGElement }
-    | Stop { offset : Maybe Int, color : Maybe Color }
+    | Stop { offset : Later Int, color : Later Color }
+    | Text { elems: List StyledSVGElement, baseline: Vec2, leftTop: Later Vec2, size: Later Vec2 }
     | TextNode { value : String }
     | Unknown { name : String, elems : List StyledSVGElement }
 
@@ -120,6 +121,7 @@ type Msg
     | AddNewStop String
     | RemoveStop String Int
     | RemoveGradient String
+    | TextSizes (List (Int, (Vec2, Vec2)))
 
 
 type ChangePropertyMsg
@@ -251,3 +253,8 @@ type alias NodeId =
 type NodeKind
     = Endpoint
     | ControlPoint Int
+
+type alias IdentSet = {
+    textSizes: List Int,
+    gradients: List Int
+}

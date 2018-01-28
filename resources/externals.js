@@ -60,18 +60,29 @@ app.ports.getStyle.subscribe(function([id, layer]){
 });
 
 app.ports.getGradientStyles.subscribe(function(ids) {
-    setTimeout(() => {
-      const ret = ids.map(id => {
-        const elem = getSvgEditorElement(id, "color")
-        const tagName = elem.tagName;
-        return {
-          ident: elem.id,
-          tagName: tagName,
-          styles: getGradientColors(elem)
-        };
-      });
-      app.ports.getGradientStylesFromJs.send(ret);
-    }, 500);    // TODO: 500ms以上で elem = null からのエラーになるのでなんとかする
+  setTimeout(() => {
+    const ret = ids.map(id => {
+      const elem = getSvgEditorElement(id, "color")
+      const tagName = elem.tagName;
+      return {
+        ident: elem.id,
+        tagName: tagName,
+        styles: getGradientColors(elem)
+      };
+    });
+    app.ports.getGradientStylesFromJs.send(ret);
+  }, 500);    // TODO: 500ms以上で elem = null からのエラーになるのでなんとかする
+});
+
+app.ports.getTextSizes.subscribe(function(ids) {
+  setTimeout(() => {
+    const ret = ids.map(id => {
+      const elem = getSvgEditorElement(id, "color");
+      const bbox = elem.getBBox();
+      return [id, [[bbox.x, bbox.y], [bbox.width, bbox.height]]];
+    });
+    app.ports.getTextSizesFromJs.send(ret);
+  }, 500);
 });
 
 app.ports.encodeURIComponent.subscribe(function(str){
