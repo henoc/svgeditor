@@ -556,3 +556,7 @@ port getGradientStyles : List Int -> Cmd msg
 
 
 port getGradientStylesFromJs : (List GradientElementInfo -> msg) -> Sub msg
+
+port getTextSize: Int -> Cmd msg
+
+port getTextSizeFromJs : ((Int, Vec2, Vec2) -> msg) -> Sub msg

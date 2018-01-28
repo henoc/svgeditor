@@ -51,6 +51,14 @@ getBBox elem =
                     List.map (.endpoint >> second) nodes |> List.maximum |> Maybe.withDefault 0
             in
             { leftTop = ( left, top ), rightBottom = ( right, bottom ) }
+        
+        Text { elems, baseline, leftTop, size } ->
+            let
+                length = case size of
+                    Nothing -> 50
+                    Just (x, y) -> x
+            in
+            { leftTop = Maybe.withDefault baseline leftTop, rightBottom = baseline +# (length, 0) }
 
         others ->
             { leftTop = ( 0, 0 ), rightBottom = ( 0, 0 ) }
@@ -78,6 +86,8 @@ translate delta elem =
                     Path
                         { subPaths = Paths.generic ((+#) delta) subPaths
                         }
+                Text { elems, baseline, leftTop, size } ->
+                    Text {elems = elems, baseline = baseline +# delta, leftTop = Maybe.map ((+#) delta) leftTop, size = size}
 
                 others ->
                     others

@@ -409,8 +409,10 @@ update msg model =
 
                         gradientIds =
                             gradients |> List.map .id
+                        
+                        command = Traverse.accumulateCommands newModel.svg
                     in
-                    newModel ! [ Utils.encodeURIComponent svgData, Utils.getGradientStyles gradientIds ]
+                    newModel ! [ Utils.encodeURIComponent svgData, Utils.getGradientStyles gradientIds, command ]
 
                 Nothing ->
                     model ! []
@@ -808,6 +810,19 @@ update msg model =
                     { model | gradients = definedGradients, svg = newModelSvg }
             in
             newModel ! [ Utils.reflectSvgData newModel ]
+        
+        TextSize (id, lt, sz) ->
+            let
+                replacer: StyledSVGElement -> StyledSVGElement
+                replacer = \elem -> case elem.shape of
+                    Text {elems, baseline, leftTop, size} ->
+                        if elem.id == id then {elem | shape = Text {elems = elems, baseline = baseline, leftTop = Just lt, size = Just sz}}
+                        else elem
+                    _ -> elem
+                newModelSvg =
+                    Traverse.traverse replacer model.svg
+            in
+            {model | svg = newModelSvg} ! []
 
 
 
@@ -1012,6 +1027,7 @@ subscriptions model =
         , Utils.getBoundingClientRectFromJs SvgRootRect
         , Utils.getStyleFromJs ComputedStyle
         , Utils.getGradientStylesFromJs GradientStyles
+        , Utils.getTextSizeFromJs TextSize
         , Sub.map ColorPanelMsg (Ui.ColorPanel.subscriptions model.colorPanel)
         , Ui.ColorPanel.onChange ColorPanelChanged model.colorPanel
         , Sub.map GradientPanelMsg (Ui.ColorPanel.subscriptions model.gradientPanel)
