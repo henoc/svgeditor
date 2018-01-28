@@ -74,11 +74,14 @@ app.ports.getGradientStyles.subscribe(function(ids) {
   }, 500);    // TODO: 500ms以上で elem = null からのエラーになるのでなんとかする
 });
 
-app.ports.getTextSize.subscribe(function(id) {
+app.ports.getTextSizes.subscribe(function(ids) {
   setTimeout(() => {
-    const elem = getSvgEditorElement(id, "color");
-    const bbox = elem.getBBox();
-    app.ports.getTextSizeFromJs.send([id, [bbox.x, bbox.y], [bbox.width, bbox.height]]);
+    const ret = ids.map(id => {
+      const elem = getSvgEditorElement(id, "color");
+      const bbox = elem.getBBox();
+      return [id, [[bbox.x, bbox.y], [bbox.width, bbox.height]]];
+    });
+    app.ports.getTextSizesFromJs.send(ret);
   }, 500);
 });
 

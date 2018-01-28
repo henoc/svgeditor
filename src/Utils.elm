@@ -189,33 +189,6 @@ getDefsElems model =
     loop elems []
 
 
-getGradients : Model -> List StyledSVGElement
-getGradients model =
-    let
-        elems =
-            getDefsElems model
-
-        loop : List StyledSVGElement -> List StyledSVGElement -> List StyledSVGElement
-        loop es acc =
-            case es of
-                hd :: tl ->
-                    case hd.shape of
-                        LinearGradient { stops } ->
-                            loop tl (hd :: acc)
-
-                        RadialGradient { stops } ->
-                            loop tl (hd :: acc)
-
-                        _ ->
-                            loop tl acc
-
-                [] ->
-                    List.reverse acc
-    in
-    loop elems []
-
-
-
 -- gradElemsToDefinedGradients: Model -> Dict String GradientInfo
 -- gradElemsToDefinedGradients model =
 --   let
@@ -557,6 +530,6 @@ port getGradientStyles : List Int -> Cmd msg
 
 port getGradientStylesFromJs : (List GradientElementInfo -> msg) -> Sub msg
 
-port getTextSize: Int -> Cmd msg
+port getTextSizes: List Int -> Cmd msg
 
-port getTextSizeFromJs : ((Int, Vec2, Vec2) -> msg) -> Sub msg
+port getTextSizesFromJs : (List (Int, (Vec2, Vec2)) -> msg) -> Sub msg

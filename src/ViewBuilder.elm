@@ -368,11 +368,8 @@ colorPicker sty model =
         cgAlp alp =
             Dict.insert sty { colorPickerState | singleColor = Color.hsla hsl.hue hsl.saturation hsl.lightness alp } model.colorPicker
 
-        gradients =
-            Utils.getGradients model
-
         gradientUrlsNoSharp =
-            List.map .attr gradients |> List.map (Dict.get "id") |> Utils.flatten
+            Dict.keys model.gradients
 
         gradientUrls =
             gradientUrlsNoSharp |> List.map (\x -> "#" ++ x)

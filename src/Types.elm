@@ -121,7 +121,7 @@ type Msg
     | AddNewStop String
     | RemoveStop String Int
     | RemoveGradient String
-    | TextSize (Int, Vec2, Vec2)
+    | TextSizes (List (Int, (Vec2, Vec2)))
 
 
 type ChangePropertyMsg
@@ -253,3 +253,8 @@ type alias NodeId =
 type NodeKind
     = Endpoint
     | ControlPoint Int
+
+type alias IdentSet = {
+    textSizes: List Int,
+    gradients: List Int
+}
