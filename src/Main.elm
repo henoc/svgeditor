@@ -6,10 +6,11 @@ import Color.Convert exposing (..)
 import Debug exposing (..)
 import Dict exposing (Dict)
 import Ext.Color
+import Generator
 import Gradients
 import HandMode
-import Html exposing (Html, button, div, img, node, p, text, input, label, span)
-import Html.Attributes exposing (attribute, checked, class, id, src, value, type_, name, step, checked, style)
+import Html exposing (Html, button, div, img, input, label, node, p, span, text)
+import Html.Attributes exposing (attribute, checked, class, id, name, src, step, style, type_, value)
 import Html.Events exposing (onClick, onInput, onMouseDown)
 import List.Extra exposing (find)
 import NodeMode
@@ -28,7 +29,6 @@ import Utils2
 import Vec2 exposing (..)
 import ViewBuilder
 import ViewParts
-import Generator
 
 
 main : Program Never Model Msg
@@ -222,10 +222,16 @@ update msg model =
 
         OnMouse onMouseMsg ->
             let
-                reflect model = case onMouseMsg of
-                    MouseUp _ -> Utils.reflectSvgData model
-                    MouseMove _ -> Utils.updateSvgImage model
-                    _ -> Cmd.none
+                reflect model =
+                    case onMouseMsg of
+                        MouseUp _ ->
+                            Utils.reflectSvgData model
+
+                        MouseMove _ ->
+                            Utils.updateSvgImage model
+
+                        _ ->
+                            Cmd.none
             in
             case model.mode of
                 HandMode ->
@@ -383,9 +389,10 @@ update msg model =
                     let
                         newModel =
                             { model | svg = data, idGen = nextId }
-                        
+
                         -- Resolve Later parameters
-                        commands = Traverse.accumulateIdents newModel.svg Traverse.zero |> Traverse.genCommands
+                        commands =
+                            Traverse.accumulateIdents newModel.svg Traverse.zero |> Traverse.genCommands
                     in
                     newModel ! [ Utils.encodeURIComponent svgData, commands ]
 
@@ -785,21 +792,31 @@ update msg model =
                     { model | gradients = definedGradients, svg = newModelSvg }
             in
             newModel ! [ Utils.reflectSvgData newModel ]
-        
+
         TextSizes lst ->
             let
-                dict = Dict.fromList lst
-                replacer: StyledSVGElement -> StyledSVGElement
-                replacer = \elem -> case elem.shape of
-                    Text {elems, baseline, leftTop, size} ->
-                        case Dict.get elem.id dict of
-                            Just (lt, sz) -> {elem | shape = Text {elems = elems, baseline = baseline, leftTop = Just lt, size = Just sz}}
-                            Nothing -> elem
-                    _ -> elem
+                dict =
+                    Dict.fromList lst
+
+                replacer : StyledSVGElement -> StyledSVGElement
+                replacer =
+                    \elem ->
+                        case elem.shape of
+                            Text { elems, baseline, leftTop, size } ->
+                                case Dict.get elem.id dict of
+                                    Just ( lt, sz ) ->
+                                        { elem | shape = Text { elems = elems, baseline = baseline, leftTop = Just lt, size = Just sz } }
+
+                                    Nothing ->
+                                        elem
+
+                            _ ->
+                                elem
+
                 newModelSvg =
                     Traverse.traverse replacer model.svg
             in
-            {model | svg = newModelSvg} ! []
+            { model | svg = newModelSvg } ! []
 
 
 
@@ -815,7 +832,7 @@ view model =
     let
         -- ボタンの追加CSS
         buttonCss =
-            style [("color", "currentColor")]
+            style [ ( "color", "currentColor" ) ]
 
         svgWidth =
             Utils.getSvgSize model |> first
@@ -825,22 +842,27 @@ view model =
 
         -- 拡大率
         scaleCss =
-            [
-                ("transform-origin", "left top"),
-                ("transform", "scale(" ++ toString model.scale ++ ")")
+            [ ( "transform-origin", "left top" )
+            , ( "transform", "scale(" ++ toString model.scale ++ ")" )
             ]
-        
-        textBox t = div [style [("width", "120px")]] [text t]
+
+        textBox t =
+            div [ style [ ( "width", "120px" ) ] ] [ text t ]
 
         -- メニュー以外の部分
         rootDiv hide =
             div
                 [ id "root"
-                , style [
-                    ("width", (toString <| (*) model.scale <| svgWidth) ++ "px"),
-                    ("height", (toString <| (*) model.scale <| svgHeight) ++ "px"),
-                    ("display", if hide then "none" else "block"),
-                    ("box-shadow", "4px 4px 16px black")
+                , style
+                    [ ( "width", (toString <| (*) model.scale <| svgWidth) ++ "px" )
+                    , ( "height", (toString <| (*) model.scale <| svgHeight) ++ "px" )
+                    , ( "display"
+                      , if hide then
+                            "none"
+                        else
+                            "block"
+                      )
+                    , ( "box-shadow", "4px 4px 16px black" )
                     ]
                 ]
                 [ -- 画像としてのsvg
@@ -916,23 +938,23 @@ view model =
                 div [] []
             , div [] <| ViewBuilder.colorPicker "fill" model
             , div [] <| ViewBuilder.colorPicker "stroke" model
-            , div [ style [("display", "flex")] ]
+            , div [ style [ ( "display", "flex" ) ] ]
                 [ textBox "stroke-width"
                 , input [ type_ "range", value (first sw |> toString), Html.Attributes.min "0", Html.Attributes.max "100", step "1", onInput (\n -> OnProperty <| Style <| Dict.insert "stroke-width" (n ++ Utils.valueUnitToStr (second sw)) styleInfo) ] []
                 ]
-            , div [ style [("display", "flex")] ]
+            , div [ style [ ( "display", "flex" ) ] ]
                 [ textBox "stroke-linecap"
-                , label [] [ input [ type_ "radio", value "butt",   checked (sc == "butt"), name "stroke-linecap", onClick <| OnProperty <| Style <| Dict.insert "stroke-linecap" "butt" styleInfo ] [], span [] [], text "butt" ]
-                , label [] [ input [ type_ "radio", value "square", checked (sc == "square"), name "stroke-linecap", onClick <| OnProperty <| Style <| Dict.insert "stroke-linecap" "square" styleInfo] [], span [] [], text "square" ]
-                , label [] [ input [ type_ "radio", value "round",  checked (sc == "round"), name "stroke-linecap", onClick <| OnProperty <| Style <| Dict.insert "stroke-linecap" "round" styleInfo ] [], span [] [], text "round" ]
+                , label [] [ input [ type_ "radio", value "butt", checked (sc == "butt"), name "stroke-linecap", onClick <| OnProperty <| Style <| Dict.insert "stroke-linecap" "butt" styleInfo ] [], span [] [], text "butt" ]
+                , label [] [ input [ type_ "radio", value "square", checked (sc == "square"), name "stroke-linecap", onClick <| OnProperty <| Style <| Dict.insert "stroke-linecap" "square" styleInfo ] [], span [] [], text "square" ]
+                , label [] [ input [ type_ "radio", value "round", checked (sc == "round"), name "stroke-linecap", onClick <| OnProperty <| Style <| Dict.insert "stroke-linecap" "round" styleInfo ] [], span [] [], text "round" ]
                 ]
-            , div [ style [("display", "flex")] ]
+            , div [ style [ ( "display", "flex" ) ] ]
                 [ textBox "stroke-linejoin"
                 , label [] [ input [ type_ "radio", value "round", checked (sl == "round"), name "stroke-linejoin", onClick <| OnProperty <| Style <| Dict.insert "stroke-linejoin" "round" styleInfo ] [], span [] [], text "round" ]
                 , label [] [ input [ type_ "radio", value "bevel", checked (sl == "bevel"), name "stroke-linejoin", onClick <| OnProperty <| Style <| Dict.insert "stroke-linejoin" "bevel" styleInfo ] [], span [] [], text "bevel" ]
                 , label [] [ input [ type_ "radio", value "miter", checked (sl == "miter"), name "stroke-linejoin", onClick <| OnProperty <| Style <| Dict.insert "stroke-linejoin" "miter" styleInfo ] [], span [] [], text "miter" ]
                 ]
-            , div [ style [("display", "flex")] ]
+            , div [ style [ ( "display", "flex" ) ] ]
                 [ textBox "stroke-dasharray"
                 , input [ type_ "range", value (first sd |> toString), Html.Attributes.min "0", Html.Attributes.max "100", step "1", onInput (\n -> OnProperty <| Style <| Dict.insert "stroke-dasharray" (n ++ Utils.valueUnitToStr (second sw)) styleInfo) ] []
                 ]
@@ -943,7 +965,7 @@ view model =
                 |> Dict.toList
                 |> List.map (\( ident, ginfo ) -> ViewBuilder.gradientItem ident ginfo model)
             )
-                ++ [ div [ style [("display", "flex")] ]
+                ++ [ div [ style [ ( "display", "flex" ) ] ]
                         [ div [ class "button", MakeNewGradient Linear |> onClick ] [ text "Add linear gradient" ]
                         , div [ class "button", MakeNewGradient Radial |> onClick ] [ text "Add radial gradient" ]
                         ]
@@ -952,33 +974,29 @@ view model =
     div []
         ([ div []
             [ div []
-                (Utils.flattenList
-                    [ ViewParts.selectButton model
-                    , ViewParts.nodeButton model
-                    , ViewParts.rectButton model
-                    , ViewParts.ellipseButton model
-                    , ViewParts.polygonButton model
-                    , ViewParts.pathButton model
-                    , ViewParts.gradientButton model
-                    ]
-                )
+                [ ViewParts.selectButton model
+                , ViewParts.nodeButton model
+                , ViewParts.rectButton model
+                , ViewParts.ellipseButton model
+                , ViewParts.polygonButton model
+                , ViewParts.pathButton model
+                , ViewParts.gradientButton model
+                ]
             , div []
-                (Utils.flattenList
-                    [ ViewParts.duplicateButton model
-                    , ViewParts.deleteButton model
-                    , ViewParts.scaleUpButton model
-                    , ViewParts.scaleDownButton model
-                    , ViewParts.bringForwardButton model
-                    , ViewParts.sendBackwardButton model
-                    , ViewParts.alignLeftButton model
-                    , ViewParts.alignRightButton model
-                    , ViewParts.alignTopButton model
-                    , ViewParts.alignBottomButton model
-                    , ViewParts.shapeToPathButton model
-                    , ViewParts.duplicateNodeButton model
-                    , ViewParts.deleteNodeButton model
-                    ]
-                )
+                [ ViewParts.duplicateButton model
+                , ViewParts.deleteButton model
+                , ViewParts.scaleUpButton model
+                , ViewParts.scaleDownButton model
+                , ViewParts.bringForwardButton model
+                , ViewParts.sendBackwardButton model
+                , ViewParts.alignLeftButton model
+                , ViewParts.alignRightButton model
+                , ViewParts.alignTopButton model
+                , ViewParts.alignBottomButton model
+                , ViewParts.shapeToPathButton model
+                , ViewParts.duplicateNodeButton model
+                , ViewParts.deleteNodeButton model
+                ]
             ]
          ]
             ++ (case model.mode of

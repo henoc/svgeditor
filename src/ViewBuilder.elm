@@ -5,7 +5,7 @@ import Color.Convert exposing (..)
 import Dict exposing (Dict)
 import Gradients
 import Html exposing (..)
-import Html.Attributes exposing (attribute, value, min, max, step, checked)
+import Html.Attributes exposing (attribute, checked, max, min, step, value)
 import Html.Events exposing (..)
 import Path.LowLevel
 import Set exposing (Set)
@@ -84,11 +84,10 @@ build layerType model svg =
             Svg.text_
                 (attrList
                     ++ itemClick
-                    ++ [
-                        x (toString <| first baseline),
-                        y (toString <| second baseline),
-                        style styleStr
-                    ]
+                    ++ [ x (toString <| first baseline)
+                       , y (toString <| second baseline)
+                       , style styleStr
+                       ]
                 )
                 (List.map (build layerType model) elems)
 
@@ -241,14 +240,14 @@ buildVertexes model =
     else
         List.map2
             (\pos anti ->
-                    circle
-                        [ cx <| toString (first pos)
-                        , cy <| toString (second pos)
-                        , r (toString (5 / model.scale))
-                        , class "node"
-                        , Utils.onItemMouseDown <| \( shift, pos ) -> OnVertex anti pos
-                        ]
-                        []
+                circle
+                    [ cx <| toString (first pos)
+                    , cy <| toString (second pos)
+                    , r (toString (5 / model.scale))
+                    , class "node"
+                    , Utils.onItemMouseDown <| \( shift, pos ) -> OnVertex anti pos
+                    ]
+                    []
             )
             positions
             (List.reverse positions)
@@ -373,21 +372,23 @@ colorPicker sty model =
             "display: flex"
     in
     [ div [ style flex ]
-        ([ div [style "width: 120px"] [text <| sty]
+        ([ div [ style "width: 120px" ] [ text <| sty ]
          , div
-            [ style ("display: flex; justify-content: center; align-items: center; cursor: pointer; width: 48px; height: 48px; background: " ++
-                (case colorPickerState.colorMode of
-                    -- 色表示の四角形
-                    NoneColor ->
-                        "hsla(0, 0%, 100%, 0.1)"
+            [ style
+                ("display: flex; justify-content: center; align-items: center; cursor: pointer; width: 48px; height: 48px; background: "
+                    ++ (case colorPickerState.colorMode of
+                            -- 色表示の四角形
+                            NoneColor ->
+                                "hsla(0, 0%, 100%, 0.1)"
 
-                    SingleColor ->
-                        Utils2.colorToCssHsla2 colorPickerState.singleColor
+                            SingleColor ->
+                                Utils2.colorToCssHsla2 colorPickerState.singleColor
 
-                    AnyColor url ->
-                        Maybe.map (Gradients.toCssGradient url) (Dict.get (noSharp url) model.gradients)
-                            |> Maybe.withDefault "hsla(0, 0%, 100%, 0.1)"
-                ))
+                            AnyColor url ->
+                                Maybe.map (Gradients.toCssGradient url) (Dict.get (noSharp url) model.gradients)
+                                    |> Maybe.withDefault "hsla(0, 0%, 100%, 0.1)"
+                       )
+                )
             , onClick <|
                 OpenedPickerMsg
                     (if model.openedPicker == sty then
@@ -413,43 +414,46 @@ colorPicker sty model =
 
                     True ->
                         [ div [ style "display: flex; flex-direction: column; margin: 0px 10px" ]
-                            ([ label []  [
-                                    input
-                                        [ type_ "radio"
-                                        , name "colors"
-                                        , onClick <| ColorPickerMsg noneInserted
-                                        , value "NoneColor"
-                                        , checked (colorPickerState.colorMode == NoneColor)
-                                        ] [],
-                                    span [] [],
-                                    text "none"
+                            ([ label []
+                                [ input
+                                    [ type_ "radio"
+                                    , name "colors"
+                                    , onClick <| ColorPickerMsg noneInserted
+                                    , value "NoneColor"
+                                    , checked (colorPickerState.colorMode == NoneColor)
+                                    ]
+                                    []
+                                , span [] []
+                                , text "none"
                                 ]
-                             , label [] [
-                                 input
+                             , label []
+                                [ input
                                     [ type_ "radio"
                                     , name "colors"
                                     , onClick <| ColorPickerMsg singleInserted
                                     , value "SingleColor"
                                     , checked (colorPickerState.colorMode == SingleColor)
-                                    ] [],
-                                 span [] [],
-                                 text "single"
-                               ]
+                                    ]
+                                    []
+                                , span [] []
+                                , text "single"
+                                ]
                              ]
                                 ++ List.indexedMap
                                     (\index ->
                                         \url ->
-                                            label [] [
-                                                input
+                                            label []
+                                                [ input
                                                     [ onClick <| ColorPickerMsg <| anyInserted url
                                                     , name "colors"
                                                     , value "AnyColor"
                                                     , type_ "radio"
                                                     , checked (colorPickerState.colorMode == AnyColor url)
-                                                    ] [],
-                                                span [] [],
-                                                text url
-                                            ]
+                                                    ]
+                                                    []
+                                                , span [] []
+                                                , text url
+                                                ]
                                     )
                                     gradientUrls
                             )
@@ -476,45 +480,45 @@ gradientItem ident ginfo model =
 
         stops =
             ginfo.stops
-        
-        svgClear =
-            svg [width "24px", height "24px"] [Svg.path [fill "currentColor", d "M19,6.41L17.59,5L12,10.59L6.41,5L5,6.41L10.59,12L5,17.59L6.41,19L12,13.41L17.59,19L19,17.59L13.41,12L19,6.41Z"] []]
-        
-        svgAdd =
-            svg [width "24px", height "24px"] [Svg.path [fill "currentColor", d "M19,13H13V19H11V13H5V11H11V5H13V11H19V13Z"] []]
-    in
-        div [ style "display: flex; flex-wrap: wrap; box-shadow: 4px 4px 8px black" ]
-            [ div []
-                [ div [ class "circle", style ("background: " ++ cssString) ] []
-                , text ("#" ++ ident)
-                , div [ class "button", RemoveGradient ident |> onClick ] [ svgClear ]
-                ]
-            , div [ style "display: flex; flex-wrap: wrap" ]
-                (stops
-                    |> List.indexedMap (\index ( ofs, clr ) -> ( input [ type_ "range", onInput (\f -> ChangeStop ident index (floor <| Result.withDefault 0 <| String.toFloat f) clr), value <| toString ofs, Html.Attributes.min "0", Html.Attributes.max "100", step "10" ] [], clr ))
-                    |> List.indexedMap
-                        (\index ( slider, clr ) ->
-                            div
-                                [ style "display: flex; flex-direction: column; margin: 1em; padding: 0.5em"
-                                ]
-                                [ div
-                                    [ class "mini-circle"
-                                    , style ("cursor: pointer; background: " ++ colorToCssRgba clr)
-                                    , onClick <| FocusToStop ident index
-                                    ]
-                                    []
-                                , case model.gradientPanelLink of
-                                    Nothing ->
-                                        slider
 
-                                    Just ( idt, idx ) ->
-                                        if idt == ident && idx == index then
-                                            Html.map GradientPanelMsg <| Ui.ColorPanel.view model.gradientPanel
-                                        else
-                                            slider
-                                , div [ class "button", RemoveStop ident index |> onClick ] [ svgClear ]
-                                ]
-                        )
-                )
-            , div [ class "button", AddNewStop ident |> onClick ] [ svgAdd ]
+        svgClear =
+            svg [ width "24px", height "24px" ] [ Svg.path [ fill "currentColor", d "M19,6.41L17.59,5L12,10.59L6.41,5L5,6.41L10.59,12L5,17.59L6.41,19L12,13.41L17.59,19L19,17.59L13.41,12L19,6.41Z" ] [] ]
+
+        svgAdd =
+            svg [ width "24px", height "24px" ] [ Svg.path [ fill "currentColor", d "M19,13H13V19H11V13H5V11H11V5H13V11H19V13Z" ] [] ]
+    in
+    div [ style "display: flex; flex-wrap: wrap; box-shadow: 4px 4px 8px black" ]
+        [ div []
+            [ div [ class "circle", style ("background: " ++ cssString) ] []
+            , text ("#" ++ ident)
+            , div [ class "button", RemoveGradient ident |> onClick ] [ svgClear ]
             ]
+        , div [ style "display: flex; flex-wrap: wrap" ]
+            (stops
+                |> List.indexedMap (\index ( ofs, clr ) -> ( input [ type_ "range", onInput (\f -> ChangeStop ident index (floor <| Result.withDefault 0 <| String.toFloat f) clr), value <| toString ofs, Html.Attributes.min "0", Html.Attributes.max "100", step "10" ] [], clr ))
+                |> List.indexedMap
+                    (\index ( slider, clr ) ->
+                        div
+                            [ style "display: flex; flex-direction: column; margin: 1em; padding: 0.5em"
+                            ]
+                            [ div
+                                [ class "mini-circle"
+                                , style ("cursor: pointer; background: " ++ colorToCssRgba clr)
+                                , onClick <| FocusToStop ident index
+                                ]
+                                []
+                            , case model.gradientPanelLink of
+                                Nothing ->
+                                    slider
+
+                                Just ( idt, idx ) ->
+                                    if idt == ident && idx == index then
+                                        Html.map GradientPanelMsg <| Ui.ColorPanel.view model.gradientPanel
+                                    else
+                                        slider
+                            , div [ class "button", RemoveStop ident index |> onClick ] [ svgClear ]
+                            ]
+                    )
+            )
+        , div [ class "button", AddNewStop ident |> onClick ] [ svgAdd ]
+        ]

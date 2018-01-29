@@ -106,7 +106,6 @@ shapeToPath model =
 alignLeft : Model -> Model
 alignLeft model =
     let
-
         mostLeft =
             model.selectedRef |> List.map Shape.getBBox |> List.map .leftTop |> List.map first |> List.minimum |> Maybe.withDefault 0
 
@@ -136,7 +135,6 @@ alignLeft model =
 alignRight : Model -> Model
 alignRight model =
     let
-
         mostRight =
             model.selectedRef |> List.map Shape.getBBox |> List.map .rightBottom |> List.map first |> List.maximum |> Maybe.withDefault 0
 
@@ -240,16 +238,18 @@ scaleDown model =
 duplicateNode : Model -> Model
 duplicateNode model =
     let
-        process: StyledSVGElement -> StyledSVGElement
+        process : StyledSVGElement -> StyledSVGElement
         process elem =
             if Set.member elem.id model.selected then
                 case model.nodeId of
                     Just nid ->
                         Shape.duplicateNode nid elem
+
                     Nothing ->
                         elem
-            else elem
-        
+            else
+                elem
+
         newSvg =
             Traverse.traverse process model.svg
 
@@ -262,16 +262,18 @@ duplicateNode model =
 deleteNode : Model -> Model
 deleteNode model =
     let
-        process: StyledSVGElement -> StyledSVGElement
+        process : StyledSVGElement -> StyledSVGElement
         process elem =
             if Set.member elem.id model.selected then
                 case model.nodeId of
                     Just nid ->
                         Shape.removeNode nid elem
+
                     Nothing ->
                         elem
-            else elem
-        
+            else
+                elem
+
         newSvg =
             Traverse.traverse process model.svg
 
