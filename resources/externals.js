@@ -74,12 +74,47 @@ app.ports.getGradientStyles.subscribe(function(ids) {
   }, 500);    // TODO: 500ms以上で elem = null からのエラーになるのでなんとかする
 });
 
+function currentNodeTextContent(elem) {
+  let ret = "";
+  for(node of elem.childNodes) {
+    if (node.nodeName == "#text") {
+      ret += node.nodeValue;
+    }
+  }
+  return ret.trim();
+}
+
+/**
+ * 
+ * @param {SVGTextElement} elem 
+ * @param {CanvasRenderingContext2D} ctx
+ */
+function measure(elem, ctx, font) {
+  let fontSize = elem.getAttribute("font-size");
+  if (fontSize && isFinite(fontSize)) fontSize += "px";
+  let cfont = {
+    fontStyle: elem.getAttribute("font-style") || font.fontStyle,
+    fontVariant: elem.getAttribute("font-variant") || font.fontVariant,
+    fontWeight: elem.getAttribute("font-weight") || font.fontWeight,
+    fontSize: fontSize || font.fontSize || "14px",
+    fontFamily: elem.getAttribute("font-family") || font.fontFamily || "sans-serif"
+  }
+  ctx.font = [cfont.fontStyle, cfont.fontVariant, cfont.fontWeight, cfont.fontSize, cfont.fontFamily].map(k => k || "").join(" ");
+  let ret = ctx.measureText(currentNodeTextContent(elem)).width;
+  for (let i = 0; i < elem.children.length; i++) {
+    const c = elem.children.item(i);
+    ret += measure(c, ctx, cfont);
+  }
+  return ret;
+}
+
 app.ports.getTextSizes.subscribe(function(ids) {
   setTimeout(() => {
     const ret = ids.map(id => {
       const elem = getSvgEditorElement(id, "color");
       const bbox = elem.getBBox();
-      return [id, [[bbox.x, bbox.y], [bbox.width, bbox.height]]];
+      const ctx = document.getElementById("hiddenCanvas").getContext("2d");
+      return [id, [[bbox.x, bbox.y], [measure(elem, ctx, {}), bbox.height]]];
     });
     app.ports.getTextSizesFromJs.send(ret);
   }, 500);

@@ -9,7 +9,7 @@ import Ext.Color
 import Generator
 import Gradients
 import HandMode
-import Html exposing (Html, button, div, img, input, label, node, p, span, text)
+import Html exposing (Html, button, div, img, input, label, node, p, span, text, canvas)
 import Html.Attributes exposing (attribute, checked, class, id, name, src, step, style, type_, value)
 import Html.Events exposing (onClick, onInput, onMouseDown)
 import List.Extra exposing (find)
@@ -849,6 +849,9 @@ view model =
         textBox t =
             div [ style [ ( "width", "120px" ) ] ] [ text t ]
 
+        -- テキスト長測定用隠しcanvas
+        hiddenCanvas = canvas [id "hiddenCanvas", width "0", height "0", style [("visibility", "hidden"), ("position", "absolute")]] []
+
         -- メニュー以外の部分
         rootDiv hide =
             div
@@ -973,7 +976,8 @@ view model =
     in
     div []
         ([ div []
-            [ div []
+            [ hiddenCanvas
+            , div []
                 [ ViewParts.selectButton model
                 , ViewParts.nodeButton model
                 , ViewParts.rectButton model
