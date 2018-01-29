@@ -101,6 +101,9 @@ update msg model =
 
                 SwichMode GradientMode ->
                     { model | mode = GradientMode } ! []
+                
+                SwichMode TextMode ->
+                    { model | mode = TextMode } ! [ Utils.getBoundingClientRect "root" ]
 
                 Style styleInfo ->
                     case model.mode of
@@ -802,10 +805,10 @@ update msg model =
                 replacer =
                     \elem ->
                         case elem.shape of
-                            Text { elems, baseline, leftTop, size } ->
+                            Text { elems, baseline, fontSize, leftTop, size } ->
                                 case Dict.get elem.id dict of
                                     Just ( lt, sz ) ->
-                                        { elem | shape = Text { elems = elems, baseline = baseline, leftTop = Just lt, size = Just sz } }
+                                        { elem | shape = Text { elems = elems, baseline = baseline, fontSize = fontSize, leftTop = Just lt, size = Just sz } }
 
                                     Nothing ->
                                         elem
@@ -984,6 +987,7 @@ view model =
                 , ViewParts.ellipseButton model
                 , ViewParts.polygonButton model
                 , ViewParts.pathButton model
+                , ViewParts.textButton model
                 , ViewParts.gradientButton model
                 ]
             , div []

@@ -91,8 +91,8 @@ translate delta elem =
                         { subPaths = Paths.generic ((+#) delta) subPaths
                         }
 
-                Text { elems, baseline, leftTop, size } ->
-                    Text { elems = elems, baseline = baseline +# delta, leftTop = Maybe.map ((+#) delta) leftTop, size = size }
+                Text { elems, baseline, fontSize, leftTop, size } ->
+                    Text { elems = elems, baseline = baseline +# delta, fontSize = fontSize, leftTop = Maybe.map ((+#) delta) leftTop, size = size }
 
                 others ->
                     others
@@ -227,6 +227,9 @@ scale ratio elem =
                             Path
                                 { subPaths = Paths.generic ((*#) ratio) subPaths
                                 }
+
+                        Text { elems, baseline, fontSize, leftTop, size} ->
+                            Text { elems = elems, baseline = baseline, fontSize = fontSize * (first ratio), leftTop = leftTop, size = Maybe.map ((*#) ratio) size}
 
                         others ->
                             others

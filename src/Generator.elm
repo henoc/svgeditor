@@ -187,7 +187,7 @@ generateNode elem =
             XmlParser.Element "path" attrs []
 
         -- leftTop, size is ignored
-        Text { elems, baseline, leftTop, size } ->
+        Text { elems, baseline, fontSize, leftTop, size } ->
             let
                 xmlSubNodes =
                     List.map generateNode elems
@@ -195,6 +195,7 @@ generateNode elem =
                 newAttr =
                     Dict.insert "x" (toString <| first baseline)
                         << Dict.insert "y" (toString <| second baseline)
+                        << Dict.insert "font-size" (toString <| fontSize)
                         << maybeInsert "style" styleAttr
                     <|
                         elem.attr

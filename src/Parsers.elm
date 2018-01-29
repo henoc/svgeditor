@@ -402,6 +402,9 @@ convertNode id node =
 
                         y =
                             getFloatAttr "y" 0 attrs
+                        
+                        fontSize =
+                            getFloatAttr "font-size" 0 attrs
 
                         ( nextId, subElems ) =
                             loop id subNodes []
@@ -410,7 +413,7 @@ convertNode id node =
                     , { style = styleMap
                       , id = id
                       , attr = attrMap
-                      , shape = Text { elems = subElems, baseline = ( x, y ), leftTop = Nothing, size = Nothing }
+                      , shape = Text { elems = subElems, baseline = ( x, y ), fontSize = fontSize, leftTop = Nothing, size = Nothing }
                       }
                     )
 
