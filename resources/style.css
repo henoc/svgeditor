@@ -33,6 +33,8 @@
   margin: 1em;
 }
 
+/* ボタン */
+
 .button {
   display: inline-block;
   padding: 0.5em;
@@ -52,6 +54,8 @@
   background-color: var(--theme-color);
 }
 
+/* ノード */
+
 .node {
   fill: currentColor;
   stroke: black;
@@ -61,6 +65,8 @@
   fill: var(--theme-color);
   stroke: currentColor;
 }
+
+/* スライダー */
 
 input[type="range"] {
   -webkit-appearance: none;
@@ -88,9 +94,16 @@ input[type="range"]::-webkit-slider-thumb {
   -webkit-border-radius: 50%;
 }
 
+/* ラジオボタン */
+
+label {
+  cursor: pointer;
+}
+
 input[type="radio"] {
   display: none;
 }
+
 input[type="radio"] + span:before {
   content: "";
   display: inline-block;
@@ -100,9 +113,34 @@ input[type="radio"] + span:before {
   border-color: rgb(59, 59, 59);
   border-width: 0.2em;
   border-style: solid;
+  transition: all 300ms 0s ease;  
 }
+
 input[type="radio"]:checked + span:before {
   content: "";
   border-color: var(--theme-color);
   background-color: var(--theme-color);
+}
+
+/* ヒントつきボタン */
+
+div:hover + p.hint {
+  opacity: 1;
+  z-index: 1;
+}
+
+.hint {
+  opacity: 0;
+  transition: all 300ms 0s ease;
+  position: absolute;
+  background-color: rgba(0, 0, 0, 0.8);
+  border-radius: 0.4em;
+  padding: 1em;
+  z-index: -1;
+  white-space: nowrap;
+}
+
+.hint-container {
+  display: inline-block;
+  position: relative;
 }

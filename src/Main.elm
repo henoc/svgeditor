@@ -829,6 +829,8 @@ view model =
                 ("transform-origin", "left top"),
                 ("transform", "scale(" ++ toString model.scale ++ ")")
             ]
+        
+        textBox t = div [style [("width", "120px")]] [text t]
 
         -- メニュー以外の部分
         rootDiv hide =
@@ -915,23 +917,23 @@ view model =
             , div [] <| ViewBuilder.colorPicker "fill" model
             , div [] <| ViewBuilder.colorPicker "stroke" model
             , div [ style [("display", "flex")] ]
-                [ text <| "stroke-width"
+                [ textBox "stroke-width"
                 , input [ type_ "range", value (first sw |> toString), Html.Attributes.min "0", Html.Attributes.max "100", step "1", onInput (\n -> OnProperty <| Style <| Dict.insert "stroke-width" (n ++ Utils.valueUnitToStr (second sw)) styleInfo) ] []
                 ]
             , div [ style [("display", "flex")] ]
-                [ text <| "stroke-linecap"
+                [ textBox "stroke-linecap"
                 , label [] [ input [ type_ "radio", value "butt",   checked (sc == "butt"), name "stroke-linecap", onClick <| OnProperty <| Style <| Dict.insert "stroke-linecap" "butt" styleInfo ] [], span [] [], text "butt" ]
                 , label [] [ input [ type_ "radio", value "square", checked (sc == "square"), name "stroke-linecap", onClick <| OnProperty <| Style <| Dict.insert "stroke-linecap" "square" styleInfo] [], span [] [], text "square" ]
                 , label [] [ input [ type_ "radio", value "round",  checked (sc == "round"), name "stroke-linecap", onClick <| OnProperty <| Style <| Dict.insert "stroke-linecap" "round" styleInfo ] [], span [] [], text "round" ]
                 ]
             , div [ style [("display", "flex")] ]
-                [ text <| "stroke-linejoin"
+                [ textBox "stroke-linejoin"
                 , label [] [ input [ type_ "radio", value "round", checked (sl == "round"), name "stroke-linejoin", onClick <| OnProperty <| Style <| Dict.insert "stroke-linejoin" "round" styleInfo ] [], span [] [], text "round" ]
                 , label [] [ input [ type_ "radio", value "bevel", checked (sl == "bevel"), name "stroke-linejoin", onClick <| OnProperty <| Style <| Dict.insert "stroke-linejoin" "bevel" styleInfo ] [], span [] [], text "bevel" ]
                 , label [] [ input [ type_ "radio", value "miter", checked (sl == "miter"), name "stroke-linejoin", onClick <| OnProperty <| Style <| Dict.insert "stroke-linejoin" "miter" styleInfo ] [], span [] [], text "miter" ]
                 ]
             , div [ style [("display", "flex")] ]
-                [ text <| "stroke-dasharray"
+                [ textBox "stroke-dasharray"
                 , input [ type_ "range", value (first sd |> toString), Html.Attributes.min "0", Html.Attributes.max "100", step "1", onInput (\n -> OnProperty <| Style <| Dict.insert "stroke-dasharray" (n ++ Utils.valueUnitToStr (second sw)) styleInfo) ] []
                 ]
             ]
@@ -942,8 +944,8 @@ view model =
                 |> List.map (\( ident, ginfo ) -> ViewBuilder.gradientItem ident ginfo model)
             )
                 ++ [ div [ style [("display", "flex")] ]
-                        [ button [ buttonCss, MakeNewGradient Linear |> onClick ] [ text "add linear gradient" ]
-                        , button [ buttonCss, MakeNewGradient Radial |> onClick ] [ text "add radial gradient" ]
+                        [ div [ class "button", MakeNewGradient Linear |> onClick ] [ text "Add linear gradient" ]
+                        , div [ class "button", MakeNewGradient Radial |> onClick ] [ text "Add radial gradient" ]
                         ]
                    ]
     in

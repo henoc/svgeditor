@@ -22,7 +22,7 @@ toggled mode now =
 
 makeMenu : Int -> Mode -> String -> Model -> String -> List (Html Msg)
 makeMenu i mode description model dstring =
-    [ div
+    [ div [class "hint-container"]  [div
         ([ class "button"
          , onClick <| OnProperty <| SwichMode mode
          ]
@@ -32,18 +32,22 @@ makeMenu i mode description model dstring =
             [ path [ fill "currentColor", d dstring ] []
             ]
         ]
+     , p [class "hint"] [text description]
+        ]
     ]
 
 
 makeAction : Int -> Action -> String -> Model -> String -> List (Html Msg)
 makeAction i action description model dstring =
-    [ div
+    [ div [class "hint-container"] [div
         [ class "button"
         , onClick <| OnAction <| action
         ]
         [ svg [ width "24", height "24", viewBox "0 0 24 24" ]
             [ path [ fill "currentColor", d dstring ] []
             ]
+        ]
+     , p [class "hint"] [text description]
         ]
     ]
 

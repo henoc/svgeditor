@@ -373,9 +373,9 @@ colorPicker sty model =
             "display: flex"
     in
     [ div [ style flex ]
-        ([ text <| sty
+        ([ div [style "width: 120px"] [text <| sty]
          , div
-            [ style ("cursor: pointer; width: 48px; height: 48px; background: " ++
+            [ style ("display: flex; justify-content: center; align-items: center; cursor: pointer; width: 48px; height: 48px; background: " ++
                 (case colorPickerState.colorMode of
                     -- 色表示の四角形
                     NoneColor ->
@@ -476,14 +476,18 @@ gradientItem ident ginfo model =
 
         stops =
             ginfo.stops
+        
+        svgClear =
+            svg [width "24px", height "24px"] [Svg.path [fill "currentColor", d "M19,6.41L17.59,5L12,10.59L6.41,5L5,6.41L10.59,12L5,17.59L6.41,19L12,13.41L17.59,19L19,17.59L13.41,12L19,6.41Z"] []]
+        
+        svgAdd =
+            svg [width "24px", height "24px"] [Svg.path [fill "currentColor", d "M19,13H13V19H11V13H5V11H11V5H13V11H19V13Z"] []]
     in
-    div
-        []
-        [ div [ style "display: flex; flex-wrap: wrap" ]
+        div [ style "display: flex; flex-wrap: wrap; box-shadow: 4px 4px 8px black" ]
             [ div []
                 [ div [ class "circle", style ("background: " ++ cssString) ] []
                 , text ("#" ++ ident)
-                , button [ RemoveGradient ident |> onClick ] [ text "clear" ]
+                , div [ class "button", RemoveGradient ident |> onClick ] [ svgClear ]
                 ]
             , div [ style "display: flex; flex-wrap: wrap" ]
                 (stops
@@ -508,10 +512,9 @@ gradientItem ident ginfo model =
                                             Html.map GradientPanelMsg <| Ui.ColorPanel.view model.gradientPanel
                                         else
                                             slider
-                                , button [ RemoveStop ident index |> onClick ] [ text "clear" ]
+                                , div [ class "button", RemoveStop ident index |> onClick ] [ svgClear ]
                                 ]
                         )
                 )
-            , button [ AddNewStop ident |> onClick ] [ text "add" ]
+            , div [ class "button", AddNewStop ident |> onClick ] [ svgAdd ]
             ]
-        ]
