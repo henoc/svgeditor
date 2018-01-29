@@ -185,19 +185,20 @@ generateNode elem =
                     Dict.toList newAttr |> List.map (\( x, y ) -> { name = x, value = y })
             in
             XmlParser.Element "path" attrs []
-        
+
         -- leftTop, size is ignored
-        Text {elems, baseline, leftTop, size} ->
+        Text { elems, baseline, leftTop, size } ->
             let
                 xmlSubNodes =
                     List.map generateNode elems
 
                 newAttr =
                     Dict.insert "x" (toString <| first baseline)
-                    << Dict.insert "y" (toString <| second baseline)
-                    << maybeInsert "style" styleAttr
-                    <| elem.attr
-                
+                        << Dict.insert "y" (toString <| second baseline)
+                        << maybeInsert "style" styleAttr
+                    <|
+                        elem.attr
+
                 attrs =
                     Dict.toList newAttr |> List.map (\( x, y ) -> { name = x, value = y })
             in

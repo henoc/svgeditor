@@ -592,113 +592,166 @@ rotate angle center subPathes =
     generic rotateFn subPathes
 
 
+
 -- ノードをけす
 
-removeNode: NodeId -> List SubPath -> List SubPath
+
+removeNode : NodeId -> List SubPath -> List SubPath
 removeNode nodeId subPaths =
     case subPaths of
         hd :: tl ->
             let
-                k = nodeId.index - subPathLength hd
+                k =
+                    nodeId.index - subPathLength hd
             in
             if k < 0 then
                 removeSubPathNode nodeId hd :: tl
             else
-                hd :: removeNode {nodeId | index = k} tl
-        [] -> []
+                hd :: removeNode { nodeId | index = k } tl
 
-removeSubPathNode: NodeId -> SubPath -> SubPath
+        [] ->
+            []
+
+
+removeSubPathNode : NodeId -> SubPath -> SubPath
 removeSubPathNode nodeId subpath =
     -- MoveToなので消せない
-    if nodeId.index == 0 then subpath
-    else  {subpath | drawtos = removeDrawTosNode {nodeId | index = nodeId.index - 1} subpath.drawtos}
+    if nodeId.index == 0 then
+        subpath
+    else
+        { subpath | drawtos = removeDrawTosNode { nodeId | index = nodeId.index - 1 } subpath.drawtos }
 
-removeDrawTosNode: NodeId -> List DrawTo -> List DrawTo
+
+removeDrawTosNode : NodeId -> List DrawTo -> List DrawTo
 removeDrawTosNode nodeId drawtos =
     case drawtos of
         hd :: tl ->
             let
-                k = nodeId.index - drawtoLength hd
+                k =
+                    nodeId.index - drawtoLength hd
             in
             if k < 0 then
                 removeDrawToNode nodeId hd :: tl
             else
-                hd :: removeDrawTosNode {nodeId | index = k} tl
-        [] -> []
+                hd :: removeDrawTosNode { nodeId | index = k } tl
 
-removeDrawToNode: NodeId -> DrawTo -> DrawTo
-removeDrawToNode nodeId drawto = case drawto of
-    LineTo mode lst ->
-        LineTo mode (removeAt nodeId.index lst)
-    Horizontal mode lst -> Horizontal mode lst
-    Vertical mode lst -> Vertical mode lst
-    CurveTo mode lst ->
-        CurveTo mode (removeAt nodeId.index lst)
-    SmoothCurveTo mode lst ->
-        SmoothCurveTo mode (removeAt nodeId.index lst)
-    QuadraticBezierCurveTo mode lst ->
-        QuadraticBezierCurveTo mode (removeAt nodeId.index lst)
-    SmoothQuadraticBezierCurveTo mode lst ->
-        SmoothQuadraticBezierCurveTo mode (removeAt nodeId.index lst)
-    EllipticalArc mode args ->
-        EllipticalArc mode (removeAt nodeId.index args)
-    ClosePath ->
-        ClosePath
+        [] ->
+            []
 
 
-duplicateNode: NodeId -> List SubPath -> List SubPath
+removeDrawToNode : NodeId -> DrawTo -> DrawTo
+removeDrawToNode nodeId drawto =
+    case drawto of
+        LineTo mode lst ->
+            LineTo mode (removeAt nodeId.index lst)
+
+        Horizontal mode lst ->
+            Horizontal mode lst
+
+        Vertical mode lst ->
+            Vertical mode lst
+
+        CurveTo mode lst ->
+            CurveTo mode (removeAt nodeId.index lst)
+
+        SmoothCurveTo mode lst ->
+            SmoothCurveTo mode (removeAt nodeId.index lst)
+
+        QuadraticBezierCurveTo mode lst ->
+            QuadraticBezierCurveTo mode (removeAt nodeId.index lst)
+
+        SmoothQuadraticBezierCurveTo mode lst ->
+            SmoothQuadraticBezierCurveTo mode (removeAt nodeId.index lst)
+
+        EllipticalArc mode args ->
+            EllipticalArc mode (removeAt nodeId.index args)
+
+        ClosePath ->
+            ClosePath
+
+
+duplicateNode : NodeId -> List SubPath -> List SubPath
 duplicateNode nodeId subPaths =
     case subPaths of
         hd :: tl ->
             let
-                k = nodeId.index - subPathLength hd
+                k =
+                    nodeId.index - subPathLength hd
             in
             if k < 0 then
                 duplicateSubPathNode nodeId hd :: tl
             else
-                hd :: duplicateNode {nodeId | index = k} tl
-        [] -> []
+                hd :: duplicateNode { nodeId | index = k } tl
 
-duplicateSubPathNode: NodeId -> SubPath -> SubPath
+        [] ->
+            []
+
+
+duplicateSubPathNode : NodeId -> SubPath -> SubPath
 duplicateSubPathNode nodeId subpath =
     -- MoveToなので消せない
-    if nodeId.index == 0 then subpath
-    else  {subpath | drawtos = duplicateDrawTosNode {nodeId | index = nodeId.index - 1} subpath.drawtos}
+    if nodeId.index == 0 then
+        subpath
+    else
+        { subpath | drawtos = duplicateDrawTosNode { nodeId | index = nodeId.index - 1 } subpath.drawtos }
 
-duplicateDrawTosNode: NodeId -> List DrawTo -> List DrawTo
+
+duplicateDrawTosNode : NodeId -> List DrawTo -> List DrawTo
 duplicateDrawTosNode nodeId drawtos =
     case drawtos of
         hd :: tl ->
             let
-                k = nodeId.index - drawtoLength hd
+                k =
+                    nodeId.index - drawtoLength hd
             in
             if k < 0 then
                 duplicateDrawToNode nodeId hd :: tl
             else
-                hd :: duplicateDrawTosNode {nodeId | index = k} tl
-        [] -> []
+                hd :: duplicateDrawTosNode { nodeId | index = k } tl
 
-duplicateDrawToNode: NodeId -> DrawTo -> DrawTo
-duplicateDrawToNode nodeId drawto = case drawto of
-    LineTo mode lst ->
-        LineTo mode (duplicateAt nodeId.index lst)
-    Horizontal mode lst -> Horizontal mode lst
-    Vertical mode lst -> Vertical mode lst
-    CurveTo mode lst ->
-        CurveTo mode (duplicateAt nodeId.index lst)
-    SmoothCurveTo mode lst ->
-        SmoothCurveTo mode (duplicateAt nodeId.index lst)
-    QuadraticBezierCurveTo mode lst ->
-        QuadraticBezierCurveTo mode (duplicateAt nodeId.index lst)
-    SmoothQuadraticBezierCurveTo mode lst ->
-        SmoothQuadraticBezierCurveTo mode (duplicateAt nodeId.index lst)
-    EllipticalArc mode args ->
-        EllipticalArc mode (duplicateAt nodeId.index args)
-    ClosePath ->
-        ClosePath
+        [] ->
+            []
 
-duplicateAt: Int -> List a -> List a
-duplicateAt index lst = case lst of
-    hd :: tl -> if index == 0 then hd :: hd :: tl
-                else hd :: duplicateAt (index - 1) tl
-    [] -> []
+
+duplicateDrawToNode : NodeId -> DrawTo -> DrawTo
+duplicateDrawToNode nodeId drawto =
+    case drawto of
+        LineTo mode lst ->
+            LineTo mode (duplicateAt nodeId.index lst)
+
+        Horizontal mode lst ->
+            Horizontal mode lst
+
+        Vertical mode lst ->
+            Vertical mode lst
+
+        CurveTo mode lst ->
+            CurveTo mode (duplicateAt nodeId.index lst)
+
+        SmoothCurveTo mode lst ->
+            SmoothCurveTo mode (duplicateAt nodeId.index lst)
+
+        QuadraticBezierCurveTo mode lst ->
+            QuadraticBezierCurveTo mode (duplicateAt nodeId.index lst)
+
+        SmoothQuadraticBezierCurveTo mode lst ->
+            SmoothQuadraticBezierCurveTo mode (duplicateAt nodeId.index lst)
+
+        EllipticalArc mode args ->
+            EllipticalArc mode (duplicateAt nodeId.index args)
+
+        ClosePath ->
+            ClosePath
+
+
+duplicateAt : Int -> List a -> List a
+duplicateAt index lst =
+    case lst of
+        hd :: tl ->
+            if index == 0 then
+                hd :: hd :: tl
+            else
+                hd :: duplicateAt (index - 1) tl
+
+        [] ->
+            []

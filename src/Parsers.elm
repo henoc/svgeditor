@@ -394,7 +394,7 @@ convertNode id node =
                       , shape = Path { subPaths = pathOps }
                       }
                     )
-                
+
                 "text" ->
                     let
                         x =
@@ -402,16 +402,17 @@ convertNode id node =
 
                         y =
                             getFloatAttr "y" 0 attrs
+
                         ( nextId, subElems ) =
                             loop id subNodes []
                     in
                     ( nextId + 1
-                    , {
-                        style = styleMap
+                    , { style = styleMap
                       , id = id
                       , attr = attrMap
-                      , shape = Text { elems = subElems, baseline = (x, y), leftTop = Nothing, size = Nothing }
-                    })
+                      , shape = Text { elems = subElems, baseline = ( x, y ), leftTop = Nothing, size = Nothing }
+                      }
+                    )
 
                 others ->
                     let

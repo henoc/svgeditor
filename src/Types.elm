@@ -3,7 +3,6 @@ module Types exposing (..)
 import Color exposing (Color)
 import Dict exposing (Dict)
 import Ext.Color
-import Material
 import Path.LowLevel exposing (..)
 import Set exposing (Set)
 import Ui.ColorPanel
@@ -27,7 +26,11 @@ type alias StyleInfo =
 type alias AttributeInfo =
     Dict String String
 
-type alias Later a = Maybe a
+
+type alias Later a =
+    Maybe a
+
+
 
 -- モデルが所有するSVGの形
 
@@ -42,7 +45,7 @@ type SVGElement
     | LinearGradient { identifier : String, stops : List StyledSVGElement }
     | RadialGradient { identifier : String, stops : List StyledSVGElement }
     | Stop { offset : Later Int, color : Later Color }
-    | Text { elems: List StyledSVGElement, baseline: Vec2, leftTop: Later Vec2, size: Later Vec2 }
+    | Text { elems : List StyledSVGElement, baseline : Vec2, leftTop : Later Vec2, size : Later Vec2 }
     | TextNode { value : String }
     | Unknown { name : String, elems : List StyledSVGElement }
 
@@ -56,8 +59,7 @@ type alias StyledSVGElement =
 
 
 type alias Model =
-    { mdl : Material.Model
-    , mode : Mode
+    { mode : Mode
     , dragBegin : Maybe Vec2
     , isMouseDown : Bool
     , svg : StyledSVGElement
@@ -95,8 +97,7 @@ type alias GradientInfo =
 
 
 type Msg
-    = Mdl (Material.Msg Msg)
-    | OnProperty ChangePropertyMsg
+    = OnProperty ChangePropertyMsg
     | OnAction Action
     | OnMouse MouseMsg
     | OnSelect Int Bool Vec2
@@ -121,7 +122,7 @@ type Msg
     | AddNewStop String
     | RemoveStop String Int
     | RemoveGradient String
-    | TextSizes (List (Int, (Vec2, Vec2)))
+    | TextSizes (List ( Int, ( Vec2, Vec2 ) ))
 
 
 type ChangePropertyMsg
@@ -254,7 +255,8 @@ type NodeKind
     = Endpoint
     | ControlPoint Int
 
-type alias IdentSet = {
-    textSizes: List Int,
-    gradients: List Int
-}
+
+type alias IdentSet =
+    { textSizes : List Int
+    , gradients : List Int
+    }

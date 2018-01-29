@@ -7,11 +7,11 @@ import Generator
 import Html exposing (Attribute)
 import Html.Events exposing (keyCode, on, onWithOptions)
 import Json.Decode as Json
+import Set exposing (Set)
 import Tuple exposing (first, second)
 import Types exposing (..)
 import Utils2
 import Vec2 exposing (..)
-import Set exposing (Set)
 
 
 last : List a -> Maybe a
@@ -187,6 +187,7 @@ getDefsElems model =
                     acc
     in
     loop elems []
+
 
 
 -- gradElemsToDefinedGradients: Model -> Dict String GradientInfo
@@ -369,9 +370,12 @@ reflectSvgData model =
     in
     Cmd.batch [ sendSvgData svgData, encodeURIComponent svgData ]
 
+
+
 -- エンコード文字列の変更のみ
 
-updateSvgImage: Model -> Cmd msg
+
+updateSvgImage : Model -> Cmd msg
 updateSvgImage model =
     let
         svgData =
@@ -530,6 +534,8 @@ port getGradientStyles : List Int -> Cmd msg
 
 port getGradientStylesFromJs : (List GradientElementInfo -> msg) -> Sub msg
 
-port getTextSizes: List Int -> Cmd msg
 
-port getTextSizesFromJs : (List (Int, (Vec2, Vec2)) -> msg) -> Sub msg
+port getTextSizes : List Int -> Cmd msg
+
+
+port getTextSizesFromJs : (List ( Int, ( Vec2, Vec2 ) ) -> msg) -> Sub msg

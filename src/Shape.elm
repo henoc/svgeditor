@@ -1,11 +1,11 @@
 module Shape exposing (..)
 
+import List.Extra
 import Paths
 import Tuple exposing (first, second)
 import Types exposing (..)
 import Utils
 import Vec2 exposing (..)
-import List.Extra
 
 
 getBBox : StyledSVGElement -> Box
@@ -51,14 +51,18 @@ getBBox elem =
                     List.map (.endpoint >> second) nodes |> List.maximum |> Maybe.withDefault 0
             in
             { leftTop = ( left, top ), rightBottom = ( right, bottom ) }
-        
+
         Text { elems, baseline, leftTop, size } ->
             let
-                length = case size of
-                    Nothing -> 50
-                    Just (x, y) -> x
+                length =
+                    case size of
+                        Nothing ->
+                            50
+
+                        Just ( x, y ) ->
+                            x
             in
-            { leftTop = Maybe.withDefault baseline leftTop, rightBottom = baseline +# (length, 0) }
+            { leftTop = Maybe.withDefault baseline leftTop, rightBottom = baseline +# ( length, 0 ) }
 
         others ->
             { leftTop = ( 0, 0 ), rightBottom = ( 0, 0 ) }
@@ -86,8 +90,9 @@ translate delta elem =
                     Path
                         { subPaths = Paths.generic ((+#) delta) subPaths
                         }
+
                 Text { elems, baseline, leftTop, size } ->
-                    Text {elems = elems, baseline = baseline +# delta, leftTop = Maybe.map ((+#) delta) leftTop, size = size}
+                    Text { elems = elems, baseline = baseline +# delta, leftTop = Maybe.map ((+#) delta) leftTop, size = size }
 
                 others ->
                     others
@@ -262,27 +267,37 @@ replaceNode nid fn elem =
         others ->
             elem
 
+
+
 -- ノードを消す
 
-removeNode: NodeId -> StyledSVGElement -> StyledSVGElement
+
+removeNode : NodeId -> StyledSVGElement -> StyledSVGElement
 removeNode nid elem =
     case elem.shape of
-        Polygon {points, enclosed} ->
-            {elem | shape = Polygon {points = List.Extra.removeAt nid.index points, enclosed = enclosed}}
-        Path {subPaths} ->
-            {elem | shape = Path { subPaths = Paths.removeNode nid subPaths}}
+        Polygon { points, enclosed } ->
+            { elem | shape = Polygon { points = List.Extra.removeAt nid.index points, enclosed = enclosed } }
+
+        Path { subPaths } ->
+            { elem | shape = Path { subPaths = Paths.removeNode nid subPaths } }
+
         others ->
             elem
 
-duplicateNode: NodeId -> StyledSVGElement -> StyledSVGElement
+
+duplicateNode : NodeId -> StyledSVGElement -> StyledSVGElement
 duplicateNode nid elem =
     case elem.shape of
-        Polygon {points, enclosed} ->
-            {elem | shape = Polygon {points = Paths.duplicateAt nid.index points, enclosed = enclosed}}
-        Path {subPaths} ->
-            {elem | shape = Path { subPaths = Paths.duplicateNode nid subPaths}}
+        Polygon { points, enclosed } ->
+            { elem | shape = Polygon { points = Paths.duplicateAt nid.index points, enclosed = enclosed } }
+
+        Path { subPaths } ->
+            { elem | shape = Path { subPaths = Paths.duplicateNode nid subPaths } }
+
         others ->
             elem
+
+
 
 -- ノードのリストを返す
 
