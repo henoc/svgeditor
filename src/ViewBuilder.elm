@@ -80,16 +80,17 @@ build layerType model svg =
         TextNode { value } ->
             text value
 
-        Text { elems, baseline, leftTop, size } ->
+        Text args ->
             Svg.text_
                 (attrList
                     ++ itemClick
-                    ++ [ x (toString <| first baseline)
-                       , y (toString <| second baseline)
+                    ++ [ x (toString <| first args.baseline)
+                       , y (toString <| second args.baseline)
+                       , fontSize (toString <| args.fontSize)
                        , style styleStr
                        ]
                 )
-                (List.map (build layerType model) elems)
+                (List.map (build layerType model) args.elems)
 
         Rectangle { leftTop, size } ->
             rect

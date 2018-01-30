@@ -9,7 +9,7 @@ import Ext.Color
 import Generator
 import Gradients
 import HandMode
-import Html exposing (Html, button, div, img, input, label, node, p, span, text)
+import Html exposing (Html, button, canvas, div, img, input, label, node, p, span, text)
 import Html.Attributes exposing (attribute, checked, class, id, name, src, step, style, type_, value)
 import Html.Events exposing (onClick, onInput, onMouseDown)
 import List.Extra exposing (find)
@@ -101,6 +101,9 @@ update msg model =
 
                 SwichMode GradientMode ->
                     { model | mode = GradientMode } ! []
+
+                SwichMode TextMode ->
+                    { model | mode = TextMode } ! [ Utils.getBoundingClientRect "root" ]
 
                 Style styleInfo ->
                     case model.mode of
@@ -802,10 +805,10 @@ update msg model =
                 replacer =
                     \elem ->
                         case elem.shape of
-                            Text { elems, baseline, leftTop, size } ->
+                            Text { elems, baseline, fontSize, leftTop, size } ->
                                 case Dict.get elem.id dict of
                                     Just ( lt, sz ) ->
-                                        { elem | shape = Text { elems = elems, baseline = baseline, leftTop = Just lt, size = Just sz } }
+                                        { elem | shape = Text { elems = elems, baseline = baseline, fontSize = fontSize, leftTop = Just lt, size = Just sz } }
 
                                     Nothing ->
                                         elem
@@ -848,6 +851,10 @@ view model =
 
         textBox t =
             div [ style [ ( "width", "120px" ) ] ] [ text t ]
+
+        -- テキスト長測定用隠しcanvas
+        hiddenCanvas =
+            canvas [ id "hiddenCanvas", width "0", height "0", style [ ( "visibility", "hidden" ), ( "position", "absolute" ) ] ] []
 
         -- メニュー以外の部分
         rootDiv hide =
@@ -973,13 +980,15 @@ view model =
     in
     div []
         ([ div []
-            [ div []
+            [ hiddenCanvas
+            , div []
                 [ ViewParts.selectButton model
                 , ViewParts.nodeButton model
                 , ViewParts.rectButton model
                 , ViewParts.ellipseButton model
                 , ViewParts.polygonButton model
                 , ViewParts.pathButton model
+                , ViewParts.textButton model
                 , ViewParts.gradientButton model
                 ]
             , div []

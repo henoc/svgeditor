@@ -36,6 +36,13 @@ update msg model =
                             EllipseMode ->
                                 Utils.getElems model ++ { shape = Ellipse { center = correctedPos, size = ( 0, 0 ) }, style = model.styleInfo, attr = Dict.empty, id = model.idGen } :: []
 
+                            TextMode ->
+                                let
+                                    textNode =
+                                        { shape = TextNode { value = "Sample Text" }, style = model.styleInfo, attr = Dict.empty, id = model.idGen }
+                                in
+                                Utils.getElems model ++ { shape = Text { elems = [ textNode ], baseline = correctedPos, fontSize = 14, leftTop = Just (correctedPos +# ( 0, -14 )), size = Just ( 7 * 11, 14 ) }, style = model.styleInfo, attr = Dict.empty, id = model.idGen } :: []
+
                             _ ->
                                 Utils.getElems model
                         )
@@ -70,17 +77,9 @@ update msg model =
                                 -- dragBeginが存在する間は最終要素をdrag
                                 case last.shape of
                                     Rectangle { leftTop, size } ->
-                                        let
-                                            modelSvg =
-                                                model.svg
-                                        in
                                         { model | svg = Utils.changeContains (init ++ { last | shape = Rectangle { leftTop = leftTop, size = correctedPos -# ( x, y ) } } :: []) model.svg }
 
                                     Ellipse { center, size } ->
-                                        let
-                                            modelSvg =
-                                                model.svg
-                                        in
                                         { model | svg = Utils.changeContains (init ++ { last | shape = Ellipse { center = (( x, y ) +# correctedPos) /# ( 2, 2 ), size = correctedPos -# ( x, y ) } } :: []) model.svg }
 
                                     others ->
