@@ -46,7 +46,7 @@ type SVGElement
     | LinearGradient { identifier : String, stops : List StyledSVGElement }
     | RadialGradient { identifier : String, stops : List StyledSVGElement }
     | Stop { offset : Later Int, color : Later Color }
-    | Text { elems : List StyledSVGElement, baseline : Vec2, fontSize: Float, leftTop : Later Vec2, size : Later Vec2 }
+    | Text { elems : List StyledSVGElement, baseline : Vec2, fontSize : Float, leftTop : Later Vec2, size : Later Vec2 }
     | TextNode { value : String }
     | Unknown { name : String, elems : List StyledSVGElement }
 

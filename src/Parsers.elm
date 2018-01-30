@@ -402,7 +402,7 @@ convertNode id node =
 
                         y =
                             getFloatAttr "y" 0 attrs
-                        
+
                         fontSize =
                             getFloatAttr "font-size" 0 attrs
 

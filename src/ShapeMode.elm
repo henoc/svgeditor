@@ -35,12 +35,13 @@ update msg model =
 
                             EllipseMode ->
                                 Utils.getElems model ++ { shape = Ellipse { center = correctedPos, size = ( 0, 0 ) }, style = model.styleInfo, attr = Dict.empty, id = model.idGen } :: []
-                            
+
                             TextMode ->
                                 let
-                                    textNode = { shape = TextNode { value = "Sample Text" }, style = model.styleInfo, attr = Dict.empty, id = model.idGen }
+                                    textNode =
+                                        { shape = TextNode { value = "Sample Text" }, style = model.styleInfo, attr = Dict.empty, id = model.idGen }
                                 in
-                                Utils.getElems model ++ { shape = Text { elems = [textNode], baseline = correctedPos, fontSize = 14, leftTop = Just (correctedPos +# (0,-14)), size = Just (7 * 11, 14)}, style = model.styleInfo, attr = Dict.empty, id = model.idGen } :: []
+                                Utils.getElems model ++ { shape = Text { elems = [ textNode ], baseline = correctedPos, fontSize = 14, leftTop = Just (correctedPos +# ( 0, -14 )), size = Just ( 7 * 11, 14 ) }, style = model.styleInfo, attr = Dict.empty, id = model.idGen } :: []
 
                             _ ->
                                 Utils.getElems model

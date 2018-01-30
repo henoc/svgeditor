@@ -228,8 +228,8 @@ scale ratio elem =
                                 { subPaths = Paths.generic ((*#) ratio) subPaths
                                 }
 
-                        Text { elems, baseline, fontSize, leftTop, size} ->
-                            Text { elems = elems, baseline = baseline, fontSize = fontSize * (first ratio), leftTop = leftTop, size = Maybe.map ((*#) ratio) size}
+                        Text { elems, baseline, fontSize, leftTop, size } ->
+                            Text { elems = elems, baseline = baseline, fontSize = fontSize * first ratio, leftTop = Just <| baseline -# ( 0, fontSize * first ratio ), size = Maybe.map ((*#) ratio) size }
 
                         others ->
                             others

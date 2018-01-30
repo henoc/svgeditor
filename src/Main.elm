@@ -9,7 +9,7 @@ import Ext.Color
 import Generator
 import Gradients
 import HandMode
-import Html exposing (Html, button, div, img, input, label, node, p, span, text, canvas)
+import Html exposing (Html, button, canvas, div, img, input, label, node, p, span, text)
 import Html.Attributes exposing (attribute, checked, class, id, name, src, step, style, type_, value)
 import Html.Events exposing (onClick, onInput, onMouseDown)
 import List.Extra exposing (find)
@@ -101,7 +101,7 @@ update msg model =
 
                 SwichMode GradientMode ->
                     { model | mode = GradientMode } ! []
-                
+
                 SwichMode TextMode ->
                     { model | mode = TextMode } ! [ Utils.getBoundingClientRect "root" ]
 
@@ -853,7 +853,8 @@ view model =
             div [ style [ ( "width", "120px" ) ] ] [ text t ]
 
         -- テキスト長測定用隠しcanvas
-        hiddenCanvas = canvas [id "hiddenCanvas", width "0", height "0", style [("visibility", "hidden"), ("position", "absolute")]] []
+        hiddenCanvas =
+            canvas [ id "hiddenCanvas", width "0", height "0", style [ ( "visibility", "hidden" ), ( "position", "absolute" ) ] ] []
 
         -- メニュー以外の部分
         rootDiv hide =
