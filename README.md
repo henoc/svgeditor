@@ -19,7 +19,7 @@ You can create shapes using the SVG's coder or directly creating shapes with the
   - Scale and translate.
 - Node mode
   - Edit node of polyline, polygon.
-- Rectangle, ellipse, polygon, path mode
+- Rectangle, ellipse, polygon, path, text mode
   - Make new objects.
 - Gradient mode
   - Define linear or radial gradients.
@@ -28,7 +28,7 @@ You can create shapes using the SVG's coder or directly creating shapes with the
 
 - [x] Reimplement rotation
 - [x] Reimplement path mode
-- [ ] Reimplement text mode
+- [x] Reimplement text mode
 - [ ] Reimplement group and ungroup
 - [x] Reflect embedded CSS in SVG
 - [ ] Attributes output style options
@@ -41,9 +41,11 @@ You can create shapes using the SVG's coder or directly creating shapes with the
 - [ ] Transform attribute
 - [x] Zoom
 - [ ] Handle images
+- [ ] Filters
 
 ## ChangeLog
 
+- 1.0.0 Add text mode again, remove dependency of elm-mdl
 - 0.17.0 Enable to move text
 - 0.16.0 It was changed to reference always a content of latest active editor 
 - 0.15.1 Fix align bug
