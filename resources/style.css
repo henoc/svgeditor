@@ -1,146 +1,28 @@
-* {
-  --theme-color: #3F51B5;
+ul {
+    padding: 0px;
 }
-
-#root {
-  position: relative;
-  margin: 10px;
+li {
+    display: inline-block;
+    color: var(--vscode-button-foreground);
+    background-color: var(--vscode-button-background);
+    width: 50px;
+    text-align: center;
 }
-
-#svg-color-layer,#svg-physics-layer {
-  position: absolute;
-  left: 0px;
-  top: 0px;
+li:hover {
+    background-color: var(--vscode-button-hoverBackground);
 }
-
-#svgimage {
-  position: absolute;
-  left: 0px;
-  top: 0px;
+#aaa {
+    display: block;
+    background-color: var(--vscode-sideBar-background);
+    position: relative;
 }
-
-.circle {
-  width: 56px;
-  height: 56px;
-  border-radius: 50%;
-  margin: 1em;
+.svgeditor-svg-image {
+    position: absolute;
+    left: 0px;
+    top: 0px;
 }
-
-.mini-circle {
-  width: 36px;
-  height: 36px;
-  border-radius: 50%;
-  margin: 1em;
-}
-
-/* ボタン */
-
-.button {
-  display: inline-block;
-  padding: 0.5em;
-  text-align: center;
-  border-radius: 0.1em;
-}
-
-.button:hover {
-  background-color: rgba(255, 255, 255, 0.1)
-}
-
-.button:active {
-  background-color: rgba(255, 255, 255, 0.2)
-}
-
-.button-toggled,.button-toggled:hover {
-  background-color: var(--theme-color);
-}
-
-/* ノード */
-
-.node {
-  fill: currentColor;
-  stroke: black;
-}
-
-.node-toggled {
-  fill: var(--theme-color);
-  stroke: currentColor;
-}
-
-/* スライダー */
-
-input[type="range"] {
-  -webkit-appearance: none;
-  appearance: none;
-  background-color: var(--theme-color);
-  height: 3px;
-  border-radius: 6px;
-}
-
-input[type="range"]:focus,
-input[type="range"]:active {
-  outline: none;
-}
-
-input[type="range"]::-webkit-slider-thumb {
-  -webkit-appearance: none;
-  appearance: none;
-  cursor: pointer;
-  position: relative;
-  width: 16px;
-  height: 16px;
-  display: block;
-  background-color: var(--theme-color);
-  border-radius: 50%;
-  -webkit-border-radius: 50%;
-}
-
-/* ラジオボタン */
-
-label {
-  cursor: pointer;
-}
-
-input[type="radio"] {
-  display: none;
-}
-
-input[type="radio"] + span:before {
-  content: "";
-  display: inline-block;
-  width: 0.8em;
-  height: 0.8em;
-  border-radius: 50%;
-  border-color: rgb(59, 59, 59);
-  border-width: 0.2em;
-  border-style: solid;
-  transition: all 300ms 0s ease;  
-}
-
-input[type="radio"]:checked + span:before {
-  content: "";
-  border-color: var(--theme-color);
-  background-color: var(--theme-color);
-}
-
-/* ヒントつきボタン */
-
-div:hover + p.hint {
-  opacity: 1;
-  z-index: 1;
-}
-
-.hint {
-  opacity: 0;
-  transition: all 300ms 0s ease;
-  position: absolute;
-  background-color: rgba(0, 0, 0, 0.8);
-  border-radius: 0.4em;
-  padding: 1em;
-  z-index: -1;
-  white-space: nowrap;
-}
-
-.hint-container {
-  display: inline-block;
-  position: relative;
+.svgeditor-svg-svg {
+    position: absolute;
+    left: 0px;
+    top: 0px;
 }
