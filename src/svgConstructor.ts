@@ -1,9 +1,11 @@
 import { ParsedElement, ParsedBaseAttr } from "./domParser";
 import { Svg } from "./svg";
 import uuid from "uuid";
+import { onShapeMouseDown } from "./triggers";
 
 interface SvgConstructOptions {
     putUUIDAttribute?: boolean;
+    setListeners?: boolean;
     transparent?: boolean;
     all?: boolean;
 }
@@ -13,14 +15,18 @@ interface SvgConstructOptions {
 */
 export function construct(pe: ParsedElement, options?: SvgConstructOptions): Element | null {
     const putIndexAttribute = options && options.putUUIDAttribute || false;
+    const setListeners = options && options.setListeners || false;
     const transparent = options && options.transparent || false;
     const all = options && options.all || false;
-    const uu = uuid.v4();
+    const uu = pe.uuid || uuid.v4();
 
     const tag = new Svg(pe.tag);
     if (putIndexAttribute) {
         tag.attr("data-uuid", uu);
         pe.uuid = uu;
+    }
+    if (setListeners) {
+        tag.listener("mousedown", event => onShapeMouseDown(<MouseEvent>event, uu));
     }
     if (transparent) {
         tag.beforeBuild(t => t.attr("opacity", 0));
@@ -79,4 +85,15 @@ function makeChildren(pc: ParsedElement[], tag: Svg, options?: SvgConstructOptio
         if (elem) c.push(elem);
     }
     tag.children(...c);
+}
+
+export function makeUuidMap(pe: ParsedElement): {[uu: string]: ParsedElement} {
+    const acc: {[uu: string]: ParsedElement} = {};
+    if (pe.uuid) acc[pe.uuid] = pe;
+    if ("children" in pe) {
+        pe.children.forEach(child => {
+            Object.assign(acc, makeUuidMap(child));
+        });
+    }
+    return acc;
 }

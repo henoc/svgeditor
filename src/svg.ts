@@ -16,7 +16,8 @@ export class Svg {
         class: string[]
         children: Element[]
         text?: string
-    } = {attrs: {}, class: [], children: []};
+        listeners: {[key: string]: (event: Event) => void}
+    } = {attrs: {}, class: [], children: [], listeners: {}};
     public beforeBuildFn: (tag: Svg) => void = () => void 0;
 
     constructor(name?: string) {
@@ -54,6 +55,10 @@ export class Svg {
         if (text !== null) this.data.text = text;
         return this;
     }
+    listener(name: string, action: (event: Event) => void): Svg {
+        this.data.listeners[name] = action;
+        return this;
+    }
     build(): Element {
         this.beforeBuildFn(this);
         if (this.data.tag) {
@@ -66,6 +71,9 @@ export class Svg {
                 elem.insertAdjacentElement("beforeend", c);
             });
             if (this.data.text) elem.textContent = this.data.text;
+            map(this.data.listeners, (key, value) => {
+                elem.addEventListener(key, value);
+            });
             return elem;
         } else {
             throw new Error("In class Tag, no tag name found when build.");
