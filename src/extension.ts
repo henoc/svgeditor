@@ -105,6 +105,7 @@ function parseSvg(svgText: string, editor: vscode.TextEditor, diagnostics: vscod
         const startLine = warn.range.line - (svgText.slice(warn.range.startTagPosition, warn.range.position).split("\n").length - 1);
         const startColumn = warn.range.startTagPosition - svgText.slice(undefined, warn.range.startTagPosition).lastIndexOf("\n") - 2;
         return {
+            source: "svgeditor",
             message: warn.message,
             range: new vscode.Range(startLine, startColumn, warn.range.line, warn.range.column),
             severity: vscode.DiagnosticSeverity.Warning
