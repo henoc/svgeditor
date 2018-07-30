@@ -1,51 +1,78 @@
-import { ParsedElement } from "./domParser";
+import { ParsedElement, UnitValue } from "./domParser";
 import { Point, p } from "./utils";
+const units = require('units-css');
 
-export class Shape {
-    constructor(public pe: ParsedElement) {}
+interface ShaperFunctions {
+    center: (point?: Point) => undefined | Point;
+    move: (diff: Point) => void;
+}
 
-    center(point?: Point): undefined | Point {
-        if (point) {
-            if (this.pe.tag === "svg") {
+export function shaper(pe: ParsedElement, elem: Element): ShaperFunctions {
+    const px = (unitValue: UnitValue | null) => {
+        return unitValue ? units.convert("px", `${unitValue.value}${unitValue.unit || ""}`, elem, unitValue.attrName) : 0;
+    }
+    const fromPx = (unitValue: UnitValue | null, attrName: string, pxValue: number): UnitValue => {
+        return unitValue ?
+            {value: units.convert(unitValue.unit || "px", `${pxValue}px`, elem, unitValue.attrName), unit: unitValue.unit, attrName: unitValue.attrName} :
+            {value: pxValue, unit: null, attrName};
+    }
+    if (pe.tag === "svg") {
+        return {
+            center: (point?: Point) => {
+                if (point) return;
+                else return p(px(pe.attrs.width) / 2, px(pe.attrs.height) / 2);
+            },
+            move: (diff: Point) => {
                 return;
-            } else if (this.pe.tag === "circle") {
-                this.pe.attrs.cx = point.x;
-                this.pe.attrs.cy = point.y;
-            } else if (this.pe.tag === "rect") {
-                this.pe.attrs.x = point.x - ((this.pe.attrs.width || 0) / 2);
-                this.pe.attrs.y = point.y - ((this.pe.attrs.height || 0) / 2);
-            } else {
-                throw new Error("Center position of unknown shape is unknown.");
-            }
-        } else {
-            if (this.pe.tag === "svg") {
-                return p((this.pe.attrs.width || 0) / 2, (this.pe.attrs.height || 0) / 2);
-            } else if (this.pe.tag === "circle") {
-                return p(this.pe.attrs.cx || 0, this.pe.attrs.cy || 0);
-            } else if (this.pe.tag === "rect") {
-                return p((this.pe.attrs.x || 0) + (this.pe.attrs.width || 0) / 2, (this.pe.attrs.y || 0) + (this.pe.attrs.height || 0) / 2);
-            } else {
-                throw new Error("Center position of unknown shape is unknown.");
             }
         }
-    }
-    move(diff: Point): this {
-        if (this.pe.tag === "svg") {
-            return this;
-        } else if (this.pe.tag === "circle") {
-            this.pe.attrs.cx = (this.pe.attrs.cx || 0) + diff.x;
-            this.pe.attrs.cy = (this.pe.attrs.cy || 0) + diff.y;
-            return this;
-        } else if (this.pe.tag === "rect") {
-            this.pe.attrs.x = (this.pe.attrs.x || 0) + diff.x;
-            this.pe.attrs.y = (this.pe.attrs.y || 0) + diff.y;
-            return this;
-        } else {
-            throw new Error("Unknown shape cannot move.");
+    } else if (pe.tag === "circle") {
+        return {
+            center: (point?: Point) => {
+                if (point) {
+                    pe.attrs.cx = fromPx(pe.attrs.cx, "cx", point.x);
+                    pe.attrs.cy = fromPx(pe.attrs.cy, "cy", point.y);
+                } else {
+                    return p(px(pe.attrs.cx), px(pe.attrs.cy));
+                }
+            },
+            move: (diff: Point) => {
+                pe.attrs.cx = fromPx(pe.attrs.cx, "cx",
+                    px(pe.attrs.cx) + diff.x
+                );
+                pe.attrs.cy = fromPx(pe.attrs.cy, "cy",
+                    px(pe.attrs.cy) + diff.y
+                )
+            }
         }
+    } else if (pe.tag === "rect") {
+        return {
+            center: (point?: Point) => {
+                if (point) {
+                    pe.attrs.x = fromPx(pe.attrs.x, "x",
+                        point.x - px(pe.attrs.width) / 2
+                    );
+                    pe.attrs.y = fromPx(pe.attrs.y, "y",
+                        point.y - px(pe.attrs.height) / 2
+                    );
+                } else {
+                    return p(
+                        px(pe.attrs.x) + px(pe.attrs.width) / 2,
+                        px(pe.attrs.y) + px(pe.attrs.height) / 2
+                    );
+                }
+            },
+            move: (diff: Point) => {
+                pe.attrs.x = fromPx(pe.attrs.x, "x",
+                    px(pe.attrs.x) + diff.x
+                );
+                pe.attrs.y = fromPx(pe.attrs.y, "y",
+                    px(pe.attrs.y) + diff.y
+                );
+            }
+        }
+    } else {
+        throw new Error("Unknown shape cannot move.");
     }
 }
 
-export function shp(pe: ParsedElement) {
-    return new Shape(pe);
-}

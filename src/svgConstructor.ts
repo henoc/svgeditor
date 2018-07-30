@@ -1,5 +1,5 @@
 import { ParsedElement, ParsedBaseAttr } from "./domParser";
-import { Svg } from "./svg";
+import { SvgTag } from "./svg";
 import uuid from "uuid";
 import { onShapeMouseDown } from "./triggers";
 
@@ -18,15 +18,13 @@ export function construct(pe: ParsedElement, options?: SvgConstructOptions): Ele
     const setListeners = options && options.setListeners || false;
     const transparent = options && options.transparent || false;
     const all = options && options.all || false;
-    const uu = pe.uuid || uuid.v4();
 
-    const tag = new Svg(pe.tag);
+    const tag = new SvgTag(pe.tag);
     if (putIndexAttribute) {
-        tag.attr("data-uuid", uu);
-        pe.uuid = uu;
+        tag.attr("data-uuid", pe.uuid);
     }
     if (setListeners) {
-        tag.listener("mousedown", event => onShapeMouseDown(<MouseEvent>event, uu));
+        tag.listener("mousedown", event => onShapeMouseDown(<MouseEvent>event, pe.uuid));
     }
     if (transparent) {
         tag.beforeBuild(t => t.attr("opacity", 0));
@@ -52,33 +50,33 @@ export function construct(pe: ParsedElement, options?: SvgConstructOptions): Ele
             setBaseAttrs(pe.attrs, tag);
             makeChildren(pe.children, tag, options);
             return tag.attr("xmlns", pe.attrs.xmlns)
-                .attr("width", pe.attrs.width)
-                .attr("height", pe.attrs.height).build();
+                .uattr("width", pe.attrs.width)
+                .uattr("height", pe.attrs.height).build();
         } else if (pe.tag === "circle") {
             setBaseAttrs(pe.attrs, tag);
-            return tag.attr("r", pe.attrs.r)
-                .attr("cx", pe.attrs.cx)
-                .attr("cy", pe.attrs.cy).build();
+            return tag.uattr("r", pe.attrs.r)
+                .uattr("cx", pe.attrs.cx)
+                .uattr("cy", pe.attrs.cy).build();
         } else if (pe.tag === "rect") {
             setBaseAttrs(pe.attrs, tag);
-            return tag.attr("x", pe.attrs.x)
-                .attr("y", pe.attrs.y)
-                .attr("width", pe.attrs.width)
-                .attr("height", pe.attrs.height)
-                .attr("rx", pe.attrs.rx)
-                .attr("ry", pe.attrs.ry).build();
+            return tag.uattr("x", pe.attrs.x)
+                .uattr("y", pe.attrs.y)
+                .uattr("width", pe.attrs.width)
+                .uattr("height", pe.attrs.height)
+                .uattr("rx", pe.attrs.rx)
+                .uattr("ry", pe.attrs.ry).build();
         } {
             return null;
         }
     }
 }
 
-function setBaseAttrs(baseAttr: ParsedBaseAttr, tag: Svg) {
+function setBaseAttrs(baseAttr: ParsedBaseAttr, tag: SvgTag) {
     tag.attr("id", baseAttr.id);
     if (baseAttr.class) tag.class(...baseAttr.class);
 }
 
-function makeChildren(pc: ParsedElement[], tag: Svg, options?: SvgConstructOptions) {
+function makeChildren(pc: ParsedElement[], tag: SvgTag, options?: SvgConstructOptions) {
     const c = [];
     for (let i = 0; i < pc.length; i++) {
         const elem = construct(pc[i], options);
@@ -87,13 +85,24 @@ function makeChildren(pc: ParsedElement[], tag: Svg, options?: SvgConstructOptio
     tag.children(...c);
 }
 
-export function makeUuidMap(pe: ParsedElement): {[uu: string]: ParsedElement} {
+export function makeUuidVirtualMap(pe: ParsedElement): {[uu: string]: ParsedElement} {
     const acc: {[uu: string]: ParsedElement} = {};
     if (pe.uuid) acc[pe.uuid] = pe;
     if ("children" in pe) {
         pe.children.forEach(child => {
-            Object.assign(acc, makeUuidMap(child));
+            Object.assign(acc, makeUuidVirtualMap(child));
         });
+    }
+    return acc;
+}
+
+export function makeUuidRealMap(e: Element): {[uu: string]: Element} {
+    const acc: {[uu: string]: Element} = {};
+    let tmp: string | null;
+    if (tmp = e.getAttribute("data-uuid")) acc[tmp] = e;
+    for (let i = 0; i < e.children.length; i++) {
+        const child = e.children.item(i);
+        Object.assign(acc, makeUuidRealMap(child));
     }
     return acc;
 }

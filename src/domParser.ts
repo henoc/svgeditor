@@ -2,6 +2,7 @@ import * as xmldoc from "xmldoc";
 import { MarkupData } from "parse5/lib";
 import { map } from "./utils";
 import { Assoc } from "./svg";
+import uuidStatic from "uuid";
 
 interface Warning {
     range: {line: number, column: number, position: number, startTagPosition: number},
@@ -16,7 +17,7 @@ interface ParsedResult {
 type TagNames = "svg" | "circle"
 
 export type ParsedElement = (ParsedSvgElement | ParsedCircleElement | ParsedRectElement | ParsedUnknownElement) & {
-    uuid?: string;
+    uuid: string;
 }
 
 interface ParsedSvgElement {
@@ -54,26 +55,33 @@ interface ParsedSvgAttr extends ParsedBaseAttr {
     xmlns: string | null;
     "xmlns:xlink": string | null;
     version: number | null;
-    width: number | null;
-    height: number | null;
+    width: UnitValue | null;
+    height: UnitValue | null;
 }
 
 interface ParsedCircleAttr extends ParsedBaseAttr {
-    cx: number | null;
-    cy: number | null;
-    r: number | null;
+    cx: UnitValue | null;
+    cy: UnitValue | null;
+    r: UnitValue | null;
 }
 
 interface ParsedRectAttr extends ParsedBaseAttr {
-    x: number | null;
-    y: number | null;
-    width: number | null;
-    height: number | null;
-    rx: number | null;
-    ry: number | null;
+    x: UnitValue | null;
+    y: UnitValue | null;
+    width: UnitValue | null;
+    height: UnitValue | null;
+    rx: UnitValue | null;
+    ry: UnitValue | null;
+}
+
+export interface UnitValue {
+    unit: "%" | "ch" | "cm" | "em" | "ex" | "in" | "mm" | "pc" | "pt" | "px" | null;
+    value: number;
+    attrName: string;
 }
 
 export function parse(element: xmldoc.XmlElement): ParsedResult {
+    const uuid = uuidStatic.v4();
     const warns: Warning[] = [];
     const pushWarns = (warn: Warning | Warning[]) => {
         if (Array.isArray(warn)) warns.push(...warn);
@@ -83,16 +91,16 @@ export function parse(element: xmldoc.XmlElement): ParsedResult {
     const text = element.val;
     if (element.name === "svg") {
         const attrs = parseAttrs(element, pushWarns).svg();
-        return {result: {tag: "svg", attrs, children}, warns};
+        return {result: {tag: "svg", attrs, children, uuid}, warns};
     } else if (element.name === "circle") {
         const attrs = parseAttrs(element, pushWarns).circle();
-        return {result: {tag: "circle", attrs}, warns};
+        return {result: {tag: "circle", attrs, uuid}, warns};
     } else if (element.name === "rect") {
         const attrs = parseAttrs(element, pushWarns).rect();
-        return {result: {tag: "rect", attrs}, warns};
+        return {result: {tag: "rect", attrs, uuid}, warns};
     } else {
         const attrs: Assoc = element.attr;
-        return {result: {tag: "unknown", tag$real: element.name, attrs, children, text}, warns: [{range: toRange(element), message: `${element.name} is unsupported element.`}]};
+        return {result: {tag: "unknown", tag$real: element.name, attrs, children, text, uuid}, warns: [{range: toRange(element), message: `${element.name} is unsupported element.`}]};
     }
 }
 
@@ -119,10 +127,10 @@ function parseAttrs(element: xmldoc.XmlElement, onWarns: (ws: Warning[]) => void
     const attrs: Assoc = element.attr;
 
     // for global attributes
-    let tmp: null | string = null;
+    let tmp: {name: string, value: string | null};
     const globalValidAttrs: ParsedBaseAttr = {
-        id: pop(attrs, "id"),
-        class: (tmp = pop(attrs, "class")) && tmp.split(" ") || null,
+        id: pop(attrs, "id").value,
+        class: (tmp = pop(attrs, "class")) && tmp.value && tmp.value.split(" ") || null,
         unknown: {}
     };
 
@@ -134,11 +142,11 @@ function parseAttrs(element: xmldoc.XmlElement, onWarns: (ws: Warning[]) => void
     return {
         svg: () => {
             const validSvgAttrs: ParsedSvgAttr = Object.assign(globalValidAttrs, {
-                xmlns: pop(attrs, "xmlns"),
+                xmlns: pop(attrs, "xmlns").value,
                 width: (tmp = pop(attrs, "width")) && lengthAttr(tmp, element, pushWarns) || null,
                 height: (tmp = pop(attrs, "height")) && lengthAttr(tmp, element, pushWarns) || null,
-                "xmlns:xlink": pop(attrs, "xmlns:xlink"),
-                version: (tmp = pop(attrs, "version")) && lengthAttr(tmp, element, pushWarns) || null,
+                "xmlns:xlink": pop(attrs, "xmlns:xlink").value,
+                version: (tmp = pop(attrs, "version")) && tmp.value && numberAttr(tmp.value, element, pushWarns) || null,
                 unknown: unknownAttrs(attrs, element, pushWarns)
             });
             onWarns(warns);
@@ -174,9 +182,9 @@ function pop(attrs: Assoc, name: string) {
     if (attrs[name]) {
         const value = attrs[name];
         delete attrs[name];
-        return value;
+        return {name, value};
     } else {
-        return null;
+        return {name, value: null};
     }
 }
 
@@ -187,14 +195,26 @@ function unknownAttrs(attrs: Assoc, element: xmldoc.XmlElement, onWarns: (ws: Wa
     return attrs;
 }
 
-function lengthAttr(length: string, element: xmldoc.XmlElement, onWarn: (w: Warning) => void): number | undefined {
-    if (/^[+-]?[0-9]+(\.[0-9]*)?([eE][+-]?[0-9]+)?$/.test(length)) {
-        return Number(length);
-    } else if (/em|ex|px|in|cm|mm|pt|pc|%/.test(length)) {
-        onWarn({range: toRange(element), message: "Length with unit is unsupported."});
-        return void 0;
+function lengthAttr(pair: {name: string, value: string | null}, element: xmldoc.XmlElement, onWarn: (w: Warning) => void): UnitValue | undefined {
+    if (pair.value === null) return void 0;
+    let tmp;
+    if (tmp = /^[+-]?[0-9]+(\.[0-9]*)?([eE][+-]?[0-9]+)?(em|ex|px|in|cm|mm|pt|pc|%)?$/.exec(pair.value)) {
+        return {
+            unit: <any>tmp[3] || null,
+            value: parseFloat(pair.value),
+            attrName: pair.name
+        };
     } else {
-        onWarn({range: toRange(element), message: `${length} is not a number.`});
+        onWarn({range: toRange(element), message: `${JSON.stringify(pair)} is a invalid number with unit.`});
+        return void 0;
+    }
+}
+
+function numberAttr(maybeNumber: string, element: xmldoc.XmlElement, onWarn: (w: Warning) => void): number | undefined {
+    if (/^[+-]?[0-9]+(\.[0-9]*)?([eE][+-]?[0-9]+)?$/.test(maybeNumber)) {
+        return Number(maybeNumber);
+    } else {
+        onWarn({range: toRange(element), message: `${maybeNumber} is not a number.`});
         return void 0;
     }
 }
