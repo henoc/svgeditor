@@ -55,26 +55,26 @@ interface ParsedSvgAttr extends ParsedBaseAttr {
     xmlns: string | null;
     "xmlns:xlink": string | null;
     version: number | null;
-    width: UnitValue | null;
-    height: UnitValue | null;
+    width: Length | null;
+    height: Length | null;
 }
 
 interface ParsedCircleAttr extends ParsedBaseAttr {
-    cx: UnitValue | null;
-    cy: UnitValue | null;
-    r: UnitValue | null;
+    cx: Length | null;
+    cy: Length | null;
+    r: Length | null;
 }
 
 interface ParsedRectAttr extends ParsedBaseAttr {
-    x: UnitValue | null;
-    y: UnitValue | null;
-    width: UnitValue | null;
-    height: UnitValue | null;
-    rx: UnitValue | null;
-    ry: UnitValue | null;
+    x: Length | null;
+    y: Length | null;
+    width: Length | null;
+    height: Length | null;
+    rx: Length | null;
+    ry: Length | null;
 }
 
-export interface UnitValue {
+export interface Length {
     unit: "%" | "ch" | "cm" | "em" | "ex" | "in" | "mm" | "pc" | "pt" | "px" | null;
     value: number;
     attrName: string;
@@ -195,7 +195,7 @@ function unknownAttrs(attrs: Assoc, element: xmldoc.XmlElement, onWarns: (ws: Wa
     return attrs;
 }
 
-function lengthAttr(pair: {name: string, value: string | null}, element: xmldoc.XmlElement, onWarn: (w: Warning) => void): UnitValue | undefined {
+function lengthAttr(pair: {name: string, value: string | null}, element: xmldoc.XmlElement, onWarn: (w: Warning) => void): Length | undefined {
     if (pair.value === null) return void 0;
     let tmp;
     if (tmp = /^[+-]?[0-9]+(\.[0-9]*)?([eE][+-]?[0-9]+)?(em|ex|px|in|cm|mm|pt|pc|%)?$/.exec(pair.value)) {

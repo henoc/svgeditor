@@ -1,5 +1,5 @@
 import { map } from "./utils";
-import { UnitValue } from "./domParser";
+import { Length } from "./domParser";
 
 const ns = "http://www.w3.org/2000/svg";
 
@@ -38,7 +38,7 @@ export class SvgTag {
         }
         return this;
     }
-    uattr(key: string, value: UnitValue | null): SvgTag {
+    uattr(key: string, value: Length | null): SvgTag {
         if (value !== null) {
             this.data.attrs[key] = `${value.value}${value.unit || ""}`;
         }

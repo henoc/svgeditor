@@ -30,22 +30,18 @@ export function construct(pe: ParsedElement, options?: SvgConstructOptions): Ele
         tag.beforeBuild(t => t.attr("opacity", 0));
     }
 
-    if (all) {
-        if (pe.tag === "unknown") {
+    if (pe.tag === "unknown") {
+        if (all) {
             return tag.tag(pe.tag$real)
                 .attrs(pe.attrs)
                 .text(pe.text)
                 .children(...pe.children.map(e => construct(e, options)!))
                 .build();
         } else {
-            tag.tag(pe.tag).attrs(<any>pe.attrs /* "unknown" attribute is supposed to be removed here. */).attrs(pe.attrs.unknown);
-            delete tag.data.attrs["unknown"];
-            if ("children" in pe) {
-                tag.children(...pe.children.map(e => construct(e, options)!));
-            }
-            return tag.build();
+            return null;
         }
     } else {
+        if (all) tag.attrs(pe.attrs.unknown);
         if (pe.tag === "svg") {
             setBaseAttrs(pe.attrs, tag);
             makeChildren(pe.children, tag, options);
@@ -65,9 +61,8 @@ export function construct(pe: ParsedElement, options?: SvgConstructOptions): Ele
                 .uattr("height", pe.attrs.height)
                 .uattr("rx", pe.attrs.rx)
                 .uattr("ry", pe.attrs.ry).build();
-        } {
-            return null;
         }
+        return null;    // unreachable
     }
 }
 

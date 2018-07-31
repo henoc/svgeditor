@@ -1,4 +1,4 @@
-import { ParsedElement, UnitValue } from "./domParser";
+import { ParsedElement, Length } from "./domParser";
 import { Point, p } from "./utils";
 const units = require('units-css');
 
@@ -8,10 +8,10 @@ interface ShaperFunctions {
 }
 
 export function shaper(pe: ParsedElement, elem: Element): ShaperFunctions {
-    const px = (unitValue: UnitValue | null) => {
+    const px = (unitValue: Length | null) => {
         return unitValue ? units.convert("px", `${unitValue.value}${unitValue.unit || ""}`, elem, unitValue.attrName) : 0;
     }
-    const fromPx = (unitValue: UnitValue | null, attrName: string, pxValue: number): UnitValue => {
+    const fromPx = (unitValue: Length | null, attrName: string, pxValue: number): Length => {
         return unitValue ?
             {value: units.convert(unitValue.unit || "px", `${pxValue}px`, elem, unitValue.attrName), unit: unitValue.unit, attrName: unitValue.attrName} :
             {value: pxValue, unit: null, attrName};
