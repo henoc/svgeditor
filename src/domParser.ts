@@ -3,6 +3,7 @@ import { MarkupData } from "parse5/lib";
 import { map } from "./utils";
 import { Assoc } from "./svg";
 import uuidStatic from "uuid";
+import tinycolor from "tinycolor2";
 
 interface Warning {
     range: {line: number, column: number, position: number, startTagPosition: number},
@@ -63,6 +64,8 @@ interface ParsedCircleAttr extends ParsedBaseAttr {
     cx: Length | null;
     cy: Length | null;
     r: Length | null;
+    fill: Paint | null;
+    stroke: Paint | null;
 }
 
 interface ParsedRectAttr extends ParsedBaseAttr {
@@ -72,12 +75,22 @@ interface ParsedRectAttr extends ParsedBaseAttr {
     height: Length | null;
     rx: Length | null;
     ry: Length | null;
+    fill: Paint | null;
+    stroke: Paint | null;
 }
 
 export interface Length {
     unit: "%" | "ch" | "cm" | "em" | "ex" | "in" | "mm" | "pc" | "pt" | "px" | null;
     value: number;
     attrName: string;
+}
+
+export interface Paint {
+    format: "none" | "currentColor" | "inherit" | "name" | "hex" | "hex6" | "hex3" | "hex4" | "hex8" | "rgb" | "prgb" | "hsl" | "hsv";
+    h: number;
+    s: number;
+    l: number;
+    a: number;
 }
 
 export function parse(element: xmldoc.XmlElement): ParsedResult {
@@ -157,6 +170,8 @@ function parseAttrs(element: xmldoc.XmlElement, onWarns: (ws: Warning[]) => void
                 cx: (tmp = pop(attrs, "cx")) && lengthAttr(tmp, element, pushWarns) || null,
                 cy: (tmp = pop(attrs, "cy")) && lengthAttr(tmp, element, pushWarns) || null,
                 r: (tmp = pop(attrs, "r")) && lengthAttr(tmp, element, pushWarns) || null,
+                fill: (tmp = pop(attrs, "fill")) && paintAttr(tmp, element, pushWarns) || null,
+                stroke: (tmp = pop(attrs, "stroke")) && paintAttr(tmp, element, pushWarns) || null,
                 unknown: unknownAttrs(attrs, element, pushWarns)
             });
             onWarns(warns);
@@ -170,6 +185,8 @@ function parseAttrs(element: xmldoc.XmlElement, onWarns: (ws: Warning[]) => void
                 height: (tmp = pop(attrs, "height")) && lengthAttr(tmp, element, pushWarns) || null,
                 rx: (tmp = pop(attrs, "rx")) && lengthAttr(tmp, element, pushWarns) || null,
                 ry: (tmp = pop(attrs, "ry")) && lengthAttr(tmp, element, pushWarns) || null,
+                fill: (tmp = pop(attrs, "fill")) && paintAttr(tmp, element, pushWarns) || null,
+                stroke: (tmp = pop(attrs, "stroke")) && paintAttr(tmp, element, pushWarns) || null,
                 unknown: unknownAttrs(attrs, element, pushWarns)
             });
             onWarns(warns);
@@ -216,5 +233,26 @@ function numberAttr(maybeNumber: string, element: xmldoc.XmlElement, onWarn: (w:
     } else {
         onWarn({range: toRange(element), message: `${maybeNumber} is not a number.`});
         return void 0;
+    }
+}
+
+function paintAttr(pair: {name: string, value: string | null}, element: xmldoc.XmlElement, onWarn: (w: Warning) => void): Paint | undefined {
+    if (pair.value === null) return void 0;
+    let tcolor: tinycolorInstance = tinycolor(pair.value);
+    if (tcolor.getFormat()) {
+        return {
+            format: <any>tcolor.getFormat(),
+            ...tcolor.toHsl()
+        }
+    } else if (/^(none|currentColor|inherit)$/.test(pair.value)) {
+        return {
+            format: <any>pair.value,
+            h: 0, s: 0, l: 0, a: 0
+        }
+    } else if (/^url\([^\)]*\)$/.test(pair.value)) {
+        onWarn({range: toRange(element), message: `FuncIRI notation ${JSON.stringify(pair)} is unsupported.` });
+    } else {
+        onWarn({range: toRange(element), message: `${JSON.stringify(pair)} is a invalid paint value.`});
+        return void 0;        
     }
 }

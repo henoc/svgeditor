@@ -1,5 +1,7 @@
 import { map } from "./utils";
-import { Length } from "./domParser";
+import { Length, Paint } from "./domParser";
+import tinycolor from "tinycolor2";
+
 
 const ns = "http://www.w3.org/2000/svg";
 
@@ -41,6 +43,20 @@ export class SvgTag {
     uattr(key: string, value: Length | null): SvgTag {
         if (value !== null) {
             this.data.attrs[key] = `${value.value}${value.unit || ""}`;
+        }
+        return this;
+    }
+    pattr(key: string, value: Paint | null): SvgTag {
+        if (value !== null) {
+            const tcolor = tinycolor({h: value.h, s: value.s, l: value.l, a: value.a});
+            if (value.format === "none" || value.format === "currentColor" || value.format === "inherit") {
+                this.data.attrs[key] = value.format;
+            } else if (value.format === "hex4") {
+                this.data.attrs[key] = tcolor.toString("hex8");
+            } else {
+                this.data.attrs[key] = tcolor.toString(value.format);
+            }
+            return this;
         }
         return this;
     }

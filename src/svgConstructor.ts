@@ -52,7 +52,9 @@ export function construct(pe: ParsedElement, options?: SvgConstructOptions): Ele
             setBaseAttrs(pe.attrs, tag);
             return tag.uattr("r", pe.attrs.r)
                 .uattr("cx", pe.attrs.cx)
-                .uattr("cy", pe.attrs.cy).build();
+                .uattr("cy", pe.attrs.cy)
+                .pattr("fill", pe.attrs.fill)
+                .pattr("stroke", pe.attrs.stroke).build();
         } else if (pe.tag === "rect") {
             setBaseAttrs(pe.attrs, tag);
             return tag.uattr("x", pe.attrs.x)
@@ -60,7 +62,9 @@ export function construct(pe: ParsedElement, options?: SvgConstructOptions): Ele
                 .uattr("width", pe.attrs.width)
                 .uattr("height", pe.attrs.height)
                 .uattr("rx", pe.attrs.rx)
-                .uattr("ry", pe.attrs.ry).build();
+                .uattr("ry", pe.attrs.ry)
+                .pattr("fill", pe.attrs.fill)
+                .pattr("stroke", pe.attrs.stroke).build();
         }
         return null;    // unreachable
     }

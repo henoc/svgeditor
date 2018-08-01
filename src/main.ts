@@ -26,7 +26,6 @@ window.addEventListener("message", event => {
     switch (message.command) {
         case "modified":
             svgdata = message.data;
-            console.log(svgdata);
             refleshContent();
             break;
     }
