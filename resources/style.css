@@ -26,3 +26,8 @@ li:hover {
     left: 0px;
     top: 0px;
 }
+.svgeditor-shape-handler {
+    fill: var(--vscode-activityBarBadge-background);
+    stroke: var(--vscode-activityBarBadge-foreground);
+    stroke-width: 1px;
+}

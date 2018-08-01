@@ -4,6 +4,7 @@ import * as path from "path";
 import * as xmldoc from "xmldoc";
 import { render } from "ejs";
 import { parse } from "./domParser";
+import uuid from "uuid";
 
 export function activate(context: vscode.ExtensionContext) {
 
@@ -17,7 +18,8 @@ export function activate(context: vscode.ExtensionContext) {
     let cssPath = vscode.Uri.file(path.join(context.extensionPath, "resources", "style.css")).with({ scheme: "vscode-resource"});
 
 
-    let panelSets: {editor: vscode.TextEditor, panel: vscode.WebviewPanel}[] = [];
+    let panelSets: {editor: vscode.TextEditor, panel: vscode.WebviewPanel, uuid: string}[] = [];
+    let prevendSend: {[uuid: string]: boolean} = {};
     let diagnostics = vscode.languages.createDiagnosticCollection("svgeditor");
 
     let createPanel = (editor: vscode.TextEditor) => {
@@ -29,14 +31,17 @@ export function activate(context: vscode.ExtensionContext) {
                 localResourceRoots: [
                     vscode.Uri.file(path.join(context.extensionPath, "resources"))
                 ]
-            });
+            }
+        );
         panel.webview.html = render(viewer, {bundleJsPath, cssPath});
+        const uu = uuid.v4();
         panel.webview.onDidReceiveMessage(message => {
             switch (message.command) {
                 case "modified":
                     editor.edit(editBuilder => {
                         editBuilder.replace(allRange(editor), message.data);
                     });
+                    prevendSend[uu] = true;
                     return;
                 case "svg-request":
                     panel.webview.postMessage({
@@ -47,16 +52,21 @@ export function activate(context: vscode.ExtensionContext) {
             }
         }, undefined, context.subscriptions);
         
-        panelSets.push({editor, panel})
+        panelSets.push({editor, panel, uuid: uu});
+        prevendSend[uu] = false;
     }
 
     context.subscriptions.push(vscode.workspace.onDidChangeTextDocument((e: vscode.TextDocumentChangeEvent) => {
         panelSets.forEach(sets => {
             if (sets.editor.document === e.document) {
-                sets.panel.webview.postMessage({
-                    command: "modified",
-                    data: parseSvg(e.document.getText(), sets.editor, diagnostics)
-                });
+                if (prevendSend[sets.uuid]) {
+                    prevendSend[sets.uuid] = false;
+                } else {
+                    sets.panel.webview.postMessage({
+                        command: "modified",
+                        data: parseSvg(e.document.getText(), sets.editor, diagnostics)
+                    });
+                }
             }
         });
     }));

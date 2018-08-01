@@ -15,6 +15,18 @@ export class Point {
     sub(that: Point) {
         return p(this.x - that.x, this.y - that.y);
     }
+    mul(that: Point) {
+        return p(this.x * that.x, this.y * that.y);
+    }
+    div(that: Point) {
+        return p(this.x / that.x, this.y / that.y);
+    }
+    abs() {
+        return p(Math.abs(this.x), Math.abs(this.y));
+    }
+    toString() {
+        return `(${this.x}, ${this.y})`;
+    }
 }
 
 export function p(x: number, y: number): Point {

@@ -12,6 +12,8 @@ export let svgVirtualMap: {[uu: string]: ParsedElement} = {};
 export let svgRealMap: {[uu: string]: Element} = {};
 export let editMode: "select" | "rect" | "ellipse" = "select";
 const aaa = document.getElementById("aaa")!;
+export const debugMessage = document.getElementById("svgeditor-message")!;
+export const debug: boolean = true;
 
 vscode.postMessage({
     command: "svg-request"
@@ -31,13 +33,15 @@ window.addEventListener("message", event => {
     }
 });
 // check box listeners
-showAll.addEventListener("change", refleshContent);
+showAll.addEventListener("change", () => refleshContent());
 // others
 document.addEventListener("mousemove", (event) => onDocumentMouseMove(event));
 document.addEventListener("mouseup", (event) => onDocumentMouseUp(event));
 aaa.addEventListener("mousedown", (event) => onAaaMouseDown(event));
 
-export function refleshContent() {
+export function refleshContent(options?: {shapeHandlers: Element[]}) {
+    const shapeHandlers = options && options.shapeHandlers || [];
+
     const elem = construct(svgdata, {all: showAll.checked});
     while(aaa.firstChild) {
         aaa.removeChild(aaa.firstChild);
@@ -57,8 +61,12 @@ export function refleshContent() {
         const physicsElem = construct(svgdata, {putUUIDAttribute: true, setListeners: true, transparent: true, all: showAll.checked});
         svgVirtualMap = makeUuidVirtualMap(svgdata);
         if (physicsElem) {
+            for (let handler of shapeHandlers) {
+                physicsElem.insertAdjacentElement("beforeend", handler);
+            }
             svgRealMap = makeUuidRealMap(physicsElem);
             physicsElem.classList.add("svgeditor-svg-svg");
+            physicsElem.removeAttribute("opacity");
             aaa.insertAdjacentElement(
                 "beforeend",
                 physicsElem

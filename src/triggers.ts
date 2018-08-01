@@ -1,4 +1,4 @@
-import { editMode } from "./main";
+import { editMode, debugMessage, debug } from "./main";
 import * as selectMode from "./selectMode";
 
 export function onShapeMouseDown(event: MouseEvent, uu: string) {
@@ -12,6 +12,7 @@ export function onAaaMouseDown(event: MouseEvent) {
 }
 
 export function onDocumentMouseMove(event: MouseEvent) {
+    if (debug) debugMessage.innerText = `${event.offsetX}, ${event.offsetY}`;
     if (editMode === "select") {
         selectMode.onDocumentMouseMove(event);
     }
