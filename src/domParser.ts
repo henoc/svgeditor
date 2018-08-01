@@ -19,6 +19,7 @@ type TagNames = "svg" | "circle"
 
 export type ParsedElement = (ParsedSvgElement | ParsedCircleElement | ParsedRectElement | ParsedUnknownElement) & {
     uuid: string;
+    isRoot: boolean;
 }
 
 interface ParsedSvgElement {
@@ -93,7 +94,7 @@ export interface Paint {
     a: number;
 }
 
-export function parse(element: xmldoc.XmlElement): ParsedResult {
+export function parse(element: xmldoc.XmlElement, isRoot?: boolean): ParsedResult {
     const uuid = uuidStatic.v4();
     const warns: Warning[] = [];
     const pushWarns = (warn: Warning | Warning[]) => {
@@ -104,16 +105,16 @@ export function parse(element: xmldoc.XmlElement): ParsedResult {
     const text = element.val;
     if (element.name === "svg") {
         const attrs = parseAttrs(element, pushWarns).svg();
-        return {result: {tag: "svg", attrs, children, uuid}, warns};
+        return {result: {tag: "svg", attrs, children, uuid, isRoot: !!isRoot}, warns};
     } else if (element.name === "circle") {
         const attrs = parseAttrs(element, pushWarns).circle();
-        return {result: {tag: "circle", attrs, uuid}, warns};
+        return {result: {tag: "circle", attrs, uuid, isRoot: !!isRoot}, warns};
     } else if (element.name === "rect") {
         const attrs = parseAttrs(element, pushWarns).rect();
-        return {result: {tag: "rect", attrs, uuid}, warns};
+        return {result: {tag: "rect", attrs, uuid, isRoot: !!isRoot}, warns};
     } else {
         const attrs: Assoc = element.attr;
-        return {result: {tag: "unknown", tag$real: element.name, attrs, children, text, uuid}, warns: [{range: toRange(element), message: `${element.name} is unsupported element.`}]};
+        return {result: {tag: "unknown", tag$real: element.name, attrs, children, text, uuid, isRoot: !!isRoot}, warns: [{range: toRange(element), message: `${element.name} is unsupported element.`}]};
     }
 }
 

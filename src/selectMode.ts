@@ -17,10 +17,17 @@ let startShapeSize: Point | null = null;
 
 export function onShapeMouseDown(event: MouseEvent, uu: string) {
     event.stopPropagation();
-    selectedShapeUuid = uu;
-    startCursorPos = p(event.offsetX, event.offsetY);
-    startShapeCenter = shaper(svgVirtualMap[uu], svgRealMap[uu]).center()!;
-    isDruggingShape = true;
+    if (svgVirtualMap[uu].isRoot) {
+        selectedShapeUuid = null;
+        selectedHandlerIndex = null;
+        shapeHanlders = [];
+        refleshContent();
+    } else {
+        selectedShapeUuid = uu;
+        startCursorPos = p(event.offsetX, event.offsetY);
+        startShapeCenter = shaper(svgVirtualMap[uu], svgRealMap[uu]).center()!;
+        isDruggingShape = true;
+    }
 }
 
 export function onDocumentMouseMove(event: MouseEvent) {
@@ -28,7 +35,7 @@ export function onDocumentMouseMove(event: MouseEvent) {
     if (selectedShapeUuid) {
         const pe = svgVirtualMap[selectedShapeUuid];
         const re = svgRealMap[selectedShapeUuid];
-        if (pe.tag !== "svg") {
+        if (!pe.isRoot) {
             if (isDruggingShape && startCursorPos && startShapeCenter) {
                 shaper(pe, re).center(startShapeCenter.add(currentCursorPos.sub(startCursorPos)));
                 refleshContent({shapeHandlers: shapeHanlders = createShapeHandlers(selectedShapeUuid)});
