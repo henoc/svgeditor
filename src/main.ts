@@ -1,7 +1,8 @@
 import { construct, makeUuidVirtualMap, makeUuidRealMap } from "./svgConstructor";
 import { ParsedElement } from "./domParser";
 import { SvgTag } from "./svg";
-import { onAaaMouseDown, onDocumentMouseMove, onDocumentMouseUp } from "./triggers";
+import { onAaaMouseDown, onDocumentMouseMove, onDocumentMouseUp, onColorBoxClick } from "./triggers";
+import { ColorPicker } from "./colorPicker";
 
 declare function acquireVsCodeApi(): any;
 
@@ -12,8 +13,21 @@ export let svgVirtualMap: {[uu: string]: ParsedElement} = {};
 export let svgRealMap: {[uu: string]: Element} = {};
 export let editMode: "select" | "rect" | "ellipse" = "select";
 const aaa = document.getElementById("aaa")!;
-export const debugMessage = document.getElementById("svgeditor-message")!;
-export const debug: boolean = true;
+const colorBoxFill = document.getElementById("svgeditor-colorbox-fill")!;
+const colorBoxStroke = document.getElementById("svgeditor-colorbox-stroke")!;
+const colorPickerDiv = document.getElementById("svgeditor-colorpicker")!;
+const debugMessage = document.getElementById("svgeditor-message")!;
+const debug: boolean = true;
+const messages: Map<string, string> = new Map();
+
+export function debugLog(at: string, message: string) {
+    messages.set(at, message);
+    let mstr = "";
+    for(let [key, value] of messages) {
+        mstr += `[${key}] ${value}\n`;
+    }
+    if (debug) debugMessage.innerText = mstr.trimRight();
+}
 
 vscode.postMessage({
     command: "svg-request"
@@ -34,10 +48,13 @@ window.addEventListener("message", event => {
 });
 // check box listeners
 showAll.addEventListener("change", () => refleshContent());
+// color pickers
+colorBoxFill.addEventListener("click", (event) => onColorBoxClick(colorBoxFill, colorPickerDiv))
 // others
 document.addEventListener("mousemove", (event) => onDocumentMouseMove(event));
 document.addEventListener("mouseup", (event) => onDocumentMouseUp(event));
 aaa.addEventListener("mousedown", (event) => onAaaMouseDown(event));
+
 
 export function refleshContent(options?: {shapeHandlers: Element[]}) {
     const shapeHandlers = options && options.shapeHandlers || [];

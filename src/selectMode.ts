@@ -1,4 +1,4 @@
-import { svgVirtualMap, refleshContent, svgRealMap, sendBackToEditor, debugMessage, debug } from "./main";
+import { svgVirtualMap, refleshContent, svgRealMap, sendBackToEditor, debugLog } from "./main";
 import { Point, p } from "./utils";
 import { shaper } from "./shapes";
 import { SvgTag } from "./svg";
@@ -46,8 +46,8 @@ export function onDocumentMouseMove(event: MouseEvent) {
                 const currentSize = diff.add(startShapeSize);
                 if (currentSize.x < 0) currentSize.x = 0;
                 if (currentSize.y < 0) currentSize.y = 0;
-                if (debug) debugMessage.innerText = `index: ${selectedHandlerIndex}, currentSize: ${currentSize}, diff: ${diff}, fixedPoint: ${startShapeFixedPoint}
-                pe.tag: ${pe.tag}`;
+                debugLog("selectMode", `index: ${selectedHandlerIndex}, currentSize: ${currentSize}, diff: ${diff}, fixedPoint: ${startShapeFixedPoint}
+                pe.tag: ${pe.tag}`);
                 shaper(pe, re).size2(currentSize, startShapeFixedPoint);
                 refleshContent({shapeHandlers: shapeHanlders = createShapeHandlers(selectedShapeUuid)});
             }

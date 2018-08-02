@@ -32,3 +32,12 @@ export class Point {
 export function p(x: number, y: number): Point {
     return new Point(x, y);
 }
+
+export function clearEventListeners(element: Element): Element {
+    var clone = element.cloneNode();
+    while (element.firstChild) {
+        clone.appendChild(element.lastChild!);
+    }
+    element.parentNode!.replaceChild(clone, element);
+    return <Element>clone;
+}

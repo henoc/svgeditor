@@ -48,7 +48,7 @@ export class SvgTag {
     }
     pattr(key: string, value: Paint | null): SvgTag {
         if (value !== null) {
-            const tcolor = tinycolor({h: value.h, s: value.s, l: value.l, a: value.a});
+            const tcolor = tinycolor(value);
             if (value.format === "none" || value.format === "currentColor" || value.format === "inherit") {
                 this.data.attrs[key] = value.format;
             } else if (value.format === "hex4") {

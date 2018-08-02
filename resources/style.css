@@ -31,3 +31,13 @@ li:hover {
     stroke: var(--vscode-activityBarBadge-foreground);
     stroke-width: 1px;
 }
+.svgeditor-bold {
+    font-weight: bold;
+    font-size: small;
+}
+.svgeditor-colorbox {
+    display: inline-block;
+    width: 1em;
+    height: 1em;
+    background: red;
+}

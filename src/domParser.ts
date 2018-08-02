@@ -1,5 +1,4 @@
 import * as xmldoc from "xmldoc";
-import { MarkupData } from "parse5/lib";
 import { map } from "./utils";
 import { Assoc } from "./svg";
 import uuidStatic from "uuid";
@@ -87,10 +86,10 @@ export interface Length {
 }
 
 export interface Paint {
-    format: "none" | "currentColor" | "inherit" | "name" | "hex" | "hex6" | "hex3" | "hex4" | "hex8" | "rgb" | "prgb" | "hsl" | "hsv";
-    h: number;
-    s: number;
-    l: number;
+    format: "none" | "currentColor" | "inherit" | "name" | "hex" | "hex6" | "hex3" | "hex4" | "hex8" | "rgb" | "prgb" | "hsl";
+    r: number;
+    g: number;
+    b: number;
     a: number;
 }
 
@@ -240,20 +239,20 @@ function numberAttr(maybeNumber: string, element: xmldoc.XmlElement, onWarn: (w:
 function paintAttr(pair: {name: string, value: string | null}, element: xmldoc.XmlElement, onWarn: (w: Warning) => void): Paint | undefined {
     if (pair.value === null) return void 0;
     let tcolor: tinycolorInstance = tinycolor(pair.value);
-    if (tcolor.getFormat()) {
+    if (tcolor.getFormat() && tcolor.getFormat() !== "hsv") {
         return {
             format: <any>tcolor.getFormat(),
-            ...tcolor.toHsl()
+            ...tcolor.toRgb()
         }
     } else if (/^(none|currentColor|inherit)$/.test(pair.value)) {
         return {
             format: <any>pair.value,
-            h: 0, s: 0, l: 0, a: 0
+            r: 0, g: 0, b: 0, a: 0
         }
     } else if (/^url\([^\)]*\)$/.test(pair.value)) {
         onWarn({range: toRange(element), message: `FuncIRI notation ${JSON.stringify(pair)} is unsupported.` });
     } else {
-        onWarn({range: toRange(element), message: `${JSON.stringify(pair)} is a invalid paint value.`});
+        onWarn({range: toRange(element), message: `${JSON.stringify(pair)} is unsupported paint value.`});
         return void 0;        
     }
 }
