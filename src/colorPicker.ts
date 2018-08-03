@@ -41,6 +41,10 @@ export class ColorPicker {
         this.ctx.fillRect(0, 0, this.width * 0.8, this.height * 0.2);
         this.ctx.fillStyle = this.initialColor.toString("rgb");
         this.ctx.fillRect(this.width * 0.8, 0, this.width * 0.2, this.height * 0.2);
+        this.ctx.fillStyle = tmpColor.toHsl().l < 0.5 ? "white" : "black";
+        this.ctx.textBaseline = "middle";
+        this.ctx.textAlign = "center";
+        this.ctx.fillText(tmpColor.toString("hex8"), this.width * 0.4, this.height * 0.1, this.width * 0.8);
     }
 
     drawGrad() {
