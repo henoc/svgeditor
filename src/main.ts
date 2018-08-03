@@ -1,8 +1,9 @@
 import { construct, makeUuidVirtualMap, makeUuidRealMap } from "./svgConstructor";
 import { ParsedElement } from "./domParser";
 import { SvgTag } from "./svg";
-import { onAaaMouseDown, onDocumentMouseMove, onDocumentMouseUp, onColorBoxClick } from "./triggers";
+import { onAaaMouseDown, onDocumentMouseMove, onDocumentMouseUp, onColorBoxClick, onDocumentClick } from "./triggers";
 import { ColorPicker } from "./colorPicker";
+import { ActiveContents } from "./utils";
 
 declare function acquireVsCodeApi(): any;
 
@@ -12,6 +13,8 @@ export let svgdata: ParsedElement;
 export let svgVirtualMap: {[uu: string]: ParsedElement} = {};
 export let svgRealMap: {[uu: string]: Element} = {};
 export let editMode: "select" | "rect" | "ellipse" = "select";
+export let openContents: {[id: string]: HTMLElement} = {};
+export let activeContents = new ActiveContents();
 const aaa = document.getElementById("aaa")!;
 const colorBoxFill = document.getElementById("svgeditor-colorbox-fill")!;
 const colorBoxStroke = document.getElementById("svgeditor-colorbox-stroke")!;
@@ -49,10 +52,13 @@ window.addEventListener("message", event => {
 // check box listeners
 showAll.addEventListener("change", () => refleshContent());
 // color pickers
-colorBoxFill.addEventListener("click", (event) => onColorBoxClick(colorBoxFill, colorPickerDiv))
+colorPickerDiv.addEventListener("click", (event) => event.stopPropagation());
+colorBoxFill.addEventListener("click", (event) => onColorBoxClick(event, colorBoxFill, colorPickerDiv));
+colorBoxStroke.addEventListener("click", (event) => onColorBoxClick(event, colorBoxStroke, colorPickerDiv));
 // others
 document.addEventListener("mousemove", (event) => onDocumentMouseMove(event));
 document.addEventListener("mouseup", (event) => onDocumentMouseUp(event));
+document.addEventListener("click", (event) => onDocumentClick(event));
 aaa.addEventListener("mousedown", (event) => onAaaMouseDown(event));
 
 

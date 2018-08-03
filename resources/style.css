@@ -31,6 +31,14 @@ li:hover {
     stroke: var(--vscode-activityBarBadge-foreground);
     stroke-width: 1px;
 }
+#svgeditor-colorpicker {
+    display: none;
+    padding: 0.5em;
+    background: var(--vscode-input-background);
+}
+.svgeditor-active {
+    border: var(--vscode-inputOption-activeBorder) solid 1px;
+}
 .svgeditor-bold {
     font-weight: bold;
     font-size: small;

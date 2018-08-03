@@ -41,3 +41,22 @@ export function clearEventListeners(element: Element): Element {
     element.parentNode!.replaceChild(clone, element);
     return <Element>clone;
 }
+
+export class ActiveContents {
+    public elems: {[id: string]: HTMLElement} = {};
+    constructor() {
+    }
+    set(elem: HTMLElement) {
+        this.elems[elem.id] = elem;
+        elem.classList.add("svgeditor-active");        
+    }
+    remove(elem: HTMLElement) {
+        elem.classList.remove("svgeditor-active");
+        delete this.elems[elem.id];
+    }
+    removeAll() {
+        map(this.elems, (id, elem) => {
+            this.remove(elem);
+        });
+    }
+}

@@ -6,8 +6,10 @@ export class ColorPicker {
     public width: number;
     public height: number;
     public downFlags: {grad: boolean; hue: boolean; opacity: boolean} = {grad: false, hue: false, opacity: false};
+    public initialColor: tinycolorInstance;
 
     constructor(public canvas: HTMLCanvasElement, public color: tinycolorInstance) {
+        this.initialColor = color.clone();
         this.ctx = canvas.getContext("2d")!;
         this.width = canvas.width;
         this.height = canvas.height;
@@ -37,8 +39,8 @@ export class ColorPicker {
     drawHeader(tmpColor: tinycolorInstance) {
         this.ctx.fillStyle = tmpColor.toString("rgb");
         this.ctx.fillRect(0, 0, this.width * 0.8, this.height * 0.2);
-        this.ctx.fillStyle = this.color.toString("rgb");
-        this.ctx.fillRect(this.width * 0.8, 0, this.width, this.height * 0.2);
+        this.ctx.fillStyle = this.initialColor.toString("rgb");
+        this.ctx.fillRect(this.width * 0.8, 0, this.width * 0.2, this.height * 0.2);
     }
 
     drawGrad() {
