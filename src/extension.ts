@@ -17,12 +17,12 @@ export function activate(context: vscode.ExtensionContext) {
     let bundleJsPath = vscode.Uri.file(path.join(context.extensionPath, "resources", "bundle.js")).with({ scheme: "vscode-resource"});
     let cssPath = vscode.Uri.file(path.join(context.extensionPath, "resources", "style.css")).with({ scheme: "vscode-resource"});
 
-
     let panelSets: {editor: vscode.TextEditor, panel: vscode.WebviewPanel, uuid: string}[] = [];
     let prevendSend: {[uuid: string]: boolean} = {};
     let diagnostics = vscode.languages.createDiagnosticCollection("svgeditor");
 
     let createPanel = (editor: vscode.TextEditor) => {
+        const config = vscode.workspace.getConfiguration("svgeditor", editor.document.uri);
         const panel = vscode.window.createWebviewPanel(
             "svgeditor",
             "SVG Editor",
@@ -48,6 +48,16 @@ export function activate(context: vscode.ExtensionContext) {
                         command: "modified",
                         data: parseSvg(editor.document.getText(), editor, diagnostics)
                     });
+                    panel.webview.postMessage({
+                        command: "configuration",
+                        data: {
+                            showAll: config.get<boolean>("showAll"),
+                            defaultUnit: config.get<string | null>("defaultUnit")
+                        }
+                    });
+                    return;
+                case "error":
+                    showError(message.data);
                     return;
             }
         }, undefined, context.subscriptions);

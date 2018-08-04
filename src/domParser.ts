@@ -79,10 +79,16 @@ export interface ParsedRectAttr extends ParsedBaseAttr {
     stroke: Paint | null;
 }
 
+export type LengthUnit = "%" | "ch" | "cm" | "em" | "ex" | "in" | "mm" | "pc" | "pt" | "px" | null;
+
 export interface Length {
-    unit: "%" | "ch" | "cm" | "em" | "ex" | "in" | "mm" | "pc" | "pt" | "px" | null;
+    unit: LengthUnit;
     value: number;
     attrName: string;
+}
+
+export function isLengthUnit(unit: string | null): unit is LengthUnit {
+    return unit === null || ["%" , "ch" , "cm" , "em" , "ex" , "in" , "mm" , "pc" , "pt" , "px"].indexOf(unit) !== -1;
 }
 
 export interface Paint {

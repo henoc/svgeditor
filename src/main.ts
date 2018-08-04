@@ -1,5 +1,5 @@
 import { construct, makeUuidVirtualMap, makeUuidRealMap } from "./svgConstructor";
-import { ParsedElement } from "./domParser";
+import { ParsedElement, isLengthUnit, LengthUnit } from "./domParser";
 import { SvgTag } from "./svg";
 import { onAaaMouseDown, onDocumentMouseMove, onDocumentMouseUp, onColorBoxClick, onDocumentClick, onMenuButtonClick } from "./triggers";
 import { ColorPicker } from "./colorPicker";
@@ -41,7 +41,10 @@ vscode.postMessage({
     command: "svg-request"
 });
 
-const showAll = <HTMLInputElement>document.getElementById("svgeditor-options-preview-showall")!
+export const configuration = {
+    showAll: false,
+    defaultUnit: <LengthUnit>null
+}
 
 // set listeners
 window.addEventListener("message", event => {
@@ -52,13 +55,16 @@ window.addEventListener("message", event => {
             svgdata = message.data;
             refleshContent();
             break;
+        case "configuration":
+            message.data.showAll && (configuration.showAll = message.data.showAll);
+            message.data.defaultUnit && isLengthUnit(message.data.defaultUnit) && (configuration.defaultUnit = message.data.defaultUnit);
+            if (!isLengthUnit(message.data.defaultUnit)) sendErrorMessage(`Configuration "svgeditor.defaultUnit: ${message.data.defaultUnit}" is unsupported unit.`);
+            break;
     }
 });
 // menu
 menuSelect.addEventListener("click", event => onMenuButtonClick(event, "select"));
 menuRect.addEventListener("click", event => onMenuButtonClick(event, "rect"));
-// check box listeners
-showAll.addEventListener("change", () => refleshContent());
 // color pickers
 colorPickerDiv.addEventListener("click", (event) => event.stopPropagation());
 colorBoxFill.addEventListener("click", (event) => onColorBoxClick(event, colorBoxFill, colorPickerDiv));
@@ -73,7 +79,7 @@ aaa.addEventListener("mousedown", onAaaMouseDown);
 export function refleshContent(options?: {shapeHandlers: Element[]}) {
     const shapeHandlers = options && options.shapeHandlers || [];
 
-    const elem = construct(svgdata, {all: showAll.checked});
+    const elem = construct(svgdata, {all: configuration.showAll});
     while(aaa.firstChild) {
         aaa.removeChild(aaa.firstChild);
     }
@@ -88,7 +94,7 @@ export function refleshContent(options?: {shapeHandlers: Element[]}) {
     }
 
     // overlay for cursor detection
-    const physicsElem = construct(svgdata, {putUUIDAttribute: true, setListeners: true, transparent: true, all: showAll.checked});
+    const physicsElem = construct(svgdata, {putUUIDAttribute: true, setListeners: true, transparent: true, all: configuration.showAll});
     svgVirtualMap = makeUuidVirtualMap(svgdata);
     if (physicsElem) {
         for (let handler of shapeHandlers) {
@@ -105,9 +111,16 @@ export function refleshContent(options?: {shapeHandlers: Element[]}) {
 }
 
 export function sendBackToEditor() {
-    const elem = construct(svgdata, {all: showAll.checked});
+    const elem = construct(svgdata, {all: configuration.showAll});
     if (elem) vscode.postMessage({
         command: "modified",
         data: elem.outerHTML
     })
+}
+
+export function sendErrorMessage(msg: string) {
+    vscode.postMessage({
+        command: "error",
+        data: msg
+    });
 }

@@ -1,7 +1,8 @@
-import { svgVirtualMap, refleshContent } from "./main";
+import { svgVirtualMap, refleshContent, configuration, svgRealMap } from "./main";
 import { Point, p } from "./utils";
 import uuidStatic from "uuid";
-import { ParsedRectAttr } from "./domParser";
+import { ParsedRectAttr, ParsedElement } from "./domParser";
+import { shaper } from "./shapes";
 
 let isDragging: boolean = false;
 let startCursorPos: Point | null = null;
@@ -15,15 +16,15 @@ export function onShapeMouseDown(event: MouseEvent, uu: string) {
         startCursorPos = p(event.offsetX, event.offsetY);
         dragTargetUuid = uuidStatic.v4();
         if (root.tag === "svg") {
-            root.children.push({
+            const pe: ParsedElement = {
                 uuid: dragTargetUuid,
                 isRoot: false,
                 tag: "rect",
                 attrs: {
-                    x: {unit: null, value: startCursorPos.x, attrName: "x"},
-                    y: {unit: null, value: startCursorPos.y, attrName: "y"},
-                    width: {unit: null, value: 0, attrName: "width"},
-                    height: {unit: null, value: 0, attrName: "height"},
+                    x: {unit: configuration.defaultUnit, value: 0, attrName: "x"},
+                    y: {unit: configuration.defaultUnit, value: 0, attrName: "y"},
+                    width: {unit: configuration.defaultUnit, value: 0, attrName: "width"},
+                    height: {unit: configuration.defaultUnit, value: 0, attrName: "height"},
                     rx: null,
                     ry: null,
                     fill: null,
@@ -32,7 +33,11 @@ export function onShapeMouseDown(event: MouseEvent, uu: string) {
                     id: null,
                     unknown: {}
                 },
-            });
+            };
+            root.children.push(pe);
+            refleshContent();   // make real Element
+            const re = svgRealMap[dragTargetUuid];
+            shaper(pe, re).leftTop(startCursorPos);
             refleshContent();
         }
     }
@@ -42,11 +47,11 @@ export function onDocumentMouseMove(event: MouseEvent) {
     const [cx, cy] = [event.offsetX, event.offsetY];
     if (isDragging && startCursorPos && dragTargetUuid) {
         const pe = svgVirtualMap[dragTargetUuid];
-        const rectAttr = <ParsedRectAttr>pe.attrs;
-        rectAttr.x!.value = Math.min(startCursorPos.x, cx);
-        rectAttr.y!.value = Math.min(startCursorPos.y, cy);
-        rectAttr.width!.value = Math.abs(cx - startCursorPos.x);
-        rectAttr.height!.value = Math.abs(cy - startCursorPos.y);
+        const re = svgRealMap[dragTargetUuid];
+        const leftTop = p(Math.min(cx, startCursorPos.x), Math.min(cy, startCursorPos.y));
+        const size = p(Math.abs(cx - startCursorPos.x), Math.abs(cy - startCursorPos.y));
+        shaper(pe, re).size(size);
+        shaper(pe, re).leftTop(leftTop);
         refleshContent();
     }
 }

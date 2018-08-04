@@ -47,6 +47,21 @@
           "when": "resourceLangId == svg"
         }
       ]
+    },
+    "configuration": {
+      "title": "SVG Editor configurations",
+      "properties": {
+        "svgeditor.showAll": {
+          "type": "boolean",
+          "default": false,
+          "description": "Send all attributes and tags to WebView regardless of SVG Editor support."
+        },
+        "svgeditor.defaultUnit": {
+          "type": ["string", "null"],
+          "default": null,
+          "description": "Specifies the unit when creating some shapes."
+        }
+      }
     }
   },
   "scripts": {
@@ -58,6 +73,7 @@
   },
   "devDependencies": {
     "@types/ejs": "^2.5.0",
+    "@types/hammerjs": "^2.0.35",
     "@types/jsdom": "^11.0.6",
     "@types/node": "^9.4.0",
     "@types/tinycolor2": "^1.4.0",
@@ -70,6 +86,7 @@
   },
   "dependencies": {
     "ejs": "^2.5.7",
+    "hammerjs": "^2.0.8",
     "jsdom": "^11.12.0",
     "parse-color": "^1.0.0",
     "pickr-widget": "^0.1.7",

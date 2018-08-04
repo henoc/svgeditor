@@ -4,6 +4,7 @@ const units = require('units-css');
 
 interface ShaperFunctions {
     center: (point?: Point) => undefined | Point;
+    leftTop: (point?: Point) => undefined | Point;
     move: (diff: Point) => void;
     size: (wh?: Point) => Point | undefined;
     size2: (newSize: Point, fixedPoint: Point) => void;
@@ -17,6 +18,16 @@ export function shaper(pe: ParsedElement, elem: Element): ShaperFunctions {
         return unitValue ?
             {value: units.convert(unitValue.unit || "px", `${pxValue}px`, elem, unitValue.attrName), unit: unitValue.unit, attrName: unitValue.attrName} :
             {value: pxValue, unit: null, attrName};
+    }
+    const leftTop = (point?: Point) => {
+        if (point) {
+            const newCent = point.add(self().size()!.div(p(2, 2)));
+            self().center(newCent);
+        } else {
+            const cent = self().center()!;
+            const size = self().size()!;
+            return cent.sub(size.div(p(2, 2)));
+        }
     }
     const self = () => shaper(pe, elem);
     const size2 = (newSize: Point, fixedPoint: Point) => {
@@ -41,7 +52,8 @@ export function shaper(pe: ParsedElement, elem: Element): ShaperFunctions {
                     pe.attrs.height = fromPx(pe.attrs.height, "height", wh.y);
                 } else return p(px(pe.attrs.width), px(pe.attrs.height));
             },
-            size2
+            size2,
+            leftTop
         }
     } else if (pe.tag === "circle") {
         return {
@@ -66,7 +78,8 @@ export function shaper(pe: ParsedElement, elem: Element): ShaperFunctions {
                     // todo: to ellipse
                 } else return p(px(pe.attrs.r) * 2, px(pe.attrs.r) * 2);
             },
-            size2
+            size2,
+            leftTop
         }
     } else if (pe.tag === "rect") {
         return {
@@ -101,7 +114,8 @@ export function shaper(pe: ParsedElement, elem: Element): ShaperFunctions {
                     self().center(center);
                 } else return p(px(pe.attrs.width), px(pe.attrs.height));
             },
-            size2
+            size2,
+            leftTop
         }
     } else {
         throw new Error("Unknown shape cannot move.");
