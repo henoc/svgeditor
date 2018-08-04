@@ -52,7 +52,7 @@ export interface ParsedBaseAttr {
     unknown: Assoc;
 }
 
-interface ParsedSvgAttr extends ParsedBaseAttr {
+export interface ParsedSvgAttr extends ParsedBaseAttr {
     xmlns: string | null;
     "xmlns:xlink": string | null;
     version: number | null;
@@ -60,7 +60,7 @@ interface ParsedSvgAttr extends ParsedBaseAttr {
     height: Length | null;
 }
 
-interface ParsedCircleAttr extends ParsedBaseAttr {
+export interface ParsedCircleAttr extends ParsedBaseAttr {
     cx: Length | null;
     cy: Length | null;
     r: Length | null;
@@ -68,7 +68,7 @@ interface ParsedCircleAttr extends ParsedBaseAttr {
     stroke: Paint | null;
 }
 
-interface ParsedRectAttr extends ParsedBaseAttr {
+export interface ParsedRectAttr extends ParsedBaseAttr {
     x: Length | null;
     y: Length | null;
     width: Length | null;

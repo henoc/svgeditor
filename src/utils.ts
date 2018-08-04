@@ -1,3 +1,5 @@
+import uuidStatic from "uuid";
+
 export function map<T>(obj: any, fn: (key: string, value: any, index: number) => T): T[] {
     const acc: T[] = [];
     Object.keys(obj).forEach((k, i) => {
@@ -47,6 +49,7 @@ export class ActiveContents {
     constructor() {
     }
     set(elem: HTMLElement) {
+        elem.id || (elem.id = uuidStatic.v4());
         this.elems[elem.id] = elem;
         elem.classList.add("svgeditor-active");        
     }
@@ -60,3 +63,33 @@ export class ActiveContents {
         });
     }
 }
+
+// export class EnhancedElem {
+//     public downFlag = false;
+//     public listeners: {[type: string]: {[key: string]: (event: Event) => void}} = {};
+
+//     constructor(public elem: Element) {
+//         elem.id || (elem.id = uuidStatic.v4());
+//     }
+//     onMouseDrag(start: (event: MouseEvent) => void, drag: (event: MouseEvent) => void, end: (event: MouseEvent) => void) {
+//         this.elem.addEventListener("mousedown", (ev) => {
+//             this.downFlag = true;
+//             start(<MouseEvent>ev);
+//         });
+//         document.addEventListener("mouseup", (ev) => {
+//             this.downFlag = false;
+//             end(ev);
+//         });
+//         document.addEventListener("mouseleave", (ev) => {
+//             this.downFlag = false;
+//             end(<MouseEvent>ev);
+//         });
+//         document.addEventListener("mousemove", (ev) => {
+//             if (this.downFlag) drag(ev);
+//         });
+//     }
+// }
+
+// export function enhanced(elem: Element): EnhancedElem {
+//     return new EnhancedElem(elem);
+// }

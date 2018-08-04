@@ -1,7 +1,7 @@
 import { construct, makeUuidVirtualMap, makeUuidRealMap } from "./svgConstructor";
 import { ParsedElement } from "./domParser";
 import { SvgTag } from "./svg";
-import { onAaaMouseDown, onDocumentMouseMove, onDocumentMouseUp, onColorBoxClick, onDocumentClick } from "./triggers";
+import { onAaaMouseDown, onDocumentMouseMove, onDocumentMouseUp, onColorBoxClick, onDocumentClick, onMenuButtonClick } from "./triggers";
 import { ColorPicker } from "./colorPicker";
 import { ActiveContents } from "./utils";
 
@@ -9,16 +9,21 @@ declare function acquireVsCodeApi(): any;
 
 const vscode = acquireVsCodeApi();
 
+export type EditMode = "select" | "rect" | "ellipse";
 export let svgdata: ParsedElement;
 export let svgVirtualMap: {[uu: string]: ParsedElement} = {};
 export let svgRealMap: {[uu: string]: Element} = {};
-export let editMode: "select" | "rect" | "ellipse" = "select";
+export let editMode: EditMode = "select";
+export function setEditMode(mode: EditMode) { editMode = mode; }
 export let openContents: {[id: string]: HTMLElement} = {};
 export let activeContents = new ActiveContents();
 const aaa = document.getElementById("aaa")!;
 const colorBoxFill = document.getElementById("svgeditor-colorbox-fill")!;
 const colorBoxStroke = document.getElementById("svgeditor-colorbox-stroke")!;
 const colorPickerDiv = document.getElementById("svgeditor-colorpicker")!;
+const menuSelect = document.getElementById("svgeditor-menu-select")!;
+const menuRect = document.getElementById("svgeditor-menu-rect")!;
+const menuEllipse = document.getElementById("svgeditor-menu-ellipse")!;
 const debugMessage = document.getElementById("svgeditor-message")!;
 const debug: boolean = true;
 const messages: Map<string, string> = new Map();
@@ -49,6 +54,9 @@ window.addEventListener("message", event => {
             break;
     }
 });
+// menu
+menuSelect.addEventListener("click", event => onMenuButtonClick(event, "select"));
+menuRect.addEventListener("click", event => onMenuButtonClick(event, "rect"));
 // check box listeners
 showAll.addEventListener("change", () => refleshContent());
 // color pickers
@@ -56,10 +64,10 @@ colorPickerDiv.addEventListener("click", (event) => event.stopPropagation());
 colorBoxFill.addEventListener("click", (event) => onColorBoxClick(event, colorBoxFill, colorPickerDiv));
 colorBoxStroke.addEventListener("click", (event) => onColorBoxClick(event, colorBoxStroke, colorPickerDiv));
 // others
-document.addEventListener("mousemove", (event) => onDocumentMouseMove(event));
-document.addEventListener("mouseup", (event) => onDocumentMouseUp(event));
-document.addEventListener("click", (event) => onDocumentClick(event));
-aaa.addEventListener("mousedown", (event) => onAaaMouseDown(event));
+document.addEventListener("mousemove", onDocumentMouseMove);
+document.addEventListener("mouseup", onDocumentMouseUp);
+document.addEventListener("click", onDocumentClick);
+aaa.addEventListener("mousedown", onAaaMouseDown);
 
 
 export function refleshContent(options?: {shapeHandlers: Element[]}) {
@@ -80,21 +88,19 @@ export function refleshContent(options?: {shapeHandlers: Element[]}) {
     }
 
     // overlay for cursor detection
-    if (editMode === "select") {
-        const physicsElem = construct(svgdata, {putUUIDAttribute: true, setListeners: true, transparent: true, all: showAll.checked});
-        svgVirtualMap = makeUuidVirtualMap(svgdata);
-        if (physicsElem) {
-            for (let handler of shapeHandlers) {
-                physicsElem.insertAdjacentElement("beforeend", handler);
-            }
-            svgRealMap = makeUuidRealMap(physicsElem);
-            physicsElem.classList.add("svgeditor-svg-svg");
-            physicsElem.removeAttribute("opacity");
-            aaa.insertAdjacentElement(
-                "beforeend",
-                physicsElem
-            );
+    const physicsElem = construct(svgdata, {putUUIDAttribute: true, setListeners: true, transparent: true, all: showAll.checked});
+    svgVirtualMap = makeUuidVirtualMap(svgdata);
+    if (physicsElem) {
+        for (let handler of shapeHandlers) {
+            physicsElem.insertAdjacentElement("beforeend", handler);
         }
+        svgRealMap = makeUuidRealMap(physicsElem);
+        physicsElem.classList.add("svgeditor-svg-svg");
+        physicsElem.removeAttribute("opacity");
+        aaa.insertAdjacentElement(
+            "beforeend",
+            physicsElem
+        );
     }
 }
 

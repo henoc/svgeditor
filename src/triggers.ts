@@ -1,12 +1,21 @@
-import { editMode, debugLog, openContents, activeContents } from "./main";
+import { editMode, debugLog, openContents, activeContents, setEditMode, EditMode } from "./main";
 import * as selectMode from "./selectMode";
+import * as rectMode from "./rectMode";
 import { ColorPicker } from "./colorPicker";
 import tinycolor from "tinycolor2";
 import { clearEventListeners, map } from "./utils";
 
+export function onMenuButtonClick(event: MouseEvent, mode: EditMode) {
+    selectMode.breakaway();
+    rectMode.breakaway();
+    setEditMode(mode);
+}
+
 export function onShapeMouseDown(event: MouseEvent, uu: string) {
     if (editMode === "select") {
         selectMode.onShapeMouseDown(event, uu);
+    } else if (editMode === "rect") {
+        rectMode.onShapeMouseDown(event, uu);
     }
 }
 
@@ -15,15 +24,19 @@ export function onAaaMouseDown(event: MouseEvent) {
 }
 
 export function onDocumentMouseMove(event: MouseEvent) {
-    debugLog("trigger", `${event.offsetX}, ${event.offsetY}`);
+    debugLog("trigger", `mode:${editMode}, (x,y): ${event.offsetX}, ${event.offsetY}`);
     if (editMode === "select") {
         selectMode.onDocumentMouseMove(event);
+    } else if (editMode === "rect") {
+        rectMode.onDocumentMouseMove(event);
     }
 }
 
 export function onDocumentMouseUp(event: MouseEvent) {
     if (editMode === "select") {
         selectMode.onDocumentMouseUp(event);
+    } else if (editMode === "rect") {
+        rectMode.onDocumentMouseMove(event);
     }
 }
 
