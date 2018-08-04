@@ -36,7 +36,7 @@ export function onDocumentMouseUp(event: MouseEvent) {
     if (editMode === "select") {
         selectMode.onDocumentMouseUp(event);
     } else if (editMode === "rect") {
-        rectMode.onDocumentMouseMove(event);
+        rectMode.onDocumentMouseUp(event);
     }
 }
 
