@@ -14,7 +14,6 @@ export let svgdata: ParsedElement;
 export let svgVirtualMap: {[uu: string]: ParsedElement} = {};
 export let svgRealMap: {[uu: string]: Element} = {};
 export let editMode: EditMode = "select";
-export function setEditMode(mode: EditMode) { editMode = mode; }
 export let openContents: {[id: string]: HTMLElement} = {};
 export let activeContents = new ActiveContents();
 const aaa = document.getElementById("aaa")!;
@@ -24,6 +23,15 @@ const colorPickerDiv = document.getElementById("svgeditor-colorpicker")!;
 const menuSelect = document.getElementById("svgeditor-menu-select")!;
 const menuRect = document.getElementById("svgeditor-menu-rect")!;
 const menuEllipse = document.getElementById("svgeditor-menu-ellipse")!;
+
+export function setEditMode(mode: EditMode) {
+    [menuSelect, menuRect, menuEllipse].forEach(elem => elem.classList.remove("svgeditor-selected"));
+    editMode = mode;
+    if (mode === "select") menuSelect.classList.add("svgeditor-selected");
+    else if (mode === "rect") menuRect.classList.add("svgeditor-selected");
+    else if (mode === "ellipse") menuEllipse.classList.add("svgeditor-selected");
+}
+
 const debugMessage = document.getElementById("svgeditor-message")!;
 const debug: boolean = true;
 const messages: Map<string, string> = new Map();

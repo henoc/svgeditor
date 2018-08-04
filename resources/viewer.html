@@ -6,9 +6,9 @@
 
 <body>
     <ul>
-        <li id="svgeditor-menu-select">select</li>
-        <li id="svgeditor-menu-rect">rect</li>
-        <li id="svgeditor-menu-ellipse">ellipse</li>
+        <li id="svgeditor-menu-select" class="svgeditor-selected">select</li><!--
+        --><li id="svgeditor-menu-rect">rect</li><!--
+        --><li id="svgeditor-menu-ellipse">ellipse</li>
     </ul>
     <div id="svgeditor-message"></div>
     <div id="aaa"></div>
@@ -18,10 +18,9 @@
     </span>
     <div id="svgeditor-colorpicker">
         <canvas width="200" height="100"></canvas>
-        <ul>
-            <li id="svgeditor-colorpicker-save">save</li>
-            <li id="svgeditor-colorpicker-cancel">cancel</li>
-        </ul>
+        <br>
+        <div id="svgeditor-colorpicker-save" class="svgeditor-button">save</div><!--
+        --><div id="svgeditor-colorpicker-cancel" class="svgeditor-button">cancel</div>
     </div>
     <script src="<%- bundleJsPath %>"></script>
 </body>

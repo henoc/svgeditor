@@ -4,12 +4,27 @@ ul {
 }
 li {
     display: inline-block;
-    color: var(--vscode-button-foreground);
-    background-color: var(--vscode-button-background);
+    color: var(--vscode-sideBar-foreground);
+    background-color: var(--vscode-sideBar-background);
     width: 50px;
     text-align: center;
 }
-li:hover {
+li:hover:not(.svgeditor-selected) {
+    color: var(--vscode-list-hoverForeground);
+    background-color: var(--vscode-list-hoverBackground);
+}
+.svgeditor-selected {
+    color: var(--vscode-list-activeSelectionForeground);
+    background-color: var(--vscode-list-activeSelectionBackground);
+}
+.svgeditor-button {
+    display: inline-block;
+    width: 5em;
+    text-align: center;
+    color: var(--vscode-button-foreground);
+    background-color: var(--vscode-button-background);
+}
+.svgeditor-button:hover {
     background-color: var(--vscode-button-hoverBackground);
 }
 #aaa {
