@@ -31,6 +31,7 @@ select {
     background-color: var(--vscode-dropdown-background);
     border: var(--vscode-dropdown-border);
     color: var(--vscode-dropdown-foreground);
+    margin-bottom: 0.5em;
 }
 select option {
     background-color: var(--vscode-dropdown-listBackground);

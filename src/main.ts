@@ -32,7 +32,7 @@ const colorBoxFill = document.getElementById("svgeditor-colorbox-fill")!;
 reflectPaint(drawState.fill, colorBoxFill);
 const colorBoxStroke = document.getElementById("svgeditor-colorbox-stroke")!;
 reflectPaint(drawState.stroke, colorBoxStroke);
-const colorPickerSelector = document.getElementById("svgeditor-colorpicker-selector")!;
+const colorPickerSelector = <HTMLSelectElement>document.getElementById("svgeditor-colorpicker-selector")!;
 const colorPickerDiv = document.getElementById("svgeditor-colorpicker")!;
 const menuSelect = document.getElementById("svgeditor-menu-select")!;
 const menuRect = document.getElementById("svgeditor-menu-rect")!;
@@ -84,8 +84,8 @@ menuSelect.addEventListener("click", event => onMenuButtonClick(event, "select")
 menuRect.addEventListener("click", event => onMenuButtonClick(event, "rect"));
 // color pickers
 colorPickerDiv.addEventListener("click", (event) => event.stopPropagation());
-colorBoxFill.addEventListener("click", (event) => onColorBoxClick(event, colorBoxFill, colorPickerDiv, "fill"));
-colorBoxStroke.addEventListener("click", (event) => onColorBoxClick(event, colorBoxStroke, colorPickerDiv, "stroke"));
+colorBoxFill.addEventListener("click", (event) => onColorBoxClick(event, colorBoxFill, colorPickerDiv, colorPickerSelector, "fill"));
+colorBoxStroke.addEventListener("click", (event) => onColorBoxClick(event, colorBoxStroke, colorPickerDiv, colorPickerSelector, "stroke"));
 // others
 document.addEventListener("mousemove", onDocumentMouseMove);
 document.addEventListener("mouseup", onDocumentMouseUp);

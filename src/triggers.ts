@@ -48,7 +48,7 @@ export function onDocumentClick(event: MouseEvent) {
     activeContents.removeAll();
 }
 
-export function onColorBoxClick(event: Event, box: HTMLElement, div: HTMLElement, propertyOnSave: "fill" | "stroke" /* style-fill and more? */) {
+export function onColorBoxClick(event: Event, box: HTMLElement, div: HTMLElement, selector: HTMLSelectElement, propertyOnSave: "fill" | "stroke" /* style-fill and more? */) {
     event.stopPropagation();
     activeContents.removeAll();
     div.style.display = "block";
@@ -56,7 +56,7 @@ export function onColorBoxClick(event: Event, box: HTMLElement, div: HTMLElement
     activeContents.set(box);
     const canvas = div.querySelector("canvas")!;
     debugLog("triggers-onColorBoxClick", `bgcolor: ${box.style.background}, tcolor: ${tinycolor(box.style.backgroundColor!)}`);
-    let picker = new ColorPicker(canvas, tinycolor(box.style.backgroundColor!));
+    let picker = new ColorPicker(canvas, selector, tinycolor(box.style.backgroundColor!));
     let save: Element = document.getElementById("svgeditor-colorpicker-save")!;
     save = clearEventListeners(save);
     save.addEventListener("click", () => {

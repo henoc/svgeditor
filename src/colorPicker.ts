@@ -9,7 +9,7 @@ export class ColorPicker {
     public downFlags: {grad: boolean; hue: boolean; opacity: boolean} = {grad: false, hue: false, opacity: false};
     public initialColor: tinycolorInstance;
 
-    constructor(public canvas: HTMLCanvasElement, public color: tinycolorInstance) {
+    constructor(public canvas: HTMLCanvasElement, public selector: HTMLSelectElement, public color: tinycolorInstance) {
         this.initialColor = color.clone();
         this.ctx = canvas.getContext("2d")!;
         this.width = canvas.width;
@@ -23,14 +23,35 @@ export class ColorPicker {
         this.drawGrad();
         this.drawSlider();
         this.drawCursors(color);
+        selector.addEventListener("change", () => {
+            if (selector.value === "color") {
+                this.showCanvas();
+            } else {
+                this.hideCanvas();
+            }
+        });
     }
 
-    getPaint(destFormat: PaintFormat | null): Paint {
-        if (destFormat !== "none" && destFormat !== "currentColor" && destFormat !== "inherit" && destFormat !== null) {
-            return {format: destFormat, ...this.color.toRgb()};
+    getPaint(destFormat: PaintFormat | null): Paint | null {
+        if (this.selector.value === "noAttribute") {
+            return null;
+        } else if (this.selector.value === "none" || this.selector.value === "currentColor" || this.selector.value === "inherit") {
+            return {format: this.selector.value, ...this.color.toRgb()};
         } else {
-            return {format: "rgb", ...this.color.toRgb()};
+            if (destFormat !== "none" && destFormat !== "currentColor" && destFormat !== "inherit" && destFormat !== null) {
+                return {format: destFormat, ...this.color.toRgb()};
+            } else {
+                return {format: "rgb", ...this.color.toRgb()};
+            }
         }
+    }
+
+    showCanvas() {
+        this.canvas.style.display = "block";
+    }
+
+    hideCanvas() {
+        this.canvas.style.display = "none";
     }
 
     fillTransparent() {
