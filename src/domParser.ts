@@ -52,7 +52,7 @@ export interface ParsedBaseAttr {
     unknown: Assoc;
 }
 
-export interface ParsedSvgAttr extends ParsedBaseAttr {
+interface ParsedSvgAttr extends ParsedBaseAttr {
     xmlns: string | null;
     "xmlns:xlink": string | null;
     version: number | null;
@@ -60,7 +60,7 @@ export interface ParsedSvgAttr extends ParsedBaseAttr {
     height: Length | null;
 }
 
-export interface ParsedCircleAttr extends ParsedBaseAttr {
+interface ParsedCircleAttr extends ParsedBaseAttr {
     cx: Length | null;
     cy: Length | null;
     r: Length | null;
@@ -68,7 +68,7 @@ export interface ParsedCircleAttr extends ParsedBaseAttr {
     stroke: Paint | null;
 }
 
-export interface ParsedRectAttr extends ParsedBaseAttr {
+interface ParsedRectAttr extends ParsedBaseAttr {
     x: Length | null;
     y: Length | null;
     width: Length | null;
@@ -91,8 +91,10 @@ export function isLengthUnit(unit: string | null): unit is LengthUnit {
     return unit === null || ["%" , "ch" , "cm" , "em" , "ex" , "in" , "mm" , "pc" , "pt" , "px"].indexOf(unit) !== -1;
 }
 
+export type PaintFormat = "none" | "currentColor" | "inherit" | "name" | "hex" | "hex6" | "hex3" | "hex4" | "hex8" | "rgb" | "prgb" | "hsl";
+
 export interface Paint {
-    format: "none" | "currentColor" | "inherit" | "name" | "hex" | "hex6" | "hex3" | "hex4" | "hex8" | "rgb" | "prgb" | "hsl";
+    format: PaintFormat;
     r: number;
     g: number;
     b: number;

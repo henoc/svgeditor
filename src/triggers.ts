@@ -1,9 +1,10 @@
-import { editMode, debugLog, openContents, activeContents, setEditMode, EditMode } from "./main";
+import { editMode, debugLog, openContents, activeContents, setEditMode, EditMode, drawState } from "./main";
 import * as selectMode from "./selectMode";
 import * as rectMode from "./rectMode";
 import { ColorPicker } from "./colorPicker";
 import tinycolor from "tinycolor2";
 import { clearEventListeners, map } from "./utils";
+import { reflectPaint } from "./colorBox";
 
 export function onMenuButtonClick(event: MouseEvent, mode: EditMode) {
     selectMode.breakaway();
@@ -47,33 +48,33 @@ export function onDocumentClick(event: MouseEvent) {
     activeContents.removeAll();
 }
 
-export function onColorBoxClick(event: Event, box: HTMLElement, div: HTMLElement) {
+export function onColorBoxClick(event: Event, box: HTMLElement, div: HTMLElement, propertyOnSave: "fill" | "stroke" /* style-fill and more? */) {
     event.stopPropagation();
     activeContents.removeAll();
     div.style.display = "block";
     openContents[div.id] = div;
     activeContents.set(box);
-    activeContents.set(div);
     const canvas = div.querySelector("canvas")!;
     debugLog("triggers-onColorBoxClick", `bgcolor: ${box.style.background}, tcolor: ${tinycolor(box.style.backgroundColor!)}`);
     let picker = new ColorPicker(canvas, tinycolor(box.style.backgroundColor!));
     let save: Element = document.getElementById("svgeditor-colorpicker-save")!;
     save = clearEventListeners(save);
     save.addEventListener("click", () => {
-        box.style.background = picker.color.toString("rbg");
+        reflectPaint(picker.getPaint(null), box);
+        if (propertyOnSave === "fill") {
+            drawState.fill = picker.getPaint(drawState.fill && drawState.fill.format);
+        } else if (propertyOnSave === "stroke") {
+            drawState.stroke = picker.getPaint(drawState.stroke && drawState.stroke.format);
+        }
         div.style.display = "none";
         delete openContents[div.id];
-        activeContents.remove(div);
         activeContents.remove(box);
     }, {once: true});
     let cancel: Element = document.getElementById("svgeditor-colorpicker-cancel")!;
     cancel = clearEventListeners(cancel);
     cancel.addEventListener("click", () => {
         div.style.display = "none"; 
-        delete openContents[div.id]; 
-        box.classList.remove("svgeditor-active");
-        div.classList.remove("svgeditor-active");
-        activeContents.remove(div);
-        activeContents.remove(box);    
+        delete openContents[div.id];
+        activeContents.remove(box);
     }, {once: true});
 }

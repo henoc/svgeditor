@@ -1,7 +1,7 @@
-import { svgVirtualMap, refleshContent, configuration, svgRealMap } from "./main";
+import { svgVirtualMap, refleshContent, configuration, svgRealMap, drawState } from "./main";
 import { Point, p } from "./utils";
 import uuidStatic from "uuid";
-import { ParsedRectAttr, ParsedElement } from "./domParser";
+import { ParsedElement } from "./domParser";
 import { shaper } from "./shapes";
 
 let isDragging: boolean = false;
@@ -27,8 +27,8 @@ export function onShapeMouseDown(event: MouseEvent, uu: string) {
                     height: {unit: configuration.defaultUnit, value: 0, attrName: "height"},
                     rx: null,
                     ry: null,
-                    fill: null,
-                    stroke: null,
+                    fill: drawState.fill,
+                    stroke: drawState.stroke,
                     class: null,
                     id: null,
                     unknown: {}

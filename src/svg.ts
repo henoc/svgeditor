@@ -51,8 +51,6 @@ export class SvgTag {
             const tcolor = tinycolor(value);
             if (value.format === "none" || value.format === "currentColor" || value.format === "inherit") {
                 this.data.attrs[key] = value.format;
-            } else if (value.format === "hex4") {
-                this.data.attrs[key] = tcolor.toString("hex8");
             } else {
                 this.data.attrs[key] = tcolor.toString(value.format);
             }

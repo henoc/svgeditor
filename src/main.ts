@@ -1,14 +1,16 @@
 import { construct, makeUuidVirtualMap, makeUuidRealMap } from "./svgConstructor";
-import { ParsedElement, isLengthUnit, LengthUnit } from "./domParser";
+import { ParsedElement, isLengthUnit, LengthUnit, Paint } from "./domParser";
 import { SvgTag } from "./svg";
 import { onAaaMouseDown, onDocumentMouseMove, onDocumentMouseUp, onColorBoxClick, onDocumentClick, onMenuButtonClick } from "./triggers";
 import { ColorPicker } from "./colorPicker";
 import { ActiveContents } from "./utils";
+import { reflectPaint } from "./colorBox";
 
 declare function acquireVsCodeApi(): any;
 
 const vscode = acquireVsCodeApi();
 
+// global variables
 export type EditMode = "select" | "rect" | "ellipse";
 export let svgdata: ParsedElement;
 export let svgVirtualMap: {[uu: string]: ParsedElement} = {};
@@ -16,9 +18,21 @@ export let svgRealMap: {[uu: string]: Element} = {};
 export let editMode: EditMode = "select";
 export let openContents: {[id: string]: HTMLElement} = {};
 export let activeContents = new ActiveContents();
+export const configuration = {
+    showAll: false,
+    defaultUnit: <LengthUnit>null
+}
+export const drawState = {
+    fill: <Paint | null>{format: "rgb", r: 255, g: 255, b: 255, a: 1},
+    stroke: <Paint | null>null
+}
+
 const aaa = document.getElementById("aaa")!;
 const colorBoxFill = document.getElementById("svgeditor-colorbox-fill")!;
+reflectPaint(drawState.fill, colorBoxFill);
 const colorBoxStroke = document.getElementById("svgeditor-colorbox-stroke")!;
+reflectPaint(drawState.stroke, colorBoxStroke);
+const colorPickerSelector = document.getElementById("svgeditor-colorpicker-selector")!;
 const colorPickerDiv = document.getElementById("svgeditor-colorpicker")!;
 const menuSelect = document.getElementById("svgeditor-menu-select")!;
 const menuRect = document.getElementById("svgeditor-menu-rect")!;
@@ -49,11 +63,6 @@ vscode.postMessage({
     command: "svg-request"
 });
 
-export const configuration = {
-    showAll: false,
-    defaultUnit: <LengthUnit>null
-}
-
 // set listeners
 window.addEventListener("message", event => {
     const message = event.data;
@@ -75,8 +84,8 @@ menuSelect.addEventListener("click", event => onMenuButtonClick(event, "select")
 menuRect.addEventListener("click", event => onMenuButtonClick(event, "rect"));
 // color pickers
 colorPickerDiv.addEventListener("click", (event) => event.stopPropagation());
-colorBoxFill.addEventListener("click", (event) => onColorBoxClick(event, colorBoxFill, colorPickerDiv));
-colorBoxStroke.addEventListener("click", (event) => onColorBoxClick(event, colorBoxStroke, colorPickerDiv));
+colorBoxFill.addEventListener("click", (event) => onColorBoxClick(event, colorBoxFill, colorPickerDiv, "fill"));
+colorBoxStroke.addEventListener("click", (event) => onColorBoxClick(event, colorBoxStroke, colorPickerDiv, "stroke"));
 // others
 document.addEventListener("mousemove", onDocumentMouseMove);
 document.addEventListener("mouseup", onDocumentMouseUp);

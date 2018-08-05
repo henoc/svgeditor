@@ -13,10 +13,18 @@
     <div id="svgeditor-message"></div>
     <div id="aaa"></div>
     <span class="svgeditor-bold">
-        fill: <div id="svgeditor-colorbox-fill" class="svgeditor-colorbox"></div>
-        stroke: <div id="svgeditor-colorbox-stroke" class="svgeditor-colorbox"></div>
+        fill: <div id="svgeditor-colorbox-fill" class="svgeditor-colorbox" tabindex="0"></div>
+        stroke: <div id="svgeditor-colorbox-stroke" class="svgeditor-colorbox" tabindex="0"></div>
     </span>
     <div id="svgeditor-colorpicker">
+        <select name="svgeditor-colorpicker-selector" id="svgeditor-colorpicker-selector">
+            <option value="color">color</option>
+            <option value="noAttribute">no attribute</option>
+            <option value="none">none</option>
+            <option value="currentColor">currentColor</option>
+            <option value="inherit">inherit</option>
+        </select>
+        <br>
         <canvas width="200" height="100"></canvas>
         <br>
         <div id="svgeditor-colorpicker-save" class="svgeditor-button">save</div><!--

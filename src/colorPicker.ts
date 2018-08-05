@@ -1,5 +1,6 @@
 import tinycolor from "tinycolor2";
 import { debugLog } from "./main";
+import { PaintFormat, Paint } from "./domParser";
 
 export class ColorPicker {
     public ctx: CanvasRenderingContext2D;
@@ -22,6 +23,14 @@ export class ColorPicker {
         this.drawGrad();
         this.drawSlider();
         this.drawCursors(color);
+    }
+
+    getPaint(destFormat: PaintFormat | null): Paint {
+        if (destFormat !== "none" && destFormat !== "currentColor" && destFormat !== "inherit" && destFormat !== null) {
+            return {format: destFormat, ...this.color.toRgb()};
+        } else {
+            return {format: "rgb", ...this.color.toRgb()};
+        }
     }
 
     fillTransparent() {
