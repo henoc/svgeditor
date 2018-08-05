@@ -1,14 +1,20 @@
 import { editMode, debugLog, openContents, activeContents, setEditMode, EditMode, drawState } from "./main";
 import * as selectMode from "./selectMode";
 import * as rectMode from "./rectMode";
+import * as ellipseMode from "./ellipseMode";
 import { ColorPicker } from "./colorPicker";
 import tinycolor from "tinycolor2";
 import { clearEventListeners, map } from "./utils";
 import { reflectPaint } from "./colorBox";
 
 export function onMenuButtonClick(event: MouseEvent, mode: EditMode) {
+    changeMode(mode);
+}
+
+function changeMode(mode: EditMode) {
     selectMode.breakaway();
     rectMode.breakaway();
+    ellipseMode.breakaway();
     setEditMode(mode);
 }
 
@@ -17,6 +23,8 @@ export function onShapeMouseDown(event: MouseEvent, uu: string) {
         selectMode.onShapeMouseDown(event, uu);
     } else if (editMode === "rect") {
         rectMode.onShapeMouseDown(event, uu);
+    } else if (editMode === "ellipse") {
+        ellipseMode.onShapeMouseDown(event, uu);
     }
 }
 
@@ -30,6 +38,8 @@ export function onDocumentMouseMove(event: MouseEvent) {
         selectMode.onDocumentMouseMove(event);
     } else if (editMode === "rect") {
         rectMode.onDocumentMouseMove(event);
+    } else if (editMode === "ellipse") {
+        ellipseMode.onDocumentMouseMove(event);
     }
 }
 
@@ -38,7 +48,10 @@ export function onDocumentMouseUp(event: MouseEvent) {
         selectMode.onDocumentMouseUp(event);
     } else if (editMode === "rect") {
         rectMode.onDocumentMouseUp(event);
+    } else if (editMode === "ellipse") {
+        ellipseMode.onDocumentMouseUp(event);
     }
+    changeMode("select");
 }
 
 export function onDocumentClick(event: MouseEvent) {

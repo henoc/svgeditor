@@ -65,6 +65,14 @@ export function construct(pe: ParsedElement, options?: SvgConstructOptions): Ele
                 .uattr("ry", pe.attrs.ry)
                 .pattr("fill", pe.attrs.fill)
                 .pattr("stroke", pe.attrs.stroke).build();
+        } else if (pe.tag === "ellipse") {
+            setBaseAttrs(pe.attrs, tag);
+            return tag.uattr("cx", pe.attrs.cx)
+                .uattr("cy", pe.attrs.cy)
+                .uattr("rx", pe.attrs.rx)
+                .uattr("ry", pe.attrs.ry)
+                .pattr("fill", pe.attrs.fill)
+                .pattr("stroke", pe.attrs.stroke).build();
         }
         return null;    // unreachable
     }

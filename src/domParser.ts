@@ -16,7 +16,7 @@ interface ParsedResult {
 
 type TagNames = "svg" | "circle"
 
-export type ParsedElement = (ParsedSvgElement | ParsedCircleElement | ParsedRectElement | ParsedUnknownElement) & {
+export type ParsedElement = (ParsedSvgElement | ParsedCircleElement | ParsedRectElement | ParsedEllipseElement | ParsedUnknownElement) & {
     uuid: string;
     isRoot: boolean;
 }
@@ -35,6 +35,11 @@ interface ParsedCircleElement {
 interface ParsedRectElement {
     tag: "rect",
     attrs: ParsedRectAttr
+}
+
+interface ParsedEllipseElement {
+    tag: "ellipse",
+    attrs: ParsedEllipseAttr
 }
 
 interface ParsedUnknownElement {
@@ -73,6 +78,15 @@ interface ParsedRectAttr extends ParsedBaseAttr {
     y: Length | null;
     width: Length | null;
     height: Length | null;
+    rx: Length | null;
+    ry: Length | null;
+    fill: Paint | null;
+    stroke: Paint | null;
+}
+
+interface ParsedEllipseAttr extends ParsedBaseAttr {
+    cx: Length | null;
+    cy: Length | null;
     rx: Length | null;
     ry: Length | null;
     fill: Paint | null;
@@ -119,6 +133,9 @@ export function parse(element: xmldoc.XmlElement, isRoot?: boolean): ParsedResul
     } else if (element.name === "rect") {
         const attrs = parseAttrs(element, pushWarns).rect();
         return {result: {tag: "rect", attrs, uuid, isRoot: !!isRoot}, warns};
+    } else if (element.name === "ellipse") {
+        const attrs = parseAttrs(element, pushWarns).ellipse();
+        return {result: {tag: "ellipse", attrs, uuid, isRoot: !!isRoot}, warns};
     } else {
         const attrs: Assoc = element.attr;
         return {result: {tag: "unknown", tag$real: element.name, attrs, children, text, uuid, isRoot: !!isRoot}, warns: [{range: toRange(element), message: `${element.name} is unsupported element.`}]};
@@ -199,6 +216,19 @@ function parseAttrs(element: xmldoc.XmlElement, onWarns: (ws: Warning[]) => void
             });
             onWarns(warns);
             return validRectAttrs;
+        },
+        ellipse: () => {
+            const validEllipseAttrs: ParsedEllipseAttr = Object.assign(globalValidAttrs, {
+                cx: (tmp = pop(attrs, "cx")) && lengthAttr(tmp, element, pushWarns) || null,
+                cy: (tmp = pop(attrs, "cy")) && lengthAttr(tmp, element, pushWarns) || null,
+                rx: (tmp = pop(attrs, "rx")) && lengthAttr(tmp, element, pushWarns) || null,
+                ry: (tmp = pop(attrs, "ry")) && lengthAttr(tmp, element, pushWarns) || null,
+                fill: (tmp = pop(attrs, "fill")) && paintAttr(tmp, element, pushWarns) || null,
+                stroke: (tmp = pop(attrs, "stroke")) && paintAttr(tmp, element, pushWarns) || null,
+                unknown: unknownAttrs(attrs, element, pushWarns)
+            });
+            onWarns(warns);
+            return validEllipseAttrs;
         }
     }
 }

@@ -82,6 +82,7 @@ window.addEventListener("message", event => {
 // menu
 menuSelect.addEventListener("click", event => onMenuButtonClick(event, "select"));
 menuRect.addEventListener("click", event => onMenuButtonClick(event, "rect"));
+menuEllipse.addEventListener("click", event => onMenuButtonClick(event, "ellipse"));
 // color pickers
 colorPickerDiv.addEventListener("click", (event) => event.stopPropagation());
 colorBoxFill.addEventListener("click", (event) => onColorBoxClick(event, colorBoxFill, colorPickerDiv, colorPickerSelector, "fill"));

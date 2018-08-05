@@ -71,11 +71,19 @@ export function shaper(pe: ParsedElement, elem: Element): ShaperFunctions {
                 );
                 pe.attrs.cy = fromPx(pe.attrs.cy, "cy",
                     px(pe.attrs.cy) + diff.y
-                )
+                );
             },
             size: (wh?: Point) => {
-                if (wh) {
-                    // todo: to ellipse
+                if (wh && wh.x === wh.y) {
+                    pe.attrs.r = fromPx(pe.attrs.r, "r", wh.x / 2);
+                } else if (wh) {
+                    // @ts-ignore
+                    pe.tag = "ellipse";
+                    delete pe.attrs.r;
+                    // @ts-ignore
+                    pe.attrs.rx = fromPx(pe.attrs.r, "rx", wh.x / 2);
+                    // @ts-ignore
+                    pe.attrs.ry = fromPx(pe.attrs.r, "ry", wh.y / 2);
                 } else return p(px(pe.attrs.r) * 2, px(pe.attrs.r) * 2);
             },
             size2,
@@ -113,6 +121,35 @@ export function shaper(pe: ParsedElement, elem: Element): ShaperFunctions {
                     pe.attrs.height = fromPx(pe.attrs.height, "height", wh.y);
                     self().center(center);
                 } else return p(px(pe.attrs.width), px(pe.attrs.height));
+            },
+            size2,
+            leftTop
+        }
+    } else if (pe.tag === "ellipse") {
+        return {
+            center: (point?: Point) => {
+                if (point) {
+                    pe.attrs.cx = fromPx(pe.attrs.cx, "cx", point.x);
+                    pe.attrs.cy = fromPx(pe.attrs.cy, "cy", point.y);
+                } else {
+                    return p(px(pe.attrs.cx), px(pe.attrs.cy));
+                }
+            },
+            move: (diff: Point) => {
+                pe.attrs.cx = fromPx(pe.attrs.cx, "cx",
+                px(pe.attrs.cx) + diff.x
+                );
+                pe.attrs.cy = fromPx(pe.attrs.cy, "cy",
+                    px(pe.attrs.cy) + diff.y
+                );
+            },
+            size: (wh?: Point) => {
+                if (wh) {
+                    pe.attrs.rx = fromPx(pe.attrs.rx, "rx", wh.x / 2);
+                    pe.attrs.ry = fromPx(pe.attrs.ry, "ry", wh.y / 2);
+                } else {
+                    return p(px(pe.attrs.rx) * 2, px(pe.attrs.ry) * 2);
+                }
             },
             size2,
             leftTop
