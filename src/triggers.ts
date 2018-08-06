@@ -2,9 +2,10 @@ import { editMode, debugLog, openContents, activeContents, setEditMode, EditMode
 import * as selectMode from "./selectMode";
 import * as rectMode from "./rectMode";
 import * as ellipseMode from "./ellipseMode";
+import * as polylineMode from "./polylineMode";
 import { ColorPicker } from "./colorPicker";
 import tinycolor from "tinycolor2";
-import { clearEventListeners, map } from "./utils";
+import { clearEventListeners, map, assertNever } from "./utils";
 import { reflectPaint } from "./colorBox";
 
 export function onMenuButtonClick(event: MouseEvent, mode: EditMode) {
@@ -15,16 +16,26 @@ function changeMode(mode: EditMode) {
     selectMode.breakaway();
     rectMode.breakaway();
     ellipseMode.breakaway();
+    polylineMode.breakaway();
     setEditMode(mode);
 }
 
 export function onShapeMouseDown(event: MouseEvent, uu: string) {
-    if (editMode === "select") {
+    switch (editMode) {
+        case "select":
         selectMode.onShapeMouseDown(event, uu);
-    } else if (editMode === "rect") {
+        break;
+        case "rect":
         rectMode.onShapeMouseDown(event, uu);
-    } else if (editMode === "ellipse") {
+        break;
+        case "ellipse":
         ellipseMode.onShapeMouseDown(event, uu);
+        break;
+        case "polyline":
+        polylineMode.onShapeMouseDown(event, uu, () => changeMode("select"));
+        break;
+        default:
+        assertNever(editMode);
     }
 }
 
@@ -34,22 +45,39 @@ export function onAaaMouseDown(event: MouseEvent) {
 
 export function onDocumentMouseMove(event: MouseEvent) {
     debugLog("trigger", `mode:${editMode}, (x,y): ${event.offsetX}, ${event.offsetY}`);
-    if (editMode === "select") {
+    switch (editMode) {
+        case "select":
         selectMode.onDocumentMouseMove(event);
-    } else if (editMode === "rect") {
+        break;
+        case "rect":
         rectMode.onDocumentMouseMove(event);
-    } else if (editMode === "ellipse") {
+        break;
+        case "ellipse":
         ellipseMode.onDocumentMouseMove(event);
+        break;
+        case "polyline":
+        polylineMode.onDocumentMouseMove(event);
+        break;
+        default:
+        assertNever(editMode);
     }
 }
 
 export function onDocumentMouseUp(event: MouseEvent) {
-    if (editMode === "select") {
+    switch (editMode) {
+        case "select":
         selectMode.onDocumentMouseUp(event);
-    } else if (editMode === "rect") {
+        break;
+        case "rect":
         rectMode.onDocumentMouseUp(event);
-    } else if (editMode === "ellipse") {
+        break;
+        case "ellipse":
         ellipseMode.onDocumentMouseUp(event);
+        break;
+        case "polyline":
+        return;
+        default:
+        assertNever(editMode);
     }
     changeMode("select");
 }

@@ -3,7 +3,7 @@ import { ParsedElement, isLengthUnit, LengthUnit, Paint } from "./domParser";
 import { SvgTag } from "./svg";
 import { onAaaMouseDown, onDocumentMouseMove, onDocumentMouseUp, onColorBoxClick, onDocumentClick, onMenuButtonClick } from "./triggers";
 import { ColorPicker } from "./colorPicker";
-import { ActiveContents } from "./utils";
+import { ActiveContents, assertNever } from "./utils";
 import { reflectPaint } from "./colorBox";
 
 declare function acquireVsCodeApi(): any;
@@ -11,7 +11,7 @@ declare function acquireVsCodeApi(): any;
 const vscode = acquireVsCodeApi();
 
 // global variables
-export type EditMode = "select" | "rect" | "ellipse";
+export type EditMode = "select" | "rect" | "ellipse" | "polyline";
 export let svgdata: ParsedElement;
 export let svgVirtualMap: {[uu: string]: ParsedElement} = {};
 export let svgRealMap: {[uu: string]: Element} = {};
@@ -37,13 +37,27 @@ const colorPickerDiv = document.getElementById("svgeditor-colorpicker")!;
 const menuSelect = document.getElementById("svgeditor-menu-select")!;
 const menuRect = document.getElementById("svgeditor-menu-rect")!;
 const menuEllipse = document.getElementById("svgeditor-menu-ellipse")!;
+const menuPolyline = document.getElementById("svgeditor-menu-polyline")!;
 
 export function setEditMode(mode: EditMode) {
     [menuSelect, menuRect, menuEllipse].forEach(elem => elem.classList.remove("svgeditor-selected"));
     editMode = mode;
-    if (mode === "select") menuSelect.classList.add("svgeditor-selected");
-    else if (mode === "rect") menuRect.classList.add("svgeditor-selected");
-    else if (mode === "ellipse") menuEllipse.classList.add("svgeditor-selected");
+    switch (mode) {
+        case "select":
+        menuSelect.classList.add("svgeditor-selected");
+        break;
+        case "rect":
+        menuRect.classList.add("svgeditor-selected");
+        break;
+        case "ellipse":
+        menuEllipse.classList.add("svgeditor-selected");
+        break;
+        case "polyline":
+        menuPolyline.classList.add("svgeditor-selected");
+        break;
+        default:
+        assertNever(mode);
+    }
 }
 
 const debugMessage = document.getElementById("svgeditor-message")!;
@@ -83,6 +97,7 @@ window.addEventListener("message", event => {
 menuSelect.addEventListener("click", event => onMenuButtonClick(event, "select"));
 menuRect.addEventListener("click", event => onMenuButtonClick(event, "rect"));
 menuEllipse.addEventListener("click", event => onMenuButtonClick(event, "ellipse"));
+menuPolyline.addEventListener("click", event => onMenuButtonClick(event, "polyline"));
 // color pickers
 colorPickerDiv.addEventListener("click", (event) => event.stopPropagation());
 colorBoxFill.addEventListener("click", (event) => onColorBoxClick(event, colorBoxFill, colorPickerDiv, colorPickerSelector, "fill"));
