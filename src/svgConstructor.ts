@@ -2,6 +2,7 @@ import { ParsedElement, ParsedBaseAttr } from "./domParser";
 import { SvgTag } from "./svg";
 import uuid from "uuid";
 import { onShapeMouseDown } from "./triggers";
+import { assertNever } from "./utils";
 
 interface SvgConstructOptions {
     putUUIDAttribute?: boolean;
@@ -42,20 +43,21 @@ export function construct(pe: ParsedElement, options?: SvgConstructOptions): Ele
         }
     } else {
         if (all) tag.attrs(pe.attrs.unknown);
-        if (pe.tag === "svg") {
+        switch (pe.tag) {
+            case "svg":
             setBaseAttrs(pe.attrs, tag);
             makeChildren(pe.children, tag, options);
             return tag.attr("xmlns", pe.attrs.xmlns)
                 .uattr("width", pe.attrs.width)
                 .uattr("height", pe.attrs.height).build();
-        } else if (pe.tag === "circle") {
+            case "circle":
             setBaseAttrs(pe.attrs, tag);
             return tag.uattr("r", pe.attrs.r)
                 .uattr("cx", pe.attrs.cx)
                 .uattr("cy", pe.attrs.cy)
                 .pattr("fill", pe.attrs.fill)
                 .pattr("stroke", pe.attrs.stroke).build();
-        } else if (pe.tag === "rect") {
+            case "rect":
             setBaseAttrs(pe.attrs, tag);
             return tag.uattr("x", pe.attrs.x)
                 .uattr("y", pe.attrs.y)
@@ -65,7 +67,7 @@ export function construct(pe: ParsedElement, options?: SvgConstructOptions): Ele
                 .uattr("ry", pe.attrs.ry)
                 .pattr("fill", pe.attrs.fill)
                 .pattr("stroke", pe.attrs.stroke).build();
-        } else if (pe.tag === "ellipse") {
+            case "ellipse":
             setBaseAttrs(pe.attrs, tag);
             return tag.uattr("cx", pe.attrs.cx)
                 .uattr("cy", pe.attrs.cy)
@@ -73,6 +75,14 @@ export function construct(pe: ParsedElement, options?: SvgConstructOptions): Ele
                 .uattr("ry", pe.attrs.ry)
                 .pattr("fill", pe.attrs.fill)
                 .pattr("stroke", pe.attrs.stroke).build();
+            case "polyline":
+            setBaseAttrs(pe.attrs, tag);
+            const pointsStr = pe.attrs.points && pe.attrs.points.map(point => `${point.x},${point.y}`).join(" ") || null;
+            return tag.attr("points", pointsStr)
+                .pattr("fill", pe.attrs.fill)
+                .pattr("stroke", pe.attrs.stroke).build();
+            default:
+            assertNever(pe);
         }
         return null;    // unreachable
     }

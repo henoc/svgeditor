@@ -8,31 +8,31 @@ export function map<T>(obj: any, fn: (key: string, value: any, index: number) =>
     return acc;
 }
 
-export class Point {
+export class Vec2 {
     constructor(public x: number, public y: number) {
     }
-    add(that: Point) {
-        return p(this.x + that.x, this.y + that.y);
+    add(that: Vec2) {
+        return v(this.x + that.x, this.y + that.y);
     }
-    sub(that: Point) {
-        return p(this.x - that.x, this.y - that.y);
+    sub(that: Vec2) {
+        return v(this.x - that.x, this.y - that.y);
     }
-    mul(that: Point) {
-        return p(this.x * that.x, this.y * that.y);
+    mul(that: Vec2) {
+        return v(this.x * that.x, this.y * that.y);
     }
-    div(that: Point) {
-        return p(this.x / that.x, this.y / that.y);
+    div(that: Vec2, dealWithZeroDivisor?: (dividend: number) => number) {
+        return v(that.x === 0 && dealWithZeroDivisor ? dealWithZeroDivisor(this.x) : this.x / that.x, that.y === 0 && dealWithZeroDivisor ? dealWithZeroDivisor(this.y) : this.y / that.y);
     }
     abs() {
-        return p(Math.abs(this.x), Math.abs(this.y));
+        return v(Math.abs(this.x), Math.abs(this.y));
     }
     toString() {
         return `(${this.x}, ${this.y})`;
     }
 }
 
-export function p(x: number, y: number): Point {
-    return new Point(x, y);
+export function v(x: number, y: number): Vec2 {
+    return new Vec2(x, y);
 }
 
 export function clearEventListeners(element: Element): Element {
@@ -62,6 +62,13 @@ export class ActiveContents {
             this.remove(elem);
         });
     }
+}
+
+/**
+ * Type support for pattern match. `x` should be never.
+ */
+export function assertNever(x: never): never {
+    throw new Error("Unexpected object: " + x);
 }
 
 // export class EnhancedElem {

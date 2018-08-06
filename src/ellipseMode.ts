@@ -1,11 +1,11 @@
 import { svgVirtualMap, refleshContent, configuration, svgRealMap, drawState } from "./main";
-import { Point, p } from "./utils";
+import { Vec2, v } from "./utils";
 import uuidStatic from "uuid";
 import { ParsedElement } from "./domParser";
 import { shaper } from "./shapes";
 
 let isDragging: boolean = false;
-let startCursorPos: Point | null = null;
+let startCursorPos: Vec2 | null = null;
 let dragTargetUuid: string | null = null;
 
 export function onShapeMouseDown(event: MouseEvent, uu: string) {
@@ -13,7 +13,7 @@ export function onShapeMouseDown(event: MouseEvent, uu: string) {
         const root = svgVirtualMap[uu];
         event.stopPropagation();
         isDragging = true;
-        startCursorPos = p(event.offsetX, event.offsetY);
+        startCursorPos = v(event.offsetX, event.offsetY);
         dragTargetUuid = uuidStatic.v4();
         if (root.tag === "svg") {
             const pe: ParsedElement = {
@@ -46,8 +46,8 @@ export function onDocumentMouseMove(event: MouseEvent) {
     if (isDragging && startCursorPos && dragTargetUuid) {
         const pe = svgVirtualMap[dragTargetUuid];
         const re = svgRealMap[dragTargetUuid];
-        const leftTop = p(Math.min(cx, startCursorPos.x), Math.min(cy, startCursorPos.y));
-        const size = p(Math.abs(cx - startCursorPos.x), Math.abs(cy - startCursorPos.y));
+        const leftTop = v(Math.min(cx, startCursorPos.x), Math.min(cy, startCursorPos.y));
+        const size = v(Math.abs(cx - startCursorPos.x), Math.abs(cy - startCursorPos.y));
         shaper(pe, re).size(size);
         shaper(pe, re).leftTop(leftTop);
         refleshContent();

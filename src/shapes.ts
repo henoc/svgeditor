@@ -1,13 +1,13 @@
 import { ParsedElement, Length } from "./domParser";
-import { Point, p } from "./utils";
+import { Vec2, v } from "./utils";
 const units = require('units-css');
 
 interface ShaperFunctions {
-    center: (point?: Point) => undefined | Point;
-    leftTop: (point?: Point) => undefined | Point;
-    move: (diff: Point) => void;
-    size: (wh?: Point) => Point | undefined;
-    size2: (newSize: Point, fixedPoint: Point) => void;
+    center: (point?: Vec2) => undefined | Vec2;
+    leftTop: (point?: Vec2) => undefined | Vec2;
+    move: (diff: Vec2) => void;
+    size: (wh?: Vec2) => Vec2 | undefined;
+    size2: (newSize: Vec2, fixedPoint: Vec2) => void;
 }
 
 export function shaper(pe: ParsedElement, elem: Element): ShaperFunctions {
@@ -19,53 +19,54 @@ export function shaper(pe: ParsedElement, elem: Element): ShaperFunctions {
             {value: units.convert(unitValue.unit || "px", `${pxValue}px`, elem, unitValue.attrName), unit: unitValue.unit, attrName: unitValue.attrName} :
             {value: pxValue, unit: null, attrName};
     }
-    const leftTop = (point?: Point) => {
+    const leftTop = (point?: Vec2) => {
         if (point) {
-            const newCent = point.add(self().size()!.div(p(2, 2)));
+            const newCent = point.add(self().size()!.div(v(2, 2)));
             self().center(newCent);
         } else {
             const cent = self().center()!;
             const size = self().size()!;
-            return cent.sub(size.div(p(2, 2)));
+            return cent.sub(size.div(v(2, 2)));
         }
     }
     const self = () => shaper(pe, elem);
-    const size2 = (newSize: Point, fixedPoint: Point) => {
+    const size2 = (newSize: Vec2, fixedPoint: Vec2) => {
         let oldSize = self().size()!;
         let center = self().center()!;
         self().size(newSize);
-        let diff = oldSize.sub(newSize).div(p(2, 2)).mul(p(fixedPoint.x - center.x > 0 ? 1 : -1, fixedPoint.y - center.y > 0 ? 1 : -1));
+        let diff = oldSize.sub(newSize).div(v(2, 2)).mul(v(fixedPoint.x - center.x > 0 ? 1 : -1, fixedPoint.y - center.y > 0 ? 1 : -1));
         self().move(diff);
     };
-    if (pe.tag === "svg") {
+    switch (pe.tag) {
+        case "svg":
         return {
-            center: (point?: Point) => {
+            center: (point?: Vec2) => {
                 if (point) return;
-                else return p(px(pe.attrs.width) / 2, px(pe.attrs.height) / 2);
+                else return v(px(pe.attrs.width) / 2, px(pe.attrs.height) / 2);
             },
-            move: (diff: Point) => {
+            move: (diff: Vec2) => {
                 return;
             },
-            size: (wh?: Point) => {
+            size: (wh?: Vec2) => {
                 if (wh) {
                     pe.attrs.width = fromPx(pe.attrs.width, "width", wh.x);
                     pe.attrs.height = fromPx(pe.attrs.height, "height", wh.y);
-                } else return p(px(pe.attrs.width), px(pe.attrs.height));
+                } else return v(px(pe.attrs.width), px(pe.attrs.height));
             },
             size2,
             leftTop
         }
-    } else if (pe.tag === "circle") {
+        case "circle":
         return {
-            center: (point?: Point) => {
+            center: (point?: Vec2) => {
                 if (point) {
                     pe.attrs.cx = fromPx(pe.attrs.cx, "cx", point.x);
                     pe.attrs.cy = fromPx(pe.attrs.cy, "cy", point.y);
                 } else {
-                    return p(px(pe.attrs.cx), px(pe.attrs.cy));
+                    return v(px(pe.attrs.cx), px(pe.attrs.cy));
                 }
             },
-            move: (diff: Point) => {
+            move: (diff: Vec2) => {
                 pe.attrs.cx = fromPx(pe.attrs.cx, "cx",
                     px(pe.attrs.cx) + diff.x
                 );
@@ -73,7 +74,7 @@ export function shaper(pe: ParsedElement, elem: Element): ShaperFunctions {
                     px(pe.attrs.cy) + diff.y
                 );
             },
-            size: (wh?: Point) => {
+            size: (wh?: Vec2) => {
                 if (wh && wh.x === wh.y) {
                     pe.attrs.r = fromPx(pe.attrs.r, "r", wh.x / 2);
                 } else if (wh) {
@@ -84,14 +85,14 @@ export function shaper(pe: ParsedElement, elem: Element): ShaperFunctions {
                     pe.attrs.rx = fromPx(pe.attrs.r, "rx", wh.x / 2);
                     // @ts-ignore
                     pe.attrs.ry = fromPx(pe.attrs.r, "ry", wh.y / 2);
-                } else return p(px(pe.attrs.r) * 2, px(pe.attrs.r) * 2);
+                } else return v(px(pe.attrs.r) * 2, px(pe.attrs.r) * 2);
             },
             size2,
             leftTop
         }
-    } else if (pe.tag === "rect") {
+        case "rect":
         return {
-            center: (point?: Point) => {
+            center: (point?: Vec2) => {
                 if (point) {
                     pe.attrs.x = fromPx(pe.attrs.x, "x",
                         point.x - px(pe.attrs.width) / 2
@@ -100,13 +101,13 @@ export function shaper(pe: ParsedElement, elem: Element): ShaperFunctions {
                         point.y - px(pe.attrs.height) / 2
                     );
                 } else {
-                    return p(
+                    return v(
                         px(pe.attrs.x) + px(pe.attrs.width) / 2,
                         px(pe.attrs.y) + px(pe.attrs.height) / 2
                     );
                 }
             },
-            move: (diff: Point) => {
+            move: (diff: Vec2) => {
                 pe.attrs.x = fromPx(pe.attrs.x, "x",
                     px(pe.attrs.x) + diff.x
                 );
@@ -114,28 +115,28 @@ export function shaper(pe: ParsedElement, elem: Element): ShaperFunctions {
                     px(pe.attrs.y) + diff.y
                 );
             },
-            size: (wh?: Point) => {
+            size: (wh?: Vec2) => {
                 if (wh) {
                     let center = self().center()!;
                     pe.attrs.width = fromPx(pe.attrs.width, "width", wh.x);
                     pe.attrs.height = fromPx(pe.attrs.height, "height", wh.y);
                     self().center(center);
-                } else return p(px(pe.attrs.width), px(pe.attrs.height));
+                } else return v(px(pe.attrs.width), px(pe.attrs.height));
             },
             size2,
             leftTop
         }
-    } else if (pe.tag === "ellipse") {
+        case "ellipse":
         return {
-            center: (point?: Point) => {
+            center: (point?: Vec2) => {
                 if (point) {
                     pe.attrs.cx = fromPx(pe.attrs.cx, "cx", point.x);
                     pe.attrs.cy = fromPx(pe.attrs.cy, "cy", point.y);
                 } else {
-                    return p(px(pe.attrs.cx), px(pe.attrs.cy));
+                    return v(px(pe.attrs.cx), px(pe.attrs.cy));
                 }
             },
-            move: (diff: Point) => {
+            move: (diff: Vec2) => {
                 pe.attrs.cx = fromPx(pe.attrs.cx, "cx",
                 px(pe.attrs.cx) + diff.x
                 );
@@ -143,18 +144,61 @@ export function shaper(pe: ParsedElement, elem: Element): ShaperFunctions {
                     px(pe.attrs.cy) + diff.y
                 );
             },
-            size: (wh?: Point) => {
+            size: (wh?: Vec2) => {
                 if (wh) {
                     pe.attrs.rx = fromPx(pe.attrs.rx, "rx", wh.x / 2);
                     pe.attrs.ry = fromPx(pe.attrs.ry, "ry", wh.y / 2);
                 } else {
-                    return p(px(pe.attrs.rx) * 2, px(pe.attrs.ry) * 2);
+                    return v(px(pe.attrs.rx) * 2, px(pe.attrs.ry) * 2);
                 }
             },
             size2,
             leftTop
         }
-    } else {
+        case "polyline":
+        return {
+            center: (point?: Vec2) => {
+                if (point) {
+                    const oldCenter = self().center()!;
+                    self().move(point.sub(oldCenter));
+                } else {
+                    const minX = pe.attrs.points && Math.min(...pe.attrs.points.map(pair => pair.x)) || 0;
+                    const maxX = pe.attrs.points && Math.max(...pe.attrs.points.map(pair => pair.x)) || 0;
+                    const minY = pe.attrs.points && Math.min(...pe.attrs.points.map(pair => pair.y)) || 0;
+                    const maxY = pe.attrs.points && Math.max(...pe.attrs.points.map(pair => pair.y)) || 0;
+                    return v(maxX + minX, maxY + minY).div(v(2, 2));
+                }
+            },
+            move: (diff: Vec2) => {
+                if (pe.attrs.points) for(let i = 0; i < pe.attrs.points.length; i++) {
+                    pe.attrs.points[i] = v(pe.attrs.points[i].x, pe.attrs.points[i].y).add(diff);
+                }
+            },
+            size: (wh?: Vec2) => {
+                if (wh) {
+                    const oldCenter = self().center()!;
+                    const leftTop = self().leftTop()!;
+                    const oldSize = self().size()!;
+                    const ratio = wh.div(oldSize, dividend => 1);
+                    const acc: Vec2[] = [];
+                    for (let point of pe.attrs.points || []) {
+                        const newPoint = leftTop.add(v(point.x, point.y).sub(leftTop).mul(ratio));
+                        acc.push(newPoint);
+                    }
+                    pe.attrs.points = acc;
+                    self().center(oldCenter);
+                } else {
+                    const minX = pe.attrs.points && Math.min(...pe.attrs.points.map(pair => pair.x)) || 0;
+                    const maxX = pe.attrs.points && Math.max(...pe.attrs.points.map(pair => pair.x)) || 0;
+                    const minY = pe.attrs.points && Math.min(...pe.attrs.points.map(pair => pair.y)) || 0;
+                    const maxY = pe.attrs.points && Math.max(...pe.attrs.points.map(pair => pair.y)) || 0;
+                    return v(maxX - minX, maxY - minY);
+                }
+            },
+            size2,
+            leftTop
+        }
+        case "unknown":
         throw new Error("Unknown shape cannot move.");
     }
 }

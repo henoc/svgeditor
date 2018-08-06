@@ -1,5 +1,5 @@
 import { svgVirtualMap, refleshContent, svgRealMap, sendBackToEditor, debugLog } from "./main";
-import { Point, p } from "./utils";
+import { Vec2, v } from "./utils";
 import { shaper } from "./shapes";
 import { SvgTag } from "./svg";
 
@@ -8,12 +8,12 @@ let shapeHanlders: ShapeHandlers = [];
 
 let selectedShapeUuid: string | null = null;
 let isDraggingShape: boolean = false;
-let startCursorPos: Point | null = null;
-let startShapeCenter: Point | null = null;
+let startCursorPos: Vec2 | null = null;
+let startShapeCenter: Vec2 | null = null;
 let selectedHandlerIndex: number | null = null;
 let isDraggingHandler: boolean = false;
-let startShapeFixedPoint: Point | null = null;
-let startShapeSize: Point | null = null;
+let startShapeFixedPoint: Vec2 | null = null;
+let startShapeSize: Vec2 | null = null;
 
 export function onShapeMouseDown(event: MouseEvent, uu: string) {
     event.stopPropagation();
@@ -24,14 +24,14 @@ export function onShapeMouseDown(event: MouseEvent, uu: string) {
         refleshContent();
     } else {
         selectedShapeUuid = uu;
-        startCursorPos = p(event.offsetX, event.offsetY);
+        startCursorPos = v(event.offsetX, event.offsetY);
         startShapeCenter = shaper(svgVirtualMap[uu], svgRealMap[uu]).center()!;
         isDraggingShape = true;
     }
 }
 
 export function onDocumentMouseMove(event: MouseEvent) {
-    let currentCursorPos = p(event.offsetX, event.offsetY);
+    let currentCursorPos = v(event.offsetX, event.offsetY);
     if (selectedShapeUuid) {
         const pe = svgVirtualMap[selectedShapeUuid];
         const re = svgRealMap[selectedShapeUuid];
@@ -40,7 +40,7 @@ export function onDocumentMouseMove(event: MouseEvent) {
                 shaper(pe, re).center(startShapeCenter.add(currentCursorPos.sub(startCursorPos)));
                 refleshContent({shapeHandlers: shapeHanlders = createShapeHandlers(selectedShapeUuid)});
             } else if (isDraggingHandler && startCursorPos && startShapeFixedPoint && startShapeSize) {
-                const diff =  currentCursorPos.sub(startCursorPos).mul(p(startCursorPos.x - startShapeFixedPoint.x > 0 ? 1 : -1, startCursorPos.y - startShapeFixedPoint.y > 0 ? 1 : -1));
+                const diff =  currentCursorPos.sub(startCursorPos).mul(v(startCursorPos.x - startShapeFixedPoint.x > 0 ? 1 : -1, startCursorPos.y - startShapeFixedPoint.y > 0 ? 1 : -1));
                 if (selectedHandlerIndex === 1 || selectedHandlerIndex === 7) diff.x = 0;
                 if (selectedHandlerIndex === 3 || selectedHandlerIndex === 5) diff.y = 0;
                 const currentSize = diff.add(startShapeSize);
@@ -66,7 +66,7 @@ export function onDocumentMouseUp(event: MouseEvent) {
 
 function createShapeHandlers(uu: string): ShapeHandlers {
     const center = shaper(svgVirtualMap[uu], svgRealMap[uu]).center()!;
-    const halfSize = shaper(svgVirtualMap[uu], svgRealMap[uu]).size()!.div(p(2, 2));
+    const halfSize = shaper(svgVirtualMap[uu], svgRealMap[uu]).size()!.div(v(2, 2));
     const leftTop = center.sub(halfSize);
     const elems: Element[] = [];
     for (let i = 0; i < 9; i++) {
@@ -94,11 +94,11 @@ function createShapeHandlers(uu: string): ShapeHandlers {
 
 function onShapeHandlerMouseDown(event: MouseEvent, index: number) {
     event.stopPropagation();
-    startCursorPos = p(event.offsetX, event.offsetY);
+    startCursorPos = v(event.offsetX, event.offsetY);
     selectedHandlerIndex = index;
     isDraggingHandler = true;
     startShapeFixedPoint =
-        p(
+        v(
             Number(shapeHanlders[8 - index].getAttribute("cx")),
             Number(shapeHanlders[8 - index].getAttribute("cy"))
         );

@@ -1,5 +1,5 @@
 import * as xmldoc from "xmldoc";
-import { map } from "./utils";
+import { map, Vec2, v } from "./utils";
 import { Assoc } from "./svg";
 import uuidStatic from "uuid";
 import tinycolor from "tinycolor2";
@@ -16,7 +16,7 @@ interface ParsedResult {
 
 type TagNames = "svg" | "circle"
 
-export type ParsedElement = (ParsedSvgElement | ParsedCircleElement | ParsedRectElement | ParsedEllipseElement | ParsedUnknownElement) & {
+export type ParsedElement = (ParsedSvgElement | ParsedCircleElement | ParsedRectElement | ParsedEllipseElement | ParsedPolylineElement | ParsedUnknownElement) & {
     uuid: string;
     isRoot: boolean;
 }
@@ -40,6 +40,11 @@ interface ParsedRectElement {
 interface ParsedEllipseElement {
     tag: "ellipse",
     attrs: ParsedEllipseAttr
+}
+
+interface ParsedPolylineElement {
+    tag: "polyline",
+    attrs: ParsedPolylineAttr
 }
 
 interface ParsedUnknownElement {
@@ -93,6 +98,12 @@ interface ParsedEllipseAttr extends ParsedBaseAttr {
     stroke: Paint | null;
 }
 
+interface ParsedPolylineAttr extends ParsedBaseAttr {
+    points: Point[] | null;
+    fill: Paint | null;
+    stroke: Paint | null;
+}
+
 export type LengthUnit = "%" | "ch" | "cm" | "em" | "ex" | "in" | "mm" | "pc" | "pt" | "px" | null;
 
 export interface Length {
@@ -113,6 +124,11 @@ export interface Paint {
     g: number;
     b: number;
     a: number;
+}
+
+export interface Point {
+    x: number;
+    y: number;
 }
 
 export function parse(element: xmldoc.XmlElement, isRoot?: boolean): ParsedResult {
@@ -136,6 +152,9 @@ export function parse(element: xmldoc.XmlElement, isRoot?: boolean): ParsedResul
     } else if (element.name === "ellipse") {
         const attrs = parseAttrs(element, pushWarns).ellipse();
         return {result: {tag: "ellipse", attrs, uuid, isRoot: !!isRoot}, warns};
+    } else if (element.name === "polyline") {
+        const attrs = parseAttrs(element, pushWarns).polyline();
+        return {result: {tag: "polyline", attrs, uuid, isRoot: !!isRoot}, warns};
     } else {
         const attrs: Assoc = element.attr;
         return {result: {tag: "unknown", tag$real: element.name, attrs, children, text, uuid, isRoot: !!isRoot}, warns: [{range: toRange(element), message: `${element.name} is unsupported element.`}]};
@@ -229,6 +248,16 @@ function parseAttrs(element: xmldoc.XmlElement, onWarns: (ws: Warning[]) => void
             });
             onWarns(warns);
             return validEllipseAttrs;
+        },
+        polyline: () => {
+            const validPolylineAttrs: ParsedPolylineAttr = Object.assign(globalValidAttrs, {
+                points: (tmp = pop(attrs, "points")) && tmp.value && pointsAttr(tmp.value, element, pushWarns) || null,
+                fill: (tmp = pop(attrs, "fill")) && paintAttr(tmp, element, pushWarns) || null,
+                stroke: (tmp = pop(attrs, "stroke")) && paintAttr(tmp, element, pushWarns) || null,
+                unknown: unknownAttrs(attrs, element, pushWarns)
+            });
+            onWarns(warns);
+            return validPolylineAttrs;
         }
     }
 }
@@ -293,4 +322,18 @@ function paintAttr(pair: {name: string, value: string | null}, element: xmldoc.X
         onWarn({range: toRange(element), message: `${JSON.stringify(pair)} is unsupported paint value.`});
         return void 0;        
     }
+}
+
+function pointsAttr(maybePoints: string, element: xmldoc.XmlElement, onWarn: (w: Warning) => void): Point[] {
+    const floatRegExp = /[+-]?[0-9]+(\.[0-9]*)?([eE][+-]?[0-9]+)?/g;
+    let tmp: RegExpExecArray | null;
+    const acc: number[] = [];
+    while ((tmp = floatRegExp.exec(maybePoints)) !== null) {
+        acc.push(Number(tmp[0]));
+    }
+    const points: Point[] = [];
+    for (let i = 0; i < acc.length; i+=2) {
+        points.push(v(acc[i], acc[i + 1]));
+    }
+    return points;
 }
