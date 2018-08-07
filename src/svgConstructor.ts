@@ -81,6 +81,11 @@ export function construct(pe: ParsedElement, options?: SvgConstructOptions): Ele
             return tag.attr("points", pointsStr)
                 .pattr("fill", pe.attrs.fill)
                 .pattr("stroke", pe.attrs.stroke).build();
+            case "path":
+            setBaseAttrs(pe.attrs, tag);
+            return tag.dattr("d", pe.attrs.d)
+                .pattr("fill", pe.attrs.fill)
+                .pattr("stroke", pe.attrs.stroke).build();
             default:
             assertNever(pe);
         }

@@ -3,6 +3,7 @@ import { map, Vec2, v } from "./utils";
 import { Assoc } from "./svg";
 import uuidStatic from "uuid";
 import tinycolor from "tinycolor2";
+import { svgpath2 } from "./pathHelpers";
 
 interface Warning {
     range: {line: number, column: number, position: number, startTagPosition: number},
@@ -14,9 +15,15 @@ interface ParsedResult {
     warns: Warning[]
 }
 
-type TagNames = "svg" | "circle"
-
-export type ParsedElement = (ParsedSvgElement | ParsedCircleElement | ParsedRectElement | ParsedEllipseElement | ParsedPolylineElement | ParsedUnknownElement) & {
+export type ParsedElement = (
+    ParsedSvgElement |
+    ParsedCircleElement |
+    ParsedRectElement |
+    ParsedEllipseElement |
+    ParsedPolylineElement |
+    ParsedPathElement |
+    ParsedUnknownElement
+) & {
     uuid: string;
     isRoot: boolean;
 }
@@ -45,6 +52,11 @@ interface ParsedEllipseElement {
 interface ParsedPolylineElement {
     tag: "polyline",
     attrs: ParsedPolylineAttr
+}
+
+interface ParsedPathElement {
+    tag: "path",
+    attrs: ParsedPathAttr
 }
 
 interface ParsedUnknownElement {
@@ -104,6 +116,12 @@ interface ParsedPolylineAttr extends ParsedBaseAttr {
     stroke: Paint | null;
 }
 
+interface ParsedPathAttr extends ParsedBaseAttr {
+    d: PathCommand[] | null;
+    fill: Paint | null;
+    stroke: Paint | null;
+}
+
 export type LengthUnit = "%" | "ch" | "cm" | "em" | "ex" | "in" | "mm" | "pc" | "pt" | "px" | null;
 
 export interface Length {
@@ -131,6 +149,8 @@ export interface Point {
     y: number;
 }
 
+export type PathCommand = [string, ...number[]]
+
 export function parse(element: xmldoc.XmlElement, isRoot?: boolean): ParsedResult {
     const uuid = uuidStatic.v4();
     const warns: Warning[] = [];
@@ -155,6 +175,9 @@ export function parse(element: xmldoc.XmlElement, isRoot?: boolean): ParsedResul
     } else if (element.name === "polyline") {
         const attrs = parseAttrs(element, pushWarns).polyline();
         return {result: {tag: "polyline", attrs, uuid, isRoot: !!isRoot}, warns};
+    } else if (element.name === "path") {
+        const attrs = parseAttrs(element, pushWarns).path();
+        return {result: {tag: "path", attrs, uuid, isRoot: !!isRoot}, warns};
     } else {
         const attrs: Assoc = element.attr;
         return {result: {tag: "unknown", tag$real: element.name, attrs, children, text, uuid, isRoot: !!isRoot}, warns: [{range: toRange(element), message: `${element.name} is unsupported element.`}]};
@@ -258,6 +281,16 @@ function parseAttrs(element: xmldoc.XmlElement, onWarns: (ws: Warning[]) => void
             });
             onWarns(warns);
             return validPolylineAttrs;
+        },
+        path: () => {
+            const validPathAttrs: ParsedPathAttr = Object.assign(globalValidAttrs, {
+                d: (tmp = pop(attrs, "d")) && tmp.value && pathDefinitionAttr(tmp.value, element, pushWarns) || null,
+                fill: (tmp = pop(attrs, "fill")) && paintAttr(tmp, element, pushWarns) || null,
+                stroke: (tmp = pop(attrs, "stroke")) && paintAttr(tmp, element, pushWarns) || null,
+                unknown: unknownAttrs(attrs, element, pushWarns)
+            });
+            onWarns(warns);
+            return validPathAttrs;
         }
     }
 }
@@ -318,6 +351,7 @@ function paintAttr(pair: {name: string, value: string | null}, element: xmldoc.X
         }
     } else if (/^url\([^\)]*\)$/.test(pair.value)) {
         onWarn({range: toRange(element), message: `FuncIRI notation ${JSON.stringify(pair)} is unsupported.` });
+        return void 0;
     } else {
         onWarn({range: toRange(element), message: `${JSON.stringify(pair)} is unsupported paint value.`});
         return void 0;        
@@ -336,4 +370,14 @@ function pointsAttr(maybePoints: string, element: xmldoc.XmlElement, onWarn: (w:
         points.push(v(acc[i], acc[i + 1]));
     }
     return points;
+}
+
+function pathDefinitionAttr(maybeDAttr: string, element: xmldoc.XmlElement, onWarn: (w: Warning) => void): PathCommand[] | undefined {
+    const parsedDAttr = svgpath2(maybeDAttr);
+    if (parsedDAttr.err) {
+        onWarn({range: toRange(element), message: parsedDAttr.err});
+        return void 0;
+    } else {
+        return parsedDAttr.segments;
+    }
 }

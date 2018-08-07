@@ -57,7 +57,10 @@
           "description": "Send all attributes and tags to WebView regardless of SVG Editor support."
         },
         "svgeditor.defaultUnit": {
-          "type": ["string", "null"],
+          "type": [
+            "string",
+            "null"
+          ],
           "default": null,
           "description": "Specifies the unit when creating some shapes."
         }
@@ -81,7 +84,7 @@
     "@types/xmldoc": "^1.1.3",
     "browserify": "^16.2.2",
     "tslint": "^5.9.1",
-    "typescript": "^2.6.2",
+    "typescript": "^3.0.1",
     "vscode": "^1.1.18"
   },
   "dependencies": {
@@ -90,6 +93,7 @@
     "jsdom": "^11.12.0",
     "parse-color": "^1.0.0",
     "pickr-widget": "^0.1.7",
+    "svgpath": "2.2.1",
     "tinycolor2": "^1.4.1",
     "units-css": "^0.4.0",
     "uuid": "^3.3.2",

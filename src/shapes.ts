@@ -1,6 +1,7 @@
 import { ParsedElement, Length } from "./domParser";
 import { Vec2, v } from "./utils";
 const units = require('units-css');
+import {svgpath2} from "./pathHelpers";
 
 interface ShaperFunctions {
     center: (point?: Vec2) => undefined | Vec2;
@@ -179,7 +180,7 @@ export function shaper(pe: ParsedElement, elem: Element): ShaperFunctions {
                     const oldCenter = self().center()!;
                     const leftTop = self().leftTop()!;
                     const oldSize = self().size()!;
-                    const ratio = wh.div(oldSize, dividend => 1);
+                    const ratio = wh.div(oldSize, () => 1);
                     const acc: Vec2[] = [];
                     for (let point of pe.attrs.points || []) {
                         const newPoint = leftTop.add(v(point.x, point.y).sub(leftTop).mul(ratio));
@@ -192,6 +193,95 @@ export function shaper(pe: ParsedElement, elem: Element): ShaperFunctions {
                     const maxX = pe.attrs.points && Math.max(...pe.attrs.points.map(pair => pair.x)) || 0;
                     const minY = pe.attrs.points && Math.min(...pe.attrs.points.map(pair => pair.y)) || 0;
                     const maxY = pe.attrs.points && Math.max(...pe.attrs.points.map(pair => pair.y)) || 0;
+                    return v(maxX - minX, maxY - minY);
+                }
+            },
+            size2,
+            leftTop
+        }
+        case "path":
+        return {
+            center: (point?: Vec2) => {
+                if (point) {
+                    const oldCenter = self().center()!;
+                    self().move(point.sub(oldCenter));
+                } else {
+                    const parsedDAttr = svgpath2();
+                    parsedDAttr.segments = pe.attrs.d || [];
+                    const vertexes = parsedDAttr.getVertexes();
+                    const minX = Math.min(...vertexes.map(vec2 => vec2.x));
+                    const maxX = Math.max(...vertexes.map(vec2 => vec2.x));
+                    const minY = Math.min(...vertexes.map(vec2 => vec2.y));
+                    const maxY = Math.max(...vertexes.map(vec2 => vec2.y));
+                    return v(maxX + minX, maxY + minY).div(v(2, 2));
+                }
+            },
+            move: (diff: Vec2) => {
+                const parsedDAttr = svgpath2();
+                parsedDAttr.segments = pe.attrs.d || [];
+                parsedDAttr.unarc();
+                parsedDAttr.iterate((s, i, x, y) => {
+                    if (s[0].toLowerCase() === "v") {
+                        s[1] += diff.y;
+                    } else if (s[0].toLowerCase() === "h") {
+                        s[1] += diff.x;
+                    } else {
+                        for (let j = 1; j < s.length; j += 2) {
+                            s[j] += diff.x;
+                            s[j + 1] += diff.y;
+                        }
+                    }
+                });
+                pe.attrs.d = parsedDAttr.segments;
+            },
+            size: (wh?: Vec2) => {
+                if (wh) {
+                    const oldCenter = self().center()!;
+                    const parsedDAttr = svgpath2();
+                    parsedDAttr.segments = pe.attrs.d || [];
+                    parsedDAttr.unarc();
+                    parsedDAttr.evaluateStack();
+                    const isRelative: boolean[] = [];
+                    parsedDAttr.segments.forEach(s => isRelative.push(s[0] === s[0].toLowerCase()));
+                    parsedDAttr.abs();
+                    const ratio = wh.div(self().size()!, () => 1);
+                    const leftTop = self().leftTop()!;
+                    parsedDAttr.iterate((s, i, x, y) => {
+                        if (s[0] === "V") {
+                            s[1] /* y */ = v(x, s[1]).sub(leftTop).mul(ratio).add(leftTop).y;
+                            if (isRelative[i]) {
+                                s[0] = "v";
+                                s[1] -= y;
+                            }
+                        } else if (s[0] === "H") {
+                            s[1] /* x */ = v(s[1], y).sub(leftTop).mul(ratio).add(leftTop).x;
+                            if (isRelative[i]) {
+                                s[0] = "h";
+                                s[1] -= x;
+                            }
+                        } else {
+                            for (let j = 1; j < s.length; j += 2) {
+                                const ctrlPoint = v(s[j], s[j + 1]).sub(leftTop).mul(ratio).add(leftTop);
+                                s[j] = ctrlPoint.x;
+                                s[j + 1] = ctrlPoint.y;
+                                if (isRelative[i]) {
+                                    s[j] -= x;
+                                    s[j + 1] -= y;
+                                }
+                            }
+                            if (isRelative[i]) s[0] = s[0].toLowerCase();
+                        }
+                    });
+                    pe.attrs.d = parsedDAttr.segments;
+                    self().center(oldCenter);
+                } else {
+                    const parsedDAttr = svgpath2();
+                    parsedDAttr.segments = pe.attrs.d || [];
+                    const vertexes = parsedDAttr.getVertexes();
+                    const minX = Math.min(...vertexes.map(vec2 => vec2.x));
+                    const maxX = Math.max(...vertexes.map(vec2 => vec2.x));
+                    const minY = Math.min(...vertexes.map(vec2 => vec2.y));
+                    const maxY = Math.max(...vertexes.map(vec2 => vec2.y));
                     return v(maxX - minX, maxY - minY);
                 }
             },

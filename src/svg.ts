@@ -1,7 +1,7 @@
 import { map } from "./utils";
-import { Length, Paint } from "./domParser";
+import { Length, Paint, PathCommand } from "./domParser";
 import tinycolor from "tinycolor2";
-
+import {svgpath2} from "./pathHelpers";
 
 const ns = "http://www.w3.org/2000/svg";
 
@@ -54,7 +54,14 @@ export class SvgTag {
             } else {
                 this.data.attrs[key] = tcolor.toString(value.format);
             }
-            return this;
+        }
+        return this;
+    }
+    dattr(key: string, value: PathCommand[] | null): SvgTag {
+        if (value !== null) {
+            const parsedDAttr = svgpath2();
+            parsedDAttr.segments = value;
+            this.data.attrs[key] = <string>parsedDAttr.toString();
         }
         return this;
     }
