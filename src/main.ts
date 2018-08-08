@@ -19,7 +19,7 @@ export let editMode: EditMode = "select";
 export let openContents: {[id: string]: HTMLElement} = {};
 export let activeContents = new ActiveContents();
 export const configuration = {
-    showAll: false,
+    showAll: true,
     defaultUnit: <LengthUnit>null
 }
 export const drawState = {
@@ -76,8 +76,8 @@ window.addEventListener("message", event => {
             refleshContent();
             break;
         case "configuration":
-            message.data.showAll && (configuration.showAll = message.data.showAll);
-            message.data.defaultUnit && isLengthUnit(message.data.defaultUnit) && (configuration.defaultUnit = message.data.defaultUnit);
+            if (message.data.showAll !== undefined) configuration.showAll = message.data.showAll;
+            if (message.data.defaultUni !== undefined && isLengthUnit(message.data.defaultUnit)) configuration.defaultUnit = message.data.defaultUnit;
             if (!isLengthUnit(message.data.defaultUnit)) sendErrorMessage(`Configuration "svgeditor.defaultUnit: ${message.data.defaultUnit}" is unsupported unit.`);
             break;
     }

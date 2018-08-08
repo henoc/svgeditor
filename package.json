@@ -53,7 +53,7 @@
       "properties": {
         "svgeditor.showAll": {
           "type": "boolean",
-          "default": false,
+          "default": true,
           "description": "Send all attributes and tags to WebView regardless of SVG Editor support."
         },
         "svgeditor.defaultUnit": {
