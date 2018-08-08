@@ -3,7 +3,7 @@ import { map, Vec2, v } from "./utils";
 import { Assoc } from "./svg";
 import uuidStatic from "uuid";
 import tinycolor from "tinycolor2";
-import { svgpath2 } from "./pathHelpers";
+import { svgPathManager } from "./pathHelpers";
 
 interface Warning {
     range: {line: number, column: number, position: number, startTagPosition: number},
@@ -373,7 +373,7 @@ function pointsAttr(maybePoints: string, element: xmldoc.XmlElement, onWarn: (w:
 }
 
 function pathDefinitionAttr(maybeDAttr: string, element: xmldoc.XmlElement, onWarn: (w: Warning) => void): PathCommand[] | undefined {
-    const parsedDAttr = svgpath2(maybeDAttr);
+    const parsedDAttr = svgPathManager(maybeDAttr);
     if (parsedDAttr.err) {
         onWarn({range: toRange(element), message: parsedDAttr.err});
         return void 0;

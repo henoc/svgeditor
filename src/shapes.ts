@@ -1,7 +1,7 @@
 import { ParsedElement, Length } from "./domParser";
 import { Vec2, v } from "./utils";
 const units = require('units-css');
-import {svgpath2} from "./pathHelpers";
+import {svgPathManager} from "./pathHelpers";
 
 interface ShaperFunctions {
     center: (point?: Vec2) => undefined | Vec2;
@@ -206,8 +206,7 @@ export function shaper(pe: ParsedElement, elem: Element): ShaperFunctions {
                     const oldCenter = self().center()!;
                     self().move(point.sub(oldCenter));
                 } else {
-                    const parsedDAttr = svgpath2();
-                    parsedDAttr.segments = pe.attrs.d || [];
+                    const parsedDAttr = svgPathManager(pe.attrs.d || []);
                     const vertexes = parsedDAttr.getVertexes();
                     const minX = Math.min(...vertexes.map(vec2 => vec2.x));
                     const maxX = Math.max(...vertexes.map(vec2 => vec2.x));
@@ -217,66 +216,47 @@ export function shaper(pe: ParsedElement, elem: Element): ShaperFunctions {
                 }
             },
             move: (diff: Vec2) => {
-                const parsedDAttr = svgpath2();
-                parsedDAttr.segments = pe.attrs.d || [];
-                parsedDAttr.unarc();
-                parsedDAttr.iterate((s, i, x, y) => {
-                    if (s[0].toLowerCase() === "v") {
-                        s[1] += diff.y;
-                    } else if (s[0].toLowerCase() === "h") {
-                        s[1] += diff.x;
+                console.log(pe.attrs.d || []);
+                const parsedDAttr = svgPathManager(pe.attrs.d || []);
+                parsedDAttr.proceed(p => p.unarc()).safeIterate(([s, ...t], i, p) => {
+                    if (s === "V") {
+                        t[0] += diff.y;
+                    } else if (s === "H") {
+                        t[0] += diff.x;
                     } else {
-                        for (let j = 1; j < s.length; j += 2) {
-                            s[j] += diff.x;
-                            s[j + 1] += diff.y;
+                        for (let j = 0; j < t.length; j += 2) {
+                            t[j] += diff.x;
+                            t[j+1] += diff.y;
                         }
                     }
+                    return [s, ...t];
                 });
                 pe.attrs.d = parsedDAttr.segments;
             },
             size: (wh?: Vec2) => {
                 if (wh) {
                     const oldCenter = self().center()!;
-                    const parsedDAttr = svgpath2();
-                    parsedDAttr.segments = pe.attrs.d || [];
-                    parsedDAttr.unarc();
-                    parsedDAttr.evaluateStack();
-                    const isRelative: boolean[] = [];
-                    parsedDAttr.segments.forEach(s => isRelative.push(s[0] === s[0].toLowerCase()));
-                    parsedDAttr.abs();
+                    const parsedDAttr = svgPathManager(pe.attrs.d || []).proceed(p => p.unarc());
                     const ratio = wh.div(self().size()!, () => 1);
                     const leftTop = self().leftTop()!;
-                    parsedDAttr.iterate((s, i, x, y) => {
-                        if (s[0] === "V") {
-                            s[1] /* y */ = v(x, s[1]).sub(leftTop).mul(ratio).add(leftTop).y;
-                            if (isRelative[i]) {
-                                s[0] = "v";
-                                s[1] -= y;
-                            }
-                        } else if (s[0] === "H") {
-                            s[1] /* x */ = v(s[1], y).sub(leftTop).mul(ratio).add(leftTop).x;
-                            if (isRelative[i]) {
-                                s[0] = "h";
-                                s[1] -= x;
-                            }
+                    parsedDAttr.safeIterate(([s, ...t], i, p) => {
+                        if (s === "V") {
+                            t[0] = v(p.x, t[0]).sub(leftTop).mul(ratio).add(leftTop).y;
+                        } else if (s === "H") {
+                            t[0] = v(t[0], p.y).sub(leftTop).mul(ratio).add(leftTop).x;
                         } else {
-                            for (let j = 1; j < s.length; j += 2) {
-                                const ctrlPoint = v(s[j], s[j + 1]).sub(leftTop).mul(ratio).add(leftTop);
-                                s[j] = ctrlPoint.x;
-                                s[j + 1] = ctrlPoint.y;
-                                if (isRelative[i]) {
-                                    s[j] -= x;
-                                    s[j + 1] -= y;
-                                }
+                            for (let j = 0; j < t.length; j += 2) {
+                                const ctrlPoint = v(t[j], t[j + 1]).sub(leftTop).mul(ratio).add(leftTop);
+                                t[j] = ctrlPoint.x;
+                                t[j + 1] = ctrlPoint.y;
                             }
-                            if (isRelative[i]) s[0] = s[0].toLowerCase();
                         }
+                        return [s, ...t];
                     });
                     pe.attrs.d = parsedDAttr.segments;
                     self().center(oldCenter);
                 } else {
-                    const parsedDAttr = svgpath2();
-                    parsedDAttr.segments = pe.attrs.d || [];
+                    const parsedDAttr = svgPathManager(pe.attrs.d || []);
                     const vertexes = parsedDAttr.getVertexes();
                     const minX = Math.min(...vertexes.map(vec2 => vec2.x));
                     const maxX = Math.max(...vertexes.map(vec2 => vec2.x));
