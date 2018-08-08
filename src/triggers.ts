@@ -3,6 +3,7 @@ import * as selectMode from "./selectMode";
 import * as rectMode from "./rectMode";
 import * as ellipseMode from "./ellipseMode";
 import * as polylineMode from "./polylineMode";
+import * as pathMode from "./pathMode";
 import { ColorPicker } from "./colorPicker";
 import tinycolor from "tinycolor2";
 import { clearEventListeners, map, assertNever } from "./utils";
@@ -17,6 +18,7 @@ function changeMode(mode: EditMode) {
     rectMode.breakaway();
     ellipseMode.breakaway();
     polylineMode.breakaway();
+    pathMode.breakaway();
     setEditMode(mode);
 }
 
@@ -33,6 +35,9 @@ export function onShapeMouseDown(event: MouseEvent, uu: string) {
         break;
         case "polyline":
         polylineMode.onShapeMouseDown(event, uu, () => changeMode("select"));
+        break;
+        case "path":
+        pathMode.onShapeMouseDown(event, uu, () => changeMode("select"));
         break;
         default:
         assertNever(editMode);
@@ -58,6 +63,9 @@ export function onDocumentMouseMove(event: MouseEvent) {
         case "polyline":
         polylineMode.onDocumentMouseMove(event);
         break;
+        case "path":
+        pathMode.onDocumentMouseMove(event);
+        break;
         default:
         assertNever(editMode);
     }
@@ -75,6 +83,9 @@ export function onDocumentMouseUp(event: MouseEvent) {
         ellipseMode.onDocumentMouseUp(event);
         break;
         case "polyline":
+        return;
+        case "path":
+        pathMode.onDocumentMouseUp(event);
         return;
         default:
         assertNever(editMode);

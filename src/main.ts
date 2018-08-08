@@ -11,7 +11,7 @@ declare function acquireVsCodeApi(): any;
 const vscode = acquireVsCodeApi();
 
 // global variables
-export type EditMode = "select" | "rect" | "ellipse" | "polyline";
+export type EditMode = "select" | "rect" | "ellipse" | "polyline" | "path";
 export let svgdata: ParsedElement;
 export let svgVirtualMap: {[uu: string]: ParsedElement} = {};
 export let svgRealMap: {[uu: string]: Element} = {};
@@ -38,26 +38,15 @@ const menuSelect = document.getElementById("svgeditor-menu-select")!;
 const menuRect = document.getElementById("svgeditor-menu-rect")!;
 const menuEllipse = document.getElementById("svgeditor-menu-ellipse")!;
 const menuPolyline = document.getElementById("svgeditor-menu-polyline")!;
+const menuPath = document.getElementById("svgeditor-menu-path")!;
 
 export function setEditMode(mode: EditMode) {
-    [menuSelect, menuRect, menuEllipse].forEach(elem => elem.classList.remove("svgeditor-selected"));
-    editMode = mode;
-    switch (mode) {
-        case "select":
-        menuSelect.classList.add("svgeditor-selected");
-        break;
-        case "rect":
-        menuRect.classList.add("svgeditor-selected");
-        break;
-        case "ellipse":
-        menuEllipse.classList.add("svgeditor-selected");
-        break;
-        case "polyline":
-        menuPolyline.classList.add("svgeditor-selected");
-        break;
-        default:
-        assertNever(mode);
+    document.querySelectorAll(`li[id^="svgeditor-menu"]`).forEach(elem => elem.classList.remove("svgeditor-selected"));
+    const menuCurrent = document.getElementById(`svgeditor-menu-${mode}`);
+    if (menuCurrent) {
+        menuCurrent.classList.add("svgeditor-selected");
     }
+    editMode = mode;
 }
 
 const debugMessage = document.getElementById("svgeditor-message")!;
@@ -98,6 +87,7 @@ menuSelect.addEventListener("click", event => onMenuButtonClick(event, "select")
 menuRect.addEventListener("click", event => onMenuButtonClick(event, "rect"));
 menuEllipse.addEventListener("click", event => onMenuButtonClick(event, "ellipse"));
 menuPolyline.addEventListener("click", event => onMenuButtonClick(event, "polyline"));
+menuPath.addEventListener("click", event => onMenuButtonClick(event, "path"));
 // color pickers
 colorPickerDiv.addEventListener("click", (event) => event.stopPropagation());
 colorBoxFill.addEventListener("click", (event) => onColorBoxClick(event, colorBoxFill, colorPickerDiv, colorPickerSelector, "fill"));
