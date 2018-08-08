@@ -61,7 +61,7 @@ export class SvgTag {
         if (value !== null) {
             const parsedDAttr = svgpath2();
             parsedDAttr.segments = value;
-            this.data.attrs[key] = <string>parsedDAttr.toString();
+            this.data.attrs[key] = parsedDAttr.toString();
         }
         return this;
     }

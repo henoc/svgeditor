@@ -50,6 +50,14 @@ class SvgPath2 extends SvgPath {
         });
         return acc;
     }
+
+    /**
+     * No optimize version of toString.
+     */
+    toString(): string {
+        this.evaluateStack();
+        return this.segments.map(s => s.join(" ")).join(" ");
+    }
 }
 
 export function svgpath2(path?: string): SvgPath2 {
