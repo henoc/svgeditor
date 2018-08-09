@@ -4,7 +4,7 @@ import { shaper } from "./shapes";
 import { SvgTag } from "./svg";
 
 type ShapeHandlers = Element[];
-let shapeHanlders: ShapeHandlers = [];
+let shapeHandlers: ShapeHandlers = [];
 
 let selectedShapeUuid: string | null = null;
 let isDraggingShape: boolean = false;
@@ -20,7 +20,7 @@ export function onShapeMouseDown(event: MouseEvent, uu: string) {
     if (svgVirtualMap[uu].isRoot) {
         selectedShapeUuid = null;
         selectedHandlerIndex = null;
-        shapeHanlders = [];
+        shapeHandlers = [];
         refleshContent();
     } else {
         selectedShapeUuid = uu;
@@ -38,7 +38,7 @@ export function onDocumentMouseMove(event: MouseEvent) {
         if (!pe.isRoot) {
             if (isDraggingShape && startCursorPos && startShapeCenter) {
                 shaper(pe, re).center(startShapeCenter.add(currentCursorPos.sub(startCursorPos)));
-                refleshContent({shapeHandlers: shapeHanlders = createShapeHandlers(selectedShapeUuid)});
+                refleshContent({shapeHandlers: shapeHandlers = createShapeHandlers(selectedShapeUuid)});
             } else if (isDraggingHandler && startCursorPos && startShapeFixedPoint && startShapeSize) {
                 const diff =  currentCursorPos.sub(startCursorPos).mul(v(startCursorPos.x - startShapeFixedPoint.x > 0 ? 1 : -1, startCursorPos.y - startShapeFixedPoint.y > 0 ? 1 : -1));
                 if (selectedHandlerIndex === 1 || selectedHandlerIndex === 7) diff.x = 0;
@@ -49,7 +49,7 @@ export function onDocumentMouseMove(event: MouseEvent) {
                 debugLog("selectMode", `index: ${selectedHandlerIndex}, currentSize: ${currentSize}, diff: ${diff}, fixedPoint: ${startShapeFixedPoint}
                 pe.tag: ${pe.tag}`);
                 shaper(pe, re).size2(currentSize, startShapeFixedPoint);
-                refleshContent({shapeHandlers: shapeHanlders = createShapeHandlers(selectedShapeUuid)});
+                refleshContent({shapeHandlers: shapeHandlers = createShapeHandlers(selectedShapeUuid)});
             }
         }
     }
@@ -99,8 +99,8 @@ function onShapeHandlerMouseDown(event: MouseEvent, index: number) {
     isDraggingHandler = true;
     startShapeFixedPoint =
         v(
-            Number(shapeHanlders[8 - index].getAttribute("cx")),
-            Number(shapeHanlders[8 - index].getAttribute("cy"))
+            Number(shapeHandlers[8 - index].getAttribute("cx")),
+            Number(shapeHandlers[8 - index].getAttribute("cy"))
         );
     if (selectedShapeUuid) {
         const pe = svgVirtualMap[selectedShapeUuid];

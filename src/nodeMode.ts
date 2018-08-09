@@ -2,6 +2,7 @@ import { svgVirtualMap, refleshContent, svgRealMap, sendBackToEditor, debugLog }
 import { SvgTag } from "./svg";
 import { svgPathManager } from "./pathHelpers";
 import { Vec2, v } from "./utils";
+import { PathCommand } from "./domParser";
 
 let shapeHandlers: Element[] = [];
 let selectedShapeUuid: string | null = null;
@@ -21,6 +22,79 @@ export function onShapeMouseDown(event: MouseEvent, uu: string) {
     }
 }
 
+export function onDocumentMouseMove(event: MouseEvent) {
+    let cursor = v(event.offsetX, event.offsetY);
+    if (selectedShapeUuid && isDraggingHandler && selectedHandlerIndex !== null) {
+        const selected = svgVirtualMap[selectedShapeUuid];
+        if (selected.tag === "polyline" && selected.attrs.points) {
+            selected.attrs.points[selectedHandlerIndex] = cursor;
+        } else if (selected.tag === "path" && selected.attrs.d) {
+            let i = 0;
+            svgPathManager(selected.attrs.d).safeIterate(([s, ...t], _, start) => {
+                switch (s) {
+                    case "M":
+                    case "L":
+                    if (i++ === selectedHandlerIndex) {
+                        return [s, ...cursor];
+                    }
+                    break;
+                    case "H":
+                    if (i++ === selectedHandlerIndex) {
+                        return [s, cursor.x];
+                    }
+                    break;
+                    case "V":
+                    if (i++ === selectedHandlerIndex) {
+                        return [s, cursor.y];
+                    }
+                    break;
+                    case "C":
+                    if (i++ === selectedHandlerIndex) {
+                        return <PathCommand>[s, ...cursor, ...t.slice(2)];
+                    }
+                    if (i++ === selectedHandlerIndex) {
+                        return <PathCommand>[s, t[0], t[1], ...cursor, t[4], t[5]];
+                    }
+                    if (i++ === selectedHandlerIndex) {
+                        return <PathCommand>[s, ...t.slice(0, 4), ...cursor];
+                    }
+                    break;
+                    case "S":
+                    if (i++ === selectedHandlerIndex) {
+                        return <PathCommand>[s, ...cursor, t[2], t[3]];
+                    }
+                    if (i++ === selectedHandlerIndex) {
+                        return <PathCommand>[s, t[0], t[1], ...cursor];
+                    }
+                    break;
+                    case "Q":
+                    if (i++ === selectedHandlerIndex) {
+                        return <PathCommand>[s, ...cursor, t[2], t[3]];
+                    }
+                    if (i++ === selectedHandlerIndex) {
+                        return <PathCommand>[s, t[0], t[1], ...cursor];
+                    }
+                    break;
+                    case "T":
+                    if (i++ === selectedHandlerIndex) {
+                        return <PathCommand>[s, ...cursor];
+                    }
+                    break;
+                    case "A":
+                    case "Z":
+                    break;
+                }
+            });
+        }
+        refleshContent({shapeHandlers: shapeHandlers = createShapeHandlers(selectedShapeUuid)});        
+    }
+}
+
+export function onDocumentMouseUp(event: MouseEvent) {
+    isDraggingHandler = false;
+    sendBackToEditor();
+}
+
 function createShapeHandlers(uu: string): Element[] {
     const selected = svgVirtualMap[uu];
     const elems: Element[] = [];
@@ -35,7 +109,7 @@ function createShapeHandlers(uu: string): Element[] {
         e.addEventListener("mousedown", event => onShapeHandlerMouseDown(<MouseEvent>event, index));
         elems.push(e);
     }
-    const registCtrlPoint = (p: Vec2, index: number | null, ...froms: Vec2[]) => {
+    const registCtrlPoint = (p: Vec2, index: number | null /* fake ctrl point if index is null */, ...froms: Vec2[]) => {
         const e = new SvgTag("circle")
             .attr("r", 5)
             .attr("cx", p.x)
@@ -43,6 +117,7 @@ function createShapeHandlers(uu: string): Element[] {
             .class("svgeditor-shape-handler" + (index === null && "-fake" || ""))
             .build();
         if (index !== null) e.addEventListener("mousedown", event => onShapeHandlerMouseDown(<MouseEvent>event, index));
+        else e.addEventListener("mousedown", event => event.stopPropagation());
         for (let from of froms) {
             const l = new SvgTag("line")
                 .attr("x1", from.x)
@@ -111,4 +186,8 @@ function onShapeHandlerMouseDown(event: MouseEvent, index: number) {
     event.stopPropagation();
     selectedHandlerIndex = index;
     isDraggingHandler = true;
+}
+
+export function breakaway() {
+
 }

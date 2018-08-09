@@ -4,6 +4,7 @@ import * as rectMode from "./rectMode";
 import * as ellipseMode from "./ellipseMode";
 import * as polylineMode from "./polylineMode";
 import * as pathMode from "./pathMode";
+import * as nodeMode from "./nodeMode";
 import { ColorPicker } from "./colorPicker";
 import tinycolor from "tinycolor2";
 import { clearEventListeners, map, assertNever } from "./utils";
@@ -15,6 +16,7 @@ export function onMenuButtonClick(event: MouseEvent, mode: EditMode) {
 
 function changeMode(mode: EditMode) {
     selectMode.breakaway();
+    nodeMode.breakaway();
     rectMode.breakaway();
     ellipseMode.breakaway();
     polylineMode.breakaway();
@@ -27,6 +29,9 @@ export function onShapeMouseDown(event: MouseEvent, uu: string) {
         case "select":
         selectMode.onShapeMouseDown(event, uu);
         break;
+        case "node":
+        nodeMode.onShapeMouseDown(event, uu);
+        break;
         case "rect":
         rectMode.onShapeMouseDown(event, uu);
         break;
@@ -34,10 +39,10 @@ export function onShapeMouseDown(event: MouseEvent, uu: string) {
         ellipseMode.onShapeMouseDown(event, uu);
         break;
         case "polyline":
-        polylineMode.onShapeMouseDown(event, uu, () => changeMode("select"));
+        polylineMode.onShapeMouseDown(event, uu, () => changeMode("node"));
         break;
         case "path":
-        pathMode.onShapeMouseDown(event, uu, () => changeMode("select"));
+        pathMode.onShapeMouseDown(event, uu, () => changeMode("node"));
         break;
         default:
         assertNever(editMode);
@@ -53,6 +58,9 @@ export function onDocumentMouseMove(event: MouseEvent) {
     switch (editMode) {
         case "select":
         selectMode.onDocumentMouseMove(event);
+        break;
+        case "node":
+        nodeMode.onDocumentMouseMove(event);
         break;
         case "rect":
         rectMode.onDocumentMouseMove(event);
@@ -76,6 +84,9 @@ export function onDocumentMouseUp(event: MouseEvent) {
         case "select":
         selectMode.onDocumentMouseUp(event);
         break;
+        case "node":
+        nodeMode.onDocumentMouseUp(event);
+        return;
         case "rect":
         rectMode.onDocumentMouseUp(event);
         break;

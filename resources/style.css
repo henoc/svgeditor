@@ -56,6 +56,22 @@ select option {
     stroke: var(--vscode-activityBarBadge-foreground);
     stroke-width: 1px;
 }
+.svgeditor-shape-handler-line {
+    stroke: var(--vscode-activityBarBadge-foreground);
+    stroke-width: 2px;
+}
+.svgeditor-shape-handler-fake {
+    fill: var(--vscode-activityBarBadge-background);
+    stroke: var(--vscode-activityBarBadge-foreground);
+    stroke-width: 1px;
+    opacity: 0.5;
+}
+.svgeditor-shape-handler-line-fake {
+    stroke: var(--vscode-activityBarBadge-foreground);
+    stroke-width: 2px;
+    stroke-dasharray: 4px;
+    opacity: 0.5;
+}
 #svgeditor-colorpicker {
     display: none;
     padding: 0.5em;

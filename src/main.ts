@@ -11,7 +11,7 @@ declare function acquireVsCodeApi(): any;
 const vscode = acquireVsCodeApi();
 
 // global variables
-export type EditMode = "select" | "rect" | "ellipse" | "polyline" | "path";
+export type EditMode = "select" | "node" | "rect" | "ellipse" | "polyline" | "path";
 export let svgdata: ParsedElement;
 export let svgVirtualMap: {[uu: string]: ParsedElement} = {};
 export let svgRealMap: {[uu: string]: Element} = {};
@@ -35,6 +35,7 @@ reflectPaint(drawState.stroke, colorBoxStroke);
 const colorPickerSelector = <HTMLSelectElement>document.getElementById("svgeditor-colorpicker-selector")!;
 const colorPickerDiv = document.getElementById("svgeditor-colorpicker")!;
 const menuSelect = document.getElementById("svgeditor-menu-select")!;
+const menuNode = document.getElementById("svgeditor-menu-node")!;
 const menuRect = document.getElementById("svgeditor-menu-rect")!;
 const menuEllipse = document.getElementById("svgeditor-menu-ellipse")!;
 const menuPolyline = document.getElementById("svgeditor-menu-polyline")!;
@@ -84,6 +85,7 @@ window.addEventListener("message", event => {
 });
 // menu
 menuSelect.addEventListener("click", event => onMenuButtonClick(event, "select"));
+menuNode.addEventListener("click", event => onMenuButtonClick(event, "node"));
 menuRect.addEventListener("click", event => onMenuButtonClick(event, "rect"));
 menuEllipse.addEventListener("click", event => onMenuButtonClick(event, "ellipse"));
 menuPolyline.addEventListener("click", event => onMenuButtonClick(event, "polyline"));

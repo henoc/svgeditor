@@ -11,6 +11,9 @@ export function map<T>(obj: any, fn: (key: string, value: any, index: number) =>
 export class Vec2 {
     constructor(public x: number, public y: number) {
     }
+    [Symbol.iterator]() {
+        return [this.x, this.y][Symbol.iterator]();
+    }
     add(that: Vec2) {
         return v(this.x + that.x, this.y + that.y);
     }
