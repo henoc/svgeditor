@@ -1,21 +1,23 @@
 import { construct, makeUuidVirtualMap, makeUuidRealMap } from "./svgConstructor";
 import { ParsedElement, isLengthUnit, LengthUnit, Paint } from "./domParser";
 import { SvgTag } from "./svg";
-import { onAaaMouseDown, onDocumentMouseMove, onDocumentMouseUp, onColorBoxClick, onDocumentClick, onMenuButtonClick } from "./triggers";
+import { onAaaMouseDown, onDocumentMouseMove, onDocumentMouseUp, onColorBoxClick, onDocumentClick, onMenuButtonClick, onDocumentMouseLeave } from "./triggers";
 import { ColorPicker } from "./colorPicker";
 import { ActiveContents, assertNever } from "./utils";
 import { reflectPaint } from "./colorBox";
+import { Mode } from "./modeInterface";
+import { SelectMode } from "./selectMode";
 
 declare function acquireVsCodeApi(): any;
 
 const vscode = acquireVsCodeApi();
 
 // global variables
-export type EditMode = "select" | "node" | "rect" | "ellipse" | "polyline" | "path";
+export type ModeName = "select" | "node" | "rect" | "ellipse" | "polyline" | "path";
 export let svgdata: ParsedElement;
 export let svgVirtualMap: {[uu: string]: ParsedElement} = {};
 export let svgRealMap: {[uu: string]: Element} = {};
-export let editMode: EditMode = "select";
+export let editMode: Mode = new SelectMode();
 export let openContents: {[id: string]: HTMLElement} = {};
 export let activeContents = new ActiveContents();
 export const configuration = {
@@ -41,9 +43,9 @@ const menuEllipse = document.getElementById("svgeditor-menu-ellipse")!;
 const menuPolyline = document.getElementById("svgeditor-menu-polyline")!;
 const menuPath = document.getElementById("svgeditor-menu-path")!;
 
-export function setEditMode(mode: EditMode) {
+export function setEditMode(name: ModeName, mode: Mode) {
     document.querySelectorAll(`li[id^="svgeditor-menu"]`).forEach(elem => elem.classList.remove("svgeditor-selected"));
-    const menuCurrent = document.getElementById(`svgeditor-menu-${mode}`);
+    const menuCurrent = document.getElementById(`svgeditor-menu-${name}`);
     if (menuCurrent) {
         menuCurrent.classList.add("svgeditor-selected");
     }
@@ -97,6 +99,7 @@ colorBoxStroke.addEventListener("click", (event) => onColorBoxClick(event, color
 // others
 document.addEventListener("mousemove", onDocumentMouseMove);
 document.addEventListener("mouseup", onDocumentMouseUp);
+document.addEventListener("mouseleave", onDocumentMouseLeave);
 document.addEventListener("click", onDocumentClick);
 aaa.addEventListener("mousedown", onAaaMouseDown);
 

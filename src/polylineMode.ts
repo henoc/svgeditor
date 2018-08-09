@@ -3,63 +3,75 @@ import uuidStatic from "uuid";
 import { ParsedElement } from "./domParser";
 import { v } from "./utils";
 import { shaper } from "./shapes";
+import { Mode } from "./modeInterface";
 
-let makeTargetUuid: string | null = null;
+export class PolylineMode implements Mode {
 
-export function onShapeMouseDown(event: MouseEvent, uu: string, finished: () => void) {
-    if (svgVirtualMap[uu].isRoot) {
-        const root = svgVirtualMap[uu];
-        event.stopPropagation();
-        const cursor = v(event.offsetX, event.offsetY);
-        if (root.tag === "svg") {
-            if (makeTargetUuid) {
-                const pe = svgVirtualMap[makeTargetUuid];
-                if (pe.tag === "polyline" && pe.attrs.points) {
-                    if (event.button === 0) {
+    makeTargetUuid: string | null = null;
+
+    constructor(public finished?: (uu: string | null) => void) {}
+
+    onShapeMouseDownLeft(event: MouseEvent, uu: string): void {
+        if (svgVirtualMap[uu].isRoot) {
+            const root = svgVirtualMap[uu];
+            event.stopPropagation();
+            const cursor = v(event.offsetX, event.offsetY);
+            if (root.tag === "svg") {
+                if (this.makeTargetUuid) {
+                    const pe = svgVirtualMap[this.makeTargetUuid];
+                    if (pe.tag === "polyline" && pe.attrs.points) {
                         pe.attrs.points.push(cursor);
-                    } else if (event.button === 2) {
-                        pe.attrs.points.pop();
-                        makeTargetUuid = null;
-                        finished();
                     }
-                }
-            } else {
-                makeTargetUuid = uuidStatic.v4();
-                const pe: ParsedElement = {
-                    uuid: makeTargetUuid,
-                    isRoot: false,
-                    tag: "polyline",
-                    attrs: {
-                        points: [cursor, cursor],
-                        fill: drawState.fill,
-                        stroke: drawState.stroke,
-                        class: null,
-                        id: null,
-                        unknown: {}
+                } else {
+                    this.makeTargetUuid = uuidStatic.v4();
+                    const pe: ParsedElement = {
+                        uuid: this.makeTargetUuid,
+                        isRoot: false,
+                        tag: "polyline",
+                        attrs: {
+                            points: [cursor, cursor],
+                            fill: drawState.fill,
+                            stroke: drawState.stroke,
+                            class: null,
+                            id: null,
+                            unknown: {}
+                        }
                     }
+                    root.children.push(pe);
+                    refleshContent();
+                    const re = svgRealMap[this.makeTargetUuid];
+                    shaper(pe, re).center(cursor);
                 }
-                root.children.push(pe);
                 refleshContent();
-                const re = svgRealMap[makeTargetUuid];
-                shaper(pe, re).center(cursor);
             }
-            refleshContent();
         }
     }
-}
-
-export function onDocumentMouseMove(event: MouseEvent) {
-    const cursor = v(event.offsetX, event.offsetY);
-    if (makeTargetUuid) {
-        const pe = svgVirtualMap[makeTargetUuid];
-        if (pe.tag === "polyline" && pe.attrs.points) {
-            const len = pe.attrs.points.length;
-            pe.attrs.points[len - 1] = cursor;
-            refleshContent();
+    onShapeMouseDownRight(event: MouseEvent, uu: string): void {
+        if (this.makeTargetUuid) {
+            const pe = svgVirtualMap[this.makeTargetUuid];
+            if (pe.tag === "polyline" && pe.attrs.points) {
+                pe.attrs.points.pop();
+                this.finished && this.finished(this.makeTargetUuid);
+            }
         }
     }
-}
+    onDocumentMouseMove(event: MouseEvent): void {
+        const cursor = v(event.offsetX, event.offsetY);
+        if (this.makeTargetUuid) {
+            const pe = svgVirtualMap[this.makeTargetUuid];
+            if (pe.tag === "polyline" && pe.attrs.points) {
+                const len = pe.attrs.points.length;
+                pe.attrs.points[len - 1] = cursor;
+                refleshContent();
+            }
+        }
+    }
+    onDocumentMouseUp(event: MouseEvent): void {
 
-export function breakaway() {
+    }
+    onDocumentMouseLeave(event: Event): void {
+        
+    }
+
 
 }
