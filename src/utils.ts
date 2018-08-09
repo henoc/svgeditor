@@ -32,6 +32,13 @@ export class Vec2 {
     toString() {
         return `(${this.x}, ${this.y})`;
     }
+    static of(...args: number[]): Vec2[] {
+        const acc: Vec2[] = [];
+        for (let i = 0; i + 1 < args.length; i+=2) {
+            acc.push(v(args[i], args[i+1]));
+        }
+        return acc;
+    }
 }
 
 export function v(x: number, y: number): Vec2 {
@@ -73,33 +80,3 @@ export class ActiveContents {
 export function assertNever(x: never): never {
     throw new Error("Unexpected object: " + x);
 }
-
-// export class EnhancedElem {
-//     public downFlag = false;
-//     public listeners: {[type: string]: {[key: string]: (event: Event) => void}} = {};
-
-//     constructor(public elem: Element) {
-//         elem.id || (elem.id = uuidStatic.v4());
-//     }
-//     onMouseDrag(start: (event: MouseEvent) => void, drag: (event: MouseEvent) => void, end: (event: MouseEvent) => void) {
-//         this.elem.addEventListener("mousedown", (ev) => {
-//             this.downFlag = true;
-//             start(<MouseEvent>ev);
-//         });
-//         document.addEventListener("mouseup", (ev) => {
-//             this.downFlag = false;
-//             end(ev);
-//         });
-//         document.addEventListener("mouseleave", (ev) => {
-//             this.downFlag = false;
-//             end(<MouseEvent>ev);
-//         });
-//         document.addEventListener("mousemove", (ev) => {
-//             if (this.downFlag) drag(ev);
-//         });
-//     }
-// }
-
-// export function enhanced(elem: Element): EnhancedElem {
-//     return new EnhancedElem(elem);
-// }
