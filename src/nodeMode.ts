@@ -119,8 +119,8 @@ export class NodeMode implements Mode {
             const e = new SvgTag("rect")
                 .attr("width", 10)
                 .attr("height", 10)
-                .attr("x", p.x)
-                .attr("y", p.y)
+                .attr("x", p.x - 5)
+                .attr("y", p.y - 5)
                 .class("svgeditor-shape-handler")
                 .build();
             e.addEventListener("mousedown", event => this.onShapeHandlerMouseDown(<MouseEvent>event, index));
