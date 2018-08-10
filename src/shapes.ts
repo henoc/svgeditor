@@ -1,7 +1,8 @@
 import { ParsedElement, Length } from "./domParser";
 import { Vec2, v } from "./utils";
-const units = require('units-css');
 import {svgPathManager} from "./pathHelpers";
+import { convertToPixel, convertFromPixel } from "./measureUnits";
+import { svgVirtualMap, svgRealMap } from "./main";
 
 interface ShaperFunctions {
     center: (point?: Vec2) => undefined | Vec2;
@@ -11,13 +12,17 @@ interface ShaperFunctions {
     size2: (newSize: Vec2, fixedPoint: Vec2) => void;
 }
 
-export function shaper(pe: ParsedElement, elem: Element): ShaperFunctions {
+/**
+ * Transform some shapes. Need to set the shape into `svgVirtualMap` and `svgRealMap` before use.
+ */
+export function shaper(uuid: string): ShaperFunctions {
+    const pe = svgVirtualMap[uuid];
     const px = (unitValue: Length | null) => {
-        return unitValue ? units.convert("px", `${unitValue.value}${unitValue.unit || ""}`, elem, unitValue.attrName) : 0;
+        return unitValue ? convertToPixel(unitValue, uuid) : 0;
     }
     const fromPx = (unitValue: Length | null, attrName: string, pxValue: number): Length => {
         return unitValue ?
-            {value: units.convert(unitValue.unit || "px", `${pxValue}px`, elem, unitValue.attrName), unit: unitValue.unit, attrName: unitValue.attrName} :
+            convertFromPixel({unit: "px", attrName, value: pxValue}, unitValue.unit, uuid) :
             {value: pxValue, unit: null, attrName};
     }
     const leftTop = (point?: Vec2) => {
@@ -30,7 +35,7 @@ export function shaper(pe: ParsedElement, elem: Element): ShaperFunctions {
             return cent.sub(size.div(v(2, 2)));
         }
     }
-    const self = () => shaper(pe, elem);
+    const self = () => shaper(uuid);
     const size2 = (newSize: Vec2, fixedPoint: Vec2) => {
         let oldSize = self().size()!;
         let center = self().center()!;

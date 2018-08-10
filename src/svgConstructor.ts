@@ -47,7 +47,11 @@ export function construct(pe: ParsedElement, options?: SvgConstructOptions): Ele
             case "svg":
             setBaseAttrs(pe.attrs, tag);
             makeChildren(pe.children, tag, options);
+            const viewBoxAttrStr = pe.attrs.viewBox && pe.attrs.viewBox.map(p => `${p.x} ${p.y}`).join(" ");
             return tag.attr("xmlns", pe.attrs.xmlns)
+                .attr("version", pe.attrs.version)
+                .attr("xmlns:xlink", pe.attrs["xmlns:xlink"])
+                .attr("viewBox", viewBoxAttrStr)
                 .uattr("width", pe.attrs.width)
                 .uattr("height", pe.attrs.height).build();
             case "circle":
@@ -77,7 +81,7 @@ export function construct(pe: ParsedElement, options?: SvgConstructOptions): Ele
                 .pattr("stroke", pe.attrs.stroke).build();
             case "polyline":
             setBaseAttrs(pe.attrs, tag);
-            const pointsStr = pe.attrs.points && pe.attrs.points.map(point => `${point.x},${point.y}`).join(" ") || null;
+            const pointsStr = pe.attrs.points && pe.attrs.points.map(point => `${point.x},${point.y}`).join(" ");
             return tag.attr("points", pointsStr)
                 .pattr("fill", pe.attrs.fill)
                 .pattr("stroke", pe.attrs.stroke).build();

@@ -27,6 +27,7 @@ export class PolylineMode implements Mode {
                     const pe: ParsedElement = {
                         uuid: this.makeTargetUuid,
                         isRoot: false,
+                        owner: uu,
                         tag: "polyline",
                         attrs: {
                             points: [cursor, cursor],
@@ -39,8 +40,7 @@ export class PolylineMode implements Mode {
                     }
                     root.children.push(pe);
                     refleshContent();
-                    const re = svgRealMap[this.makeTargetUuid];
-                    shaper(pe, re).center(cursor);
+                    shaper(this.makeTargetUuid).center(cursor);
                 }
                 refleshContent();
             }

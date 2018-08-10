@@ -24,6 +24,7 @@ export class EllipseMode implements Mode {
                 const pe: ParsedElement = {
                     uuid: this.dragTargetUuid,
                     isRoot: false,
+                    owner: uu,
                     tag: "ellipse",
                     attrs: {
                         cx: {unit: configuration.defaultUnit, value: 0, attrName: "cx"},
@@ -39,8 +40,7 @@ export class EllipseMode implements Mode {
                 };
                 root.children.push(pe);
                 refleshContent();   // make real Element
-                const re = svgRealMap[this.dragTargetUuid];
-                shaper(pe, re).center(this.startCursorPos);
+                shaper(this.dragTargetUuid).center(this.startCursorPos);
                 refleshContent();
             }
         }
@@ -51,12 +51,10 @@ export class EllipseMode implements Mode {
     onDocumentMouseMove(event: MouseEvent): void {
         const [cx, cy] = [event.offsetX, event.offsetY];
         if (this.isDragging && this.startCursorPos && this.dragTargetUuid) {
-            const pe = svgVirtualMap[this.dragTargetUuid];
-            const re = svgRealMap[this.dragTargetUuid];
             const leftTop = v(Math.min(cx, this.startCursorPos.x), Math.min(cy, this.startCursorPos.y));
             const size = v(Math.abs(cx - this.startCursorPos.x), Math.abs(cy - this.startCursorPos.y));
-            shaper(pe, re).size(size);
-            shaper(pe, re).leftTop(leftTop);
+            shaper(this.dragTargetUuid).size(size);
+            shaper(this.dragTargetUuid).leftTop(leftTop);
             refleshContent();
         }
     }

@@ -33,7 +33,7 @@ export class SelectMode implements Mode {
         } else {
             this.selectedShapeUuid = uu;
             this.startCursorPos = v(event.offsetX, event.offsetY);
-            this.startShapeCenter = shaper(svgVirtualMap[uu], svgRealMap[uu]).center()!;
+            this.startShapeCenter = shaper(uu).center()!;
             this.isDraggingShape = true;
             refleshContent({shapeHandlers: this.shapeHandlers = this.createShapeHandlers(this.selectedShapeUuid)});
         }
@@ -45,10 +45,9 @@ export class SelectMode implements Mode {
         let currentCursorPos = v(event.offsetX, event.offsetY);
         if (this.selectedShapeUuid) {
             const pe = svgVirtualMap[this.selectedShapeUuid];
-            const re = svgRealMap[this.selectedShapeUuid];
             if (!pe.isRoot) {
                 if (this.isDraggingShape && this.startCursorPos && this.startShapeCenter) {
-                    shaper(pe, re).center(this.startShapeCenter.add(currentCursorPos.sub(this.startCursorPos)));
+                    shaper(this.selectedShapeUuid).center(this.startShapeCenter.add(currentCursorPos.sub(this.startCursorPos)));
                     refleshContent({shapeHandlers: this.shapeHandlers = this.createShapeHandlers(this.selectedShapeUuid)});
                 } else if (this.isDraggingHandler && this.startCursorPos && this.startShapeFixedPoint && this.startShapeSize) {
                     const diff =  currentCursorPos.sub(this.startCursorPos).mul(v(this.startCursorPos.x - this.startShapeFixedPoint.x > 0 ? 1 : -1, this.startCursorPos.y - this.startShapeFixedPoint.y > 0 ? 1 : -1));
@@ -59,7 +58,7 @@ export class SelectMode implements Mode {
                     if (currentSize.y < 0) currentSize.y = 0;
                     debugLog("selectMode", `index: ${this.selectedHandlerIndex}, currentSize: ${currentSize}, diff: ${diff}, fixedPoint: ${this.startShapeFixedPoint}
                     pe.tag: ${pe.tag}`);
-                    shaper(pe, re).size2(currentSize, this.startShapeFixedPoint);
+                    shaper(this.selectedShapeUuid).size2(currentSize, this.startShapeFixedPoint);
                     refleshContent({shapeHandlers: this.shapeHandlers = this.createShapeHandlers(this.selectedShapeUuid)});
                 }
             }
@@ -77,8 +76,8 @@ export class SelectMode implements Mode {
         this.onDocumentMouseUp();
     }
     private createShapeHandlers(uu: string): Element[] {
-        const center = shaper(svgVirtualMap[uu], svgRealMap[uu]).center()!;
-        const halfSize = shaper(svgVirtualMap[uu], svgRealMap[uu]).size()!.div(v(2, 2));
+        const center = shaper(uu).center()!;
+        const halfSize = shaper(uu).size()!.div(v(2, 2));
         const leftTop = center.sub(halfSize);
         const elems: Element[] = [];
         for (let i = 0; i < 9; i++) {
@@ -115,9 +114,7 @@ export class SelectMode implements Mode {
                 Number(this.shapeHandlers[8 - index].getAttribute("cy"))
             );
         if (this.selectedShapeUuid) {
-            const pe = svgVirtualMap[this.selectedShapeUuid];
-            const re = svgRealMap[this.selectedShapeUuid];
-            this.startShapeSize = shaper(pe, re).size()!;
+            this.startShapeSize = shaper(this.selectedShapeUuid).size()!;
         }
     }
 }

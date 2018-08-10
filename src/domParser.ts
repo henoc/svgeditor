@@ -26,6 +26,7 @@ export type ParsedElement = (
 ) & {
     uuid: string;
     isRoot: boolean;
+    owner: string | null;  // uuid of owner svg element. null if it's outermost one
 }
 
 interface ParsedSvgElement {
@@ -80,6 +81,7 @@ interface ParsedSvgAttr extends ParsedBaseAttr {
     version: number | null;
     width: Length | null;
     height: Length | null;
+    viewBox: [Point, Point] | null;
 }
 
 interface ParsedCircleAttr extends ParsedBaseAttr {
@@ -122,7 +124,7 @@ interface ParsedPathAttr extends ParsedBaseAttr {
     stroke: Paint | null;
 }
 
-export type LengthUnit = "%" | "ch" | "cm" | "em" | "ex" | "in" | "mm" | "pc" | "pt" | "px" | null;
+export type LengthUnit = "em" | "ex" | "px" | "in" | "cm" | "mm" | "pt" | "pc" | "%" | null;
 
 export interface Length {
     unit: LengthUnit;
@@ -131,7 +133,7 @@ export interface Length {
 }
 
 export function isLengthUnit(unit: string | null): unit is LengthUnit {
-    return unit === null || ["%" , "ch" , "cm" , "em" , "ex" , "in" , "mm" , "pc" , "pt" , "px"].indexOf(unit) !== -1;
+    return unit === null || ["em" , "ex" , "px" , "in" , "cm" , "mm" , "pt" , "pc" , "%"].indexOf(unit) !== -1;
 }
 
 export type PaintFormat = "none" | "currentColor" | "inherit" | "name" | "hex" | "hex6" | "hex3" | "hex4" | "hex8" | "rgb" | "prgb" | "hsl";
@@ -151,36 +153,37 @@ export interface Point {
 
 export type PathCommand = [string, ...number[]]
 
-export function parse(element: xmldoc.XmlElement, isRoot?: boolean): ParsedResult {
+export function parse(element: xmldoc.XmlElement, owner: string | null): ParsedResult {
     const uuid = uuidStatic.v4();
+    const isRoot = owner === null;
     const warns: Warning[] = [];
     const pushWarns = (warn: Warning | Warning[]) => {
         if (Array.isArray(warn)) warns.push(...warn);
         else warns.push(warn);
     }
-    const children = parseChildren(element, pushWarns);
+    const children = parseChildren(element, pushWarns, element.name === "svg" ? uuid : owner);
     const text = element.val;
     if (element.name === "svg") {
         const attrs = parseAttrs(element, pushWarns).svg();
-        return {result: {tag: "svg", attrs, children, uuid, isRoot: !!isRoot}, warns};
+        return {result: {tag: "svg", attrs, children, uuid, owner, isRoot}, warns};
     } else if (element.name === "circle") {
         const attrs = parseAttrs(element, pushWarns).circle();
-        return {result: {tag: "circle", attrs, uuid, isRoot: !!isRoot}, warns};
+        return {result: {tag: "circle", attrs, uuid, owner, isRoot}, warns};
     } else if (element.name === "rect") {
         const attrs = parseAttrs(element, pushWarns).rect();
-        return {result: {tag: "rect", attrs, uuid, isRoot: !!isRoot}, warns};
+        return {result: {tag: "rect", attrs, uuid, owner, isRoot}, warns};
     } else if (element.name === "ellipse") {
         const attrs = parseAttrs(element, pushWarns).ellipse();
-        return {result: {tag: "ellipse", attrs, uuid, isRoot: !!isRoot}, warns};
+        return {result: {tag: "ellipse", attrs, uuid, owner, isRoot}, warns};
     } else if (element.name === "polyline") {
         const attrs = parseAttrs(element, pushWarns).polyline();
-        return {result: {tag: "polyline", attrs, uuid, isRoot: !!isRoot}, warns};
+        return {result: {tag: "polyline", attrs, uuid, owner, isRoot}, warns};
     } else if (element.name === "path") {
         const attrs = parseAttrs(element, pushWarns).path();
-        return {result: {tag: "path", attrs, uuid, isRoot: !!isRoot}, warns};
+        return {result: {tag: "path", attrs, uuid, owner, isRoot}, warns};
     } else {
         const attrs: Assoc = element.attr;
-        return {result: {tag: "unknown", tag$real: element.name, attrs, children, text, uuid, isRoot: !!isRoot}, warns: [{range: toRange(element), message: `${element.name} is unsupported element.`}]};
+        return {result: {tag: "unknown", tag$real: element.name, attrs, children, text, uuid, owner, isRoot}, warns: [{range: toRange(element), message: `${element.name} is unsupported element.`}]};
     }
 }
 
@@ -188,12 +191,12 @@ function toRange(element: xmldoc.XmlElement) {
     return {line: element.line, column: element.column, position: element.position, startTagPosition: element.startTagPosition};
 }
 
-function parseChildren(element: xmldoc.XmlElement, onWarns: (warns: Warning[]) => void) {
+function parseChildren(element: xmldoc.XmlElement, onWarns: (warns: Warning[]) => void, owner: string | null) {
     const children = [];
     const warns = [];
     for (let item of element.children ) {
         if (item.type === "element") {
-            const ret = parse(item);
+            const ret = parse(item, owner);
             if (ret.result) children.push(ret.result);
             warns.push(...ret.warns);
         }
@@ -227,6 +230,7 @@ function parseAttrs(element: xmldoc.XmlElement, onWarns: (ws: Warning[]) => void
                 height: (tmp = pop(attrs, "height")) && lengthAttr(tmp, element, pushWarns) || null,
                 "xmlns:xlink": pop(attrs, "xmlns:xlink").value,
                 version: (tmp = pop(attrs, "version")) && tmp.value && numberAttr(tmp.value, element, pushWarns) || null,
+                viewBox: (tmp = pop(attrs, "viewBox")) && tmp.value && viewBoxAttr(tmp.value, element, pushWarns) || null,
                 unknown: unknownAttrs(attrs, element, pushWarns)
             });
             onWarns(warns);
@@ -333,6 +337,16 @@ function numberAttr(maybeNumber: string, element: xmldoc.XmlElement, onWarn: (w:
     } else {
         onWarn({range: toRange(element), message: `${maybeNumber} is not a number.`});
         return void 0;
+    }
+}
+
+function viewBoxAttr(maybeViewBox: string, element: xmldoc.XmlElement, onWarn: (w: Warning) => void): [Point, Point] | undefined {
+    const ret = pointsAttr(maybeViewBox, element, onWarn);
+    if (ret.length !== 2) {
+        onWarn({range: toRange(element), message: `${maybeViewBox} is a invalid viewBox value.`});
+        return void 0;
+    } else {
+        return [ret[0], ret[1]];
     }
 }
 

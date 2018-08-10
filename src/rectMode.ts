@@ -24,6 +24,7 @@ export class RectMode implements Mode {
                 const pe: ParsedElement = {
                     uuid: this.dragTargetUuid,
                     isRoot: false,
+                    owner: uu,
                     tag: "rect",
                     attrs: {
                         x: {unit: configuration.defaultUnit, value: 0, attrName: "x"},
@@ -41,8 +42,7 @@ export class RectMode implements Mode {
                 };
                 root.children.push(pe);
                 refleshContent();   // make real Element
-                const re = svgRealMap[this.dragTargetUuid];
-                shaper(pe, re).leftTop(this.startCursorPos);
+                shaper(this.dragTargetUuid).leftTop(this.startCursorPos);
                 refleshContent();
             }
         }
@@ -53,12 +53,10 @@ export class RectMode implements Mode {
     onDocumentMouseMove(event: MouseEvent): void {
         const [cx, cy] = [event.offsetX, event.offsetY];
         if (this.isDragging && this.startCursorPos && this.dragTargetUuid) {
-            const pe = svgVirtualMap[this.dragTargetUuid];
-            const re = svgRealMap[this.dragTargetUuid];
             const leftTop = v(Math.min(cx, this.startCursorPos.x), Math.min(cy, this.startCursorPos.y));
             const size = v(Math.abs(cx - this.startCursorPos.x), Math.abs(cy - this.startCursorPos.y));
-            shaper(pe, re).size(size);
-            shaper(pe, re).leftTop(leftTop);
+            shaper(this.dragTargetUuid).size(size);
+            shaper(this.dragTargetUuid).leftTop(leftTop);
             refleshContent();
         }
     }
