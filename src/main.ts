@@ -115,9 +115,11 @@ export function refleshContent(options?: {shapeHandlers: Element[]}) {
         // CSS needs "px", number only is invalid!
         aaa.style.width = svgdata.tag === "svg" && svgdata.attrs.width && `${svgdata.attrs.width.value}${svgdata.attrs.width.unit || "px"}` || "400px";
         aaa.style.height = svgdata.tag === "svg" && svgdata.attrs.height && `${svgdata.attrs.height.value}${svgdata.attrs.height.unit || "px"}` || "400px";
+        const outerFontEnv = getComputedStyle(aaa).font || "";
+        const container = new SvgTag("svg").attr("xmlns", "http://www.w3.org/2000/svg").attr("width", aaa.style.width).attr("height", aaa.style.height).attr("style", `font:${outerFontEnv}`).children(elem).build();
         aaa.insertAdjacentElement(
             "beforeend",
-            new SvgTag("img").setOptions({ isSvg: false }).class("svgeditor-svg-image").attr("src", `data:image/svg+xml,${encodeURIComponent(elem.outerHTML)}`).build()
+            new SvgTag("img").setOptions({ isSvg: false }).class("svgeditor-svg-image").attr("src", `data:image/svg+xml,${encodeURIComponent(container.outerHTML)}`).build()
         );
     }
 

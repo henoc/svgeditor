@@ -30,7 +30,7 @@ export function convertToPixel(length: Length, uuid: string): number {
         return length.value * fsize;
 
         case "ex":
-        return length.value * getCreatedElementDimensions(re, {}, "x").y;
+        return length.value * getCreatedElementDimensions(document.body, {font: getComputedStyle(re).font || ""}, "x").y;
 
         case "in":
         return length.value * dpi;
@@ -93,7 +93,7 @@ export function convertFromPixel(length: Length, targetUnit: LengthUnit, uuid: s
         return {
             unit: "ex",
             attrName: length.attrName,
-            value: length.value / getCreatedElementDimensions(re, {}, "x").y
+            value: length.value / getCreatedElementDimensions(document.body, {font: getComputedStyle(re).font || ""}, "x").y
         };
 
         case "in":
@@ -149,14 +149,14 @@ function getSvgBasePx(uuid: string, attrKind: "horizontal" | "vertical"): number
     return null;
 }
 
-function getCreatedElementDimensions(parent: Element, properties: Assoc, content?: string): Vec2 {
+function getCreatedElementDimensions(parent: Element, styleProps: Assoc, content?: string): Vec2 {
     const div = document.createElement("div");
     div.style.position = "absolute";
     div.style.zIndex = "-2147483648";
     div.style.left = "0";
     div.style.top = "0";
     div.style.visibility = "hidden";
-    Object.assign(div.style, properties);
+    Object.assign(div.style, styleProps);
     if (content) div.innerHTML = content;
     parent.insertAdjacentElement("beforeend", div);
     const ret = v(div.offsetWidth, div.offsetHeight);

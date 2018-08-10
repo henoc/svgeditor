@@ -40,7 +40,6 @@ select option {
     display: block;
     background-color: var(--vscode-sideBar-background);
     position: relative;
-    font-size: 16px;        /* for unit em. font-size in data URI scheme is 16px */
 }
 .svgeditor-svg-image {
     position: absolute;
