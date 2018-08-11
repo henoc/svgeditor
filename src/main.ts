@@ -7,6 +7,7 @@ import { ActiveContents, assertNever } from "./utils";
 import { reflectPaint } from "./colorBox";
 import { Mode } from "./modeInterface";
 import { SelectMode } from "./selectMode";
+import { elementVoid, elementOpen, elementClose, patch } from "incremental-dom";
 
 declare function acquireVsCodeApi(): any;
 
@@ -104,47 +105,42 @@ document.addEventListener("click", onDocumentClick);
 aaa.addEventListener("mousedown", onAaaMouseDown);
 
 
-export function refleshContent(options?: {shapeHandlers: Element[]}) {
+export function refleshContent(options?: {shapeHandlers: SvgTag[]}) {
     const shapeHandlers = options && options.shapeHandlers || [];
 
-    const elem = construct(svgdata, {all: configuration.showAll});
-    while(aaa.firstChild) {
-        aaa.removeChild(aaa.firstChild);
-    }
-    if (elem) {
+    const svgtag = construct(svgdata, {all: configuration.showAll});
+    const transparentSvgtag = construct(svgdata, {putUUIDAttribute: true, setListeners: true, transparent: true, all: configuration.showAll});
+    if (svgtag && transparentSvgtag) {
         // CSS needs "px", number only is invalid!
         aaa.style.width = svgdata.tag === "svg" && svgdata.attrs.width && `${svgdata.attrs.width.value}${svgdata.attrs.width.unit || "px"}` || "400px";
         aaa.style.height = svgdata.tag === "svg" && svgdata.attrs.height && `${svgdata.attrs.height.value}${svgdata.attrs.height.unit || "px"}` || "400px";
         const outerFontEnv = getComputedStyle(aaa).font || "";
-        const container = new SvgTag("svg").attr("xmlns", "http://www.w3.org/2000/svg").attr("width", aaa.style.width).attr("height", aaa.style.height).attr("style", `font:${outerFontEnv}`).children(elem).build();
-        aaa.insertAdjacentElement(
-            "beforeend",
-            new SvgTag("img").setOptions({ isSvg: false }).class("svgeditor-svg-image").attr("src", `data:image/svg+xml,${encodeURIComponent(container.outerHTML)}`).build()
-        );
-    }
+        const container = new SvgTag("svg").attr("xmlns", "http://www.w3.org/2000/svg").attr("width", aaa.style.width).attr("height", aaa.style.height).attr("style", `font:${outerFontEnv}`).children(svgtag);
+        const imgSvgtag = new SvgTag("img").setOptions({ isSvg: false }).class("svgeditor-svg-image").attr("src", `data:image/svg+xml,${encodeURIComponent(container.build().outerHTML)}`);
+        
+        transparentSvgtag.children(...shapeHandlers);
+        transparentSvgtag.class("svgeditor-svg-svg");
+        transparentSvgtag.rmAttr("opacity");
 
-    // overlay for cursor detection
-    const physicsElem = construct(svgdata, {putUUIDAttribute: true, setListeners: true, transparent: true, all: configuration.showAll});
-    svgVirtualMap = makeUuidVirtualMap(svgdata);
-    if (physicsElem) {
-        for (let handler of shapeHandlers) {
-            physicsElem.insertAdjacentElement("beforeend", handler);
+        const aaaRender = () => {
+            imgSvgtag.render();
+            transparentSvgtag.render();
         }
-        svgRealMap = makeUuidRealMap(physicsElem);
-        physicsElem.classList.add("svgeditor-svg-svg");
-        physicsElem.removeAttribute("opacity");
-        aaa.insertAdjacentElement(
-            "beforeend",
-            physicsElem
-        );
+
+        patch(aaa, aaaRender);
+
+        let transparentSvgRoot = document.querySelector("#aaa > svg");
+
+        svgVirtualMap = makeUuidVirtualMap(svgdata);
+        svgRealMap = transparentSvgRoot ? makeUuidRealMap(transparentSvgRoot) : {};
     }
 }
 
 export function sendBackToEditor() {
-    const elem = construct(svgdata, {all: configuration.showAll});
-    if (elem) vscode.postMessage({
+    const svgtag = construct(svgdata, {all: configuration.showAll});
+    if (svgtag) vscode.postMessage({
         command: "modified",
-        data: elem.outerHTML
+        data: svgtag.build().outerHTML
     })
 }
 

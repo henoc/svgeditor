@@ -2,6 +2,7 @@ import { map } from "./utils";
 import { Length, Paint, PathCommand } from "./domParser";
 import tinycolor from "tinycolor2";
 import { svgPathManager } from "./pathHelpers";
+import { elementOpenStart, elementOpenEnd, attr, text, elementClose } from "incremental-dom";
 
 const ns = "http://www.w3.org/2000/svg";
 
@@ -17,11 +18,11 @@ export class SvgTag {
         tag?: string;
         attrs: {[key: string]: string | number}
         class: string[]
-        children: Element[]
+        children: SvgTag[]
         text?: string
         listeners: {[key: string]: (event: Event) => void}
-    } = {attrs: {}, class: [], children: [], listeners: {}};
-    public beforeBuildFn: (tag: SvgTag) => void = () => void 0;
+        important: string[]
+    } = {attrs: {}, class: [], children: [], listeners: {}, important: []};
 
     constructor(name?: string) {
         if (name) this.data.tag = name;
@@ -34,20 +35,29 @@ export class SvgTag {
         this.data.tag = name;
         return this;
     }
+    rmAttr(key: string): SvgTag {
+        delete this.data.attrs[key];
+        return this;
+    }
     attr(key: string, value: string | number | null): SvgTag {
-        if (value !== null) {
+        if (value !== null && this.data.important.indexOf(key) === -1) {
             this.data.attrs[key] = value;
         }
         return this;
     }
+    importantAttr(key: string, value: string | number): SvgTag {
+        this.attr(key, value);
+        this.data.important.push(key);
+        return this;
+    }
     uattr(key: string, value: Length | null): SvgTag {
-        if (value !== null) {
+        if (value !== null && this.data.important.indexOf(key) === -1) {
             this.data.attrs[key] = `${value.value}${value.unit || ""}`;
         }
         return this;
     }
     pattr(key: string, value: Paint | null): SvgTag {
-        if (value !== null) {
+        if (value !== null && this.data.important.indexOf(key) === -1) {
             const tcolor = tinycolor(value);
             if (value.format === "none" || value.format === "currentColor" || value.format === "inherit") {
                 this.data.attrs[key] = value.format;
@@ -58,7 +68,7 @@ export class SvgTag {
         return this;
     }
     dattr(key: string, value: PathCommand[] | null): SvgTag {
-        if (value !== null) {
+        if (value !== null && this.data.important.indexOf(key) === -1) {
             const parsedDAttr = svgPathManager(value);
             this.data.attrs[key] = parsedDAttr.toString();
         }
@@ -66,7 +76,7 @@ export class SvgTag {
     }
     attrs(assoc: {[key: string]: string | number | null}): SvgTag {
         map(assoc, (key, value) => {
-            this.data.attrs[key] = value;            
+            if (this.data.important.indexOf(key) === -1) this.data.attrs[key] = value;            
         });
         return this;
     }
@@ -74,7 +84,7 @@ export class SvgTag {
         this.data.class.push(...classNames);
         return this;
     }
-    children(...children: Element[]) {
+    children(...children: SvgTag[]) {
         this.data.children.push(...children);
         return this;
     }
@@ -87,7 +97,6 @@ export class SvgTag {
         return this;
     }
     build(): Element {
-        this.beforeBuildFn(this);
         if (this.data.tag) {
             const elem = this.options.isSvg ? document.createElementNS(ns, this.data.tag) : document.createElement(this.data.tag);
             map(this.data.attrs, (key, value) => {
@@ -95,7 +104,7 @@ export class SvgTag {
             });
             elem.classList.add(...this.data.class);
             this.data.children.forEach(c => {
-                elem.insertAdjacentElement("beforeend", c);
+                elem.insertAdjacentElement("beforeend", c.build());
             });
             if (this.data.text) elem.textContent = this.data.text;
             map(this.data.listeners, (key, value) => {
@@ -106,9 +115,28 @@ export class SvgTag {
             throw new Error("In class Tag, no tag name found when build.");
         }
     }
-    beforeBuild(fn: (tag: SvgTag) => void): SvgTag {
-        this.beforeBuildFn = fn;
-        return this;
+
+    /**
+     * For incremental-dom
+     */
+    render = () => {
+        if (this.data.tag) {
+            elementOpenStart(this.data.tag);
+            map(this.data.attrs, (key, value) => {
+                if (value !== null) attr(key, value);
+            });
+            map(this.data.listeners, (key, value) => {
+                attr(`on${key}`, value);
+            });
+            attr("class", this.data.class.join(" "));
+            elementOpenEnd();
+            this.data.children.forEach(c => c.render());
+            if (this.data.text) text(this.data.text);
+            elementClose(this.data.tag);
+        }
+        else {
+            throw new Error("In class Tag, no tag name found when build.");
+        }
     }
 }
 

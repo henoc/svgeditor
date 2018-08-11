@@ -14,7 +14,7 @@ interface SvgConstructOptions {
 /**
   Make elements only use recognized attributes and tags.
 */
-export function construct(pe: ParsedElement, options?: SvgConstructOptions): Element | null {
+export function construct(pe: ParsedElement, options?: SvgConstructOptions): SvgTag | null {
     const putIndexAttribute = options && options.putUUIDAttribute || false;
     const setListeners = options && options.setListeners || false;
     const transparent = options && options.transparent || false;
@@ -28,7 +28,7 @@ export function construct(pe: ParsedElement, options?: SvgConstructOptions): Ele
         tag.listener("mousedown", event => onShapeMouseDown(<MouseEvent>event, pe.uuid));
     }
     if (transparent) {
-        tag.beforeBuild(t => t.attr("opacity", 0));
+        tag.importantAttr("opacity", 0);
     }
 
     if (pe.tag === "unknown") {
@@ -36,8 +36,7 @@ export function construct(pe: ParsedElement, options?: SvgConstructOptions): Ele
             return tag.tag(pe.tag$real)
                 .attrs(pe.attrs)
                 .text(pe.text)
-                .children(...pe.children.map(e => construct(e, options)!))
-                .build();
+                .children(...pe.children.map(e => construct(e, options)!));
         } else {
             return null;
         }
@@ -53,14 +52,14 @@ export function construct(pe: ParsedElement, options?: SvgConstructOptions): Ele
                 .attr("xmlns:xlink", pe.attrs["xmlns:xlink"])
                 .attr("viewBox", viewBoxAttrStr)
                 .uattr("width", pe.attrs.width)
-                .uattr("height", pe.attrs.height).build();
+                .uattr("height", pe.attrs.height);
             case "circle":
             setBaseAttrs(pe.attrs, tag);
             return tag.uattr("r", pe.attrs.r)
                 .uattr("cx", pe.attrs.cx)
                 .uattr("cy", pe.attrs.cy)
                 .pattr("fill", pe.attrs.fill)
-                .pattr("stroke", pe.attrs.stroke).build();
+                .pattr("stroke", pe.attrs.stroke);
             case "rect":
             setBaseAttrs(pe.attrs, tag);
             return tag.uattr("x", pe.attrs.x)
@@ -70,7 +69,7 @@ export function construct(pe: ParsedElement, options?: SvgConstructOptions): Ele
                 .uattr("rx", pe.attrs.rx)
                 .uattr("ry", pe.attrs.ry)
                 .pattr("fill", pe.attrs.fill)
-                .pattr("stroke", pe.attrs.stroke).build();
+                .pattr("stroke", pe.attrs.stroke);
             case "ellipse":
             setBaseAttrs(pe.attrs, tag);
             return tag.uattr("cx", pe.attrs.cx)
@@ -78,18 +77,18 @@ export function construct(pe: ParsedElement, options?: SvgConstructOptions): Ele
                 .uattr("rx", pe.attrs.rx)
                 .uattr("ry", pe.attrs.ry)
                 .pattr("fill", pe.attrs.fill)
-                .pattr("stroke", pe.attrs.stroke).build();
+                .pattr("stroke", pe.attrs.stroke);
             case "polyline":
             setBaseAttrs(pe.attrs, tag);
             const pointsStr = pe.attrs.points && pe.attrs.points.map(point => `${point.x},${point.y}`).join(" ");
             return tag.attr("points", pointsStr)
                 .pattr("fill", pe.attrs.fill)
-                .pattr("stroke", pe.attrs.stroke).build();
+                .pattr("stroke", pe.attrs.stroke);
             case "path":
             setBaseAttrs(pe.attrs, tag);
             return tag.dattr("d", pe.attrs.d)
                 .pattr("fill", pe.attrs.fill)
-                .pattr("stroke", pe.attrs.stroke).build();
+                .pattr("stroke", pe.attrs.stroke);
             default:
             assertNever(pe);
         }

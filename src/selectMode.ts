@@ -14,7 +14,7 @@ export class SelectMode implements Mode {
     isDraggingHandler: boolean = false;
     startShapeFixedPoint: Vec2 | null = null;
     startShapeSize: Vec2 | null = null;
-    shapeHandlers: Element[] = [];
+    shapeHandlers: SvgTag[] = [];
 
     constructor(initialSelectedShapeUuid?: string) {
         if (initialSelectedShapeUuid) {
@@ -75,18 +75,17 @@ export class SelectMode implements Mode {
     onDocumentMouseLeave(event: Event) {
         this.onDocumentMouseUp();
     }
-    private createShapeHandlers(uu: string): Element[] {
+    private createShapeHandlers(uu: string): SvgTag[] {
         const center = shaper(uu).center()!;
         const halfSize = shaper(uu).size()!.div(v(2, 2));
         const leftTop = center.sub(halfSize);
-        const elems: Element[] = [];
+        const elems: SvgTag[] = [];
         for (let i = 0; i < 9; i++) {
             if (i === 4) {
                 const e = new SvgTag("circle").attr("r", 6)
                     .attr("cx", leftTop.x + halfSize.x)
                     .attr("cy", leftTop.y - halfSize.y)
-                    .class("svgeditor-shape-handler")
-                    .build();
+                    .class("svgeditor-shape-handler");
                 elems.push(e);
             } else {
                 let s = i % 3;
@@ -94,9 +93,8 @@ export class SelectMode implements Mode {
                 const e = new SvgTag("circle").attr("r", 5)
                     .attr("cx", leftTop.x + halfSize.x * s)
                     .attr("cy", leftTop.y + halfSize.y * t)
-                    .class("svgeditor-shape-handler")
-                    .build();
-                e.addEventListener("mousedown", (event) => this.onShapeHandlerMouseDown(<MouseEvent>event, i));
+                    .class("svgeditor-shape-handler");
+                e.listener("mousedown", (event) => this.onShapeHandlerMouseDown(<MouseEvent>event, i));
                 elems.push(e);
             }
         }
@@ -110,8 +108,8 @@ export class SelectMode implements Mode {
         this.isDraggingHandler = true;
         this.startShapeFixedPoint =
             v(
-                Number(this.shapeHandlers[8 - index].getAttribute("cx")),
-                Number(this.shapeHandlers[8 - index].getAttribute("cy"))
+                Number(this.shapeHandlers[8 - index].data.attrs["cx"]),
+                Number(this.shapeHandlers[8 - index].data.attrs["cy"])
             );
         if (this.selectedShapeUuid) {
             this.startShapeSize = shaper(this.selectedShapeUuid).size()!;

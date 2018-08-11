@@ -7,7 +7,7 @@ import { Mode } from "./modeInterface";
 
 export class NodeMode implements Mode {
 
-    shapeHandlers: Element[] = [];
+    shapeHandlers: SvgTag[] = [];
     selectedShapeUuid: string | null = null;
     selectedHandlerIndex: number | null = null;
     isDraggingHandler: boolean = false;
@@ -112,18 +112,17 @@ export class NodeMode implements Mode {
         this.onDocumentMouseUp();
     }
 
-    private createShapeHandlers(uu: string): Element[] {
+    private createShapeHandlers(uu: string): SvgTag[] {
         const selected = svgVirtualMap[uu];
-        const elems: Element[] = [];
+        const elems: SvgTag[] = [];
         const registEndPoint = (p: Vec2, index: number) => {
             const e = new SvgTag("rect")
                 .attr("width", 10)
                 .attr("height", 10)
                 .attr("x", p.x - 5)
                 .attr("y", p.y - 5)
-                .class("svgeditor-shape-handler")
-                .build();
-            e.addEventListener("mousedown", event => this.onShapeHandlerMouseDown(<MouseEvent>event, index));
+                .class("svgeditor-shape-handler");
+            e.listener("mousedown", event => this.onShapeHandlerMouseDown(<MouseEvent>event, index));
             elems.push(e);
         }
         const registCtrlPoint = (p: Vec2, index: number | null /* fake ctrl point if index is null */, ...froms: Vec2[]) => {
@@ -131,18 +130,16 @@ export class NodeMode implements Mode {
                 .attr("r", 5)
                 .attr("cx", p.x)
                 .attr("cy", p.y)
-                .class("svgeditor-shape-handler" + (index === null && "-fake" || ""))
-                .build();
-            if (index !== null) e.addEventListener("mousedown", event => this.onShapeHandlerMouseDown(<MouseEvent>event, index));
-            else e.addEventListener("mousedown", event => event.stopPropagation());
+                .class("svgeditor-shape-handler" + (index === null && "-fake" || ""));
+            if (index !== null) e.listener("mousedown", event => this.onShapeHandlerMouseDown(<MouseEvent>event, index));
+            else e.listener("mousedown", event => event.stopPropagation());
             for (let from of froms) {
                 const l = new SvgTag("line")
                     .attr("x1", from.x)
                     .attr("y1", from.y)
                     .attr("x2", p.x)
                     .attr("y2", p.y)
-                    .class("svgeditor-shape-handler-line" + (index === null && "-fake" || ""))
-                    .build();
+                    .class("svgeditor-shape-handler-line" + (index === null && "-fake" || ""));
                 elems.push(l);
             }
             elems.push(e);
