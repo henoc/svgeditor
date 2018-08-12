@@ -1,12 +1,11 @@
 import { construct, makeUuidVirtualMap, makeUuidRealMap } from "./svgConstructor";
 import { ParsedElement, isLengthUnit, LengthUnit, Paint } from "./domParser";
-import { onDocumentMouseMove, onDocumentMouseUp, onDocumentClick, onMenuButtonClick, onDocumentMouseLeave } from "./triggers";
-import { ActiveContents, assertNever } from "./utils";
+import { onDocumentMouseMove, onDocumentMouseUp, onDocumentClick, onDocumentMouseLeave } from "./triggers";
 import { Mode } from "./modeInterface";
 import { SelectMode } from "./selectMode";
 import { elementVoid, elementOpen, elementClose, patch } from "incremental-dom";
 import { MenuListComponent, ModeName } from "./menuComponent";
-import { Component } from "./component";
+import { Component, WindowComponent } from "./component";
 import { SvgContainerComponent } from "./svgContainerComponent";
 import { StyleConfigComponent } from "./styleConfigComponent";
 
@@ -18,9 +17,8 @@ const vscode = acquireVsCodeApi();
 export let svgdata: ParsedElement;
 export let svgVirtualMap: { [uu: string]: ParsedElement } = {};
 export let svgRealMap: { [uu: string]: Element } = {};
-export let editMode: Mode = new SelectMode();
-export let openContents: { [id: string]: HTMLElement } = {};
-export let activeContents = new ActiveContents();
+export let editMode: {mode: Mode} = {mode: new SelectMode()};
+export let openWindows: { [id: string]: WindowComponent } = {};
 export const configuration = {
     showAll: true,
     defaultUnit: <LengthUnit>null
@@ -100,10 +98,5 @@ export function sendErrorMessage(msg: string) {
         command: "error",
         data: msg
     });
-}
-
-export function setEditMode(name: ModeName, mode: Mode) {
-    contentChildrenComponent.menuListComponent.changeSelectedMode(name);
-    editMode = mode;
 }
 

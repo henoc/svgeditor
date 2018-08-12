@@ -15,7 +15,7 @@ export class SvgContainerComponent implements Component {
             const outerFontEnv = getComputedStyle(document.body).font || "";
             const wrapper = new SvgTag("svg").attr("xmlns", "http://www.w3.org/2000/svg").attr("width", width).attr("height", height).attr("style", `font:${outerFontEnv}`).children(svgtag);
             const imgSvgtag = new SvgTag("img").setOptions({ isSvg: false }).class("svgeditor-svg-image").attr("src", `data:image/svg+xml,${encodeURIComponent(wrapper.build().outerHTML)}`);
-            transparentSvgtag.children(...editMode.shapeHandlers);
+            transparentSvgtag.children(...editMode.mode.shapeHandlers);
             transparentSvgtag.class("svgeditor-svg-svg");
             transparentSvgtag.rmAttr("opacity");
 

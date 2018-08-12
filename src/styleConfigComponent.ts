@@ -1,8 +1,8 @@
 import { elementOpen, elementClose, text, elementVoid } from "incremental-dom";
-import { drawState, refleshContent } from "./main";
+import { drawState, refleshContent, openWindows } from "./main";
 import { Paint, PaintFormat } from "./domParser";
 import tinycolor from "tinycolor2";
-import { Component } from "./component";
+import { Component, WindowComponent } from "./component";
 
 class ButtonComponent implements Component {
     constructor(public name: string, public key: string, public onclick: () => void) {}
@@ -193,20 +193,22 @@ class ColorPickerCanvasComponent implements Component {
     }
 }
 
-class ColorPickerComponent implements Component {
+class ColorPickerComponent implements WindowComponent {
 
     CANVAS_DEFAULT_COLOR = {r: 255, g: 255, b: 255, a: 1};
     selectorValue: string = "color";
     canvasComponent: ColorPickerCanvasComponent | null;
     saveButton = new ButtonComponent("save", "colorpicker-save", () => this.onSave(this));
     cancelButton = new ButtonComponent("cancel", "colorpicker-cancel", () => this.onCancel(this));
+    onClose: () => void;
 
     constructor(public relatedProperty: "fill" | "stroke", public onSave: (self: ColorPickerComponent) => void, public onCancel: (self: ColorPickerComponent) => void) {
         this.canvasComponent = new ColorPickerCanvasComponent(200, 100, tinycolor(drawState[relatedProperty] || this.CANVAS_DEFAULT_COLOR));
+        this.onClose = () => this.onCancel(this);
     }
 
     render() {
-        elementOpen("div", "colorpicker", ["class", "svgeditor-colorpicker"]);
+        elementOpen("div", "colorpicker", ["class", "svgeditor-colorpicker", "onclick", (event: MouseEvent) => event.stopPropagation()]);
         this.selectorRender();
         elementVoid("br");
         if (this.canvasComponent) this.canvasComponent.render();
@@ -276,7 +278,7 @@ export class StyleConfigComponent implements Component {
         const statics = [
             "class", "svgeditor-colorbox",
             "tabindex", "0",
-            "onclick", () => this.openColorPicker(relatedProperty)
+            "onclick", (event: MouseEvent) => this.openColorPicker(event, relatedProperty)
         ];
         const style = {backgroundColor: "transparent"};
         let textContent: null | string = null;
@@ -294,7 +296,8 @@ export class StyleConfigComponent implements Component {
         elementClose("div");
     }
 
-    private openColorPicker(relatedProperty: "fill" | "stroke") {
+    private openColorPicker(event: MouseEvent, relatedProperty: "fill" | "stroke") {
+        event.stopPropagation();
         this.colorPicker = new ColorPickerComponent(relatedProperty, (colorpicker) => {
             switch (relatedProperty) {
                 case "fill":
@@ -310,6 +313,7 @@ export class StyleConfigComponent implements Component {
             this.colorPicker = null;
             refleshContent();
         });
+        openWindows["colorpicker"] = this.colorPicker;
         refleshContent();
     }
 }

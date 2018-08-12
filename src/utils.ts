@@ -57,26 +57,6 @@ export function clearEventListeners(element: Element): Element {
     return <Element>clone;
 }
 
-export class ActiveContents {
-    public elems: {[id: string]: HTMLElement} = {};
-    constructor() {
-    }
-    set(elem: HTMLElement) {
-        elem.id || (elem.id = uuidStatic.v4());
-        this.elems[elem.id] = elem;
-        elem.classList.add("svgeditor-active");        
-    }
-    remove(elem: HTMLElement) {
-        elem.classList.remove("svgeditor-active");
-        delete this.elems[elem.id];
-    }
-    removeAll() {
-        map(this.elems, (id, elem) => {
-            this.remove(elem);
-        });
-    }
-}
-
 /**
  * Type support for pattern match. `x` should be never.
  */
