@@ -1,5 +1,4 @@
 import tinycolor from "tinycolor2";
-import { debugLog } from "./main";
 import { PaintFormat, Paint } from "./domParser";
 
 export class ColorPicker {
@@ -134,7 +133,6 @@ export class ColorPicker {
         const y = event.offsetY;
         const hsva = this.color.toHsv();
         let tmpColor: tinycolorInstance = this.color;
-        debugLog("colorPicker", `x: ${x}, y: ${y}, hsva: ${JSON.stringify(hsva)}`);
         if (y > this.height * 0.2) {
             if (x < this.width * 0.8 && this.downFlags.grad) {
                 tmpColor = tinycolor.fromRatio({h: hsva.h / 360, s: x / (this.width * 0.8), v: (y - this.height * 0.2) / (this.height * 0.8), a: hsva.a});

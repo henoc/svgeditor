@@ -1,4 +1,4 @@
-import { svgVirtualMap, refleshContent, svgRealMap, sendBackToEditor, debugLog } from "./main";
+import { svgVirtualMap, refleshContent, svgRealMap, sendBackToEditor } from "./main";
 import { SvgTag } from "./svg";
 import { svgPathManager } from "./pathHelpers";
 import { Vec2, v } from "./utils";

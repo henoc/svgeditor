@@ -5,33 +5,6 @@
 </head>
 
 <body>
-    <ul>
-        <li id="svgeditor-menu-select" class="svgeditor-selected">select</li><!--
-        --><li id="svgeditor-menu-node">node</li><!--
-        --><li id="svgeditor-menu-rect">rect</li><!--
-        --><li id="svgeditor-menu-ellipse">ellipse</li><!--
-        --><li id="svgeditor-menu-polyline">polyline</li><!--
-        --><li id="svgeditor-menu-path">path</li>
-    </ul>
-    <div id="svgeditor-message"></div>
-    <div id="aaa"></div>
-    <span class="svgeditor-bold">
-        fill: <div id="svgeditor-colorbox-fill" class="svgeditor-colorbox" tabindex="0"></div>
-        stroke: <div id="svgeditor-colorbox-stroke" class="svgeditor-colorbox" tabindex="0"></div>
-    </span>
-    <div id="svgeditor-colorpicker">
-        <select name="svgeditor-colorpicker-selector" id="svgeditor-colorpicker-selector">
-            <option value="color">color</option>
-            <option value="noAttribute">no attribute</option>
-            <option value="none">none</option>
-            <option value="currentColor">currentColor</option>
-            <option value="inherit">inherit</option>
-        </select>
-        <br>
-        <canvas width="200" height="100" id="svgeditor-colorpicker-canvas"></canvas>
-        <br>
-        <div id="svgeditor-colorpicker-save" class="svgeditor-button">save</div><!--
-        --><div id="svgeditor-colorpicker-cancel" class="svgeditor-button">cancel</div>
-    </div>
+    <div id="svgeditor-content"></div>
     <script src="<%- bundleJsPath %>"></script>
 </body>

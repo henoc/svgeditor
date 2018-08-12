@@ -1,4 +1,4 @@
-import { editMode, debugLog, openContents, activeContents, setEditMode, ModeName, drawState, refleshContent } from "./main";
+import { editMode, openContents, activeContents, setEditMode, drawState, refleshContent, contentChildrenComponent } from "./main";
 import { ColorPicker } from "./colorPicker";
 import tinycolor from "tinycolor2";
 import { clearEventListeners, map, assertNever } from "./utils";
@@ -9,6 +9,7 @@ import { EllipseMode } from "./ellipseMode";
 import { PolylineMode } from "./polylineMode";
 import { PathMode } from "./pathMode";
 import { NodeMode } from "./nodeMode";
+import { ModeName } from "./menuComponent";
 
 export function onMenuButtonClick(event: MouseEvent, mode: ModeName) {
     changeMode(mode);
@@ -45,20 +46,25 @@ export function onShapeMouseDown(event: MouseEvent, uu: string) {
     else if (event.button === 2) editMode.onShapeMouseDownRight(event, uu);
 }
 
-export function onAaaMouseDown(event: MouseEvent) {
-
-}
-
 export function onDocumentMouseMove(event: MouseEvent) {
     editMode.onDocumentMouseMove(event);
+    if (contentChildrenComponent.styleConfigComponent.colorPicker &&
+        contentChildrenComponent.styleConfigComponent.colorPicker.canvasComponent
+    ) contentChildrenComponent.styleConfigComponent.colorPicker.canvasComponent.move(event);
 }
 
 export function onDocumentMouseUp(event: MouseEvent) {
     editMode.onDocumentMouseUp(event);
+    if (contentChildrenComponent.styleConfigComponent.colorPicker &&
+        contentChildrenComponent.styleConfigComponent.colorPicker.canvasComponent
+    ) contentChildrenComponent.styleConfigComponent.colorPicker.canvasComponent.dragCancel();
 }
 
 export function onDocumentMouseLeave(event: Event) {
     editMode.onDocumentMouseLeave(event);
+    if (contentChildrenComponent.styleConfigComponent.colorPicker &&
+        contentChildrenComponent.styleConfigComponent.colorPicker.canvasComponent
+    ) contentChildrenComponent.styleConfigComponent.colorPicker.canvasComponent.dragCancel();
 }
 
 export function onDocumentClick(event: MouseEvent) {
@@ -66,35 +72,4 @@ export function onDocumentClick(event: MouseEvent) {
         elem.style.display = "none";
     });
     activeContents.removeAll();
-}
-
-export function onColorBoxClick(event: Event, box: HTMLElement, div: HTMLElement, selector: HTMLSelectElement, propertyOnSave: "fill" | "stroke" /* style-fill and more? */) {
-    event.stopPropagation();
-    activeContents.removeAll();
-    div.style.display = "block";
-    openContents[div.id] = div;
-    activeContents.set(box);
-    const canvas = div.querySelector("canvas")!;
-    debugLog("triggers-onColorBoxClick", `bgcolor: ${box.style.background}, tcolor: ${tinycolor(box.style.backgroundColor!)}`);
-    let picker = new ColorPicker(canvas, selector, tinycolor(box.style.backgroundColor!));
-    let save: Element = document.getElementById("svgeditor-colorpicker-save")!;
-    save = clearEventListeners(save);
-    save.addEventListener("click", () => {
-        reflectPaint(picker.getPaint(null), box);
-        if (propertyOnSave === "fill") {
-            drawState.fill = picker.getPaint(drawState.fill && drawState.fill.format);
-        } else if (propertyOnSave === "stroke") {
-            drawState.stroke = picker.getPaint(drawState.stroke && drawState.stroke.format);
-        }
-        div.style.display = "none";
-        delete openContents[div.id];
-        activeContents.remove(box);
-    }, {once: true});
-    let cancel: Element = document.getElementById("svgeditor-colorpicker-cancel")!;
-    cancel = clearEventListeners(cancel);
-    cancel.addEventListener("click", () => {
-        div.style.display = "none"; 
-        delete openContents[div.id];
-        activeContents.remove(box);
-    }, {once: true});
 }

@@ -1,4 +1,4 @@
-import { svgVirtualMap, refleshContent, svgRealMap, sendBackToEditor, debugLog } from "./main";
+import { svgVirtualMap, refleshContent, svgRealMap, sendBackToEditor } from "./main";
 import { Vec2, v } from "./utils";
 import { shaper } from "./shapes";
 import { SvgTag } from "./svg";
@@ -58,8 +58,6 @@ export class SelectMode implements Mode {
                     const currentSize = diff.add(this.startShapeSize);
                     if (currentSize.x < 0) currentSize.x = 0;
                     if (currentSize.y < 0) currentSize.y = 0;
-                    debugLog("selectMode", `index: ${this.selectedHandlerIndex}, currentSize: ${currentSize}, diff: ${diff}, fixedPoint: ${this.startShapeFixedPoint}
-                    pe.tag: ${pe.tag}`);
                     shaper(this.selectedShapeUuid).size2(currentSize, this.startShapeFixedPoint);
                     this.shapeHandlers = this.createShapeHandlers(this.selectedShapeUuid);
                     refleshContent();

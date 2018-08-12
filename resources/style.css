@@ -36,7 +36,7 @@ select {
 select option {
     background-color: var(--vscode-dropdown-listBackground);
 }
-#aaa {
+#svgeditor-svgcontainer {
     display: block;
     background-color: var(--vscode-sideBar-background);
     position: relative;
@@ -72,8 +72,7 @@ select option {
     stroke-dasharray: 4px;
     opacity: 0.5;
 }
-#svgeditor-colorpicker {
-    display: none;
+.svgeditor-colorpicker {
     padding: 0.5em;
     background: var(--vscode-input-background);
 }
