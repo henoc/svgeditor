@@ -17,7 +17,7 @@ export class NodeMode implements Mode {
             let uu = initialSelectedShapeUuid;
             if (svgVirtualMap[uu].tag === "path" || svgVirtualMap[uu].tag === "polyline") {
                 this.selectedShapeUuid = uu;
-                refleshContent({shapeHandlers: this.shapeHandlers = this.createShapeHandlers(this.selectedShapeUuid)});
+                this.shapeHandlers = this.createShapeHandlers(this.selectedShapeUuid);
             }
         }
     }
@@ -31,7 +31,8 @@ export class NodeMode implements Mode {
             refleshContent();
         } else if (svgVirtualMap[uu].tag === "path" || svgVirtualMap[uu].tag === "polyline") {
             this.selectedShapeUuid = uu;
-            refleshContent({shapeHandlers: this.shapeHandlers = this.createShapeHandlers(this.selectedShapeUuid)});
+            this.shapeHandlers = this.createShapeHandlers(this.selectedShapeUuid);
+            refleshContent();
         }
     }
     onShapeMouseDownRight(event: MouseEvent, uu: string): void {
@@ -101,7 +102,8 @@ export class NodeMode implements Mode {
                     }
                 });
             }
-            refleshContent({shapeHandlers: this.shapeHandlers = this.createShapeHandlers(this.selectedShapeUuid)});        
+            this.shapeHandlers = this.createShapeHandlers(this.selectedShapeUuid);
+            refleshContent();   
         }
     }
     onDocumentMouseUp(): void {
@@ -110,6 +112,9 @@ export class NodeMode implements Mode {
     }
     onDocumentMouseLeave(event: Event): void {
         this.onDocumentMouseUp();
+    }
+    render() {
+        this.shapeHandlers.forEach(h => h.render());
     }
 
     private createShapeHandlers(uu: string): SvgTag[] {

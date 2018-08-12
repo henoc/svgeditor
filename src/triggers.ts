@@ -1,4 +1,4 @@
-import { editMode, debugLog, openContents, activeContents, setEditMode, ModeName, drawState } from "./main";
+import { editMode, debugLog, openContents, activeContents, setEditMode, ModeName, drawState, refleshContent } from "./main";
 import { ColorPicker } from "./colorPicker";
 import tinycolor from "tinycolor2";
 import { clearEventListeners, map, assertNever } from "./utils";
@@ -37,6 +37,7 @@ function changeMode(name: ModeName, initialUuid?: string) {
         default:
         assertNever(name);
     }
+    refleshContent();
 }
 
 export function onShapeMouseDown(event: MouseEvent, uu: string) {

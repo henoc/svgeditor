@@ -4,10 +4,12 @@ import { ParsedElement } from "./domParser";
 import { v } from "./utils";
 import { shaper } from "./shapes";
 import { Mode } from "./modeInterface";
+import { SvgTag } from "./svg";
 
 export class PolylineMode implements Mode {
 
     makeTargetUuid: string | null = null;
+    readonly shapeHandlers: SvgTag[] = [];
 
     constructor(public finished?: (uu: string | null) => void) {}
 
@@ -72,6 +74,5 @@ export class PolylineMode implements Mode {
     onDocumentMouseLeave(event: Event): void {
         
     }
-
 
 }

@@ -3,6 +3,7 @@ import { Length, Paint, PathCommand } from "./domParser";
 import tinycolor from "tinycolor2";
 import { svgPathManager } from "./pathHelpers";
 import { elementOpenStart, elementOpenEnd, attr, text, elementClose } from "incremental-dom";
+import { Component } from "./component";
 
 const ns = "http://www.w3.org/2000/svg";
 
@@ -10,7 +11,10 @@ interface SvgOptions {
     isSvg?: boolean;
 }
 
-export class SvgTag {
+/**
+ * Build SVG element or render for incremental-dom.
+ */
+export class SvgTag implements Component {
     public options: SvgOptions = {
         isSvg: true
     };

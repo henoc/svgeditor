@@ -3,11 +3,13 @@ import uuidStatic from "uuid";
 import { ParsedElement } from "./domParser";
 import { v } from "./utils";
 import { Mode } from "./modeInterface";
+import { SvgTag } from "./svg";
 
 export class PathMode implements Mode {
 
     isDragging: boolean = false;
     makeTargetUuid: string | null = null;
+    readonly shapeHandlers: SvgTag[] = [];
 
     constructor(public finished?: (uu: string | null) => void) {}
 

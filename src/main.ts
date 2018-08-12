@@ -105,8 +105,7 @@ document.addEventListener("click", onDocumentClick);
 aaa.addEventListener("mousedown", onAaaMouseDown);
 
 
-export function refleshContent(options?: {shapeHandlers: SvgTag[]}) {
-    const shapeHandlers = options && options.shapeHandlers || [];
+export function refleshContent() {
 
     const svgtag = construct(svgdata, {all: configuration.showAll});
     const transparentSvgtag = construct(svgdata, {putUUIDAttribute: true, setListeners: true, transparent: true, all: configuration.showAll});
@@ -118,7 +117,7 @@ export function refleshContent(options?: {shapeHandlers: SvgTag[]}) {
         const container = new SvgTag("svg").attr("xmlns", "http://www.w3.org/2000/svg").attr("width", aaa.style.width).attr("height", aaa.style.height).attr("style", `font:${outerFontEnv}`).children(svgtag);
         const imgSvgtag = new SvgTag("img").setOptions({ isSvg: false }).class("svgeditor-svg-image").attr("src", `data:image/svg+xml,${encodeURIComponent(container.build().outerHTML)}`);
         
-        transparentSvgtag.children(...shapeHandlers);
+        transparentSvgtag.children(...editMode.shapeHandlers);
         transparentSvgtag.class("svgeditor-svg-svg");
         transparentSvgtag.rmAttr("opacity");
 

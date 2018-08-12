@@ -4,12 +4,14 @@ import uuidStatic from "uuid";
 import { ParsedElement } from "./domParser";
 import { shaper } from "./shapes";
 import { Mode } from "./modeInterface";
+import { SvgTag } from "./svg";
 
 export class RectMode implements Mode {
 
     isDragging: boolean = false;
     startCursorPos: Vec2 | null = null;
     dragTargetUuid: string | null = null;
+    readonly shapeHandlers: SvgTag[] = [];
 
     constructor(public finished?: (uu: string | null) => void) {}
 
@@ -66,6 +68,5 @@ export class RectMode implements Mode {
     onDocumentMouseLeave(event: Event): void {
         this.onDocumentMouseUp();
     }
-
 
 }

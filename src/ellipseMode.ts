@@ -4,12 +4,14 @@ import uuidStatic from "uuid";
 import { ParsedElement } from "./domParser";
 import { shaper } from "./shapes";
 import { Mode } from "./modeInterface";
+import { SvgTag } from "./svg";
 
 export class EllipseMode implements Mode {
 
     isDragging: boolean = false;
     startCursorPos: Vec2 | null = null;
     dragTargetUuid: string | null = null;
+    readonly shapeHandlers: SvgTag[] = [];
 
     constructor(public finished?: (uu: string | null) => void) {}
 
@@ -64,6 +66,5 @@ export class EllipseMode implements Mode {
     onDocumentMouseLeave(event: MouseEvent): void {
         this.onDocumentMouseUp();
     }
-
 
 }

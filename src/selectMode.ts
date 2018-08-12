@@ -19,7 +19,7 @@ export class SelectMode implements Mode {
     constructor(initialSelectedShapeUuid?: string) {
         if (initialSelectedShapeUuid) {
             this.selectedShapeUuid = initialSelectedShapeUuid;
-            refleshContent({shapeHandlers: this.shapeHandlers = this.createShapeHandlers(this.selectedShapeUuid)});
+            this.shapeHandlers = this.createShapeHandlers(this.selectedShapeUuid);
         }
     }
 
@@ -35,7 +35,8 @@ export class SelectMode implements Mode {
             this.startCursorPos = v(event.offsetX, event.offsetY);
             this.startShapeCenter = shaper(uu).center()!;
             this.isDraggingShape = true;
-            refleshContent({shapeHandlers: this.shapeHandlers = this.createShapeHandlers(this.selectedShapeUuid)});
+            this.shapeHandlers = this.createShapeHandlers(this.selectedShapeUuid);
+            refleshContent();
         }
     }
     onShapeMouseDownRight(event: MouseEvent, uu: string) {
@@ -48,7 +49,8 @@ export class SelectMode implements Mode {
             if (!pe.isRoot) {
                 if (this.isDraggingShape && this.startCursorPos && this.startShapeCenter) {
                     shaper(this.selectedShapeUuid).center(this.startShapeCenter.add(currentCursorPos.sub(this.startCursorPos)));
-                    refleshContent({shapeHandlers: this.shapeHandlers = this.createShapeHandlers(this.selectedShapeUuid)});
+                    this.shapeHandlers = this.createShapeHandlers(this.selectedShapeUuid);
+                    refleshContent();
                 } else if (this.isDraggingHandler && this.startCursorPos && this.startShapeFixedPoint && this.startShapeSize) {
                     const diff =  currentCursorPos.sub(this.startCursorPos).mul(v(this.startCursorPos.x - this.startShapeFixedPoint.x > 0 ? 1 : -1, this.startCursorPos.y - this.startShapeFixedPoint.y > 0 ? 1 : -1));
                     if (this.selectedHandlerIndex === 1 || this.selectedHandlerIndex === 7) diff.x = 0;
@@ -59,7 +61,8 @@ export class SelectMode implements Mode {
                     debugLog("selectMode", `index: ${this.selectedHandlerIndex}, currentSize: ${currentSize}, diff: ${diff}, fixedPoint: ${this.startShapeFixedPoint}
                     pe.tag: ${pe.tag}`);
                     shaper(this.selectedShapeUuid).size2(currentSize, this.startShapeFixedPoint);
-                    refleshContent({shapeHandlers: this.shapeHandlers = this.createShapeHandlers(this.selectedShapeUuid)});
+                    this.shapeHandlers = this.createShapeHandlers(this.selectedShapeUuid);
+                    refleshContent();
                 }
             }
         }
