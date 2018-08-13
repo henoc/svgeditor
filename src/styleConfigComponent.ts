@@ -3,14 +3,15 @@ import { drawState, refleshContent, openWindows } from "./main";
 import { Paint, PaintFormat } from "./domParser";
 import tinycolor from "tinycolor2";
 import { Component, WindowComponent } from "./component";
+import { el } from "./utils";
 
 class ButtonComponent implements Component {
     constructor(public name: string, public key: string, public onclick: () => void) {}
 
     render() {
-        elementOpen("div", this.key, ["class", "svgeditor-button"], "onclick", this.onclick);
+        el`div :key=${this.key} *class="svgeditor-button" onclick=${this.onclick}`;
         text(this.name);
-        elementClose("div");
+        el`/div`;
     }
 }
 
@@ -208,14 +209,14 @@ class ColorPickerComponent implements WindowComponent {
     }
 
     render() {
-        elementOpen("div", "colorpicker", ["class", "svgeditor-colorpicker", "onclick", (event: MouseEvent) => event.stopPropagation()]);
+        el`div :key="colorpicker" *class="svgeditor-colorpicker" *onclick=${(event: MouseEvent) => event.stopPropagation()}`;
         this.selectorRender();
-        elementVoid("br");
+        el`br/`;
         if (this.canvasComponent) this.canvasComponent.render();
-        elementVoid("br");
+        el`br/`;
         this.saveButton.render();
         this.cancelButton.render();
-        elementClose("div");
+        el`/div`;
     }
 
     getPaint(destFormat: PaintFormat | null): Paint | null {
@@ -234,17 +235,15 @@ class ColorPickerComponent implements WindowComponent {
     }
 
     private selectorRender() {
-        elementOpen("select", "colorpicker-selector", [
-            "onchange", (event: Event) => this.selectorOnChange(event)
-        ]);
+        el`select :key="colorpicker-selector" *onchange=${(event: Event) => this.selectorOnChange(event)}`;
 
         for (let value of ["color", "no attribute", "none", "currentColor", "inherit"]) {
-            elementOpen("option", `colorpicker-option-${value}`, ["value", value]);
+            el`option :key=${`colorpicker-option-${value}`} *value=${value}`;
             text(value);
-            elementClose("option");
+            el`/option`;
         }
 
-        elementClose("select");
+        el`/select`;
     }
 
     private selectorOnChange(event: Event) {
@@ -265,12 +264,12 @@ export class StyleConfigComponent implements Component {
     colorPicker: ColorPickerComponent | null = null;
 
     render() {
-        elementOpen("span", undefined, ["class", "svgeditor-bold"]);
+        el`span *class="svgeditor-bold"`;
         text("fill: ");
         this.colorBoxRender(this.colorBoxFillBackground, "fill");
         text("stroke: ");
         this.colorBoxRender(this.colorBoxStrokeBackground, "stroke");
-        elementClose("span");
+        el`/span`;
         if (this.colorPicker) this.colorPicker.render();
     }
 
@@ -291,9 +290,14 @@ export class StyleConfigComponent implements Component {
         } else {
             textContent = "no attribute";
         }
-        elementOpen("div", `colorbox-${relatedProperty}`, statics, "style", style);
+        el`div
+            :key=${`colorbox-${relatedProperty}`}
+            *class="svgeditor-colorbox"
+            *tabindex="0"
+            *onclick=${(event: MouseEvent) => this.openColorPicker(event, relatedProperty)}
+            style=${style}`;
         if (textContent) text(textContent);
-        elementClose("div");
+        el`/div`;
     }
 
     private openColorPicker(event: MouseEvent, relatedProperty: "fill" | "stroke") {

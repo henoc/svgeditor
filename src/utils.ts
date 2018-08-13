@@ -1,4 +1,6 @@
 import uuidStatic from "uuid";
+import memoize from "fast-memoize";
+import { elementOpen, elementClose, elementVoid } from "incremental-dom";
 
 export function map<T>(obj: any, fn: (key: string, value: any, index: number) => T): T[] {
     const acc: T[] = [];
@@ -63,3 +65,77 @@ export function clearEventListeners(element: Element): Element {
 export function assertNever(x: never): never {
     throw new Error("Unexpected object: " + x);
 }
+
+function join2(sep: (i: number) => string, strs: string[]) {
+    if (strs.length === 0) return "";
+    if (strs.length === 1) return strs[0];
+    let acc = "";
+    for (let i = 0; i < strs.length - 1; i++) {
+        acc += strs[i] + sep(i);
+    }
+    return acc + strs[strs.length - 1];
+}
+
+/**
+ * Syntax sugar for elementOpen, elementClose, elementVoid.
+ * ``el`li :key="list-element" class="non-static-class-a non-static-class-b" *id="static-ident" onclick=${variable}`; text("some"); el`br/`; text("text"); el`/li` ``
+ * 
+ * note: ``el`li foo="list-${variable}"` `` is incorrect. Use ``el`li foo=${`list-${variable}`}` ``
+ */
+export function el(template: TemplateStringsArray, ...args: any[]) {
+    if (template[0].charAt(0) === "/") {
+        elementClose(template[0].slice(1).trim());
+    } else {
+        const parseResult = memoizedElopenParser(template);
+        const elementOpenArgs = <[string, string | undefined, any[], ...any[]]>[
+            parseResult.tag,
+            typeof parseResult.key === "number" ? args[parseResult.key] : parseResult.key,
+            parseResult.statics.map(st => typeof st === "number" ? args[st] : st),
+            ...parseResult.nonStatics.map(nst => typeof nst === "number" ? args[nst] : nst)
+        ];
+        if (parseResult.selfContained) {
+            elementVoid(...elementOpenArgs);
+        } else {
+            elementOpen(...elementOpenArgs);
+        }
+    }
+}
+
+interface ElopenParseResult {
+    tag: string;
+    key?: string | number;
+    statics: (string | number)[];
+    nonStatics: (string | number)[];
+    selfContained: boolean;
+}
+
+function elopenParser(template: TemplateStringsArray): ElopenParseResult {
+    for (let t of template) {
+        if (t.split(`"`).length - 1 % 2 === 1) {
+            throw new Error(`wrong arg in elopenParser. template: ${JSON.stringify(template)}`);
+        }
+    }
+    let concatTemplate = join2(i => `$${i}`, [...template]);
+    let tag = concatTemplate.match(/^\s*[^\s//]+/)![0].trimLeft();
+    let token = /([^\s="]+)\s*=\s*("[^"]*"|\$[0-9]+)/g;
+    let tmp: RegExpExecArray | null;
+    let ret: ElopenParseResult = {tag, statics: [], nonStatics: [], selfContained: concatTemplate.charAt(concatTemplate.length - 1) === "/"};
+    let valueof = (right: string) => {
+        if (/^"[^"]*"$/.test(right)) return right.slice(1, right.length - 1);
+        else return Number(right.slice(1));
+    }
+    while ((tmp = token.exec(concatTemplate)) !== null) {
+        const left = tmp[1];
+        const right = tmp[2];
+        if (left === ":key") {
+            ret.key = valueof(right);
+        } else if (left.startsWith("*")) {      // statics
+            ret.statics.push(left.slice(1), valueof(right));
+        } else {
+            ret.nonStatics.push(left, valueof(right));
+        }
+    }
+    return ret;
+}
+
+const memoizedElopenParser = memoize(elopenParser);

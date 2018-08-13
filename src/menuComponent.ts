@@ -7,7 +7,7 @@ import { RectMode } from "./rectMode";
 import { EllipseMode } from "./ellipseMode";
 import { PolylineMode } from "./polylineMode";
 import { PathMode } from "./pathMode";
-import { assertNever } from "./utils";
+import { assertNever, el } from "./utils";
 
 export type ModeName = "select" | "node" | "rect" | "ellipse" | "polyline" | "path";
 
@@ -17,13 +17,9 @@ class MenuComponent implements Component {
     }
 
     render() {
-        const cls = this.isSelected ? ["class", "svgeditor-selected"] : [];
-        elementOpen("li", this.name, [
-            "id", `svgeditor-menu-${this.name}`,
-            "onclick", () => this.changeMode(this.name)
-        ], ...cls);
+        el`li :key=${this.name} *id=${`svgeditor-menu-${this.name}`} *onclick=${() => this.changeMode(this.name)} class=${this.isSelected ? "svgeditor-selected" : ""}`;
         text(this.name);
-        elementClose("li");
+        el`/li`;
     }
 
     changeMode(name: ModeName, initialUuid?: string) {
@@ -64,14 +60,14 @@ export class MenuListComponent implements Component {
     path = new MenuComponent("path", (name) => this.changeSelectedMode(name))
 
     render() {
-        elementOpen("ul");
+        el`ul`;
         this.select.render();
         this.node.render();
         this.rect.render();
         this.ellipse.render();
         this.polyline.render();
         this.path.render();
-        elementClose("ul");
+        el`/ul`;
     }
 
     changeSelectedMode(mode: ModeName) {

@@ -3,6 +3,7 @@ import { construct } from "./svgConstructor";
 import { svgdata, configuration, editMode } from "./main";
 import { SvgTag } from "./svg";
 import { elementOpen, elementClose } from "incremental-dom";
+import { el } from "./utils";
 
 export class SvgContainerComponent implements Component {
 
@@ -19,10 +20,10 @@ export class SvgContainerComponent implements Component {
             transparentSvgtag.class("svgeditor-svg-svg");
             transparentSvgtag.rmAttr("opacity");
 
-            elementOpen("div", "svgeditor-svgcontainer", ["id", "svgeditor-svgcontainer"], "style", {width, height});
+            el`div :key="svgeditor-svgcontainer" *id="svgeditor-svgcontainer" style=${{width, height}}`;
             imgSvgtag.render();
             transparentSvgtag.render();
-            elementClose("div");
+            el`/div`
         }
     }
 }
