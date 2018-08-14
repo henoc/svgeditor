@@ -26,7 +26,7 @@ export class EllipseMode implements Mode {
                 const pe: ParsedElement = {
                     uuid: this.dragTargetUuid,
                     isRoot: false,
-                    owner: uu,
+                    parent: uu,
                     tag: "ellipse",
                     attrs: {
                         cx: {unit: configuration.defaultUnit, value: 0, attrName: "cx"},

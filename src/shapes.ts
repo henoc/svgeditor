@@ -3,6 +3,7 @@ import { Vec2, v } from "./utils";
 import {svgPathManager} from "./pathHelpers";
 import { convertToPixel, convertFromPixel } from "./measureUnits";
 import { svgVirtualMap, svgRealMap } from "./main";
+import { identity, transform, scale, translate } from "transformation-matrix";
 
 interface ShaperFunctions {
     center: (point?: Vec2) => undefined | Vec2;
@@ -10,6 +11,7 @@ interface ShaperFunctions {
     move: (diff: Vec2) => void;
     size: (wh?: Vec2) => Vec2 | undefined;
     size2: (newSize: Vec2, fixedPoint: Vec2) => void;
+    transform: () => Matrix;
 }
 
 /**
@@ -43,6 +45,9 @@ export function shaper(uuid: string): ShaperFunctions {
         let diff = oldSize.sub(newSize).div(v(2, 2)).mul(v(fixedPoint.x - center.x > 0 ? 1 : -1, fixedPoint.y - center.y > 0 ? 1 : -1));
         self().move(diff);
     };
+    const transformTmpImplmentation = () => {
+        return identity();
+    }
     switch (pe.tag) {
         case "svg":
         return {
@@ -60,7 +65,28 @@ export function shaper(uuid: string): ShaperFunctions {
                 } else return v(px(pe.attrs.width), px(pe.attrs.height));
             },
             size2,
-            leftTop
+            leftTop,
+            transform: () => {
+                const w = pe.attrs.width && convertToPixel(pe.attrs.width, uuid);
+                const h = pe.attrs.height && convertToPixel(pe.attrs.height, uuid);
+                const viewBox = pe.attrs.viewBox;
+                if (viewBox && w && h && w !== 0 && h !== 0) {
+                    const vw = viewBox[1].x - viewBox[0].x;
+                    const vh = viewBox[1].y - viewBox[0].y;
+                    const vx = viewBox[0].x;
+                    const vy = viewBox[0].y;
+                    if (vw !== 0 && vh !== 0) {
+                        return vh / h > vw / w ? transform(
+                            scale(h / vh, h / vh),
+                            translate((w - vw * h / vh) / 2 * h/vh - vx, -vy)
+                        ) : transform(
+                            scale(w / vw, w / vw),
+                            translate(-vx, (h - vh * w / vw) / 2 * w/vw - vy)
+                        );
+                    }
+                }
+                return identity();
+            }
         }
         case "circle":
         return {
@@ -94,7 +120,8 @@ export function shaper(uuid: string): ShaperFunctions {
                 } else return v(px(pe.attrs.r) * 2, px(pe.attrs.r) * 2);
             },
             size2,
-            leftTop
+            leftTop,
+            transform: transformTmpImplmentation
         }
         case "rect":
         return {
@@ -130,7 +157,8 @@ export function shaper(uuid: string): ShaperFunctions {
                 } else return v(px(pe.attrs.width), px(pe.attrs.height));
             },
             size2,
-            leftTop
+            leftTop,
+            transform: transformTmpImplmentation
         }
         case "ellipse":
         return {
@@ -159,7 +187,8 @@ export function shaper(uuid: string): ShaperFunctions {
                 }
             },
             size2,
-            leftTop
+            leftTop,
+            transform: transformTmpImplmentation
         }
         case "polyline":
         return {
@@ -202,7 +231,8 @@ export function shaper(uuid: string): ShaperFunctions {
                 }
             },
             size2,
-            leftTop
+            leftTop,
+            transform: transformTmpImplmentation
         }
         case "path":
         return {
@@ -271,7 +301,8 @@ export function shaper(uuid: string): ShaperFunctions {
                 }
             },
             size2,
-            leftTop
+            leftTop,
+            transform: transformTmpImplmentation
         }
         case "unknown":
         throw new Error("Unknown shape cannot move.");

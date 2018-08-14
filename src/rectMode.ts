@@ -26,7 +26,7 @@ export class RectMode implements Mode {
                 const pe: ParsedElement = {
                     uuid: this.dragTargetUuid,
                     isRoot: false,
-                    owner: uu,
+                    parent: uu,
                     tag: "rect",
                     attrs: {
                         x: {unit: configuration.defaultUnit, value: 0, attrName: "x"},

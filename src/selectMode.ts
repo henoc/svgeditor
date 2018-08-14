@@ -1,8 +1,9 @@
 import { svgVirtualMap, refleshContent, svgRealMap, sendBackToEditor } from "./main";
-import { Vec2, v } from "./utils";
+import { Vec2, v, vfp } from "./utils";
 import { shaper } from "./shapes";
 import { SvgTag } from "./svg";
 import { Mode } from "./modeInterface";
+import { identity, transform, applyToPoint, inverse } from "transformation-matrix";
 
 export class SelectMode implements Mode {
 
@@ -32,7 +33,7 @@ export class SelectMode implements Mode {
             refleshContent();
         } else {
             this.selectedShapeUuid = uu;
-            this.startCursorPos = v(event.offsetX, event.offsetY);
+            this.startCursorPos = vfp(this.inTargetCoordinate({x: event.offsetX, y: event.offsetY}, uu));
             this.startShapeCenter = shaper(uu).center()!;
             this.isDraggingShape = true;
             this.shapeHandlers = this.createShapeHandlers(this.selectedShapeUuid);
@@ -43,8 +44,8 @@ export class SelectMode implements Mode {
 
     }
     onDocumentMouseMove(event: MouseEvent) {
-        let currentCursorPos = v(event.offsetX, event.offsetY);
         if (this.selectedShapeUuid) {
+            let currentCursorPos = vfp(this.inTargetCoordinate({x: event.offsetX, y: event.offsetY}, this.selectedShapeUuid));
             const pe = svgVirtualMap[this.selectedShapeUuid];
             if (!pe.isRoot) {
                 if (this.isDraggingShape && this.startCursorPos && this.startShapeCenter) {
@@ -104,16 +105,41 @@ export class SelectMode implements Mode {
 
     private onShapeHandlerMouseDown(event: MouseEvent, index: number) {
         event.stopPropagation();
-        this.startCursorPos = v(event.offsetX, event.offsetY);
         this.selectedHandlerIndex = index;
         this.isDraggingHandler = true;
         this.startShapeFixedPoint =
-            v(
-                Number(this.shapeHandlers[8 - index].data.attrs["cx"]),
-                Number(this.shapeHandlers[8 - index].data.attrs["cy"])
-            );
+        v(
+            Number(this.shapeHandlers[8 - index].data.attrs["cx"]),
+            Number(this.shapeHandlers[8 - index].data.attrs["cy"])
+        );
         if (this.selectedShapeUuid) {
+            this.startCursorPos = vfp(this.inTargetCoordinate({x: event.offsetX, y: event.offsetY}, this.selectedShapeUuid));
             this.startShapeSize = shaper(this.selectedShapeUuid).size()!;
         }
+    }
+
+    /**
+     * Transform a (mouse) point into that in coordinate of a target shape by inverse mapping.
+     */
+    private inTargetCoordinate(point: Point, targetUuid: string): Point {
+        return applyToPoint(inverse(this.accumulateTransform(targetUuid)), point);
+    }
+
+    /**
+     * Calculate all effective transformation of a target shape.
+     */
+    private accumulateTransform(uu: string): Matrix {
+        const pe = svgVirtualMap[uu];
+        if (pe.parent) {
+            const past = this.accumulateTransform(pe.parent);
+            return transform(past, shaper(uu).transform());
+        } else {
+            return shaper(uu).transform();
+        }
+    }
+
+    private rootUuid(uu: string): string {
+        const pe = svgVirtualMap[uu];
+        return pe.parent ? this.rootUuid(pe.parent) : uu;
     }
 }

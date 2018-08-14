@@ -26,7 +26,7 @@ export type ParsedElement = (
 ) & {
     uuid: string;
     isRoot: boolean;
-    owner: string | null;  // uuid of owner svg element. null if it's outermost one
+    parent: string | null;
 }
 
 interface ParsedSvgElement {
@@ -153,37 +153,37 @@ export interface Point {
 
 export type PathCommand = [string, ...number[]]
 
-export function parse(element: xmldoc.XmlElement, owner: string | null): ParsedResult {
+export function parse(element: xmldoc.XmlElement, parent: string | null): ParsedResult {
     const uuid = uuidStatic.v4();
-    const isRoot = owner === null;
+    const isRoot = parent === null;
     const warns: Warning[] = [];
     const pushWarns = (warn: Warning | Warning[]) => {
         if (Array.isArray(warn)) warns.push(...warn);
         else warns.push(warn);
     }
-    const children = parseChildren(element, pushWarns, element.name === "svg" ? uuid : owner);
+    const children = parseChildren(element, pushWarns, element.name === "svg" ? uuid : parent);
     const text = element.val;
     if (element.name === "svg") {
         const attrs = parseAttrs(element, pushWarns).svg();
-        return {result: {tag: "svg", attrs, children, uuid, owner, isRoot}, warns};
+        return {result: {tag: "svg", attrs, children, uuid, parent, isRoot}, warns};
     } else if (element.name === "circle") {
         const attrs = parseAttrs(element, pushWarns).circle();
-        return {result: {tag: "circle", attrs, uuid, owner, isRoot}, warns};
+        return {result: {tag: "circle", attrs, uuid, parent, isRoot}, warns};
     } else if (element.name === "rect") {
         const attrs = parseAttrs(element, pushWarns).rect();
-        return {result: {tag: "rect", attrs, uuid, owner, isRoot}, warns};
+        return {result: {tag: "rect", attrs, uuid, parent, isRoot}, warns};
     } else if (element.name === "ellipse") {
         const attrs = parseAttrs(element, pushWarns).ellipse();
-        return {result: {tag: "ellipse", attrs, uuid, owner, isRoot}, warns};
+        return {result: {tag: "ellipse", attrs, uuid, parent, isRoot}, warns};
     } else if (element.name === "polyline") {
         const attrs = parseAttrs(element, pushWarns).polyline();
-        return {result: {tag: "polyline", attrs, uuid, owner, isRoot}, warns};
+        return {result: {tag: "polyline", attrs, uuid, parent, isRoot}, warns};
     } else if (element.name === "path") {
         const attrs = parseAttrs(element, pushWarns).path();
-        return {result: {tag: "path", attrs, uuid, owner, isRoot}, warns};
+        return {result: {tag: "path", attrs, uuid, parent, isRoot}, warns};
     } else {
         const attrs: Assoc = element.attr;
-        return {result: {tag: "unknown", tag$real: element.name, attrs, children, text, uuid, owner, isRoot}, warns: [{range: toRange(element), message: `${element.name} is unsupported element.`}]};
+        return {result: {tag: "unknown", tag$real: element.name, attrs, children, text, uuid, parent, isRoot}, warns: [{range: toRange(element), message: `${element.name} is unsupported element.`}]};
     }
 }
 

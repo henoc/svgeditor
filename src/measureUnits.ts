@@ -62,19 +62,23 @@ export function convertFromPixel(length: Length, targetUnit: LengthUnit, uuid: s
 function getSvgBasePx(uuid: string, attrKind: "horizontal" | "vertical"): number | null {
     const pe = svgVirtualMap[uuid];
     let ownerSvgPe: ParsedElement;
-    if (pe.owner && (ownerSvgPe = svgVirtualMap[pe.owner]) && ownerSvgPe.tag === "svg") {
-        let basePx: number = 1;
-        switch (attrKind) {
-            case "horizontal":
-            basePx = convertToPixel(ownerSvgPe.attrs.width || {unit: "%", value: 100, attrName: "width"}, pe.owner);
-            break;
-            case "vertical":
-            basePx = convertToPixel(ownerSvgPe.attrs.height || {unit: "%", value: 100, attrName: "height"}, pe.owner);
-            break;
-            default: 
-            assertNever(attrKind);
+    if (pe.parent && (ownerSvgPe = svgVirtualMap[pe.parent])) {
+        if (ownerSvgPe.tag === "svg") {
+            let basePx: number = 1;
+            switch (attrKind) {
+                case "horizontal":
+                basePx = convertToPixel(ownerSvgPe.attrs.width || {unit: "%", value: 100, attrName: "width"}, pe.parent);
+                break;
+                case "vertical":
+                basePx = convertToPixel(ownerSvgPe.attrs.height || {unit: "%", value: 100, attrName: "height"}, pe.parent);
+                break;
+                default: 
+                assertNever(attrKind);
+            }
+            return basePx;
+        } else {
+            return getSvgBasePx(pe.parent, attrKind);
         }
-        return basePx;
     }
     return null;
 }

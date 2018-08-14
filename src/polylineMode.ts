@@ -29,7 +29,7 @@ export class PolylineMode implements Mode {
                     const pe: ParsedElement = {
                         uuid: this.makeTargetUuid,
                         isRoot: false,
-                        owner: uu,
+                        parent: uu,
                         tag: "polyline",
                         attrs: {
                             points: [cursor, cursor],

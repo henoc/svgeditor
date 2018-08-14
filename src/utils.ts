@@ -50,6 +50,10 @@ export function v(x: number, y: number): Vec2 {
     return new Vec2(x, y);
 }
 
+export function vfp(point: Point): Vec2 {
+    return new Vec2(point.x, point.y);
+}
+
 export function clearEventListeners(element: Element): Element {
     var clone = element.cloneNode();
     while (element.firstChild) {

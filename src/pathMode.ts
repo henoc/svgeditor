@@ -25,7 +25,7 @@ export class PathMode implements Mode {
                     const pe: ParsedElement = {
                         uuid: this.makeTargetUuid,
                         isRoot: false,
-                        owner: uu,
+                        parent: uu,
                         tag: "path",
                         attrs: {
                             d: [
