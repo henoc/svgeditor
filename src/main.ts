@@ -79,7 +79,7 @@ export function refleshContent() {
 
     patch(content, () => contentChildrenComponent.render());
 
-    let transparentSvgRoot = document.querySelector("#svgeditor-svgcontainer > svg");
+    let transparentSvgRoot = document.querySelector("svg[data-root]");
 
     svgVirtualMap = makeUuidVirtualMap(svgdata);
     svgRealMap = transparentSvgRoot ? makeUuidRealMap(transparentSvgRoot) : {};

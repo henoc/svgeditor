@@ -5,19 +5,13 @@ import { svgPathManager } from "./pathHelpers";
 import { elementOpenStart, elementOpenEnd, attr, text, elementClose } from "incremental-dom";
 import { Component } from "./component";
 
-const ns = "http://www.w3.org/2000/svg";
-
-interface SvgOptions {
-    isSvg?: boolean;
-}
+const svgns = "http://www.w3.org/2000/svg";
+const xlinkns = "http://www.w3.org/1999/xlink";
 
 /**
  * Build SVG element or render for incremental-dom.
  */
 export class SvgTag implements Component {
-    public options: SvgOptions = {
-        isSvg: true
-    };
     public data: {
         tag?: string;
         attrs: {[key: string]: string | number}
@@ -26,14 +20,16 @@ export class SvgTag implements Component {
         text?: string
         listeners: {[key: string]: (event: Event) => void}
         important: string[]
-    } = {attrs: {}, class: [], children: [], listeners: {}, important: []};
+    } = {
+        attrs: {},
+        class: [],
+        children: [],
+        listeners: {},
+        important: []
+    };
 
     constructor(name?: string) {
         if (name) this.data.tag = name;
-    }
-    setOptions(options: SvgOptions): SvgTag {
-        if (options.isSvg !== undefined) this.options.isSvg = options.isSvg;
-        return this;
     }
     tag(name: string): SvgTag {
         this.data.tag = name;
@@ -43,6 +39,9 @@ export class SvgTag implements Component {
         delete this.data.attrs[key];
         return this;
     }
+    /**
+     * Key must start with "xlink:" when the attribute belongs to xlink.
+     */
     attr(key: string, value: string | number | null): SvgTag {
         if (value !== null && this.data.important.indexOf(key) === -1) {
             this.data.attrs[key] = value;
@@ -102,9 +101,16 @@ export class SvgTag implements Component {
     }
     build(): Element {
         if (this.data.tag) {
-            const elem = this.options.isSvg ? document.createElementNS(ns, this.data.tag) : document.createElement(this.data.tag);
+            if (this.data.tag === "svg") {
+                this.data.attrs.xmlns = svgns;
+                this.data.attrs["xmlns:xlink"] = xlinkns;
+            }
+            const elem = document.createElementNS(svgns, this.data.tag);
             map(this.data.attrs, (key, value) => {
-                if (value !== null) elem.setAttribute(key, String(value));
+                if (value !== null) {
+                    if (key.startsWith("xlink:")) elem.setAttributeNS(xlinkns, key, String(value));
+                    else elem.setAttribute(key, String(value));
+                }
             });
             elem.classList.add(...this.data.class);
             this.data.children.forEach(c => {
@@ -125,6 +131,10 @@ export class SvgTag implements Component {
      */
     render = () => {
         if (this.data.tag) {
+            if (this.data.tag === "svg") {
+                this.data.attrs.xmlns = svgns;
+                this.data.attrs["xmlns:xlink"] = xlinkns;
+            }
             elementOpenStart(this.data.tag);
             map(this.data.attrs, (key, value) => {
                 if (value !== null) attr(key, value);

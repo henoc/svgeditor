@@ -36,20 +36,9 @@ select {
 select option {
     background-color: var(--vscode-dropdown-listBackground);
 }
-#svgeditor-svgcontainer {
+.svgeditor-svgcontainer {
     display: block;
-    background-color: var(--vscode-sideBar-background);
-    position: relative;
-}
-.svgeditor-svg-image {
-    position: absolute;
-    left: 0px;
-    top: 0px;
-}
-.svgeditor-svg-svg {
-    position: absolute;
-    left: 0px;
-    top: 0px;
+    fill: var(--vscode-sideBar-background);
 }
 .svgeditor-shape-handler {
     fill: var(--vscode-activityBarBadge-background);

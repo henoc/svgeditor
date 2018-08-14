@@ -5,6 +5,7 @@ import { onShapeMouseDown } from "./triggers";
 import { assertNever } from "./utils";
 
 interface SvgConstructOptions {
+    putRootAttribute?: boolean;
     putUUIDAttribute?: boolean;
     setListeners?: boolean;
     transparent?: boolean;
@@ -15,12 +16,17 @@ interface SvgConstructOptions {
   Make elements only use recognized attributes and tags.
 */
 export function construct(pe: ParsedElement, options?: SvgConstructOptions): SvgTag | null {
+    const putRootAttribute = options && options.putRootAttribute || false;
     const putIndexAttribute = options && options.putUUIDAttribute || false;
     const setListeners = options && options.setListeners || false;
     const transparent = options && options.transparent || false;
     const all = options && options.all || false;
 
     const tag = new SvgTag(pe.tag);
+    if (putRootAttribute) {
+        tag.attr("data-root", "true");
+        options && (options.putRootAttribute = false);
+    }
     if (putIndexAttribute) {
         tag.attr("data-uuid", pe.uuid);
     }

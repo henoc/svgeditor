@@ -161,7 +161,7 @@ export function parse(element: xmldoc.XmlElement, parent: string | null): Parsed
         if (Array.isArray(warn)) warns.push(...warn);
         else warns.push(warn);
     }
-    const children = parseChildren(element, pushWarns, element.name === "svg" ? uuid : parent);
+    const children = parseChildren(element, pushWarns, uuid);
     const text = element.val;
     if (element.name === "svg") {
         const attrs = parseAttrs(element, pushWarns).svg();
@@ -191,12 +191,12 @@ function toRange(element: xmldoc.XmlElement) {
     return {line: element.line, column: element.column, position: element.position, startTagPosition: element.startTagPosition};
 }
 
-function parseChildren(element: xmldoc.XmlElement, onWarns: (warns: Warning[]) => void, owner: string | null) {
+function parseChildren(element: xmldoc.XmlElement, onWarns: (warns: Warning[]) => void, parent: string | null) {
     const children = [];
     const warns = [];
     for (let item of element.children ) {
         if (item.type === "element") {
-            const ret = parse(item, owner);
+            const ret = parse(item, parent);
             if (ret.result) children.push(ret.result);
             warns.push(...ret.warns);
         }
