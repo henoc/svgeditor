@@ -112,7 +112,7 @@ export class SvgTag implements Component {
                     else elem.setAttribute(key, String(value));
                 }
             });
-            elem.classList.add(...this.data.class);
+            if (this.data.class.length > 0) elem.classList.add(...this.data.class);
             this.data.children.forEach(c => {
                 elem.insertAdjacentElement("beforeend", c.build());
             });

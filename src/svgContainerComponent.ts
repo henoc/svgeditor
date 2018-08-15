@@ -5,29 +5,29 @@ import { SvgTag } from "./svg";
 import { el } from "./utils";
 
 /**
- * +------conainer(svg)-----------+
+ * +------conainer(svg)------------+
  * | +------------image----------+  <- to deal with url scheme unresolve in iframe problem
  * | | +------wrapper(svg)-----+    <- for insert outer WebView environment (ex. font)
- * | | | +-----user's svg-----+
- * | | | |
- * | | | +--------------------+
- * | | +-----------------------+
- * | +---------------------------+
+ * | | | +-----user's svg----+ | | |
+ * | | | |                   | | | |
+ * | | | +-------------------+ | | |
+ * | | +-----------------------+ | |
+ * | +---------------------------+ |
  * | +-----transparent(svg)------+  <- mouse detection
- * | |
- * | |
- * | +---------------------------+
+ * | |                           | |
+ * | |                           | |
+ * | +---------------------------+ |
  * | +------shapeHanlder(svg)----+  <- draw handler objects (to avoid the transform effect of outermost user's svg)
- * | |
- * | |
- * | +---------------------------+
- * +------------------------------+
+ * | |                           | |
+ * | |                           | |
+ * | +---------------------------+ |
+ * +-------------------------------+
  */
 export class SvgContainerComponent implements Component {
 
     render() {
-        const svgtag = construct(svgdata, {all: configuration.showAll});
-        const transparentSvgtag = construct(svgdata, {putRootAttribute: true, putUUIDAttribute: true, setListeners: true, transparent: true, insertSvgSizeRect: true, all: configuration.showAll});
+        const svgtag = construct(svgdata, {all: configuration.showAll, setRootSvgXYtoOrigin: true});
+        const transparentSvgtag = construct(svgdata, {putRootAttribute: true, setRootSvgXYtoOrigin: true, putUUIDAttribute: true, setListeners: true, transparent: true, insertSvgSizeRect: true, all: configuration.showAll});
         if (svgtag && transparentSvgtag) {
             const width = svgdata.tag === "svg" && svgdata.attrs.width && svgdata.attrs.width.unit !== "%" && `${svgdata.attrs.width.value}${svgdata.attrs.width.unit || "px"}` || "400px";
             const height = svgdata.tag === "svg" && svgdata.attrs.height && svgdata.attrs.height.unit !== "%" && `${svgdata.attrs.height.value}${svgdata.attrs.height.unit || "px"}` || "400px";

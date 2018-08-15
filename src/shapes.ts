@@ -61,11 +61,27 @@ export function shaper(uuid: string): ShaperFunctions {
         case "svg":
         return {
             center: (point?: Vec2) => {
-                if (point) return;
-                else return v(px(pe.attrs.width) / 2, px(pe.attrs.height) / 2);
+                if (point) {
+                    pe.attrs.x = fromPx(pe.attrs.x, "x",
+                        point.x - px(pe.attrs.width) / 2
+                    );
+                    pe.attrs.y = fromPx(pe.attrs.y, "y",
+                        point.y - px(pe.attrs.height) / 2
+                    );
+                } else {
+                    return v(
+                        px(pe.attrs.x) + px(pe.attrs.width) / 2,
+                        px(pe.attrs.y) + px(pe.attrs.height) / 2
+                    );
+                }
             },
             move: (diff: Vec2) => {
-                return;
+                pe.attrs.x = fromPx(pe.attrs.x, "x",
+                    px(pe.attrs.x) + diff.x
+                );
+                pe.attrs.y = fromPx(pe.attrs.y, "y",
+                    px(pe.attrs.y) + diff.y
+                );
             },
             size: (wh?: Vec2) => {
                 if (wh) {

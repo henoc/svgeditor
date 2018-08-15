@@ -79,6 +79,8 @@ interface ParsedSvgAttr extends ParsedBaseAttr {
     xmlns: string | null;
     "xmlns:xlink": string | null;
     version: number | null;
+    x: Length | null;
+    y: Length | null;
     width: Length | null;
     height: Length | null;
     viewBox: [Point, Point] | null;
@@ -226,6 +228,8 @@ function parseAttrs(element: xmldoc.XmlElement, onWarns: (ws: Warning[]) => void
         svg: () => {
             const validSvgAttrs: ParsedSvgAttr = Object.assign(globalValidAttrs, {
                 xmlns: pop(attrs, "xmlns").value,
+                x: (tmp = pop(attrs, "x")) && lengthAttr(tmp, element, pushWarns) || null,
+                y: (tmp = pop(attrs, "y")) && lengthAttr(tmp, element, pushWarns) || null,
                 width: (tmp = pop(attrs, "width")) && lengthAttr(tmp, element, pushWarns) || null,
                 height: (tmp = pop(attrs, "height")) && lengthAttr(tmp, element, pushWarns) || null,
                 "xmlns:xlink": pop(attrs, "xmlns:xlink").value,

@@ -13,6 +13,7 @@ interface SvgConstructOptions {
     transparent?: boolean;
     insertSvgSizeRect?: boolean;
     all?: boolean;
+    setRootSvgXYtoOrigin?: boolean;
 }
 
 /**
@@ -25,6 +26,7 @@ export function construct(pe: ParsedElement, options?: SvgConstructOptions): Svg
     const transparent = options && options.transparent || false;
     const insertRect = options && options.insertSvgSizeRect || false;
     const all = options && options.all || false;
+    const setRootSvgXYtoOrigin = options && options.setRootSvgXYtoOrigin || false;
 
     const tag = new SvgTag(pe.tag);
     if (putRootAttribute) {
@@ -69,12 +71,20 @@ export function construct(pe: ParsedElement, options?: SvgConstructOptions): Svg
             }
             makeChildren(pe.children, tag, options);
             const viewBoxAttrStr = pe.attrs.viewBox && pe.attrs.viewBox.map(p => `${p.x} ${p.y}`).join(" ");
-            return tag.attr("xmlns", pe.attrs.xmlns)
+            tag.attr("xmlns", pe.attrs.xmlns)
                 .attr("version", pe.attrs.version)
                 .attr("xmlns:xlink", pe.attrs["xmlns:xlink"])
                 .attr("viewBox", viewBoxAttrStr)
+                .uattr("x", pe.attrs.x)
+                .uattr("y", pe.attrs.y)
                 .uattr("width", pe.attrs.width)
                 .uattr("height", pe.attrs.height);
+            if (setRootSvgXYtoOrigin) {
+                if (pe.attrs.x) tag.attr("x", 0);
+                if (pe.attrs.y) tag.attr("y", 0);
+                options && (options.setRootSvgXYtoOrigin = false);
+            }
+            return tag;
             case "circle":
             setBaseAttrs(pe.attrs, tag);
             return tag.uattr("r", pe.attrs.r)
