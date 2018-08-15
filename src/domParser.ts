@@ -4,6 +4,7 @@ import { Assoc } from "./svg";
 import uuidStatic from "uuid";
 import tinycolor from "tinycolor2";
 import { svgPathManager } from "./pathHelpers";
+const { fromTransformAttribute } = require("transformation-matrix/fromTransformAttribute");
 
 interface Warning {
     range: {line: number, column: number, position: number, startTagPosition: number},
@@ -92,6 +93,7 @@ interface ParsedCircleAttr extends ParsedBaseAttr {
     r: Length | null;
     fill: Paint | null;
     stroke: Paint | null;
+    transform: Transform | null;
 }
 
 interface ParsedRectAttr extends ParsedBaseAttr {
@@ -103,6 +105,7 @@ interface ParsedRectAttr extends ParsedBaseAttr {
     ry: Length | null;
     fill: Paint | null;
     stroke: Paint | null;
+    transform: Transform | null;
 }
 
 interface ParsedEllipseAttr extends ParsedBaseAttr {
@@ -112,18 +115,21 @@ interface ParsedEllipseAttr extends ParsedBaseAttr {
     ry: Length | null;
     fill: Paint | null;
     stroke: Paint | null;
+    transform: Transform | null;
 }
 
 interface ParsedPolylineAttr extends ParsedBaseAttr {
     points: Point[] | null;
     fill: Paint | null;
     stroke: Paint | null;
+    transform: Transform | null;
 }
 
 interface ParsedPathAttr extends ParsedBaseAttr {
     d: PathCommand[] | null;
     fill: Paint | null;
     stroke: Paint | null;
+    transform: Transform | null;
 }
 
 export type LengthUnit = "em" | "ex" | "px" | "in" | "cm" | "mm" | "pt" | "pc" | "%" | null;
@@ -154,6 +160,33 @@ export interface Point {
 }
 
 export type PathCommand = [string, ...number[]]
+
+export type TransformDescriptor = {
+    type: "matrix",
+    a: number, b: number, c: number, d: number, e: number, f: number
+} | {
+    type: "translate",
+    tx: number, ty?: number
+} | {
+    type: "scale",
+    sx: number, sy?: number
+} | {
+    type: "rotate",
+    angle: number,
+    cx?: number,
+    cy?: number
+} | {
+    type: "skewX",
+    angle: number
+} | {
+    type: "skewY",
+    angle: number
+}
+
+export interface Transform {
+    descriptors: TransformDescriptor[];
+    matrices: Matrix[];
+}
 
 export function parse(element: xmldoc.XmlElement, parent: string | null): ParsedResult {
     const uuid = uuidStatic.v4();
@@ -247,6 +280,7 @@ function parseAttrs(element: xmldoc.XmlElement, onWarns: (ws: Warning[]) => void
                 r: (tmp = pop(attrs, "r")) && lengthAttr(tmp, element, pushWarns) || null,
                 fill: (tmp = pop(attrs, "fill")) && paintAttr(tmp, element, pushWarns) || null,
                 stroke: (tmp = pop(attrs, "stroke")) && paintAttr(tmp, element, pushWarns) || null,
+                transform: (tmp = pop(attrs, "transform")) && tmp.value && transformAttr(tmp.value, element, pushWarns) || null,
                 unknown: unknownAttrs(attrs, element, pushWarns)
             });
             onWarns(warns);
@@ -262,6 +296,7 @@ function parseAttrs(element: xmldoc.XmlElement, onWarns: (ws: Warning[]) => void
                 ry: (tmp = pop(attrs, "ry")) && lengthAttr(tmp, element, pushWarns) || null,
                 fill: (tmp = pop(attrs, "fill")) && paintAttr(tmp, element, pushWarns) || null,
                 stroke: (tmp = pop(attrs, "stroke")) && paintAttr(tmp, element, pushWarns) || null,
+                transform: (tmp = pop(attrs, "transform")) && tmp.value && transformAttr(tmp.value, element, pushWarns) || null,
                 unknown: unknownAttrs(attrs, element, pushWarns)
             });
             onWarns(warns);
@@ -275,6 +310,7 @@ function parseAttrs(element: xmldoc.XmlElement, onWarns: (ws: Warning[]) => void
                 ry: (tmp = pop(attrs, "ry")) && lengthAttr(tmp, element, pushWarns) || null,
                 fill: (tmp = pop(attrs, "fill")) && paintAttr(tmp, element, pushWarns) || null,
                 stroke: (tmp = pop(attrs, "stroke")) && paintAttr(tmp, element, pushWarns) || null,
+                transform: (tmp = pop(attrs, "transform")) && tmp.value && transformAttr(tmp.value, element, pushWarns) || null,
                 unknown: unknownAttrs(attrs, element, pushWarns)
             });
             onWarns(warns);
@@ -285,6 +321,7 @@ function parseAttrs(element: xmldoc.XmlElement, onWarns: (ws: Warning[]) => void
                 points: (tmp = pop(attrs, "points")) && tmp.value && pointsAttr(tmp.value, element, pushWarns) || null,
                 fill: (tmp = pop(attrs, "fill")) && paintAttr(tmp, element, pushWarns) || null,
                 stroke: (tmp = pop(attrs, "stroke")) && paintAttr(tmp, element, pushWarns) || null,
+                transform: (tmp = pop(attrs, "transform")) && tmp.value && transformAttr(tmp.value, element, pushWarns) || null,
                 unknown: unknownAttrs(attrs, element, pushWarns)
             });
             onWarns(warns);
@@ -295,6 +332,7 @@ function parseAttrs(element: xmldoc.XmlElement, onWarns: (ws: Warning[]) => void
                 d: (tmp = pop(attrs, "d")) && tmp.value && pathDefinitionAttr(tmp.value, element, pushWarns) || null,
                 fill: (tmp = pop(attrs, "fill")) && paintAttr(tmp, element, pushWarns) || null,
                 stroke: (tmp = pop(attrs, "stroke")) && paintAttr(tmp, element, pushWarns) || null,
+                transform: (tmp = pop(attrs, "transform")) && tmp.value && transformAttr(tmp.value, element, pushWarns) || null,
                 unknown: unknownAttrs(attrs, element, pushWarns)
             });
             onWarns(warns);
@@ -397,5 +435,14 @@ function pathDefinitionAttr(maybeDAttr: string, element: xmldoc.XmlElement, onWa
         return void 0;
     } else {
         return parsedDAttr.segments;
+    }
+}
+
+function transformAttr(maybeTransformAttr: string, element: xmldoc.XmlElement, onWarn: (w: Warning) => void): Transform | undefined {
+    try {
+        return fromTransformAttribute(maybeTransformAttr);
+    } catch (error) {
+        onWarn({range: toRange(element), message: `at transform attribute: ${error}`});
+        return void 0;
     }
 }

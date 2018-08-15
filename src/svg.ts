@@ -1,9 +1,10 @@
 import { map } from "./utils";
-import { Length, Paint, PathCommand } from "./domParser";
+import { Length, Paint, PathCommand, Transform } from "./domParser";
 import tinycolor from "tinycolor2";
 import { svgPathManager } from "./pathHelpers";
 import { elementOpenStart, elementOpenEnd, attr, text, elementClose } from "incremental-dom";
 import { Component } from "./component";
+import { toTransformStrWithoutCollect } from "./transformHelpers";
 
 const svgns = "http://www.w3.org/2000/svg";
 const xlinkns = "http://www.w3.org/1999/xlink";
@@ -74,6 +75,12 @@ export class SvgTag implements Component {
         if (value !== null && this.data.important.indexOf(key) === -1) {
             const parsedDAttr = svgPathManager(value);
             this.data.attrs[key] = parsedDAttr.toString();
+        }
+        return this;
+    }
+    tattr(key: string, value: Transform | null): SvgTag {
+        if (value !== null && this.data.important.indexOf(key) === -1) {
+            this.data.attrs[key] = toTransformStrWithoutCollect(value);
         }
         return this;
     }

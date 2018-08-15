@@ -5,6 +5,7 @@ import { onShapeMouseDown } from "./triggers";
 import { assertNever } from "./utils";
 import { toString, inverse } from "transformation-matrix";
 import { shaper } from "./shapes";
+import { toTransformStrWithoutCollect } from "./transformHelpers";
 
 interface SvgConstructOptions {
     putRootAttribute?: boolean;
@@ -91,7 +92,8 @@ export function construct(pe: ParsedElement, options?: SvgConstructOptions): Svg
                 .uattr("cx", pe.attrs.cx)
                 .uattr("cy", pe.attrs.cy)
                 .pattr("fill", pe.attrs.fill)
-                .pattr("stroke", pe.attrs.stroke);
+                .pattr("stroke", pe.attrs.stroke)
+                .tattr("tranform", pe.attrs.transform);
             case "rect":
             setBaseAttrs(pe.attrs, tag);
             return tag.uattr("x", pe.attrs.x)
@@ -101,7 +103,8 @@ export function construct(pe: ParsedElement, options?: SvgConstructOptions): Svg
                 .uattr("rx", pe.attrs.rx)
                 .uattr("ry", pe.attrs.ry)
                 .pattr("fill", pe.attrs.fill)
-                .pattr("stroke", pe.attrs.stroke);
+                .pattr("stroke", pe.attrs.stroke)
+                .tattr("tranform", pe.attrs.transform);
             case "ellipse":
             setBaseAttrs(pe.attrs, tag);
             return tag.uattr("cx", pe.attrs.cx)
@@ -109,18 +112,21 @@ export function construct(pe: ParsedElement, options?: SvgConstructOptions): Svg
                 .uattr("rx", pe.attrs.rx)
                 .uattr("ry", pe.attrs.ry)
                 .pattr("fill", pe.attrs.fill)
-                .pattr("stroke", pe.attrs.stroke);
+                .pattr("stroke", pe.attrs.stroke)
+                .tattr("tranform", pe.attrs.transform);
             case "polyline":
             setBaseAttrs(pe.attrs, tag);
             const pointsStr = pe.attrs.points && pe.attrs.points.map(point => `${point.x},${point.y}`).join(" ");
             return tag.attr("points", pointsStr)
                 .pattr("fill", pe.attrs.fill)
-                .pattr("stroke", pe.attrs.stroke);
+                .pattr("stroke", pe.attrs.stroke)
+                .tattr("tranform", pe.attrs.transform);
             case "path":
             setBaseAttrs(pe.attrs, tag);
             return tag.dattr("d", pe.attrs.d)
                 .pattr("fill", pe.attrs.fill)
-                .pattr("stroke", pe.attrs.stroke);
+                .pattr("stroke", pe.attrs.stroke)
+                .tattr("tranform", pe.attrs.transform);
             default:
             assertNever(pe);
         }
