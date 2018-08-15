@@ -5,6 +5,7 @@ import * as xmldoc from "xmldoc";
 import { render } from "ejs";
 import { parse } from "./domParser";
 import uuid from "uuid";
+const format = require('xml-formatter');
 
 export function activate(context: vscode.ExtensionContext) {
 
@@ -39,7 +40,7 @@ export function activate(context: vscode.ExtensionContext) {
             switch (message.command) {
                 case "modified":
                     editor.edit(editBuilder => {
-                        editBuilder.replace(allRange(editor), message.data);
+                        editBuilder.replace(allRange(editor), format(message.data));
                     });
                     prevendSend[uu] = true;
                     return;
