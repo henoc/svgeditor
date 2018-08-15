@@ -4,6 +4,8 @@ import { ParsedElement } from "./domParser";
 import { v } from "./utils";
 import { Mode } from "./modeInterface";
 import { SvgTag } from "./svg";
+import { applyToPoint, inverse } from "transformation-matrix";
+import { shaper } from "./shapes";
 
 export class PathMode implements Mode {
 
@@ -15,7 +17,7 @@ export class PathMode implements Mode {
 
     onShapeMouseDownLeft(event: MouseEvent, uu: string): void {
         if (svgVirtualMap[uu].isRoot) {
-            let [cx, cy] = [event.offsetX, event.offsetY];
+            let {x: cx, y: cy} = this.inTargetCoordinate({x: event.offsetX, y: event.offsetY}, uu);
             const root = svgVirtualMap[uu];
             event.stopPropagation();
             this.isDragging = true;
@@ -78,8 +80,8 @@ export class PathMode implements Mode {
         }
     }
     onDocumentMouseMove(event: MouseEvent): void {
-        const [cx, cy] = [event.offsetX, event.offsetY];
         if (this.makeTargetUuid) {
+            let {x: cx, y: cy} = this.inTargetCoordinate({x: event.offsetX, y: event.offsetY}, this.makeTargetUuid);
             const pe = svgVirtualMap[this.makeTargetUuid];
             if (pe.tag === "path" && pe.attrs.d) {
                 const topM = 0;
@@ -106,4 +108,10 @@ export class PathMode implements Mode {
         this.isDragging = false;
     }
 
+    /**
+     * Transform a (mouse) point into that in coordinate of a target shape by inverse mapping.
+     */
+    private inTargetCoordinate(point: Point, targetUuid: string): Point {
+        return applyToPoint(inverse(shaper(targetUuid).allTransform()), point);
+    }
 }

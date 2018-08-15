@@ -1,10 +1,11 @@
 import { svgVirtualMap, refleshContent, configuration, svgRealMap, drawState } from "./main";
 import uuidStatic from "uuid";
 import { ParsedElement } from "./domParser";
-import { v } from "./utils";
+import { v, vfp } from "./utils";
 import { shaper } from "./shapes";
 import { Mode } from "./modeInterface";
 import { SvgTag } from "./svg";
+import { applyToPoint, inverse } from "transformation-matrix";
 
 export class PolylineMode implements Mode {
 
@@ -17,7 +18,7 @@ export class PolylineMode implements Mode {
         if (svgVirtualMap[uu].isRoot) {
             const root = svgVirtualMap[uu];
             event.stopPropagation();
-            const cursor = v(event.offsetX, event.offsetY);
+            const cursor = vfp(this.inTargetCoordinate({x: event.offsetX, y: event.offsetY}, uu));
             if (root.tag === "svg") {
                 if (this.makeTargetUuid) {
                     const pe = svgVirtualMap[this.makeTargetUuid];
@@ -58,8 +59,8 @@ export class PolylineMode implements Mode {
         }
     }
     onDocumentMouseMove(event: MouseEvent): void {
-        const cursor = v(event.offsetX, event.offsetY);
         if (this.makeTargetUuid) {
+            const cursor = vfp(this.inTargetCoordinate({x: event.offsetX, y: event.offsetY}, this.makeTargetUuid));
             const pe = svgVirtualMap[this.makeTargetUuid];
             if (pe.tag === "polyline" && pe.attrs.points) {
                 const len = pe.attrs.points.length;
@@ -75,4 +76,10 @@ export class PolylineMode implements Mode {
         
     }
 
+    /**
+     * Transform a (mouse) point into that in coordinate of a target shape by inverse mapping.
+     */
+    private inTargetCoordinate(point: Point, targetUuid: string): Point {
+        return applyToPoint(inverse(shaper(targetUuid).allTransform()), point);
+    }
 }
