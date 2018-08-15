@@ -82,7 +82,7 @@ function join2(sep: (i: number) => string, strs: string[]) {
 
 /**
  * Syntax sugar for elementOpen, elementClose, elementVoid.
- * ``el`li :key="list-element" class="non-static-class-a non-static-class-b" *id="static-ident" onclick=${variable}`; text("some"); el`br/`; text("text"); el`/li` ``
+ * ``el`li :key="list-element" class="non-static-class-a non-static-class-b" *id="static-ident" onclick=${variable} ...${["data-optional1", "foo", "data-optional2", "bar"]}`; text("some"); el`br/`; text("text"); el`/li` ``
  * 
  * note: ``el`li foo="list-${variable}"` `` is incorrect. Use ``el`li foo=${`list-${variable}`}` ``
  */
@@ -94,8 +94,8 @@ export function el(template: TemplateStringsArray, ...args: any[]) {
         const elementOpenArgs = <[string, string | undefined, any[], ...any[]]>[
             parseResult.tag,
             typeof parseResult.key === "number" ? args[parseResult.key] : parseResult.key,
-            parseResult.statics.map(st => typeof st === "number" ? args[st] : st),
-            ...parseResult.nonStatics.map(nst => typeof nst === "number" ? args[nst] : nst)
+            parseResult.statics.map(st => typeof st === "number" ? args[st] : st).concat(...parseResult.arrayStatics.map(i => args[i])),
+            ...parseResult.nonStatics.map(nst => typeof nst === "number" ? args[nst] : nst).concat(...parseResult.arrayNonStatics.map(i => args[i]))
         ];
         if (parseResult.selfContained) {
             elementVoid(...elementOpenArgs);
@@ -110,6 +110,8 @@ interface ElopenParseResult {
     key?: string | number;
     statics: (string | number)[];
     nonStatics: (string | number)[];
+    arrayStatics: number[];
+    arrayNonStatics: number[];
     selfContained: boolean;
 }
 
@@ -121,22 +123,32 @@ function elopenParser(template: TemplateStringsArray): ElopenParseResult {
     }
     let concatTemplate = join2(i => `$${i}`, [...template]);
     let tag = concatTemplate.match(/^\s*[^\s//]+/)![0].trimLeft();
-    let token = /([^\s="]+)\s*=\s*("[^"]*"|\$[0-9]+)/g;
+    let token = /(([^\s="]+)\s*=\s*("[^"]*"|\$[0-9]+))|(\.\.\.\*?\$[0-9]+)/g;
     let tmp: RegExpExecArray | null;
-    let ret: ElopenParseResult = {tag, statics: [], nonStatics: [], selfContained: concatTemplate.charAt(concatTemplate.length - 1) === "/"};
+    let ret: ElopenParseResult = {tag, statics: [], nonStatics: [], arrayStatics: [], arrayNonStatics: [], selfContained: concatTemplate.charAt(concatTemplate.length - 1) === "/"};
     let valueof = (right: string) => {
+        let tmp2: RegExpExecArray | null;
         if (/^"[^"]*"$/.test(right)) return right.slice(1, right.length - 1);
+        else if (tmp2 = /^\.\.\.\*?\$([0-9]+)$/.exec(right)) return Number(tmp2[1]);
         else return Number(right.slice(1));
     }
     while ((tmp = token.exec(concatTemplate)) !== null) {
-        const left = tmp[1];
-        const right = tmp[2];
-        if (left === ":key") {
-            ret.key = valueof(right);
-        } else if (left.startsWith("*")) {      // statics
-            ret.statics.push(left.slice(1), valueof(right));
-        } else {
-            ret.nonStatics.push(left, valueof(right));
+        if (tmp[1]) {
+            const left = tmp[2];
+            const right = tmp[3];
+            if (left === ":key") {
+                ret.key = valueof(right);
+            } else if (left.startsWith("*")) {      // statics
+                ret.statics.push(left.slice(1), valueof(right));
+            } else {
+                ret.nonStatics.push(left, valueof(right));
+            }
+        } else if (tmp[4]) {
+            if (tmp[4].startsWith("...*")) {
+                ret.arrayStatics.push(<number>valueof(tmp[4]));
+            } else {
+                ret.arrayNonStatics.push(<number>valueof(tmp[4]));
+            }
         }
     }
     return ret;

@@ -17,7 +17,8 @@ class MenuComponent implements Component {
     }
 
     render() {
-        el`li :key=${this.name} *id=${`svgeditor-menu-${this.name}`} *onclick=${() => this.changeMode(this.name)} class=${this.isSelected ? "svgeditor-selected" : ""}`;
+        const classes = this.isSelected ? ["class", "svgeditor-selected"] : [];
+        el`li :key=${this.name} *id=${`svgeditor-menu-${this.name}`} *onclick=${() => this.changeMode(this.name)} ...${classes}`;
         text(this.name);
         el`/li`;
     }

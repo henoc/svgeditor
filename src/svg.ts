@@ -142,7 +142,7 @@ export class SvgTag implements Component {
             map(this.data.listeners, (key, value) => {
                 attr(`on${key}`, value);
             });
-            attr("class", this.data.class.join(" "));
+            if (this.data.class.length > 0)  attr("class", this.data.class.join(" "));
             elementOpenEnd();
             this.data.children.forEach(c => c.render());
             if (this.data.text) text(this.data.text);

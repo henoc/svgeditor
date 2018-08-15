@@ -274,11 +274,6 @@ export class StyleConfigComponent implements Component {
     }
 
     private colorBoxRender(paint: Paint | null, relatedProperty: "fill" | "stroke") {
-        const statics = [
-            "class", "svgeditor-colorbox",
-            "tabindex", "0",
-            "onclick", (event: MouseEvent) => this.openColorPicker(event, relatedProperty)
-        ];
         const style = {backgroundColor: "transparent"};
         let textContent: null | string = null;
         if (paint) {
