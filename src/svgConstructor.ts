@@ -3,12 +3,15 @@ import { SvgTag } from "./svg";
 import uuid from "uuid";
 import { onShapeMouseDown } from "./triggers";
 import { assertNever } from "./utils";
+import { toString, inverse } from "transformation-matrix";
+import { shaper } from "./shapes";
 
 interface SvgConstructOptions {
     putRootAttribute?: boolean;
     putUUIDAttribute?: boolean;
     setListeners?: boolean;
     transparent?: boolean;
+    insertSvgSizeRect?: boolean;
     all?: boolean;
 }
 
@@ -20,10 +23,12 @@ export function construct(pe: ParsedElement, options?: SvgConstructOptions): Svg
     const putIndexAttribute = options && options.putUUIDAttribute || false;
     const setListeners = options && options.setListeners || false;
     const transparent = options && options.transparent || false;
+    const insertRect = options && options.insertSvgSizeRect || false;
     const all = options && options.all || false;
 
     const tag = new SvgTag(pe.tag);
     if (putRootAttribute) {
+        // only top level
         tag.attr("data-root", "true");
         options && (options.putRootAttribute = false);
     }
@@ -34,7 +39,9 @@ export function construct(pe: ParsedElement, options?: SvgConstructOptions): Svg
         tag.listener("mousedown", event => onShapeMouseDown(<MouseEvent>event, pe.uuid));
     }
     if (transparent) {
+        // only top level
         tag.importantAttr("opacity", 0);
+        options && (options.transparent = false);
     }
 
     if (pe.tag === "unknown") {
@@ -51,6 +58,15 @@ export function construct(pe: ParsedElement, options?: SvgConstructOptions): Svg
         switch (pe.tag) {
             case "svg":
             setBaseAttrs(pe.attrs, tag);
+            // Mostly to deal with mouse event of nested svg tag. Nested svg shape size of collision detection strangely is the same size of inner shapes of that.
+            if (insertRect) {
+                const dummyRect = new SvgTag("rect").uattr("width", pe.attrs.width).uattr("height", pe.attrs.height)
+                .attr("transform", toString(inverse(shaper(pe.uuid).allTransform())));
+                // Use shaper in this point is a bit early becase svgRealMap is not updated yet... (so some value is inaccurate for the first time.)
+                if (transparent) dummyRect.importantAttr("opacity", 0);
+                else dummyRect.attr("fill", "gray").attr("stroke", "black");
+                tag.children(dummyRect);
+            }
             makeChildren(pe.children, tag, options);
             const viewBoxAttrStr = pe.attrs.viewBox && pe.attrs.viewBox.map(p => `${p.x} ${p.y}`).join(" ");
             return tag.attr("xmlns", pe.attrs.xmlns)

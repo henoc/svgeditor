@@ -12,10 +12,11 @@ interface ShaperFunctions {
     size: (wh?: Vec2) => Vec2 | undefined;
     size2: (newSize: Vec2, fixedPoint: Vec2) => void;
     transform: () => Matrix;
+    allTransform: () => Matrix;
 }
 
 /**
- * Transform some shapes. Need to set the shape into `svgVirtualMap` and `svgRealMap` before use.
+ * Transform some shapes. Need to set the shape into `svgVirtualMap` before use. `svgRealMap` is optional, font style sets default browser settings if none, so measurement "ex" or "em" is inaccurate. 
  */
 export function shaper(uuid: string): ShaperFunctions {
     const pe = svgVirtualMap[uuid];
@@ -47,6 +48,14 @@ export function shaper(uuid: string): ShaperFunctions {
     };
     const transformTmpImplmentation = () => {
         return identity();
+    }
+    const allTransform = () => {
+        if (pe.parent) {
+            const past = shaper(pe.parent).allTransform();
+            return transform(past, self().transform());
+        } else {
+            return self().transform();
+        }
     }
     switch (pe.tag) {
         case "svg":
@@ -86,7 +95,8 @@ export function shaper(uuid: string): ShaperFunctions {
                     }
                 }
                 return identity();
-            }
+            },
+            allTransform
         }
         case "circle":
         return {
@@ -121,7 +131,8 @@ export function shaper(uuid: string): ShaperFunctions {
             },
             size2,
             leftTop,
-            transform: transformTmpImplmentation
+            transform: transformTmpImplmentation,
+            allTransform
         }
         case "rect":
         return {
@@ -158,7 +169,8 @@ export function shaper(uuid: string): ShaperFunctions {
             },
             size2,
             leftTop,
-            transform: transformTmpImplmentation
+            transform: transformTmpImplmentation,
+            allTransform
         }
         case "ellipse":
         return {
@@ -188,7 +200,8 @@ export function shaper(uuid: string): ShaperFunctions {
             },
             size2,
             leftTop,
-            transform: transformTmpImplmentation
+            transform: transformTmpImplmentation,
+            allTransform
         }
         case "polyline":
         return {
@@ -232,7 +245,8 @@ export function shaper(uuid: string): ShaperFunctions {
             },
             size2,
             leftTop,
-            transform: transformTmpImplmentation
+            transform: transformTmpImplmentation,
+            allTransform
         }
         case "path":
         return {
@@ -302,7 +316,8 @@ export function shaper(uuid: string): ShaperFunctions {
             },
             size2,
             leftTop,
-            transform: transformTmpImplmentation
+            transform: transformTmpImplmentation,
+            allTransform
         }
         case "unknown":
         throw new Error("Unknown shape cannot move.");

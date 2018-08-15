@@ -59,6 +59,7 @@ window.addEventListener("message", event => {
     switch (message.command) {
         case "modified":
             svgdata = message.data;
+            editMode.mode = new SelectMode();
             refleshContent();
             break;
         case "configuration":
@@ -76,12 +77,10 @@ document.addEventListener("click", onDocumentClick);
 // exported functions
 
 export function refleshContent() {
-
+    svgVirtualMap = makeUuidVirtualMap(svgdata);
     patch(content, () => contentChildrenComponent.render());
 
     let transparentSvgRoot = document.querySelector("svg[data-root]");
-
-    svgVirtualMap = makeUuidVirtualMap(svgdata);
     svgRealMap = transparentSvgRoot ? makeUuidRealMap(transparentSvgRoot) : {};
 }
 

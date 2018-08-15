@@ -10,7 +10,7 @@ import memoize from "fast-memoize";
 export function convertToPixel(length: Length, uuid: string): number {
     const re = svgRealMap[uuid];
     const attrKind = /^width$|^.?x$/.test(length.attrName) ? "horizontal" : "vertical";
-    const font = getComputedStyle(re).font || "";
+    const font = re && getComputedStyle(re).font || "";
 
     switch (length.unit) {
         case null:
@@ -32,7 +32,7 @@ export function convertToPixel(length: Length, uuid: string): number {
  */
 export function convertFromPixel(length: Length, targetUnit: LengthUnit, uuid: string): Length {
     const re = svgRealMap[uuid];    
-    const font = getComputedStyle(re).font || "";
+    const font = re && getComputedStyle(re).font || "";
     const attrKind = /^width$|^.?x$/.test(length.attrName) ? "horizontal" : "vertical";
     switch (targetUnit) {
         case null:

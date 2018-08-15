@@ -38,7 +38,7 @@ select option {
 }
 .svgeditor-svgcontainer {
     display: block;
-    fill: var(--vscode-sideBar-background);
+    background-color: var(--vscode-sideBar-background);
 }
 .svgeditor-shape-handler {
     fill: var(--vscode-activityBarBadge-background);

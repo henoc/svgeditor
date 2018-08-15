@@ -84,17 +84,19 @@ export class SelectMode implements Mode {
         const elems: SvgTag[] = [];
         for (let i = 0; i < 9; i++) {
             if (i === 4) {
+                const escaped = this.escapeToNormalCoordinate({x: leftTop.x + halfSize.x, y: leftTop.y - halfSize.y}, uu);
                 const e = new SvgTag("circle").attr("r", 6)
-                    .attr("cx", leftTop.x + halfSize.x)
-                    .attr("cy", leftTop.y - halfSize.y)
+                    .attr("cx", escaped.x)
+                    .attr("cy", escaped.y)
                     .class("svgeditor-shape-handler");
                 elems.push(e);
             } else {
                 let s = i % 3;
                 let t = Math.floor(i / 3);
+                const escaped = this.escapeToNormalCoordinate({x: leftTop.x + halfSize.x * s, y: leftTop.y + halfSize.y * t}, uu);
                 const e = new SvgTag("circle").attr("r", 5)
-                    .attr("cx", leftTop.x + halfSize.x * s)
-                    .attr("cy", leftTop.y + halfSize.y * t)
+                    .attr("cx", escaped.x)
+                    .attr("cy", escaped.y)
                     .class("svgeditor-shape-handler");
                 e.listener("mousedown", (event) => this.onShapeHandlerMouseDown(<MouseEvent>event, i));
                 elems.push(e);
@@ -107,12 +109,12 @@ export class SelectMode implements Mode {
         event.stopPropagation();
         this.selectedHandlerIndex = index;
         this.isDraggingHandler = true;
-        this.startShapeFixedPoint =
-        v(
-            Number(this.shapeHandlers[8 - index].data.attrs["cx"]),
-            Number(this.shapeHandlers[8 - index].data.attrs["cy"])
-        );
         if (this.selectedShapeUuid) {
+            this.startShapeFixedPoint =
+                vfp(this.inTargetCoordinate({
+                    x: Number(this.shapeHandlers[8 - index].data.attrs["cx"]),
+                    y: Number(this.shapeHandlers[8 - index].data.attrs["cy"])
+                }, this.selectedShapeUuid));
             this.startCursorPos = vfp(this.inTargetCoordinate({x: event.offsetX, y: event.offsetY}, this.selectedShapeUuid));
             this.startShapeSize = shaper(this.selectedShapeUuid).size()!;
         }
@@ -122,24 +124,10 @@ export class SelectMode implements Mode {
      * Transform a (mouse) point into that in coordinate of a target shape by inverse mapping.
      */
     private inTargetCoordinate(point: Point, targetUuid: string): Point {
-        return applyToPoint(inverse(this.accumulateTransform(targetUuid)), point);
+        return applyToPoint(inverse(shaper(targetUuid).allTransform()), point);
     }
 
-    /**
-     * Calculate all effective transformation of a target shape.
-     */
-    private accumulateTransform(uu: string): Matrix {
-        const pe = svgVirtualMap[uu];
-        if (pe.parent) {
-            const past = this.accumulateTransform(pe.parent);
-            return transform(past, shaper(uu).transform());
-        } else {
-            return shaper(uu).transform();
-        }
-    }
-
-    private rootUuid(uu: string): string {
-        const pe = svgVirtualMap[uu];
-        return pe.parent ? this.rootUuid(pe.parent) : uu;
+    private escapeToNormalCoordinate(point: Point, targetUuid: string): Point {
+        return applyToPoint(shaper(targetUuid).allTransform(), point);
     }
 }
