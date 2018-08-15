@@ -4,7 +4,7 @@ import { Assoc } from "./svg";
 import uuidStatic from "uuid";
 import tinycolor from "tinycolor2";
 import { svgPathManager } from "./pathHelpers";
-const { fromTransformAttribute } = require("transformation-matrix/fromTransformAttribute");
+const { fromTransformAttribute } = require("transformation-matrix/build-commonjs/fromTransformAttribute");
 
 interface Warning {
     range: {line: number, column: number, position: number, startTagPosition: number},
@@ -342,7 +342,7 @@ function parseAttrs(element: xmldoc.XmlElement, onWarns: (ws: Warning[]) => void
 }
 
 function pop(attrs: Assoc, name: string) {
-    if (attrs[name]) {
+    if (name in attrs) {
         const value = attrs[name];
         delete attrs[name];
         return {name, value};

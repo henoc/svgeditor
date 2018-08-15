@@ -38,6 +38,7 @@ export class RectMode implements Mode {
                         ry: null,
                         fill: drawState.fill,
                         stroke: drawState.stroke,
+                        transform: null,
                         class: null,
                         id: null,
                         unknown: {}

@@ -36,6 +36,7 @@ export class EllipseMode implements Mode {
                         ry: {unit: configuration.defaultUnit, value: 0, attrName: "ry"},
                         fill: drawState.fill,
                         stroke: drawState.stroke,
+                        transform: null,
                         class: null,
                         id: null,
                         unknown: {}

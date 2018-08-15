@@ -46,9 +46,6 @@ export function shaper(uuid: string): ShaperFunctions {
         let diff = oldSize.sub(newSize).div(v(2, 2)).mul(v(fixedPoint.x - center.x > 0 ? 1 : -1, fixedPoint.y - center.y > 0 ? 1 : -1));
         self().move(diff);
     };
-    const transformTmpImplmentation = () => {
-        return identity();
-    }
     const allTransform = () => {
         if (pe.parent) {
             const past = shaper(pe.parent).allTransform();
@@ -145,9 +142,11 @@ export function shaper(uuid: string): ShaperFunctions {
                     pe.attrs.ry = fromPx(pe.attrs.r, "ry", wh.y / 2);
                 } else return v(px(pe.attrs.r) * 2, px(pe.attrs.r) * 2);
             },
+            transform: () => {
+                return pe.attrs.transform && transform(...pe.attrs.transform.matrices) || identity();
+            },
             size2,
             leftTop,
-            transform: transformTmpImplmentation,
             allTransform
         }
         case "rect":
@@ -183,9 +182,11 @@ export function shaper(uuid: string): ShaperFunctions {
                     self().center(center);
                 } else return v(px(pe.attrs.width), px(pe.attrs.height));
             },
+            transform: () => {
+                return pe.attrs.transform && transform(...pe.attrs.transform.matrices) || identity();
+            },
             size2,
             leftTop,
-            transform: transformTmpImplmentation,
             allTransform
         }
         case "ellipse":
@@ -214,9 +215,11 @@ export function shaper(uuid: string): ShaperFunctions {
                     return v(px(pe.attrs.rx) * 2, px(pe.attrs.ry) * 2);
                 }
             },
+            transform: () => {
+                return pe.attrs.transform && transform(...pe.attrs.transform.matrices) || identity();
+            },
             size2,
             leftTop,
-            transform: transformTmpImplmentation,
             allTransform
         }
         case "polyline":
@@ -259,9 +262,11 @@ export function shaper(uuid: string): ShaperFunctions {
                     return v(maxX - minX, maxY - minY);
                 }
             },
+            transform: () => {
+                return pe.attrs.transform && transform(...pe.attrs.transform.matrices) || identity();
+            },
             size2,
             leftTop,
-            transform: transformTmpImplmentation,
             allTransform
         }
         case "path":
@@ -330,9 +335,11 @@ export function shaper(uuid: string): ShaperFunctions {
                     return v(maxX - minX, maxY - minY);
                 }
             },
+            transform: () => {
+                return pe.attrs.transform && transform(...pe.attrs.transform.matrices) || identity();
+            },
             size2,
             leftTop,
-            transform: transformTmpImplmentation,
             allTransform
         }
         case "unknown":

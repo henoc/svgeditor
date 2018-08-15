@@ -36,6 +36,7 @@ export class PolylineMode implements Mode {
                             points: [cursor, cursor],
                             fill: drawState.fill,
                             stroke: drawState.stroke,
+                            transform: null,
                             class: null,
                             id: null,
                             unknown: {}

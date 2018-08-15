@@ -39,6 +39,7 @@ export class PathMode implements Mode {
                             ],
                             fill: drawState.fill,
                             stroke: drawState.stroke,
+                            transform: null,
                             class: null,
                             id: null,
                             unknown: {}
