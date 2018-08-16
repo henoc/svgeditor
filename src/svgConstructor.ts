@@ -29,7 +29,7 @@ export function construct(pe: ParsedElement, options?: SvgConstructOptions): Svg
     const insertRect = options && options.insertSvgSizeRect || false;
     const all = options && options.all || false;
     const setRootSvgXYtoOrigin = options && options.setRootSvgXYtoOrigin || false;
-    const numOfDecimalPlaces = options && options.numOfDecimalPlaces || 1;
+    const numOfDecimalPlaces = options && options.numOfDecimalPlaces;
 
     const tag = new SvgTag(pe.tag).options({numOfDecimalPlaces});
     if (putRootAttribute) {

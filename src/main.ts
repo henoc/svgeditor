@@ -22,7 +22,8 @@ export let openWindows: { [id: string]: WindowComponent } = {};
 export const configuration = {
     showAll: true,
     defaultUnit: <LengthUnit>null,
-    numOfDecimalPlaces: 1
+    numOfDecimalPlaces: 1,
+    collectTransform: true
 }
 export const drawState = {
     fill: <Paint | null>{ format: "rgb", r: 255, g: 255, b: 255, a: 1 },
@@ -68,6 +69,7 @@ window.addEventListener("message", event => {
             if (message.data.defaultUni !== undefined && isLengthUnit(message.data.defaultUnit)) configuration.defaultUnit = message.data.defaultUnit;
             if (!isLengthUnit(message.data.defaultUnit)) sendErrorMessage(`Configuration "svgeditor.defaultUnit: ${message.data.defaultUnit}" is unsupported unit.`);
             if (message.data.decimalPlaces !== undefined) configuration.numOfDecimalPlaces = message.data.decimalPlaces;
+            if (message.data.collectTransform !== undefined) configuration.collectTransform = message.data.collectTransform;
             break;
     }
 });

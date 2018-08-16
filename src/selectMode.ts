@@ -1,4 +1,4 @@
-import { svgVirtualMap, refleshContent, svgRealMap, sendBackToEditor } from "./main";
+import { svgVirtualMap, refleshContent, svgRealMap, sendBackToEditor, configuration } from "./main";
 import { Vec2, v, vfp } from "./utils";
 import { shaper } from "./shapes";
 import { SvgTag } from "./svg";
@@ -15,7 +15,7 @@ export class SelectMode implements Mode {
     isDraggingHandler: boolean = false;
     startShapeFixedPoint: Vec2 | null = null;
     startShapeSize: Vec2 | null = null;
-    startRawCursorPos: Vec2 | null = null;
+    previousRawCursorPos: Vec2 | null = null;
     shapeHandlers: SvgTag[] = [];
 
     constructor(initialSelectedShapeUuid?: string) {
@@ -54,9 +54,10 @@ export class SelectMode implements Mode {
                     this.shapeHandlers = this.createShapeHandlers(this.selectedShapeUuid);
                     refleshContent();
                 } else if (this.isDraggingHandler && this.startCursorPos && this.startShapeFixedPoint && this.startShapeSize) {
-                    if (this.selectedHandlerIndex === 4 && this.startRawCursorPos) {
+                    if (this.selectedHandlerIndex === 4 && this.previousRawCursorPos) {
                         let currentRawCursorPos = v(event.offsetX, event.offsetY);
-                        shaper(this.selectedShapeUuid).rotate(currentRawCursorPos.x - this.startRawCursorPos.x);
+                        shaper(this.selectedShapeUuid).rotate(currentRawCursorPos.x - this.previousRawCursorPos.x);
+                        this.previousRawCursorPos = currentRawCursorPos;
                     } else {
                         const diff =  currentCursorPos.sub(this.startCursorPos).mul(v(this.startCursorPos.x - this.startShapeFixedPoint.x > 0 ? 1 : -1, this.startCursorPos.y - this.startShapeFixedPoint.y > 0 ? 1 : -1));
                         if (this.selectedHandlerIndex === 1 || this.selectedHandlerIndex === 7) diff.x = 0;
@@ -73,12 +74,15 @@ export class SelectMode implements Mode {
         }
     }
     onDocumentMouseUp() {
+        if (this.selectedShapeUuid && configuration.collectTransform) {
+            shaper(this.selectedShapeUuid).transform(shaper(this.selectedShapeUuid).transform()!);
+        }
         this.isDraggingShape = false;
         this.startCursorPos = null;
         this.isDraggingHandler = false;
         this.startShapeFixedPoint = null;
         this.startShapeSize = null;
-        this.startRawCursorPos = null;
+        this.previousRawCursorPos = null;
         sendBackToEditor();
     }
     onDocumentMouseLeave(event: Event) {
@@ -125,7 +129,7 @@ export class SelectMode implements Mode {
                 }, this.selectedShapeUuid));
             this.startCursorPos = vfp(this.inTargetCoordinate({x: event.offsetX, y: event.offsetY}, this.selectedShapeUuid));
             this.startShapeSize = shaper(this.selectedShapeUuid).size()!;
-            this.startRawCursorPos = v(event.offsetX, event.offsetY);
+            this.previousRawCursorPos = v(event.offsetX, event.offsetY);
         }
     }
 

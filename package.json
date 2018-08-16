@@ -54,20 +54,40 @@
         "svgeditor.showAll": {
           "type": "boolean",
           "default": true,
-          "description": "Send all attributes and tags to WebView regardless of SVG Editor support."
+          "description": "Send all attributes and tags to WebView regardless of SVG Editor support.",
+          "scope": "resource"
         },
         "svgeditor.defaultUnit": {
           "type": [
             "string",
             "null"
           ],
+          "enum": [
+            "em",
+            "ex",
+            "px",
+            "in",
+            "cm",
+            "mm",
+            "pt",
+            "pc",
+            "%"
+          ],
           "default": null,
-          "description": "Specifies the unit when creating some shapes."
+          "description": "Specifies the unit when creating some shapes.",
+          "scope": "resource"
         },
         "svgeditor.decimalPlaces": {
           "type": "number",
           "default": 1,
-          "description": "The number of decimal places."
+          "description": "The number of decimal places.",
+          "scope": "resource"
+        },
+        "svgeditor.collectTransformMatrix": {
+          "type": "boolean",
+          "default": true,
+          "description": "Collect two or more transform functions into a matrix.",
+          "scope": "resource"
         }
       }
     }

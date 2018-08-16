@@ -178,7 +178,9 @@ export class SvgTag implements Component {
         const fix = (v: number) => {
             return Number(v.toFixed(this.data.options.numOfDecimalPlaces));
         }
-        if (typeof value === "number") {
+        if (this.data.options.numOfDecimalPlaces === undefined) {
+            return value;
+        } else if (typeof value === "number") {
             return <any>fix(value);
         } else {
             let copied = deepCopy(value);

@@ -1,8 +1,8 @@
-import { ParsedElement, Length } from "./domParser";
+import { ParsedElement, Length, Transform } from "./domParser";
 import { Vec2, v } from "./utils";
 import {svgPathManager} from "./pathHelpers";
 import { convertToPixel, convertFromPixel } from "./measureUnits";
-import { svgVirtualMap, svgRealMap } from "./main";
+import { svgVirtualMap, svgRealMap, configuration } from "./main";
 import { identity, transform, scale, translate, rotate, rotateDEG } from "transformation-matrix";
 import { appendDescriptor, replaceLastDescriptor } from "./transformHelpers";
 
@@ -12,7 +12,7 @@ interface ShaperFunctions {
     move: (diff: Vec2) => void;
     size: (wh?: Vec2) => Vec2 | undefined;
     size2: (newSize: Vec2, fixedPoint: Vec2) => void;
-    transform: () => Matrix;
+    transform: (matrix?: Matrix) => Matrix | undefined;
     allTransform: () => Matrix;
     rotate: (deg: number) => void;
 }
@@ -48,12 +48,19 @@ export function shaper(uuid: string): ShaperFunctions {
         let diff = oldSize.sub(newSize).div(v(2, 2)).mul(v(fixedPoint.x - center.x > 0 ? 1 : -1, fixedPoint.y - center.y > 0 ? 1 : -1));
         self().move(diff);
     };
+    const transformDefaultImpl = <T extends {transform: Transform | null}>(attrs: T) => (matrix?: Matrix) => {
+        if (matrix) {
+            attrs.transform = {descriptors: [{type: "matrix", ...matrix}], matrices: [matrix]};
+        } else {
+            return attrs.transform && transform(...attrs.transform.matrices) || identity();
+        }
+    }
     const allTransform = () => {
         if (pe.parent) {
             const past = shaper(pe.parent).allTransform();
-            return transform(past, self().transform());
+            return transform(past, self().transform()!);
         } else {
-            return self().transform();
+            return self().transform()!;
         }
     }
     const rotateCenter = (deg: number) => {
@@ -61,7 +68,7 @@ export function shaper(uuid: string): ShaperFunctions {
             const center = self().center()!;
             const rotateDescriptor = {type: <"rotate">"rotate", angle: deg, cx: center.x, cy: center.y};
             if (pe.attrs.transform === null) pe.attrs.transform = {descriptors: [], matrices: []};
-            replaceLastDescriptor(pe.attrs.transform, rotateDescriptor);
+            appendDescriptor(pe.attrs.transform, rotateDescriptor);
         }
     }
     switch (pe.tag) {
@@ -153,9 +160,7 @@ export function shaper(uuid: string): ShaperFunctions {
                     pe.attrs.ry = fromPx(pe.attrs.r, "ry", wh.y / 2);
                 } else return v(px(pe.attrs.r) * 2, px(pe.attrs.r) * 2);
             },
-            transform: () => {
-                return pe.attrs.transform && transform(...pe.attrs.transform.matrices) || identity();
-            },
+            transform: transformDefaultImpl(pe.attrs),
             size2,
             leftTop,
             allTransform,
@@ -194,9 +199,7 @@ export function shaper(uuid: string): ShaperFunctions {
                     self().center(center);
                 } else return v(px(pe.attrs.width), px(pe.attrs.height));
             },
-            transform: () => {
-                return pe.attrs.transform && transform(...pe.attrs.transform.matrices) || identity();
-            },
+            transform: transformDefaultImpl(pe.attrs),
             size2,
             leftTop,
             allTransform,
@@ -228,9 +231,7 @@ export function shaper(uuid: string): ShaperFunctions {
                     return v(px(pe.attrs.rx) * 2, px(pe.attrs.ry) * 2);
                 }
             },
-            transform: () => {
-                return pe.attrs.transform && transform(...pe.attrs.transform.matrices) || identity();
-            },
+            transform: transformDefaultImpl(pe.attrs),
             size2,
             leftTop,
             allTransform,
@@ -276,9 +277,7 @@ export function shaper(uuid: string): ShaperFunctions {
                     return v(maxX - minX, maxY - minY);
                 }
             },
-            transform: () => {
-                return pe.attrs.transform && transform(...pe.attrs.transform.matrices) || identity();
-            },
+            transform: transformDefaultImpl(pe.attrs),
             size2,
             leftTop,
             allTransform,
@@ -350,9 +349,7 @@ export function shaper(uuid: string): ShaperFunctions {
                     return v(maxX - minX, maxY - minY);
                 }
             },
-            transform: () => {
-                return pe.attrs.transform && transform(...pe.attrs.transform.matrices) || identity();
-            },
+            transform: transformDefaultImpl(pe.attrs),
             size2,
             leftTop,
             allTransform,

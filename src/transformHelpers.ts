@@ -1,6 +1,6 @@
 import { Transform, TransformDescriptor } from "./domParser";
 import { assertNever } from "./utils";
-import { transform, rotateDEG, scale, skew, translate } from "transformation-matrix";
+import { transform, rotateDEG, scale, skew, translate, identity } from "transformation-matrix";
 
 /**
  * No collect matrices version.
@@ -119,3 +119,4 @@ function descriptorToMatrix(descriptor: TransformDescriptor): Matrix {
         return translate(descriptor.tx, descriptor.ty);
     }
 }
+

@@ -54,7 +54,8 @@ export function activate(context: vscode.ExtensionContext) {
                         data: {
                             showAll: config.get<boolean>("showAll"),
                             defaultUnit: config.get<string | null>("defaultUnit"),
-                            decimalPlaces: config.get<number>("decimalPlaces")
+                            decimalPlaces: config.get<number>("decimalPlaces"),
+                            collectTransform: config.get<boolean>("collectTransformMatrix")
                         }
                     });
                     return;
