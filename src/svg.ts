@@ -1,5 +1,5 @@
-import { map } from "./utils";
-import { Length, Paint, PathCommand, Transform } from "./domParser";
+import { map, assertNever, deepCopy } from "./utils";
+import { Length, Paint, PathCommand, Transform, isLength, isPaint, isTransform } from "./domParser";
 import tinycolor from "tinycolor2";
 import { svgPathManager } from "./pathHelpers";
 import { elementOpenStart, elementOpenEnd, attr, text, elementClose } from "incremental-dom";
@@ -8,6 +8,10 @@ import { toTransformStrWithoutCollect } from "./transformHelpers";
 
 const svgns = "http://www.w3.org/2000/svg";
 const xlinkns = "http://www.w3.org/1999/xlink";
+
+interface SvgTagOptions {
+    numOfDecimalPlaces?: number;
+}
 
 /**
  * Build SVG element or render for incremental-dom.
@@ -20,13 +24,15 @@ export class SvgTag implements Component {
         children: SvgTag[]
         text?: string
         listeners: {[key: string]: (event: Event) => void}
-        important: string[]
+        important: string[],
+        options: SvgTagOptions
     } = {
         attrs: {},
         class: [],
         children: [],
         listeners: {},
-        important: []
+        important: [],
+        options: {}
     };
 
     constructor(name?: string) {
@@ -34,6 +40,12 @@ export class SvgTag implements Component {
     }
     tag(name: string): SvgTag {
         this.data.tag = name;
+        return this;
+    }
+    options(svgTagOptions: SvgTagOptions): SvgTag {
+        map(svgTagOptions, (key, value) => {
+            (<any>this.data.options)[key] = value;
+        });
         return this;
     }
     rmAttr(key: string): SvgTag {
@@ -45,7 +57,7 @@ export class SvgTag implements Component {
      */
     attr(key: string, value: string | number | null): SvgTag {
         if (value !== null && this.data.important.indexOf(key) === -1) {
-            this.data.attrs[key] = value;
+            this.data.attrs[key] = typeof value === "number" ? this.fixDecimalPlaces(value) : value;
         }
         return this;
     }
@@ -56,12 +68,14 @@ export class SvgTag implements Component {
     }
     uattr(key: string, value: Length | null): SvgTag {
         if (value !== null && this.data.important.indexOf(key) === -1) {
+            value = this.fixDecimalPlaces(value);
             this.data.attrs[key] = `${value.value}${value.unit || ""}`;
         }
         return this;
     }
     pattr(key: string, value: Paint | null): SvgTag {
         if (value !== null && this.data.important.indexOf(key) === -1) {
+            value = this.fixDecimalPlaces(value);
             const tcolor = tinycolor(value);
             if (value.format === "none" || value.format === "currentColor" || value.format === "inherit") {
                 this.data.attrs[key] = value.format;
@@ -73,6 +87,7 @@ export class SvgTag implements Component {
     }
     dattr(key: string, value: PathCommand[] | null): SvgTag {
         if (value !== null && this.data.important.indexOf(key) === -1) {
+            value = this.fixDecimalPlaces(value);
             const parsedDAttr = svgPathManager(value);
             this.data.attrs[key] = parsedDAttr.toString();
         }
@@ -80,13 +95,14 @@ export class SvgTag implements Component {
     }
     tattr(key: string, value: Transform | null): SvgTag {
         if (value !== null && this.data.important.indexOf(key) === -1) {
+            value = this.fixDecimalPlaces(value);
             this.data.attrs[key] = toTransformStrWithoutCollect(value);
         }
         return this;
     }
     attrs(assoc: {[key: string]: string | number | null}): SvgTag {
         map(assoc, (key, value) => {
-            if (this.data.important.indexOf(key) === -1) this.data.attrs[key] = value;            
+            if (this.data.important.indexOf(key) === -1) this.data.attrs[key] = typeof value === "number" ? this.fixDecimalPlaces(value) : value;       
         });
         return this;
     }
@@ -157,6 +173,37 @@ export class SvgTag implements Component {
         }
         else {
             throw new Error("In class Tag, no tag name found when build.");
+        }
+    }
+
+    private fixDecimalPlaces<T = number | Length | Paint | PathCommand[] | Transform>(value: T): T {
+        const fix = (v: number) => {
+            return Number(v.toFixed(this.data.options.numOfDecimalPlaces));
+        }
+        if (typeof value === "number") {
+            return <any>fix(value);
+        } else {
+            let copied = deepCopy(value);
+            if (isLength(copied)) {
+                copied.value = fix(copied.value);
+            } else if (isPaint(copied)) {
+                // nothing to do
+            } else if (Array.isArray(copied)) {
+                for (let i = 0; i < copied.length; i++) {
+                    for (let j = 0; j < copied[i].length; j++) {
+                        const copiedIJ = copied[i][j];
+                        copied[i][j] = typeof copiedIJ === "number" ? fix(copiedIJ) : copiedIJ;
+                    }
+                }
+            } else if (isTransform(copied)) {
+                for (let i = 0; i < copied.descriptors.length; i++) {
+                    const descriptorI = copied.descriptors[i];
+                    map(descriptorI, (k, v) => {
+                        if (typeof v === "number") (<any>descriptorI)[k] = fix(v);
+                    });
+                }
+            }
+            return copied;
         }
     }
 }

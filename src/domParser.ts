@@ -144,6 +144,10 @@ export function isLengthUnit(unit: string | null): unit is LengthUnit {
     return unit === null || ["em" , "ex" , "px" , "in" , "cm" , "mm" , "pt" , "pc" , "%"].indexOf(unit) !== -1;
 }
 
+export function isLength(obj: any): obj is Length {
+    return "unit" in obj && "value" in obj && "attrName" && obj;
+}
+
 export type PaintFormat = "none" | "currentColor" | "inherit" | "name" | "hex" | "hex6" | "hex3" | "hex4" | "hex8" | "rgb" | "prgb" | "hsl";
 
 export interface Paint {
@@ -154,12 +158,20 @@ export interface Paint {
     a: number;
 }
 
+export function isPaint(obj: any): obj is Paint {
+    return "format" in obj && "r" in obj && "g" in obj && "b" in obj && "a" in obj;
+}
+
 export interface Point {
     x: number;
     y: number;
 }
 
 export type PathCommand = [string, ...number[]]
+
+export function isPathCommand(obj: any): obj is PathCommand {
+    return Array.isArray(obj) && (obj.length === 0 || typeof obj[0] === "string");
+}
 
 export type TransformDescriptor = {
     type: "matrix",
@@ -186,6 +198,10 @@ export type TransformDescriptor = {
 export interface Transform {
     descriptors: TransformDescriptor[];
     matrices: Matrix[];
+}
+
+export function isTransform(obj: any): obj is Transform {
+    return "descriptors" in obj && "matrices" in obj;
 }
 
 export function parse(element: xmldoc.XmlElement, parent: string | null): ParsedResult {

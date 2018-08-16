@@ -15,6 +15,7 @@ interface SvgConstructOptions {
     insertSvgSizeRect?: boolean;
     all?: boolean;
     setRootSvgXYtoOrigin?: boolean;
+    numOfDecimalPlaces?: number;
 }
 
 /**
@@ -28,8 +29,9 @@ export function construct(pe: ParsedElement, options?: SvgConstructOptions): Svg
     const insertRect = options && options.insertSvgSizeRect || false;
     const all = options && options.all || false;
     const setRootSvgXYtoOrigin = options && options.setRootSvgXYtoOrigin || false;
+    const numOfDecimalPlaces = options && options.numOfDecimalPlaces || 1;
 
-    const tag = new SvgTag(pe.tag);
+    const tag = new SvgTag(pe.tag).options({numOfDecimalPlaces});
     if (putRootAttribute) {
         // only top level
         tag.attr("data-root", "true");

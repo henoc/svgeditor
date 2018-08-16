@@ -158,3 +158,10 @@ function elopenParser(template: TemplateStringsArray): ElopenParseResult {
 }
 
 const memoizedElopenParser = memoize(elopenParser);
+
+/**
+ * Deep copy with `JSON.parse(JSON.stringify(obj))` way.
+ */
+export function deepCopy<T>(obj: T): T {
+    return JSON.parse(JSON.stringify(obj));
+}

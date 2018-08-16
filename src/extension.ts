@@ -53,7 +53,8 @@ export function activate(context: vscode.ExtensionContext) {
                         command: "configuration",
                         data: {
                             showAll: config.get<boolean>("showAll"),
-                            defaultUnit: config.get<string | null>("defaultUnit")
+                            defaultUnit: config.get<string | null>("defaultUnit"),
+                            decimalPlaces: config.get<number>("decimalPlaces")
                         }
                     });
                     return;
