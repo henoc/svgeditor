@@ -4,6 +4,7 @@ import {svgPathManager} from "./pathHelpers";
 import { convertToPixel, convertFromPixel } from "./measureUnits";
 import { svgVirtualMap, svgRealMap } from "./main";
 import { identity, transform, scale, translate, rotate, rotateDEG } from "transformation-matrix";
+import { appendDescriptor, replaceLastDescriptor } from "./transformHelpers";
 
 interface ShaperFunctions {
     center: (point?: Vec2) => undefined | Vec2;
@@ -58,17 +59,9 @@ export function shaper(uuid: string): ShaperFunctions {
     const rotateCenter = (deg: number) => {
         if (pe.tag !== "unknown" && "transform" in pe.attrs) {
             const center = self().center()!;
-            const rotateMatrix = rotate(deg * Math.PI / 180, center.x, center.y);
             const rotateDescriptor = {type: <"rotate">"rotate", angle: deg, cx: center.x, cy: center.y};
-            if (pe.attrs.transform) {
-                pe.attrs.transform.descriptors.push(rotateDescriptor);
-                pe.attrs.transform.matrices.push(rotateMatrix);
-            } else {
-                pe.attrs.transform = {
-                    descriptors: [rotateDescriptor],
-                    matrices: [rotateMatrix]
-                };
-            }
+            if (pe.attrs.transform === null) pe.attrs.transform = {descriptors: [], matrices: []};
+            replaceLastDescriptor(pe.attrs.transform, rotateDescriptor);
         }
     }
     switch (pe.tag) {
