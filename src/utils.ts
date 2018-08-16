@@ -1,12 +1,16 @@
-import uuidStatic from "uuid";
 import memoize from "fast-memoize";
 import { elementOpen, elementClose, elementVoid } from "incremental-dom";
 
-export function map<T>(obj: any, fn: (key: string, value: any, index: number) => T): T[] {
-    const acc: T[] = [];
-    Object.keys(obj).forEach((k, i) => {
-        acc.push(fn(k, obj[k], i));
-    });
+export function map<T, R>(obj: T, fn: (key: Extract<keyof T, string>, value: T[Extract<keyof T, string>], index: number) => R): R[] {
+    const acc: R[] = [];
+    let i = 0;
+    for (const key in obj) {
+        if (obj.hasOwnProperty(key)) {
+            const value = obj[key];
+            acc.push(fn(key, value, i));
+            i++;
+        }
+    }
     return acc;
 }
 

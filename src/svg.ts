@@ -102,7 +102,7 @@ export class SvgTag implements Component {
     }
     attrs(assoc: {[key: string]: string | number | null}): SvgTag {
         map(assoc, (key, value) => {
-            if (this.data.important.indexOf(key) === -1) this.data.attrs[key] = typeof value === "number" ? this.fixDecimalPlaces(value) : value;       
+            if (this.data.important.indexOf(key) === -1 && value !== null) this.data.attrs[key] = typeof value === "number" ? this.fixDecimalPlaces(value) : value;       
         });
         return this;
     }
@@ -130,10 +130,8 @@ export class SvgTag implements Component {
             }
             const elem = document.createElementNS(svgns, this.data.tag);
             map(this.data.attrs, (key, value) => {
-                if (value !== null) {
-                    if (key.startsWith("xlink:")) elem.setAttributeNS(xlinkns, key, String(value));
-                    else elem.setAttribute(key, String(value));
-                }
+                if (key.startsWith("xlink:")) elem.setAttributeNS(xlinkns, key, String(value));
+                else elem.setAttribute(key, String(value));
             });
             if (this.data.class.length > 0) elem.classList.add(...this.data.class);
             this.data.children.forEach(c => {
@@ -160,7 +158,7 @@ export class SvgTag implements Component {
             }
             elementOpenStart(this.data.tag);
             map(this.data.attrs, (key, value) => {
-                if (value !== null) attr(key, value);
+                attr(key, value);
             });
             map(this.data.listeners, (key, value) => {
                 attr(`on${key}`, value);

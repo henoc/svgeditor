@@ -29,7 +29,7 @@ export function onDocumentMouseLeave(event: Event) {
 }
 
 export function onDocumentClick(event: MouseEvent) {
-    map(openWindows, (id, w: WindowComponent) => {
+    map(openWindows, (id, w) => {
         w.onClose();
     });
 }
