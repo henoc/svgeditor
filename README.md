@@ -13,16 +13,14 @@ You can create shapes using the SVG's coder or directly creating shapes with the
 - Open SVG Editor
   - Target active SVG tab to edit with SVG Editor.
 
-## Kinds of operation
+## Support attributes
 
-- Select mode
-  - Scale and translate.
-- Node mode
-  - Edit node of polyline, polygon.
-- Rectangle, ellipse, polygon, path, text mode
-  - Make new objects.
-- Gradient mode
-  - Define linear or radial gradients.
+- svg: xmlns, xmlns:xlink, version, viewBox, x, y, width, height
+- circle: cx, cy, r, fill, stroke, transform
+- rect: x, y, width, height, rx, ry, fill, stroke, transform
+- ellipse: cx, cy, rx, ry, fill, stroke, transform
+- polyline: points, fill, stroke, transform
+- path: d, fill, stroke, transform
 
 ## Future plans
 

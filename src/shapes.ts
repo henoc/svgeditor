@@ -3,7 +3,7 @@ import { Vec2, v } from "./utils";
 import {svgPathManager} from "./pathHelpers";
 import { convertToPixel, convertFromPixel } from "./measureUnits";
 import { svgVirtualMap, svgRealMap } from "./main";
-import { identity, transform, scale, translate } from "transformation-matrix";
+import { identity, transform, scale, translate, rotate, rotateDEG } from "transformation-matrix";
 
 interface ShaperFunctions {
     center: (point?: Vec2) => undefined | Vec2;
@@ -13,6 +13,7 @@ interface ShaperFunctions {
     size2: (newSize: Vec2, fixedPoint: Vec2) => void;
     transform: () => Matrix;
     allTransform: () => Matrix;
+    rotate: (deg: number) => void;
 }
 
 /**
@@ -52,6 +53,22 @@ export function shaper(uuid: string): ShaperFunctions {
             return transform(past, self().transform());
         } else {
             return self().transform();
+        }
+    }
+    const rotateCenter = (deg: number) => {
+        if (pe.tag !== "unknown" && "transform" in pe.attrs) {
+            const center = self().center()!;
+            const rotateMatrix = rotate(deg * Math.PI / 180, center.x, center.y);
+            const rotateDescriptor = {type: <"rotate">"rotate", angle: deg, cx: center.x, cy: center.y};
+            if (pe.attrs.transform) {
+                pe.attrs.transform.descriptors.push(rotateDescriptor);
+                pe.attrs.transform.matrices.push(rotateMatrix);
+            } else {
+                pe.attrs.transform = {
+                    descriptors: [rotateDescriptor],
+                    matrices: [rotateMatrix]
+                };
+            }
         }
     }
     switch (pe.tag) {
@@ -109,7 +126,8 @@ export function shaper(uuid: string): ShaperFunctions {
                 }
                 return identity();
             },
-            allTransform
+            allTransform,
+            rotate: () => undefined
         }
         case "circle":
         return {
@@ -147,7 +165,8 @@ export function shaper(uuid: string): ShaperFunctions {
             },
             size2,
             leftTop,
-            allTransform
+            allTransform,
+            rotate: rotateCenter
         }
         case "rect":
         return {
@@ -187,7 +206,8 @@ export function shaper(uuid: string): ShaperFunctions {
             },
             size2,
             leftTop,
-            allTransform
+            allTransform,
+            rotate: rotateCenter
         }
         case "ellipse":
         return {
@@ -220,7 +240,8 @@ export function shaper(uuid: string): ShaperFunctions {
             },
             size2,
             leftTop,
-            allTransform
+            allTransform,
+            rotate: rotateCenter
         }
         case "polyline":
         return {
@@ -267,7 +288,8 @@ export function shaper(uuid: string): ShaperFunctions {
             },
             size2,
             leftTop,
-            allTransform
+            allTransform,
+            rotate: rotateCenter
         }
         case "path":
         return {
@@ -340,7 +362,8 @@ export function shaper(uuid: string): ShaperFunctions {
             },
             size2,
             leftTop,
-            allTransform
+            allTransform,
+            rotate: rotateCenter
         }
         case "unknown":
         throw new Error("Unknown shape cannot move.");

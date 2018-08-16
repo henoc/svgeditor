@@ -31,6 +31,9 @@ export class Vec2 {
     abs() {
         return v(Math.abs(this.x), Math.abs(this.y));
     }
+    length() {
+        return Math.sqrt(this.x * this.x + this.y * this.y);
+    }
     symmetry(center: Vec2) {
         return this.sub(center).mul(v(-1, -1)).add(center);
     }

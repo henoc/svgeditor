@@ -53,13 +53,17 @@ export class SelectMode implements Mode {
                     this.shapeHandlers = this.createShapeHandlers(this.selectedShapeUuid);
                     refleshContent();
                 } else if (this.isDraggingHandler && this.startCursorPos && this.startShapeFixedPoint && this.startShapeSize) {
-                    const diff =  currentCursorPos.sub(this.startCursorPos).mul(v(this.startCursorPos.x - this.startShapeFixedPoint.x > 0 ? 1 : -1, this.startCursorPos.y - this.startShapeFixedPoint.y > 0 ? 1 : -1));
-                    if (this.selectedHandlerIndex === 1 || this.selectedHandlerIndex === 7) diff.x = 0;
-                    if (this.selectedHandlerIndex === 3 || this.selectedHandlerIndex === 5) diff.y = 0;
-                    const currentSize = diff.add(this.startShapeSize);
-                    if (currentSize.x < 0) currentSize.x = 0;
-                    if (currentSize.y < 0) currentSize.y = 0;
-                    shaper(this.selectedShapeUuid).size2(currentSize, this.startShapeFixedPoint);
+                    if (this.selectedHandlerIndex === 4) {
+                        shaper(this.selectedShapeUuid).rotate(currentCursorPos.sub(this.startCursorPos).length());
+                    } else {
+                        const diff =  currentCursorPos.sub(this.startCursorPos).mul(v(this.startCursorPos.x - this.startShapeFixedPoint.x > 0 ? 1 : -1, this.startCursorPos.y - this.startShapeFixedPoint.y > 0 ? 1 : -1));
+                        if (this.selectedHandlerIndex === 1 || this.selectedHandlerIndex === 7) diff.x = 0;
+                        if (this.selectedHandlerIndex === 3 || this.selectedHandlerIndex === 5) diff.y = 0;
+                        const currentSize = diff.add(this.startShapeSize);
+                        if (currentSize.x < 0) currentSize.x = 0;
+                        if (currentSize.y < 0) currentSize.y = 0;
+                        shaper(this.selectedShapeUuid).size2(currentSize, this.startShapeFixedPoint);
+                    }
                     this.shapeHandlers = this.createShapeHandlers(this.selectedShapeUuid);
                     refleshContent();
                 }
@@ -89,6 +93,7 @@ export class SelectMode implements Mode {
                     .attr("cx", escaped.x)
                     .attr("cy", escaped.y)
                     .class("svgeditor-shape-handler");
+                e.listener("mousedown", (event) => this.onShapeHandlerMouseDown(<MouseEvent>event, i));                
                 elems.push(e);
             } else {
                 let s = i % 3;

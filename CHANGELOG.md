@@ -1,9 +1,10 @@
 # CHANGELOG
 
 - 2.0.0
-  - Reimplement with typescript again 😫
+  - Reimplement with typescript again😫
   - Indicates whether tags or attributes written by user is now supported by svgeditor or not
-  - Save unit of a length attribute (not change SVG style automatically)
+  - Support unit🎉
+  - Support transform attribute🎉
   - Add some configurations
 - 1.0.0 Add text mode again, remove dependency of elm-mdl
 - 0.17.0 Enable to move text
@@ -32,7 +33,7 @@
 - 0.4.3 Add opacity adjustment button and fix style bugs
 - 0.4.2 Enable to select path element again
 - 0.4.1 Support embedded CSS again
-- 0.4.0 Reimplement with Elm. Many things have improved, but some functions are temporary unavailable 😥
+- 0.4.0 Reimplement with Elm. Many things have improved, but some functions are temporary unavailable😥
 - 0.3.0 Added group and ungroup button, improved right click menu
 - 0.2.0 Affected embedded CSS in SVG
 - 0.1.0 Released
