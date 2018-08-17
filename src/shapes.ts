@@ -5,6 +5,7 @@ import { convertToPixel, convertFromPixel } from "./measureUnits";
 import { svgVirtualMap, svgRealMap, configuration } from "./main";
 import { identity, transform, scale, translate, rotate, rotateDEG, applyToPoint, inverse } from "transformation-matrix";
 import { appendDescriptor, replaceLastDescriptor, descriptorToMatrix } from "./transformHelpers";
+import { font } from "./fontHelpers";
 
 interface ShaperFunctions {
     center: (point?: Vec2) => undefined | Vec2;
@@ -361,38 +362,40 @@ export function shaper(uuid: string): ShaperFunctions {
             rotate: rotateCenter
         }
         case "text":
+        const fontInfo = font(pe.text || "", styleDeclaration.fontFamily || "", parseFloat(styleDeclaration.fontSize || "16"), styleDeclaration.fontWeight || "", styleDeclaration.fontStyle || "");
         return {
             center: (point?: Vec2) => {
                 if (point) {
-                    const xyToCenter = self().center()!.sub(v(px(pe.attrs.x), px(pe.attrs.y)));
-                    const newXY = point.sub(xyToCenter);
-                    pe.attrs.x = fromPx(pe.attrs.x, "x", newXY.x);
-                    pe.attrs.y = fromPx(pe.attrs.y, "y", newXY.y);
+                    const oldCenter = self().center()!;
+                    self().move(point.sub(oldCenter));
                 } else {
-                    return v(bbox.x + bbox.width / 2, bbox.y + bbox.height / 2);
+                    const size = self().size()!;
+                    const topX = px(pe.attrs.x);
+                    const topY = px(pe.attrs.y) - fontInfo.height.baseline;
+                    return v(topX + size.x / 2, topY + size.y / 2);
                 }
             },
             move: (diff: Vec2) => {
                 pe.attrs.x = fromPx(pe.attrs.x, "x",
-                    bbox.x = px(pe.attrs.x) + diff.x
+                    px(pe.attrs.x) + diff.x
                 );
                 pe.attrs.y = fromPx(pe.attrs.y, "y",
-                    bbox.x = px(pe.attrs.y) + diff.y
+                    px(pe.attrs.y) + diff.y
                 );
             },
             size: (wh?: Vec2) => {
-                const fontSizePx = parseFloat(getComputedStyle(re).fontSize!);
                 if (wh) {
-                    const currentSize = self().size()!;
                     let center = self().center()!;
                     let fontSize = pe.attrs["font-size"];
-                    pe.attrs["font-size"] = fromPx(fontSize !== null && isLength(fontSize) && fontSize || null, "font-size", wh.y * fontSizePx / currentSize.y);
+                    pe.attrs["font-size"] = fromPx(fontSize !== null && isLength(fontSize) && fontSize || null, "font-size",
+                        fontInfo.heightToSize("lineHeight", wh.y) || 1
+                    );
                     pe.attrs.textLength = fromPx(pe.attrs.textLength, "textLength", wh.x);
-                    bbox.x = wh.x;
-                    bbox.y = wh.y;
                     self().center(center);
                 } else {
-                    return v(bbox.width, bbox.height);
+                    const width = pe.attrs.textLength ? px(pe.attrs.textLength) : fontInfo.width;
+                    const height = fontInfo.height.lineHeight;
+                    return v(width, height);
                 }
             },
             transform: transformDefaultImpl(pe.attrs),

@@ -1,25 +1,28 @@
+import { map } from "./utils";
+
 const fontMeasure = require("font-measure");
 const textWidth = require("text-width");
 
 export type HeightName = "top" | "median" | "middle" | "bottom" | "alphabetic" | "baseline" | "upper" | "lower" | "capHeight" | "xHeight" | "ascent" | "descent" | "hanging" | "ideographic" | "lineHeight" | "overshoot" | "tittle";
 
 export function font(text: string, family: string, size: number, weight: string, style: string) {
-    const sizeToHeightValue = (heightName: HeightName) => (size: number) => <number>fontMeasure(family, {fontSize: size, fontWeight: weight, fontStyle: style})[heightName];
+    const sizeToHeightValue = (heightName: HeightName) => (size: number) => <number>fontMeasure(family, {size, weight, style})[heightName] * size;
+    const heightInfo = map(<Record<HeightName, number>>fontMeasure(family, {size, weight, style}), (_k, v) =>  v * size);
     return {
         get width() {
             return <number>textWidth(text, {family, size, weight, style});
         },
 
         get height() {
-            return <number>fontMeasure(family, {fontSize: size, fontWeight: weight, fontStyle: style}).lineHeight;
+            return heightInfo;
         },
 
         /**
          * Return font size satisfies `heightValue` of `heightName`.
          */
-        heightToSize(heightName: HeightName, heightValue: number, searchMaxLimit: number) {
+        heightToSize(heightName: HeightName, heightValue: number) {
             const sizeToHeight = sizeToHeightValue(heightName);
-            return floatBinarySearch(1, searchMaxLimit, sizeToHeight, heightValue);
+            return floatBinarySearch(1, 1000, sizeToHeight, heightValue);
         }
     }
 }

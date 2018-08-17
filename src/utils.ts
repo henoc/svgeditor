@@ -1,18 +1,32 @@
 import memoize from "fast-memoize";
 import { elementOpen, elementClose, elementVoid } from "incremental-dom";
+import { $Values } from "utility-types";
 
-export function map<T, R>(obj: T, fn: (key: Extract<keyof T, string>, value: T[Extract<keyof T, string>], index: number) => R): R[] {
-    const acc: R[] = [];
-    let i = 0;
+/**
+ * Mapping in object. `{a: 1, b: 2, c: 3} ->(+1) {a: 2, b: 3, c: 4}`
+ */
+export function map<T, R>(obj: T, fn: (key: Extract<keyof T, string>, value: T[Extract<keyof T, string>]) => R): Record<keyof T, R> {
+    const acc: Record<keyof T, R> = <any>{};
     for (const key in obj) {
         if (obj.hasOwnProperty(key)) {
             const value = obj[key];
-            acc.push(fn(key, value, i));
-            i++;
+            acc[key] = fn(key, value);
         }
     }
     return acc;
 }
+
+export function objectValues<T extends object>(obj: T): $Values<T>[] {
+    const acc: $Values<T>[] = [];
+    for (const key in obj) {
+        if (obj.hasOwnProperty(key)) {
+            const value = obj[key];
+            acc.push(value);
+        }
+    }
+    return acc;
+}
+
 
 export class Vec2 {
     constructor(public x: number, public y: number) {
