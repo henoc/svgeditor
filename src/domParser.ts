@@ -4,6 +4,7 @@ import { Assoc } from "./svg";
 import uuidStatic from "uuid";
 import tinycolor from "tinycolor2";
 import { svgPathManager } from "./pathHelpers";
+import { SetDifference, Omit } from "utility-types";
 const { fromTransformAttribute } = require("transformation-matrix/build-commonjs/fromTransformAttribute");
 
 interface Warning {
@@ -23,6 +24,7 @@ export type ParsedElement = (
     ParsedEllipseElement |
     ParsedPolylineElement |
     ParsedPathElement |
+    ParsedTextElement |
     ParsedUnknownElement
 ) & {
     uuid: string;
@@ -61,6 +63,11 @@ interface ParsedPathElement {
     attrs: ParsedPathAttr
 }
 
+interface ParsedTextElement {
+    tag: "text",
+    attrs: ParsedTextAttr
+}
+
 interface ParsedUnknownElement {
     tag: "unknown",
     tag$real: string,
@@ -76,6 +83,16 @@ export interface ParsedBaseAttr {
     unknown: Assoc;
 }
 
+interface ParsedPresentationAttr {
+    fill: Paint | null;
+    stroke: Paint | null;
+    transform: Transform | null;
+    "font-family": string | null;
+    "font-size": FontSize | null;
+    "font-style": FontStyle | null;
+    "font-weight": FontWeight | null;
+}
+
 interface ParsedSvgAttr extends ParsedBaseAttr {
     xmlns: string | null;
     "xmlns:xlink": string | null;
@@ -87,49 +104,43 @@ interface ParsedSvgAttr extends ParsedBaseAttr {
     viewBox: [Point, Point] | null;
 }
 
-interface ParsedCircleAttr extends ParsedBaseAttr {
+interface ParsedCircleAttr extends ParsedBaseAttr, ParsedPresentationAttr {
     cx: Length | null;
     cy: Length | null;
     r: Length | null;
-    fill: Paint | null;
-    stroke: Paint | null;
-    transform: Transform | null;
 }
 
-interface ParsedRectAttr extends ParsedBaseAttr {
+interface ParsedRectAttr extends ParsedBaseAttr, ParsedPresentationAttr {
     x: Length | null;
     y: Length | null;
     width: Length | null;
     height: Length | null;
     rx: Length | null;
     ry: Length | null;
-    fill: Paint | null;
-    stroke: Paint | null;
-    transform: Transform | null;
 }
 
-interface ParsedEllipseAttr extends ParsedBaseAttr {
+interface ParsedEllipseAttr extends ParsedBaseAttr, ParsedPresentationAttr {
     cx: Length | null;
     cy: Length | null;
     rx: Length | null;
     ry: Length | null;
-    fill: Paint | null;
-    stroke: Paint | null;
-    transform: Transform | null;
 }
 
-interface ParsedPolylineAttr extends ParsedBaseAttr {
+interface ParsedPolylineAttr extends ParsedBaseAttr, ParsedPresentationAttr {
     points: Point[] | null;
-    fill: Paint | null;
-    stroke: Paint | null;
-    transform: Transform | null;
 }
 
-interface ParsedPathAttr extends ParsedBaseAttr {
+interface ParsedPathAttr extends ParsedBaseAttr, ParsedPresentationAttr {
     d: PathCommand[] | null;
-    fill: Paint | null;
-    stroke: Paint | null;
-    transform: Transform | null;
+}
+
+interface ParsedTextAttr extends ParsedBaseAttr, ParsedPresentationAttr {
+    x: Length | null;
+    y: Length | null;
+    dx: Length | null;
+    dy: Length | null;
+    textLength: Length | null;
+    lengthAdjust: LengthAdjust | null;
 }
 
 export type LengthUnit = "em" | "ex" | "px" | "in" | "cm" | "mm" | "pt" | "pc" | "%" | null;
@@ -204,6 +215,18 @@ export function isTransform(obj: any): obj is Transform {
     return "descriptors" in obj && "matrices" in obj;
 }
 
+export type FontSize = "xx-small" | "x-small" | "small" | "medium" | "large" | "x-large" | "xx-large" | "larger" | "smaller" | Length;
+
+export function isFontSize(obj: any): obj is FontSize {
+    return isLength(obj) || ["xx-small" , "x-small" , "small" , "medium" , "large" , "x-large" , "xx-large" , "larger" , "smaller"].indexOf(String(obj)) !== -1;
+}
+
+export type FontStyle = "normal" | "italic" | "oblique";
+
+export type FontWeight = "normal" | "bold" | "lighter" | "bolder" | 100 | 200 | 300 | 400 | 500 | 600 | 700 | 800 | 900;
+
+export type LengthAdjust = "spacing" | "spacingAndGlyphs";
+
 export function parse(element: xmldoc.XmlElement, parent: string | null): ParsedResult {
     const uuid = uuidStatic.v4();
     const isRoot = parent === null;
@@ -262,11 +285,22 @@ function parseAttrs(element: xmldoc.XmlElement, onWarns: (ws: Warning[]) => void
 
     // for global attributes
     let tmp: {name: string, value: string | null};
-    const globalValidAttrs: ParsedBaseAttr = {
+    const globalValidAttrs: Omit<ParsedBaseAttr, "unknown"> = {
         id: pop(attrs, "id").value,
-        class: (tmp = pop(attrs, "class")) && tmp.value && tmp.value.split(" ") || null,
-        unknown: {}
+        class: (tmp = pop(attrs, "class")) && tmp.value && tmp.value.split(" ") || null
     };
+
+    const getPresentationAttrs: () => ParsedPresentationAttr = () => {
+        return {
+            fill: (tmp = pop(attrs, "fill")) && paintAttr(tmp, element, pushWarns) || null,
+            stroke: (tmp = pop(attrs, "stroke")) && paintAttr(tmp, element, pushWarns) || null,
+            transform: (tmp = pop(attrs, "transform")) && tmp.value && transformAttr(tmp.value, element, pushWarns) || null,
+            "font-family": ,
+            "font-size": ,
+            "font-style": ,
+            "font-weight": ,
+        }
+    }
 
     const pushWarns = (warn: Warning | Warning[]) => {
         if (Array.isArray(warn)) warns.push(...warn);
@@ -275,7 +309,8 @@ function parseAttrs(element: xmldoc.XmlElement, onWarns: (ws: Warning[]) => void
 
     return {
         svg: () => {
-            const validSvgAttrs: ParsedSvgAttr = Object.assign(globalValidAttrs, {
+            const validSvgAttrs: ParsedSvgAttr = {
+                ...globalValidAttrs,
                 xmlns: pop(attrs, "xmlns").value,
                 x: (tmp = pop(attrs, "x")) && lengthAttr(tmp, element, pushWarns) || null,
                 y: (tmp = pop(attrs, "y")) && lengthAttr(tmp, element, pushWarns) || null,
@@ -285,12 +320,13 @@ function parseAttrs(element: xmldoc.XmlElement, onWarns: (ws: Warning[]) => void
                 version: (tmp = pop(attrs, "version")) && tmp.value && numberAttr(tmp.value, element, pushWarns) || null,
                 viewBox: (tmp = pop(attrs, "viewBox")) && tmp.value && viewBoxAttr(tmp.value, element, pushWarns) || null,
                 unknown: unknownAttrs(attrs, element, pushWarns)
-            });
+            };
             onWarns(warns);
             return validSvgAttrs;
         },
         circle: () => {
-            const validCircleAttrs: ParsedCircleAttr = Object.assign(globalValidAttrs, {
+            const validCircleAttrs: ParsedCircleAttr = {
+                ...globalValidAttrs,
                 cx: (tmp = pop(attrs, "cx")) && lengthAttr(tmp, element, pushWarns) || null,
                 cy: (tmp = pop(attrs, "cy")) && lengthAttr(tmp, element, pushWarns) || null,
                 r: (tmp = pop(attrs, "r")) && lengthAttr(tmp, element, pushWarns) || null,
@@ -298,12 +334,13 @@ function parseAttrs(element: xmldoc.XmlElement, onWarns: (ws: Warning[]) => void
                 stroke: (tmp = pop(attrs, "stroke")) && paintAttr(tmp, element, pushWarns) || null,
                 transform: (tmp = pop(attrs, "transform")) && tmp.value && transformAttr(tmp.value, element, pushWarns) || null,
                 unknown: unknownAttrs(attrs, element, pushWarns)
-            });
+            };
             onWarns(warns);
             return validCircleAttrs;
         },
         rect: () => {
-            const validRectAttrs: ParsedRectAttr = Object.assign(globalValidAttrs, {
+            const validRectAttrs: ParsedRectAttr = {
+                ...globalValidAttrs,
                 x: (tmp = pop(attrs, "x")) && lengthAttr(tmp, element, pushWarns) || null,
                 y: (tmp = pop(attrs, "y")) && lengthAttr(tmp, element, pushWarns) || null,
                 width: (tmp = pop(attrs, "width")) && lengthAttr(tmp, element, pushWarns) || null,
@@ -314,12 +351,13 @@ function parseAttrs(element: xmldoc.XmlElement, onWarns: (ws: Warning[]) => void
                 stroke: (tmp = pop(attrs, "stroke")) && paintAttr(tmp, element, pushWarns) || null,
                 transform: (tmp = pop(attrs, "transform")) && tmp.value && transformAttr(tmp.value, element, pushWarns) || null,
                 unknown: unknownAttrs(attrs, element, pushWarns)
-            });
+            };
             onWarns(warns);
             return validRectAttrs;
         },
         ellipse: () => {
-            const validEllipseAttrs: ParsedEllipseAttr = Object.assign(globalValidAttrs, {
+            const validEllipseAttrs: ParsedEllipseAttr = {
+                ...globalValidAttrs,
                 cx: (tmp = pop(attrs, "cx")) && lengthAttr(tmp, element, pushWarns) || null,
                 cy: (tmp = pop(attrs, "cy")) && lengthAttr(tmp, element, pushWarns) || null,
                 rx: (tmp = pop(attrs, "rx")) && lengthAttr(tmp, element, pushWarns) || null,
@@ -328,29 +366,31 @@ function parseAttrs(element: xmldoc.XmlElement, onWarns: (ws: Warning[]) => void
                 stroke: (tmp = pop(attrs, "stroke")) && paintAttr(tmp, element, pushWarns) || null,
                 transform: (tmp = pop(attrs, "transform")) && tmp.value && transformAttr(tmp.value, element, pushWarns) || null,
                 unknown: unknownAttrs(attrs, element, pushWarns)
-            });
+            };
             onWarns(warns);
             return validEllipseAttrs;
         },
         polyline: () => {
-            const validPolylineAttrs: ParsedPolylineAttr = Object.assign(globalValidAttrs, {
+            const validPolylineAttrs: ParsedPolylineAttr = {
+                ...globalValidAttrs,
                 points: (tmp = pop(attrs, "points")) && tmp.value && pointsAttr(tmp.value, element, pushWarns) || null,
                 fill: (tmp = pop(attrs, "fill")) && paintAttr(tmp, element, pushWarns) || null,
                 stroke: (tmp = pop(attrs, "stroke")) && paintAttr(tmp, element, pushWarns) || null,
                 transform: (tmp = pop(attrs, "transform")) && tmp.value && transformAttr(tmp.value, element, pushWarns) || null,
                 unknown: unknownAttrs(attrs, element, pushWarns)
-            });
+            };
             onWarns(warns);
             return validPolylineAttrs;
         },
         path: () => {
-            const validPathAttrs: ParsedPathAttr = Object.assign(globalValidAttrs, {
+            const validPathAttrs: ParsedPathAttr = {
+                ...globalValidAttrs,
                 d: (tmp = pop(attrs, "d")) && tmp.value && pathDefinitionAttr(tmp.value, element, pushWarns) || null,
                 fill: (tmp = pop(attrs, "fill")) && paintAttr(tmp, element, pushWarns) || null,
                 stroke: (tmp = pop(attrs, "stroke")) && paintAttr(tmp, element, pushWarns) || null,
                 transform: (tmp = pop(attrs, "transform")) && tmp.value && transformAttr(tmp.value, element, pushWarns) || null,
                 unknown: unknownAttrs(attrs, element, pushWarns)
-            });
+            };
             onWarns(warns);
             return validPathAttrs;
         }
