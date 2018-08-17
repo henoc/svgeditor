@@ -34,12 +34,8 @@ export class PolylineMode implements Mode {
                         tag: "polyline",
                         attrs: {
                             points: [cursor, cursor],
-                            fill: drawState.fill,
-                            stroke: drawState.stroke,
-                            transform: null,
-                            class: null,
-                            id: null,
-                            unknown: {}
+                            ...Mode.baseAttrsDefaultImpl(),
+                            ...Mode.presentationAttrsDefaultImpl()
                         }
                     }
                     root.children.push(pe);

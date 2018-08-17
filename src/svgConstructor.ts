@@ -1,4 +1,4 @@
-import { ParsedElement, ParsedBaseAttr } from "./domParser";
+import { ParsedElement, ParsedBaseAttr, ParsedPresentationAttr } from "./domParser";
 import { SvgTag } from "./svg";
 import uuid from "uuid";
 import { onShapeMouseDown } from "./triggers";
@@ -65,9 +65,13 @@ export function construct(pe: ParsedElement, options?: SvgConstructOptions): Svg
             setBaseAttrs(pe.attrs, tag);
             // Mostly to deal with mouse event of nested svg tag. Nested svg shape size of collision detection strangely is the same size of inner shapes of that.
             if (insertRect) {
-                const dummyRect = new SvgTag("rect").uattr("width", pe.attrs.width).uattr("height", pe.attrs.height)
-                .attr("transform", toString(inverse(shaper(pe.uuid).allTransform())));
-                // Use shaper in this point is a bit early becase svgRealMap is not updated yet... (so some value is inaccurate for the first time.)
+                const dummyRect = new SvgTag("rect").uattr("width", pe.attrs.width).uattr("height", pe.attrs.height);
+                try {
+                    // This operation could fail to execute because there may be no svgRealMap in this time.
+                    dummyRect.attr("transform", toString(inverse(shaper(pe.uuid).allTransform())));
+                } catch (error) {
+                    console.error(`Fail to create dummy rect. uuid: ${pe.uuid}`);
+                }
                 if (transparent) dummyRect.importantAttr("opacity", 0);
                 else dummyRect.attr("fill", "gray").attr("stroke", "black");
                 tag.children(dummyRect);
@@ -90,45 +94,45 @@ export function construct(pe: ParsedElement, options?: SvgConstructOptions): Svg
             return tag;
             case "circle":
             setBaseAttrs(pe.attrs, tag);
+            setPresentationAttrs(pe.attrs, tag);
             return tag.uattr("r", pe.attrs.r)
                 .uattr("cx", pe.attrs.cx)
-                .uattr("cy", pe.attrs.cy)
-                .pattr("fill", pe.attrs.fill)
-                .pattr("stroke", pe.attrs.stroke)
-                .tattr("transform", pe.attrs.transform);
+                .uattr("cy", pe.attrs.cy);
             case "rect":
             setBaseAttrs(pe.attrs, tag);
+            setPresentationAttrs(pe.attrs, tag);
             return tag.uattr("x", pe.attrs.x)
                 .uattr("y", pe.attrs.y)
                 .uattr("width", pe.attrs.width)
                 .uattr("height", pe.attrs.height)
                 .uattr("rx", pe.attrs.rx)
-                .uattr("ry", pe.attrs.ry)
-                .pattr("fill", pe.attrs.fill)
-                .pattr("stroke", pe.attrs.stroke)
-                .tattr("transform", pe.attrs.transform);
+                .uattr("ry", pe.attrs.ry);
             case "ellipse":
             setBaseAttrs(pe.attrs, tag);
+            setPresentationAttrs(pe.attrs, tag);
             return tag.uattr("cx", pe.attrs.cx)
                 .uattr("cy", pe.attrs.cy)
                 .uattr("rx", pe.attrs.rx)
-                .uattr("ry", pe.attrs.ry)
-                .pattr("fill", pe.attrs.fill)
-                .pattr("stroke", pe.attrs.stroke)
-                .tattr("transform", pe.attrs.transform);
+                .uattr("ry", pe.attrs.ry);
             case "polyline":
             setBaseAttrs(pe.attrs, tag);
+            setPresentationAttrs(pe.attrs, tag);
             const pointsStr = pe.attrs.points && pe.attrs.points.map(point => `${point.x},${point.y}`).join(" ");
-            return tag.attr("points", pointsStr)
-                .pattr("fill", pe.attrs.fill)
-                .pattr("stroke", pe.attrs.stroke)
-                .tattr("transform", pe.attrs.transform);
+            return tag.attr("points", pointsStr);
             case "path":
             setBaseAttrs(pe.attrs, tag);
-            return tag.dattr("d", pe.attrs.d)
-                .pattr("fill", pe.attrs.fill)
-                .pattr("stroke", pe.attrs.stroke)
-                .tattr("transform", pe.attrs.transform);
+            setPresentationAttrs(pe.attrs, tag);
+            return tag.dattr("d", pe.attrs.d);
+            case "text":
+            setBaseAttrs(pe.attrs, tag);
+            setPresentationAttrs(pe.attrs, tag);
+            return tag.uattr("x", pe.attrs.x)
+                .uattr("y", pe.attrs.y)
+                .uattr("dx", pe.attrs.dx)
+                .uattr("dy", pe.attrs.dy)
+                .uattr("textLength", pe.attrs.textLength)
+                .attr("lengthAdjust", pe.attrs.lengthAdjust)
+                .text(pe.text);
             default:
             assertNever(pe);
         }
@@ -139,6 +143,16 @@ export function construct(pe: ParsedElement, options?: SvgConstructOptions): Svg
 function setBaseAttrs(baseAttr: ParsedBaseAttr, tag: SvgTag) {
     tag.attr("id", baseAttr.id);
     if (baseAttr.class) tag.class(...baseAttr.class);
+}
+
+function setPresentationAttrs(presetationAttr: ParsedPresentationAttr, tag: SvgTag) {
+    tag.pattr("fill", presetationAttr.fill);
+    tag.pattr("stroke", presetationAttr.stroke);
+    tag.tattr("transform", presetationAttr.transform);
+    tag.attr("font-family", presetationAttr["font-family"]);
+    tag.fsattr("font-size", presetationAttr["font-size"]);
+    tag.attr("font-style", presetationAttr["font-style"]);
+    tag.attr("font-weight", presetationAttr["font-weight"]);
 }
 
 function makeChildren(pc: ParsedElement[], tag: SvgTag, options?: SvgConstructOptions) {

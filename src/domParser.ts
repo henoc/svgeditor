@@ -65,7 +65,8 @@ interface ParsedPathElement {
 
 interface ParsedTextElement {
     tag: "text",
-    attrs: ParsedTextAttr
+    attrs: ParsedTextAttr,
+    text: string | null
 }
 
 interface ParsedUnknownElement {
@@ -83,7 +84,7 @@ export interface ParsedBaseAttr {
     unknown: Assoc;
 }
 
-interface ParsedPresentationAttr {
+export interface ParsedPresentationAttr {
     fill: Paint | null;
     stroke: Paint | null;
     transform: Transform | null;
@@ -155,8 +156,8 @@ export function isLengthUnit(unit: string | null): unit is LengthUnit {
     return unit === null || ["em" , "ex" , "px" , "in" , "cm" , "mm" , "pt" , "pc" , "%"].indexOf(unit) !== -1;
 }
 
-export function isLength(obj: any): obj is Length {
-    return "unit" in obj && "value" in obj && "attrName" && obj;
+export function isLength(obj: Object): obj is Length {
+    return "unit" in obj && "value" in obj && "attrName" in obj;
 }
 
 export type PaintFormat = "none" | "currentColor" | "inherit" | "name" | "hex" | "hex6" | "hex3" | "hex4" | "hex8" | "rgb" | "prgb" | "hsl";
@@ -169,7 +170,7 @@ export interface Paint {
     a: number;
 }
 
-export function isPaint(obj: any): obj is Paint {
+export function isPaint(obj: Object): obj is Paint {
     return "format" in obj && "r" in obj && "g" in obj && "b" in obj && "a" in obj;
 }
 
@@ -180,7 +181,7 @@ export interface Point {
 
 export type PathCommand = [string, ...number[]]
 
-export function isPathCommand(obj: any): obj is PathCommand {
+export function isPathCommand(obj: Object): obj is PathCommand {
     return Array.isArray(obj) && (obj.length === 0 || typeof obj[0] === "string");
 }
 
@@ -211,21 +212,33 @@ export interface Transform {
     matrices: Matrix[];
 }
 
-export function isTransform(obj: any): obj is Transform {
+export function isTransform(obj: Object): obj is Transform {
     return "descriptors" in obj && "matrices" in obj;
 }
 
 export type FontSize = "xx-small" | "x-small" | "small" | "medium" | "large" | "x-large" | "xx-large" | "larger" | "smaller" | Length;
 
-export function isFontSize(obj: any): obj is FontSize {
-    return isLength(obj) || ["xx-small" , "x-small" , "small" , "medium" , "large" , "x-large" , "xx-large" , "larger" , "smaller"].indexOf(String(obj)) !== -1;
+export function isFontSize(obj: Object): obj is FontSize {
+    return isLength(obj) || typeof obj === "string" && ["xx-small" , "x-small" , "small" , "medium" , "large" , "x-large" , "xx-large" , "larger" , "smaller"].indexOf(obj) !== -1;
 }
 
 export type FontStyle = "normal" | "italic" | "oblique";
 
+export function isFontStyle(obj: Object): obj is FontStyle {
+    return typeof obj === "string" && ["normal", "italic", "oblique"].indexOf(obj) !== -1;
+}
+
 export type FontWeight = "normal" | "bold" | "lighter" | "bolder" | 100 | 200 | 300 | 400 | 500 | 600 | 700 | 800 | 900;
 
+export function isFontWeight(obj: Object): obj is FontWeight {
+    return (typeof obj === "string" || typeof obj === "number") && ["normal", "bold", "lighter", "bolder", 100 , 200 , 300 , 400 , 500 , 600 , 700 , 800 , 900].indexOf(obj) !== -1;
+}
+
 export type LengthAdjust = "spacing" | "spacingAndGlyphs";
+
+export function isLengthAdjust(obj: Object): obj is LengthAdjust {
+    return obj === "spacing" || obj === "spacingAndGlyphs";
+}
 
 export function parse(element: xmldoc.XmlElement, parent: string | null): ParsedResult {
     const uuid = uuidStatic.v4();
@@ -255,6 +268,9 @@ export function parse(element: xmldoc.XmlElement, parent: string | null): Parsed
     } else if (element.name === "path") {
         const attrs = parseAttrs(element, pushWarns).path();
         return {result: {tag: "path", attrs, uuid, parent, isRoot}, warns};
+    } else if (element.name === "text") {
+        const attrs = parseAttrs(element, pushWarns).text();
+        return {result: {tag: "text", attrs, uuid, parent, isRoot, text}, warns};
     } else {
         const attrs: Assoc = element.attr;
         return {result: {tag: "unknown", tag$real: element.name, attrs, children, text, uuid, parent, isRoot}, warns: [{range: toRange(element), message: `${element.name} is unsupported element.`}]};
@@ -295,10 +311,10 @@ function parseAttrs(element: xmldoc.XmlElement, onWarns: (ws: Warning[]) => void
             fill: (tmp = pop(attrs, "fill")) && paintAttr(tmp, element, pushWarns) || null,
             stroke: (tmp = pop(attrs, "stroke")) && paintAttr(tmp, element, pushWarns) || null,
             transform: (tmp = pop(attrs, "transform")) && tmp.value && transformAttr(tmp.value, element, pushWarns) || null,
-            "font-family": ,
-            "font-size": ,
-            "font-style": ,
-            "font-weight": ,
+            "font-family": pop(attrs, "font-family").value,
+            "font-size": (tmp = pop(attrs, "font-size")) && fontSizeAttr(tmp, element, pushWarns) || null,
+            "font-style": (tmp = pop(attrs, "font-style")) && tmp.value && validateOnly(tmp.value, element, pushWarns, isFontStyle) || null,
+            "font-weight": (tmp = pop(attrs, "font-weight")) && tmp.value && validateOnly(tmp.value, element, pushWarns, isFontWeight) || null,
         }
     }
 
@@ -327,12 +343,10 @@ function parseAttrs(element: xmldoc.XmlElement, onWarns: (ws: Warning[]) => void
         circle: () => {
             const validCircleAttrs: ParsedCircleAttr = {
                 ...globalValidAttrs,
+                ...getPresentationAttrs(),
                 cx: (tmp = pop(attrs, "cx")) && lengthAttr(tmp, element, pushWarns) || null,
                 cy: (tmp = pop(attrs, "cy")) && lengthAttr(tmp, element, pushWarns) || null,
                 r: (tmp = pop(attrs, "r")) && lengthAttr(tmp, element, pushWarns) || null,
-                fill: (tmp = pop(attrs, "fill")) && paintAttr(tmp, element, pushWarns) || null,
-                stroke: (tmp = pop(attrs, "stroke")) && paintAttr(tmp, element, pushWarns) || null,
-                transform: (tmp = pop(attrs, "transform")) && tmp.value && transformAttr(tmp.value, element, pushWarns) || null,
                 unknown: unknownAttrs(attrs, element, pushWarns)
             };
             onWarns(warns);
@@ -341,15 +355,13 @@ function parseAttrs(element: xmldoc.XmlElement, onWarns: (ws: Warning[]) => void
         rect: () => {
             const validRectAttrs: ParsedRectAttr = {
                 ...globalValidAttrs,
+                ...getPresentationAttrs(),
                 x: (tmp = pop(attrs, "x")) && lengthAttr(tmp, element, pushWarns) || null,
                 y: (tmp = pop(attrs, "y")) && lengthAttr(tmp, element, pushWarns) || null,
                 width: (tmp = pop(attrs, "width")) && lengthAttr(tmp, element, pushWarns) || null,
                 height: (tmp = pop(attrs, "height")) && lengthAttr(tmp, element, pushWarns) || null,
                 rx: (tmp = pop(attrs, "rx")) && lengthAttr(tmp, element, pushWarns) || null,
                 ry: (tmp = pop(attrs, "ry")) && lengthAttr(tmp, element, pushWarns) || null,
-                fill: (tmp = pop(attrs, "fill")) && paintAttr(tmp, element, pushWarns) || null,
-                stroke: (tmp = pop(attrs, "stroke")) && paintAttr(tmp, element, pushWarns) || null,
-                transform: (tmp = pop(attrs, "transform")) && tmp.value && transformAttr(tmp.value, element, pushWarns) || null,
                 unknown: unknownAttrs(attrs, element, pushWarns)
             };
             onWarns(warns);
@@ -358,13 +370,11 @@ function parseAttrs(element: xmldoc.XmlElement, onWarns: (ws: Warning[]) => void
         ellipse: () => {
             const validEllipseAttrs: ParsedEllipseAttr = {
                 ...globalValidAttrs,
+                ...getPresentationAttrs(),
                 cx: (tmp = pop(attrs, "cx")) && lengthAttr(tmp, element, pushWarns) || null,
                 cy: (tmp = pop(attrs, "cy")) && lengthAttr(tmp, element, pushWarns) || null,
                 rx: (tmp = pop(attrs, "rx")) && lengthAttr(tmp, element, pushWarns) || null,
                 ry: (tmp = pop(attrs, "ry")) && lengthAttr(tmp, element, pushWarns) || null,
-                fill: (tmp = pop(attrs, "fill")) && paintAttr(tmp, element, pushWarns) || null,
-                stroke: (tmp = pop(attrs, "stroke")) && paintAttr(tmp, element, pushWarns) || null,
-                transform: (tmp = pop(attrs, "transform")) && tmp.value && transformAttr(tmp.value, element, pushWarns) || null,
                 unknown: unknownAttrs(attrs, element, pushWarns)
             };
             onWarns(warns);
@@ -373,10 +383,8 @@ function parseAttrs(element: xmldoc.XmlElement, onWarns: (ws: Warning[]) => void
         polyline: () => {
             const validPolylineAttrs: ParsedPolylineAttr = {
                 ...globalValidAttrs,
+                ...getPresentationAttrs(),
                 points: (tmp = pop(attrs, "points")) && tmp.value && pointsAttr(tmp.value, element, pushWarns) || null,
-                fill: (tmp = pop(attrs, "fill")) && paintAttr(tmp, element, pushWarns) || null,
-                stroke: (tmp = pop(attrs, "stroke")) && paintAttr(tmp, element, pushWarns) || null,
-                transform: (tmp = pop(attrs, "transform")) && tmp.value && transformAttr(tmp.value, element, pushWarns) || null,
                 unknown: unknownAttrs(attrs, element, pushWarns)
             };
             onWarns(warns);
@@ -385,14 +393,27 @@ function parseAttrs(element: xmldoc.XmlElement, onWarns: (ws: Warning[]) => void
         path: () => {
             const validPathAttrs: ParsedPathAttr = {
                 ...globalValidAttrs,
+                ...getPresentationAttrs(),
                 d: (tmp = pop(attrs, "d")) && tmp.value && pathDefinitionAttr(tmp.value, element, pushWarns) || null,
-                fill: (tmp = pop(attrs, "fill")) && paintAttr(tmp, element, pushWarns) || null,
-                stroke: (tmp = pop(attrs, "stroke")) && paintAttr(tmp, element, pushWarns) || null,
-                transform: (tmp = pop(attrs, "transform")) && tmp.value && transformAttr(tmp.value, element, pushWarns) || null,
                 unknown: unknownAttrs(attrs, element, pushWarns)
             };
             onWarns(warns);
             return validPathAttrs;
+        },
+        text: () => {
+            const validTextAttrs: ParsedTextAttr = {
+                ...globalValidAttrs,
+                ...getPresentationAttrs(),
+                x: (tmp = pop(attrs, "x")) && lengthAttr(tmp, element, pushWarns) || null,
+                y: (tmp = pop(attrs, "y")) && lengthAttr(tmp, element, pushWarns) || null,
+                dx: (tmp = pop(attrs, "x")) && lengthAttr(tmp, element, pushWarns) || null,
+                dy: (tmp = pop(attrs, "y")) && lengthAttr(tmp, element, pushWarns) || null,
+                lengthAdjust: (tmp = pop(attrs, "lengthAdjust")) && tmp.value && validateOnly(tmp.value, element, pushWarns, isLengthAdjust) || null,
+                textLength: (tmp = pop(attrs, "textLength")) && lengthAttr(tmp, element, pushWarns) || null,
+                unknown: unknownAttrs(attrs, element, pushWarns)
+            };
+            onWarns(warns);
+            return validTextAttrs;
         }
     }
 }
@@ -500,5 +521,23 @@ function transformAttr(maybeTransformAttr: string, element: xmldoc.XmlElement, o
     } catch (error) {
         onWarn({range: toRange(element), message: `at transform attribute: ${error}`});
         return void 0;
+    }
+}
+
+function validateOnly<T>(someAttr: string, element: xmldoc.XmlElement, onWarn: (w: Warning) => void, validator: (obj: Object) => obj is T): T | undefined {
+    if (validator(someAttr)) {
+        return someAttr;
+    } else {
+        onWarn({range: toRange(element), message: `${someAttr} is unsupported value.`});
+        return void 0;
+    }
+}
+
+function fontSizeAttr(pair: {name: string, value: string | null}, element: xmldoc.XmlElement, onWarn: (w: Warning) => void): FontSize | undefined {
+    if (pair.value === null) return;
+    if (isFontSize(pair.value)) {
+        return pair.value;  // string & Length = never
+    } else {
+        return lengthAttr(pair, element, onWarn);
     }
 }

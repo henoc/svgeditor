@@ -37,12 +37,8 @@ export class PathMode implements Mode {
                                     /* end point */ cx, cy
                                 ]
                             ],
-                            fill: drawState.fill,
-                            stroke: drawState.stroke,
-                            transform: null,
-                            class: null,
-                            id: null,
-                            unknown: {}
+                            ...Mode.baseAttrsDefaultImpl(),
+                            ...Mode.presentationAttrsDefaultImpl()
                         }
                     };
                     root.children.push(pe);

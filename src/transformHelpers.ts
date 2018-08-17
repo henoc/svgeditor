@@ -103,7 +103,7 @@ export function merge(left: TransformDescriptor, right: TransformDescriptor, alw
     return false;
 }
 
-function descriptorToMatrix(descriptor: TransformDescriptor): Matrix {
+export function descriptorToMatrix(descriptor: TransformDescriptor): Matrix {
     switch (descriptor.type) {
         case "matrix":
         return descriptor;

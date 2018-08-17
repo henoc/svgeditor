@@ -34,12 +34,8 @@ export class EllipseMode implements Mode {
                         cy: {unit: configuration.defaultUnit, value: 0, attrName: "cy"},
                         rx: {unit: configuration.defaultUnit, value: 0, attrName: "rx"},
                         ry: {unit: configuration.defaultUnit, value: 0, attrName: "ry"},
-                        fill: drawState.fill,
-                        stroke: drawState.stroke,
-                        transform: null,
-                        class: null,
-                        id: null,
-                        unknown: {}
+                        ...Mode.baseAttrsDefaultImpl(),
+                        ...Mode.presentationAttrsDefaultImpl()
                     },
                 };
                 root.children.push(pe);

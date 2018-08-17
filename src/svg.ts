@@ -1,5 +1,5 @@
 import { map, assertNever, deepCopy } from "./utils";
-import { Length, Paint, PathCommand, Transform, isLength, isPaint, isTransform } from "./domParser";
+import { Length, Paint, PathCommand, Transform, isLength, isPaint, isTransform, FontSize } from "./domParser";
 import tinycolor from "tinycolor2";
 import { svgPathManager } from "./pathHelpers";
 import { elementOpenStart, elementOpenEnd, attr, text, elementClose } from "incremental-dom";
@@ -97,6 +97,16 @@ export class SvgTag implements Component {
         if (value !== null && this.data.important.indexOf(key) === -1) {
             value = this.fixDecimalPlaces(value);
             this.data.attrs[key] = toTransformStrWithoutCollect(value);
+        }
+        return this;
+    }
+    fsattr(key: string, value: FontSize | null): SvgTag {
+        if (value !== null && this.data.important.indexOf(key) === -1) {
+            if (typeof value !== "string") {
+                this.uattr(key, value);
+            } else {
+                this.data.attrs[key] = value;
+            }
         }
         return this;
     }

@@ -1,10 +1,10 @@
-import { ParsedElement, Length, Transform } from "./domParser";
-import { Vec2, v } from "./utils";
+import { ParsedElement, Length, Transform, isLength } from "./domParser";
+import { Vec2, v, vfp } from "./utils";
 import {svgPathManager} from "./pathHelpers";
 import { convertToPixel, convertFromPixel } from "./measureUnits";
 import { svgVirtualMap, svgRealMap, configuration } from "./main";
-import { identity, transform, scale, translate, rotate, rotateDEG } from "transformation-matrix";
-import { appendDescriptor, replaceLastDescriptor } from "./transformHelpers";
+import { identity, transform, scale, translate, rotate, rotateDEG, applyToPoint, inverse } from "transformation-matrix";
+import { appendDescriptor, replaceLastDescriptor, descriptorToMatrix } from "./transformHelpers";
 
 interface ShaperFunctions {
     center: (point?: Vec2) => undefined | Vec2;
@@ -22,6 +22,7 @@ interface ShaperFunctions {
  */
 export function shaper(uuid: string): ShaperFunctions {
     const pe = svgVirtualMap[uuid];
+    const re = <SVGGraphicsElement>svgRealMap[uuid];
     const px = (unitValue: Length | null) => {
         return unitValue ? convertToPixel(unitValue, uuid) : 0;
     }
@@ -99,8 +100,10 @@ export function shaper(uuid: string): ShaperFunctions {
             },
             size: (wh?: Vec2) => {
                 if (wh) {
+                    let center = self().center()!;
                     pe.attrs.width = fromPx(pe.attrs.width, "width", wh.x);
                     pe.attrs.height = fromPx(pe.attrs.height, "height", wh.y);
+                    self().center(center);
                 } else return v(px(pe.attrs.width), px(pe.attrs.height));
             },
             size2,
@@ -347,6 +350,47 @@ export function shaper(uuid: string): ShaperFunctions {
                     const minY = Math.min(...vertexes.map(vec2 => vec2.y));
                     const maxY = Math.max(...vertexes.map(vec2 => vec2.y));
                     return v(maxX - minX, maxY - minY);
+                }
+            },
+            transform: transformDefaultImpl(pe.attrs),
+            size2,
+            leftTop,
+            allTransform,
+            rotate: rotateCenter
+        }
+        case "text":
+        return {
+            center: (point?: Vec2) => {
+                const domRect = re.getBBox();
+                if (point) {
+                    const xyToCenter = self().center()!.sub(v(px(pe.attrs.x), px(pe.attrs.y)));
+                    const newXY = point.sub(xyToCenter);
+                    pe.attrs.x = fromPx(pe.attrs.x, "x", newXY.x);
+                    pe.attrs.y = fromPx(pe.attrs.y, "y", newXY.y);
+                } else {
+                    return v(domRect.x + domRect.width / 2, domRect.y + domRect.height / 2);
+                }
+            },
+            move: (diff: Vec2) => {
+                pe.attrs.x = fromPx(pe.attrs.x, "x",
+                    px(pe.attrs.x) + diff.x
+                );
+                pe.attrs.y = fromPx(pe.attrs.y, "y",
+                    px(pe.attrs.y) + diff.y
+                );
+            },
+            size: (wh?: Vec2) => {
+                const fontSizePx = parseFloat(getComputedStyle(re).fontSize!);
+                if (wh) {
+                    const currentSize = self().size()!;
+                    let center = self().center()!;
+                    let fontSize = pe.attrs["font-size"];
+                    pe.attrs["font-size"] = fromPx(fontSize !== null && isLength(fontSize) && fontSize || null, "font-size", wh.y * fontSizePx / currentSize.y);
+                    pe.attrs.textLength = fromPx(pe.attrs.textLength, "textLength", wh.x);
+                    self().center(center);
+                } else {
+                    const domRect = re.getBBox();
+                    return v(domRect.width, domRect.height);
                 }
             },
             transform: transformDefaultImpl(pe.attrs),
