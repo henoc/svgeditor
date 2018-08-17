@@ -18,11 +18,13 @@ interface ShaperFunctions {
 }
 
 /**
- * Transform some shapes. Need to set the shape into `svgVirtualMap` before use. `svgRealMap` is optional, font style sets default browser settings if none, so measurement "ex" or "em" is inaccurate. 
+ * Transform some shapes. Need to set the shape into `svgVirtualMap` and `svgRealMap` before use.
  */
 export function shaper(uuid: string): ShaperFunctions {
     const pe = svgVirtualMap[uuid];
-    const re = <SVGGraphicsElement>svgRealMap[uuid];
+    const re = svgRealMap[uuid];
+    const styleDeclaration = getComputedStyle(re);
+
     const px = (unitValue: Length | null) => {
         return unitValue ? convertToPixel(unitValue, uuid) : 0;
     }
@@ -361,22 +363,21 @@ export function shaper(uuid: string): ShaperFunctions {
         case "text":
         return {
             center: (point?: Vec2) => {
-                const domRect = re.getBBox();
                 if (point) {
                     const xyToCenter = self().center()!.sub(v(px(pe.attrs.x), px(pe.attrs.y)));
                     const newXY = point.sub(xyToCenter);
                     pe.attrs.x = fromPx(pe.attrs.x, "x", newXY.x);
                     pe.attrs.y = fromPx(pe.attrs.y, "y", newXY.y);
                 } else {
-                    return v(domRect.x + domRect.width / 2, domRect.y + domRect.height / 2);
+                    return v(bbox.x + bbox.width / 2, bbox.y + bbox.height / 2);
                 }
             },
             move: (diff: Vec2) => {
                 pe.attrs.x = fromPx(pe.attrs.x, "x",
-                    px(pe.attrs.x) + diff.x
+                    bbox.x = px(pe.attrs.x) + diff.x
                 );
                 pe.attrs.y = fromPx(pe.attrs.y, "y",
-                    px(pe.attrs.y) + diff.y
+                    bbox.x = px(pe.attrs.y) + diff.y
                 );
             },
             size: (wh?: Vec2) => {
@@ -387,10 +388,11 @@ export function shaper(uuid: string): ShaperFunctions {
                     let fontSize = pe.attrs["font-size"];
                     pe.attrs["font-size"] = fromPx(fontSize !== null && isLength(fontSize) && fontSize || null, "font-size", wh.y * fontSizePx / currentSize.y);
                     pe.attrs.textLength = fromPx(pe.attrs.textLength, "textLength", wh.x);
+                    bbox.x = wh.x;
+                    bbox.y = wh.y;
                     self().center(center);
                 } else {
-                    const domRect = re.getBBox();
-                    return v(domRect.width, domRect.height);
+                    return v(bbox.width, bbox.height);
                 }
             },
             transform: transformDefaultImpl(pe.attrs),

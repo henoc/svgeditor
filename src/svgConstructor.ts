@@ -6,6 +6,7 @@ import { assertNever } from "./utils";
 import { toString, inverse } from "transformation-matrix";
 import { shaper } from "./shapes";
 import { toTransformStrWithoutCollect } from "./transformHelpers";
+import { svgRealMap } from "./main";
 
 interface SvgConstructOptions {
     putRootAttribute?: boolean;
@@ -66,12 +67,7 @@ export function construct(pe: ParsedElement, options?: SvgConstructOptions): Svg
             // Mostly to deal with mouse event of nested svg tag. Nested svg shape size of collision detection strangely is the same size of inner shapes of that.
             if (insertRect) {
                 const dummyRect = new SvgTag("rect").uattr("width", pe.attrs.width).uattr("height", pe.attrs.height);
-                try {
-                    // This operation could fail to execute because there may be no svgRealMap in this time.
-                    dummyRect.attr("transform", toString(inverse(shaper(pe.uuid).allTransform())));
-                } catch (error) {
-                    console.error(`Fail to create dummy rect. uuid: ${pe.uuid}`);
-                }
+                if (svgRealMap[pe.uuid]) dummyRect.attr("transform", toString(inverse(shaper(pe.uuid).allTransform())));
                 if (transparent) dummyRect.importantAttr("opacity", 0);
                 else dummyRect.attr("fill", "gray").attr("stroke", "black");
                 tag.children(dummyRect);
