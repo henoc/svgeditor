@@ -2,6 +2,7 @@ import { Component } from "./component";
 import { SvgTag } from "./svg";
 import { ParsedPresentationAttr, ParsedBaseAttr } from "./domParser";
 import { drawState } from "./main";
+import { OperatorName } from "./menuComponent";
 
 export abstract class Mode {
     abstract onShapeMouseDownLeft(event: MouseEvent, uu: string): void;
@@ -9,6 +10,7 @@ export abstract class Mode {
     abstract onDocumentMouseMove(event: MouseEvent): void;
     abstract onDocumentMouseUp(event: MouseEvent): void;
     abstract onDocumentMouseLeave(event: Event): void;
+    abstract onOperatorClicked(name: OperatorName): void;
     abstract readonly shapeHandlers: SvgTag[];
 
     static baseAttrsDefaultImpl: () => ParsedBaseAttr = () => {

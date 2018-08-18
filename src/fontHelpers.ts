@@ -1,4 +1,4 @@
-import { map } from "./utils";
+import { iterate } from "./utils";
 
 const fontMeasure = require("font-measure");
 const textWidth = require("text-width");
@@ -7,7 +7,7 @@ export type HeightName = "top" | "median" | "middle" | "bottom" | "alphabetic" |
 
 export function font(text: string, family: string, size: number, weight: string, style: string) {
     const sizeToHeightValue = (heightName: HeightName) => (size: number) => <number>fontMeasure(family, {size, weight, style})[heightName] * size;
-    const heightInfo = map(<Record<HeightName, number>>fontMeasure(family, {size, weight, style}), (_k, v) =>  v * size);
+    const heightInfo = iterate(<Record<HeightName, number>>fontMeasure(family, {size, weight, style}), (_k, v) =>  v * size);
     return {
         get width() {
             return <number>textWidth(text, {family, size, weight, style});

@@ -205,6 +205,9 @@ export class NodeMode implements Mode {
         }
         return elems;
     }
+    onOperatorClicked() {
+        
+    }
 
     private onShapeHandlerMouseDown(event: MouseEvent, index: number) {
         event.stopPropagation();

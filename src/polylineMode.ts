@@ -72,6 +72,9 @@ export class PolylineMode implements Mode {
     onDocumentMouseLeave(event: Event): void {
         
     }
+    onOperatorClicked() {
+        
+    }
 
     /**
      * Transform a (mouse) point into that in coordinate of a target shape by inverse mapping.

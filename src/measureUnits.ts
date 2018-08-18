@@ -1,6 +1,6 @@
 import { Length, LengthUnit, ParsedElement } from "./domParser";
 import { svgVirtualMap, svgRealMap } from "./main";
-import { assertNever, map, v, Vec2 } from "./utils";
+import { assertNever, iterate, v, Vec2 } from "./utils";
 import { SetDifference } from "utility-types";
 import memoize from "fast-memoize";
 

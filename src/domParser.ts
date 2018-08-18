@@ -1,5 +1,5 @@
 import * as xmldoc from "xmldoc";
-import { map, Vec2, v, objectValues } from "./utils";
+import { iterate, Vec2, v, objectValues } from "./utils";
 import { Assoc } from "./svg";
 import uuidStatic from "uuid";
 import tinycolor from "tinycolor2";
@@ -429,7 +429,7 @@ function pop(attrs: Assoc, name: string) {
 }
 
 function unknownAttrs(attrs: Assoc, element: xmldoc.XmlElement, onWarns: (ws: Warning[]) => void): Assoc {
-    onWarns(objectValues(map(attrs, (name) => {
+    onWarns(objectValues(iterate(attrs, (name) => {
         return {range: toRange(element), message: `${name} is unsupported property.`};
     })));
     return attrs;

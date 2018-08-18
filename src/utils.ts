@@ -5,7 +5,7 @@ import { $Values } from "utility-types";
 /**
  * Mapping in object. `{a: 1, b: 2, c: 3} ->(+1) {a: 2, b: 3, c: 4}`
  */
-export function map<T, R>(obj: T, fn: (key: Extract<keyof T, string>, value: T[Extract<keyof T, string>]) => R): Record<keyof T, R> {
+export function iterate<T, R>(obj: T, fn: (key: Extract<keyof T, string>, value: T[Extract<keyof T, string>]) => R): Record<keyof T, R> {
     const acc: Record<keyof T, R> = <any>{};
     for (const key in obj) {
         if (obj.hasOwnProperty(key)) {

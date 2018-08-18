@@ -7,9 +7,10 @@ import { RectMode } from "./rectMode";
 import { EllipseMode } from "./ellipseMode";
 import { PolylineMode } from "./polylineMode";
 import { PathMode } from "./pathMode";
-import { assertNever, el } from "./utils";
+import { assertNever, el, iterate } from "./utils";
 
 export type ModeName = "select" | "node" | "rect" | "ellipse" | "polyline" | "path" | "text";
+export type OperatorName = "duplicate";
 
 class MenuComponent implements Component {
 
@@ -17,8 +18,8 @@ class MenuComponent implements Component {
     }
 
     render() {
-        const classes = this.isSelected ? ["class", "svgeditor-selected"] : [];
-        el`li :key=${this.name} *id=${`svgeditor-menu-${this.name}`} *onclick=${() => this.changeMode(this.name)} ...${classes}`;
+        const classes = ["svgeditor-menu", ...(this.isSelected ? ["svgeditor-selected"] : [])].join(" ");
+        el`li :key=${this.name} *id=${`svgeditor-menu-${this.name}`} *onclick=${() => this.changeMode(this.name)} class=${classes}`;
         text(this.name);
         el`/li`;
     }
@@ -55,37 +56,50 @@ class MenuComponent implements Component {
     }
 }
 
+class OperatorComponent implements Component {
+    constructor(public name: OperatorName) {}
+
+    render() {
+        el`li :key=${this.name} *class="svgeditor-operator" *onclick=${() => editMode.mode.onOperatorClicked(this.name)}`;
+        text(this.name);
+        el`/li`;
+    }
+}
+
 export class MenuListComponent implements Component {
 
-    select = new MenuComponent("select", (name) => this.changeSelectedMode(name), true)
-    node = new MenuComponent("node", (name) => this.changeSelectedMode(name))
-    rect = new MenuComponent("rect", (name) => this.changeSelectedMode(name))
-    ellipse = new MenuComponent("ellipse", (name) => this.changeSelectedMode(name))
-    polyline = new MenuComponent("polyline", (name) => this.changeSelectedMode(name))
-    path = new MenuComponent("path", (name) => this.changeSelectedMode(name))
-    text = new MenuComponent("text", name => this.changeSelectedMode(name))
+    menuComponents = {
+        select: new MenuComponent("select", (name) => this.changeSelectedMode(name), true),
+        node: new MenuComponent("node", (name) => this.changeSelectedMode(name)),
+        rect: new MenuComponent("rect", (name) => this.changeSelectedMode(name)),
+        ellipse: new MenuComponent("ellipse", (name) => this.changeSelectedMode(name)),
+        polyline: new MenuComponent("polyline", (name) => this.changeSelectedMode(name)),
+        path: new MenuComponent("path", (name) => this.changeSelectedMode(name)),
+        text: new MenuComponent("text", name => this.changeSelectedMode(name))
+    }
+
+    operatorComponents = {
+        duplicate: new OperatorComponent("duplicate")
+    }
+    
 
     render() {
         el`ul`;
-        this.select.render();
-        this.node.render();
-        this.rect.render();
-        this.ellipse.render();
-        this.polyline.render();
-        this.path.render();
-        this.text.render();
+        iterate(this.menuComponents, (_key, menuComponent) => {
+            menuComponent.render();
+        });
+        el`/ul`;
+        el`ul`;
+        iterate(this.operatorComponents, (_key, operator) => {
+            operator.render();
+        });
         el`/ul`;
     }
 
     changeSelectedMode(mode: ModeName) {
-        this.select.isSelected = false;
-        this.node.isSelected = false;
-        this.rect.isSelected = false;
-        this.ellipse.isSelected = false;
-        this.polyline.isSelected = false;
-        this.path.isSelected = false;
-        this.text.isSelected = false;
-        this[mode].isSelected = true;
+        iterate(this.menuComponents, (key, menuComponent) => {
+            menuComponent.isSelected = key === mode;
+        });
     }
 }
 

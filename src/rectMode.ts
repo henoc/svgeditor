@@ -66,6 +66,9 @@ export class RectMode implements Mode {
     onDocumentMouseLeave(event: Event): void {
         this.onDocumentMouseUp();
     }
+    onOperatorClicked() {
+        
+    }
 
     /**
      * Transform a (mouse) point into that in coordinate of a target shape by inverse mapping.

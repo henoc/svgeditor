@@ -1,5 +1,5 @@
 import { editMode, openWindows, contentChildrenComponent } from "./main";
-import { map } from "./utils";
+import { iterate } from "./utils";
 import { WindowComponent } from "./component";
 
 export function onShapeMouseDown(event: MouseEvent, uu: string) {
@@ -29,7 +29,7 @@ export function onDocumentMouseLeave(event: Event) {
 }
 
 export function onDocumentClick(event: MouseEvent) {
-    map(openWindows, (id, w) => {
+    iterate(openWindows, (id, w) => {
         w.onClose();
     });
 }

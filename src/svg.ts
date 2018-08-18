@@ -1,4 +1,4 @@
-import { map, assertNever, deepCopy } from "./utils";
+import { iterate, assertNever, deepCopy } from "./utils";
 import { Length, Paint, PathCommand, Transform, isLength, isPaint, isTransform, FontSize } from "./domParser";
 import tinycolor from "tinycolor2";
 import { svgPathManager } from "./pathHelpers";
@@ -43,7 +43,7 @@ export class SvgTag implements Component {
         return this;
     }
     options(svgTagOptions: SvgTagOptions): SvgTag {
-        map(svgTagOptions, (key, value) => {
+        iterate(svgTagOptions, (key, value) => {
             (<any>this.data.options)[key] = value;
         });
         return this;
@@ -111,7 +111,7 @@ export class SvgTag implements Component {
         return this;
     }
     attrs(assoc: {[key: string]: string | number | null}): SvgTag {
-        map(assoc, (key, value) => {
+        iterate(assoc, (key, value) => {
             if (this.data.important.indexOf(key) === -1 && value !== null) this.data.attrs[key] = typeof value === "number" ? this.fixDecimalPlaces(value) : value;       
         });
         return this;
@@ -139,7 +139,7 @@ export class SvgTag implements Component {
                 this.data.attrs["xmlns:xlink"] = xlinkns;
             }
             const elem = document.createElementNS(svgns, this.data.tag);
-            map(this.data.attrs, (key, value) => {
+            iterate(this.data.attrs, (key, value) => {
                 if (key.startsWith("xlink:")) elem.setAttributeNS(xlinkns, key, String(value));
                 else elem.setAttribute(key, String(value));
             });
@@ -148,7 +148,7 @@ export class SvgTag implements Component {
                 elem.insertAdjacentElement("beforeend", c.build());
             });
             if (this.data.text) elem.textContent = this.data.text;
-            map(this.data.listeners, (key, value) => {
+            iterate(this.data.listeners, (key, value) => {
                 elem.addEventListener(key, value);
             });
             return elem;
@@ -167,10 +167,10 @@ export class SvgTag implements Component {
                 this.data.attrs["xmlns:xlink"] = xlinkns;
             }
             elementOpenStart(this.data.tag);
-            map(this.data.attrs, (key, value) => {
+            iterate(this.data.attrs, (key, value) => {
                 attr(key, value);
             });
-            map(this.data.listeners, (key, value) => {
+            iterate(this.data.listeners, (key, value) => {
                 attr(`on${key}`, value);
             });
             if (this.data.class.length > 0)  attr("class", this.data.class.join(" "));
@@ -208,7 +208,7 @@ export class SvgTag implements Component {
             } else if (isTransform(copied)) {
                 for (let i = 0; i < copied.descriptors.length; i++) {
                     const descriptorI = copied.descriptors[i];
-                    map(descriptorI, (k, v) => {
+                    iterate(descriptorI, (k, v) => {
                         if (typeof v === "number") (<any>descriptorI)[k] = fix(v);
                     });
                 }

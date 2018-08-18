@@ -1,21 +1,31 @@
 ul {
     margin: 0.2em;
     padding: 0px;
+    list-style: none;
 }
-li {
+.svgeditor-menu {
     display: inline-block;
     color: var(--vscode-sideBar-foreground);
     background-color: var(--vscode-sideBar-background);
-    width: 50px;
+    min-width: 50px;
     text-align: center;
 }
-li:hover:not(.svgeditor-selected) {
+.svgeditor-menu:hover:not(.svgeditor-selected) {
     color: var(--vscode-list-hoverForeground);
     background-color: var(--vscode-list-hoverBackground);
 }
 .svgeditor-selected, select option[selected] {
     color: var(--vscode-list-activeSelectionForeground);
     background-color: var(--vscode-list-activeSelectionBackground);
+}
+.svgeditor-operator {
+    display: inline-block;
+    color: var(--link-color);
+    text-align: center;
+}
+.svgeditor-operator:hover {
+    color: var(--link-active-color);
+    text-decoration: underline;
 }
 .svgeditor-button {
     display: inline-block;

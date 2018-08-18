@@ -1,9 +1,13 @@
-import { svgVirtualMap, refleshContent, svgRealMap, sendBackToEditor, configuration } from "./main";
-import { Vec2, v, vfp } from "./utils";
+import { svgVirtualMap, refleshContent, svgRealMap, sendBackToEditor, configuration, svgdata } from "./main";
+import { Vec2, v, vfp, assertNever, deepCopy } from "./utils";
 import { shaper } from "./shapes";
 import { SvgTag } from "./svg";
 import { Mode } from "./modeInterface";
 import { identity, transform, applyToPoint, inverse } from "transformation-matrix";
+import { OperatorName } from "./menuComponent";
+import { convertFromPixel, convertToPixel } from "./measureUnits";
+import uuidStatic from "uuid";
+import { ParsedElement } from "./domParser";
 
 export class SelectMode implements Mode {
 
@@ -41,6 +45,7 @@ export class SelectMode implements Mode {
             refleshContent();
         }
     }
+
     onShapeMouseDownRight(event: MouseEvent, uu: string) {
 
     }
@@ -87,6 +92,31 @@ export class SelectMode implements Mode {
     }
     onDocumentMouseLeave(event: Event) {
         this.onDocumentMouseUp();
+    }
+    onOperatorClicked(name: OperatorName) {
+        switch (name) {
+            case "duplicate":
+            if (this.selectedShapeUuid) {
+                const pe = svgVirtualMap[this.selectedShapeUuid];
+                const copied = deepCopy(pe);
+                copied.uuid = uuidStatic.v4();
+                let parentPe: ParsedElement;
+                if (pe.parent && (parentPe = svgVirtualMap[pe.parent]) && "children" in parentPe) {
+                    parentPe.children.push(copied);
+                    refleshContent();       // make real element
+                    const fourPercentX = convertToPixel({unit: "%", value: 4, attrName: "x"}, copied.uuid);
+                    const fourPercentY = convertToPixel({unit: "%", value: 4, attrName: "y"}, copied.uuid);
+                    shaper(copied.uuid).move(v(fourPercentX, fourPercentY));
+                    this.selectedShapeUuid = copied.uuid;
+                    this.shapeHandlers = this.createShapeHandlers(copied.uuid);
+                }
+            }
+            break;
+            default:
+            assertNever(name);
+        }
+        refleshContent();
+        sendBackToEditor();
     }
     private createShapeHandlers(uu: string): SvgTag[] {
         const center = shaper(uu).center()!;

@@ -3,7 +3,7 @@ import { ParsedElement, isLengthUnit, LengthUnit, Paint } from "./domParser";
 import { onDocumentMouseMove, onDocumentMouseUp, onDocumentClick, onDocumentMouseLeave } from "./triggers";
 import { Mode } from "./modeInterface";
 import { SelectMode } from "./selectMode";
-import { TextMode } from "./textMode";
+import { textMode } from "./textMode";
 import { elementVoid, elementOpen, elementClose, patch } from "incremental-dom";
 import { MenuListComponent, ModeName } from "./menuComponent";
 import { Component, WindowComponent } from "./component";
@@ -73,7 +73,7 @@ window.addEventListener("message", event => {
             if (message.data.collectTransform !== undefined) configuration.collectTransform = message.data.collectTransform;
             break;
         case "input-response":
-            editMode.mode = new TextMode(message.data, (uu: string | null) => contentChildrenComponent.menuListComponent.text.changeMode("select", uu || undefined));
+            textMode(message.data, (uu: string | null) => contentChildrenComponent.menuListComponent.menuComponents.text.changeMode("select", uu || undefined));
             break;
     }
 });

@@ -64,6 +64,9 @@ export class EllipseMode implements Mode {
     onDocumentMouseLeave(event: MouseEvent): void {
         this.onDocumentMouseUp();
     }
+    onOperatorClicked() {
+        
+    }
 
     /**
      * Transform a (mouse) point into that in coordinate of a target shape by inverse mapping.

@@ -104,6 +104,9 @@ export class PathMode implements Mode {
     onDocumentMouseLeave(event: Event): void {
         this.isDragging = false;
     }
+    onOperatorClicked() {
+        
+    }
 
     /**
      * Transform a (mouse) point into that in coordinate of a target shape by inverse mapping.
