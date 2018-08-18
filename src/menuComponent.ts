@@ -1,6 +1,6 @@
 import {Component} from "./component";
 import { elementOpen, text, elementClose } from "incremental-dom";
-import { editMode, refleshContent } from "./main";
+import { editMode, refleshContent, inputRequest, sendBackToEditor } from "./main";
 import { SelectMode } from "./selectMode";
 import { NodeMode } from "./nodeMode";
 import { RectMode } from "./rectMode";
@@ -9,7 +9,7 @@ import { PolylineMode } from "./polylineMode";
 import { PathMode } from "./pathMode";
 import { assertNever, el } from "./utils";
 
-export type ModeName = "select" | "node" | "rect" | "ellipse" | "polyline" | "path";
+export type ModeName = "select" | "node" | "rect" | "ellipse" | "polyline" | "path" | "text";
 
 class MenuComponent implements Component {
 
@@ -43,11 +43,15 @@ class MenuComponent implements Component {
             case "path":
             editMode.mode = new PathMode((uu: string | null) => this.changeMode("node", uu || undefined));
             break;
+            case "text":
+            inputRequest("text");
+            break;
             default:
             assertNever(name);
         }
         this.modeChangeHandler(name);
         refleshContent();
+        sendBackToEditor();
     }
 }
 
@@ -59,6 +63,7 @@ export class MenuListComponent implements Component {
     ellipse = new MenuComponent("ellipse", (name) => this.changeSelectedMode(name))
     polyline = new MenuComponent("polyline", (name) => this.changeSelectedMode(name))
     path = new MenuComponent("path", (name) => this.changeSelectedMode(name))
+    text = new MenuComponent("text", name => this.changeSelectedMode(name))
 
     render() {
         el`ul`;
@@ -68,6 +73,7 @@ export class MenuListComponent implements Component {
         this.ellipse.render();
         this.polyline.render();
         this.path.render();
+        this.text.render();
         el`/ul`;
     }
 
@@ -78,6 +84,7 @@ export class MenuListComponent implements Component {
         this.ellipse.isSelected = false;
         this.polyline.isSelected = false;
         this.path.isSelected = false;
+        this.text.isSelected = false;
         this[mode].isSelected = true;
     }
 }

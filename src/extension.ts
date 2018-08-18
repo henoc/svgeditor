@@ -36,7 +36,7 @@ export function activate(context: vscode.ExtensionContext) {
         );
         panel.webview.html = render(viewer, {bundleJsPath, cssPath});
         const uu = uuid.v4();
-        panel.webview.onDidReceiveMessage(message => {
+        panel.webview.onDidReceiveMessage(async message => {
             switch (message.command) {
                 case "modified":
                     editor.edit(editBuilder => {
@@ -57,6 +57,13 @@ export function activate(context: vscode.ExtensionContext) {
                             decimalPlaces: config.get<number>("decimalPlaces"),
                             collectTransform: config.get<boolean>("collectTransformMatrix")
                         }
+                    });
+                    return;
+                case "input-request":
+                    const result = await vscode.window.showInputBox({placeHolder: message.data})
+                    panel.webview.postMessage({
+                        command: "input-response",
+                        data: result
                     });
                     return;
                 case "error":

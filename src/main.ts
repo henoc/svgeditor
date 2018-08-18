@@ -3,6 +3,7 @@ import { ParsedElement, isLengthUnit, LengthUnit, Paint } from "./domParser";
 import { onDocumentMouseMove, onDocumentMouseUp, onDocumentClick, onDocumentMouseLeave } from "./triggers";
 import { Mode } from "./modeInterface";
 import { SelectMode } from "./selectMode";
+import { TextMode } from "./textMode";
 import { elementVoid, elementOpen, elementClose, patch } from "incremental-dom";
 import { MenuListComponent, ModeName } from "./menuComponent";
 import { Component, WindowComponent } from "./component";
@@ -71,6 +72,9 @@ window.addEventListener("message", event => {
             if (message.data.decimalPlaces !== undefined) configuration.numOfDecimalPlaces = message.data.decimalPlaces;
             if (message.data.collectTransform !== undefined) configuration.collectTransform = message.data.collectTransform;
             break;
+        case "input-response":
+            editMode.mode = new TextMode(message.data, (uu: string | null) => contentChildrenComponent.menuListComponent.text.changeMode("select", uu || undefined));
+            break;
     }
 });
 document.addEventListener("mousemove", onDocumentMouseMove);
@@ -103,3 +107,9 @@ export function sendErrorMessage(msg: string) {
     });
 }
 
+export function inputRequest(placeHolder?: string) {
+    vscode.postMessage({
+        command: "input-request",
+        data: placeHolder
+    });
+}
