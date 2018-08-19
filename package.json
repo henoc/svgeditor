@@ -115,8 +115,8 @@
     "vscode": "^1.1.18"
   },
   "dependencies": {
-    "text-width": "^1.2.0",
     "ejs": "^2.5.7",
+    "fast-deep-equal": "^2.0.1",
     "fast-memoize": "^2.5.1",
     "font-measure": "^1.2.2",
     "hammerjs": "^2.0.8",
@@ -125,6 +125,7 @@
     "parse-color": "^1.0.0",
     "pickr-widget": "^0.1.7",
     "svgpath": "2.2.1",
+    "text-width": "^1.2.0",
     "tinycolor2": "^1.4.1",
     "transformation-matrix": "^1.12.0",
     "uuid": "^3.3.2",

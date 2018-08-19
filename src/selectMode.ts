@@ -1,5 +1,5 @@
 import { svgVirtualMap, refleshContent, svgRealMap, sendBackToEditor, configuration, svgdata } from "./main";
-import { Vec2, v, vfp, assertNever, deepCopy, StringPlus } from "./utils";
+import { Vec2, v, vfp, assertNever, deepCopy, OneOrMore } from "./utils";
 import { shaper, multiShaper } from "./shapes";
 import { SvgTag } from "./svg";
 import { Mode } from "./modeInterface";
@@ -11,7 +11,7 @@ import { ParsedElement } from "./domParser";
 
 export class SelectMode implements Mode {
 
-    selectedShapeUuids: StringPlus | null = null;
+    selectedShapeUuids: OneOrMore<string> | null = null;
     commonParent: string | null = null;
     isDraggingShape: boolean = false;
     startCursorPos: Vec2 | null = null;
@@ -145,7 +145,7 @@ export class SelectMode implements Mode {
         refleshContent();
         sendBackToEditor();
     }
-    private createShapeHandlers(uus: StringPlus): SvgTag[] {
+    private createShapeHandlers(uus: OneOrMore<string>): SvgTag[] {
         const center = multiShaper(uus).center()!;
         const halfSize = multiShaper(uus).size()!.div(v(2, 2));
         const leftTop = center.sub(halfSize);
@@ -193,11 +193,11 @@ export class SelectMode implements Mode {
     /**
      * Transform a (mouse) point into that in coordinate of a target shape by inverse mapping.
      */
-    private inTargetCoordinate(point: Point, targetUuids: StringPlus): Point {
+    private inTargetCoordinate(point: Point, targetUuids: OneOrMore<string>): Point {
         return applyToPoint(inverse(multiShaper(targetUuids).allTransform()), point);
     }
 
-    private escapeToNormalCoordinate(point: Point, targetUuids: StringPlus): Point {
+    private escapeToNormalCoordinate(point: Point, targetUuids: OneOrMore<string>): Point {
         return applyToPoint(multiShaper(targetUuids).allTransform(), point);
     }
 }

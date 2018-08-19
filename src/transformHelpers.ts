@@ -1,6 +1,7 @@
 import { Transform, TransformDescriptor } from "./domParser";
 import { assertNever, iterate } from "./utils";
 import { transform, rotateDEG, scale, skew, translate, identity } from "transformation-matrix";
+import { configuration } from "./main";
 
 /**
  * No collect matrices version.
@@ -70,6 +71,53 @@ export function appendDescriptor(transformAttribute: Transform, descriptor: Tran
     }
 }
 
+export function appendDescriptorLeft(transformAttribute: Transform, descriptor: TransformDescriptor): void {
+    if (transformAttribute.descriptors.length === 0) {
+        transformAttribute.descriptors.unshift(descriptor);
+        transformAttribute.matrices.unshift(descriptorToMatrix(descriptor));
+    } else {
+        let merged = merge(descriptor, transformAttribute.descriptors[0]);
+        if (merged) {
+            transformAttribute.descriptors[0] = merged;
+            transformAttribute.matrices[0] = descriptorToMatrix(merged);
+        } else {
+            transformAttribute.descriptors.unshift(descriptor);
+            transformAttribute.matrices.unshift(descriptorToMatrix(descriptor));
+        }
+    }
+}
+
+export function appendDescriptorsLeft(transformAttribute: Transform, ...descriptors: TransformDescriptor[]): void {
+    for (let i = descriptors.length - 1; i >= 0; i--) {
+        appendDescriptorLeft(transformAttribute, descriptors[i]);
+    }
+}
+
+export function rotateDescriptor(angle: number, cx?: number, cy?: number): TransformDescriptor & {type: "rotate"} {
+    return {
+        type: "rotate", angle, cx, cy
+    }
+}
+
+export function scaleDescriptor(sx: number, sy?: number): TransformDescriptor & {type: "scale"} {
+    return {
+        type: "scale",
+        sx, sy
+    }
+}
+
+export function skewXDescriptor(angle: number): TransformDescriptor & {type: "skewX"} {
+    return { type: "skewX", angle }
+}
+
+export function skewYDescriptor(angle: number): TransformDescriptor & {type: "skewY"} {
+    return { type: "skewY", angle }
+}
+
+export function translateDescriptor(tx: number, ty?: number): TransformDescriptor & {type: "translate"} {
+    return { type: "translate", tx, ty }
+}
+
 /**
  * Merge right descriptor to left one if possible (not so smart).
  */
@@ -118,11 +166,4 @@ export function descriptorToMatrix(descriptor: TransformDescriptor): Matrix {
         case "translate":
         return translate(descriptor.tx, descriptor.ty);
     }
-}
-
-export function equals(p: Matrix, q: Matrix): boolean {
-    iterate(p, (key) => {
-        if (p[key] !== q[key]) return false;
-    });
-    return true;
 }
