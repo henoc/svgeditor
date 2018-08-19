@@ -1,5 +1,5 @@
 import { ParsedElement, Length, Transform, isLength } from "./domParser";
-import { Vec2, v, vfp } from "./utils";
+import { Vec2, v, vfp, StringPlus } from "./utils";
 import {svgPathManager} from "./pathHelpers";
 import { convertToPixel, convertFromPixel } from "./measureUnits";
 import { svgVirtualMap, svgRealMap, configuration } from "./main";
@@ -74,12 +74,6 @@ export function shaper(uuid: string): ShaperFunctions {
             if (pe.attrs.transform === null) pe.attrs.transform = {descriptors: [], matrices: []};
             appendDescriptor(pe.attrs.transform, rotateDescriptor);
         }
-    }
-    const intoTargetCoordinate = (point: Vec2, targetUuid: string) => {
-        return vfp(applyToPoint(inverse(shaper(targetUuid).transform()!), point));
-    }
-    const escapeFromTargetCoordinate = (point: Vec2, targetUuid: string) => {
-        return vfp(applyToPoint(shaper(targetUuid).transform()!, point));
     }
     switch (pe.tag) {
         case "svg":
@@ -473,3 +467,107 @@ export function shaper(uuid: string): ShaperFunctions {
     }
 }
 
+/**
+ * @param uuids All shapes must have the same parent.
+ */
+export function multiShaper(uuids: StringPlus): ShaperFunctions {
+    if (uuids.length === 1) {
+        return shaper(uuids[0]);
+    } else {
+        const pes = uuids.map(uuid => svgVirtualMap[uuid]);
+        const commonParent = pes[0].parent;
+        const self = () => multiShaper(uuids);
+        return {
+            move: (diff: Vec2) => {
+                const oldCenter = self().center()!;
+                const newCenter = oldCenter.add(diff);
+                for(let c of pes) {
+                    const oldInC = intoTargetCoordinate(oldCenter, c.uuid);
+                    const newInC = intoTargetCoordinate(newCenter, c.uuid);
+                    shaper(c.uuid).move(newInC.sub(oldInC));
+                }
+            },
+            center: (point?: Vec2) => {
+                if (point) {
+                    const oldCenter = self().center()!;
+                    self().move(point.sub(oldCenter));
+                } else {
+                    let [minX, minY, maxX, maxY] = <(null | number)[]>[null, null, null, null];
+                        for (let c of pes) {
+                            const leftTop = shaper(c.uuid).leftTop()!;
+                            const size = shaper(c.uuid).size()!;
+                            for (let corner of [leftTop, leftTop.add(v(size.x, 0)), leftTop.add(v(0, size.y)), leftTop.add(size)]) {
+                                const cornerInGroup = escapeFromTargetCoordinate(corner, c.uuid);
+                                if (minX === null || minX > cornerInGroup.x) minX = cornerInGroup.x;
+                                if (minY === null || minY > cornerInGroup.y) minY = cornerInGroup.y;
+                                if (maxX === null || maxX < cornerInGroup.x) maxX = cornerInGroup.x;
+                                if (maxY === null || maxY < cornerInGroup.y) maxY = cornerInGroup.y;
+                            }
+                        }
+                        return v(minX || 0, minY || 0).add(v(maxX || 0, maxY || 0)).div(v(2, 2));
+                }
+            },
+            size: (wh?: Vec2) => {
+                if (wh) {
+                    for (let c of pes) {
+                        shaper(c.uuid).size(wh);
+                    }
+                } else {
+                    let [minX, minY, maxX, maxY] = <(null | number)[]>[null, null, null, null];
+                        for (let c of pes) {
+                            const leftTop = shaper(c.uuid).leftTop()!;
+                            const size = shaper(c.uuid).size()!;
+                            for (let corner of [leftTop, leftTop.add(v(size.x, 0)), leftTop.add(v(0, size.y)), leftTop.add(size)]) {
+                                const cornerInGroup = escapeFromTargetCoordinate(corner, c.uuid);
+                                if (minX === null || minX > cornerInGroup.x) minX = cornerInGroup.x;
+                                if (minY === null || minY > cornerInGroup.y) minY = cornerInGroup.y;
+                                if (maxX === null || maxX < cornerInGroup.x) maxX = cornerInGroup.x;
+                                if (maxY === null || maxY < cornerInGroup.y) maxY = cornerInGroup.y;
+                            }
+                        }
+                        return v((maxX || 0) - (minX || 0), (maxY || 0) - (minY || 0));
+                }
+            },
+            transform: (matrix?: Matrix) => {
+                throw new Error("No define transform property of muliple selected shapes.");
+            },
+            allTransform: () => {
+                return commonParent && shaper(commonParent).allTransform() || identity();
+            },
+            rotate: (deg: number) => {
+                const center = self().center()!;
+                const rotateDescriptor = {type: <"rotate">"rotate", angle: deg, cx: center.x, cy: center.y};
+                for (let c of pes) {
+                    if (c.tag !== "unknown" && "transform" in c.attrs) {
+                        if (c.attrs.transform === null) c.attrs.transform = {descriptors: [], matrices: []};
+                        appendDescriptor(c.attrs.transform, rotateDescriptor);
+                    }
+                }
+            },
+            leftTop: (point?: Vec2) => {
+                if (point) {
+                    const newCent = point.add(self().size()!.div(v(2, 2)));
+                    self().center(newCent);
+                } else {
+                    const cent = self().center()!;
+                    const size = self().size()!;
+                    return cent.sub(size.div(v(2, 2)));
+                }
+            },
+            size2: (newSize: Vec2, fixedPoint: Vec2) => {
+                let oldSize = self().size()!;
+                let center = self().center()!;
+                self().size(newSize);
+                let diff = oldSize.sub(newSize).div(v(2, 2)).mul(v(fixedPoint.x - center.x > 0 ? 1 : -1, fixedPoint.y - center.y > 0 ? 1 : -1));
+                self().move(diff);
+            }
+        }
+    }
+}
+
+function intoTargetCoordinate(point: Vec2, targetUuid: string) {
+    return vfp(applyToPoint(inverse(shaper(targetUuid).transform()!), point));
+}
+function escapeFromTargetCoordinate (point: Vec2, targetUuid: string) {
+    return vfp(applyToPoint(shaper(targetUuid).transform()!, point));
+}

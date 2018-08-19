@@ -90,6 +90,7 @@ export function refleshContent() {
 
     let transparentSvgRoot = document.querySelector("svg[data-root]");
     svgRealMap = transparentSvgRoot ? makeUuidRealMap(transparentSvgRoot) : {};
+    patch(content, () => contentChildrenComponent.render());        // 2nd render with updated svgRealMap (dummy rect for g tag)
 }
 
 export function sendBackToEditor() {

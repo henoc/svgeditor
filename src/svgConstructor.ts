@@ -69,7 +69,6 @@ export function construct(pe: ParsedElement, options?: SvgConstructOptions): Svg
             // Mostly to deal with mouse event of nested svg tag. Nested svg shape size of collision detection strangely is the same size of inner shapes of that.
             if (insertRectForSvg) {
                 const dummyRect = new SvgTag("rect").uattr("x", pe.attrs.x).uattr("y", pe.attrs.y).uattr("width", pe.attrs.width).uattr("height", pe.attrs.height);
-                // if (svgRealMap[pe.uuid]) dummyRect.attr("transform", toString(inverse(shaper(pe.uuid).allTransform())));
                 tag.children(dummyRect);
             }
             makeChildren(pe.children, tag, options);

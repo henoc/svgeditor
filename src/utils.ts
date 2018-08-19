@@ -188,3 +188,8 @@ const memoizedElopenParser = memoize(elopenParser);
 export function deepCopy<T>(obj: T): T {
     return JSON.parse(JSON.stringify(obj));
 }
+
+/**
+ * One ore more strings.
+ */
+export type StringPlus = [string, ...string[]];
