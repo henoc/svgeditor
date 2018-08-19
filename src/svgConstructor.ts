@@ -14,6 +14,7 @@ interface SvgConstructOptions {
     setListeners?: boolean;
     transparent?: boolean;
     insertSvgSizeRect?: boolean;
+    insertRectForGroup?: boolean;
     all?: boolean;
     setRootSvgXYtoOrigin?: boolean;
     numOfDecimalPlaces?: number;
@@ -27,7 +28,8 @@ export function construct(pe: ParsedElement, options?: SvgConstructOptions): Svg
     const putIndexAttribute = options && options.putUUIDAttribute || false;
     const setListeners = options && options.setListeners || false;
     const transparent = options && options.transparent || false;
-    const insertRect = options && options.insertSvgSizeRect || false;
+    const insertRectForSvg = options && options.insertSvgSizeRect || false;
+    const insertRectForGroup = options && options.insertRectForGroup || false;
     const all = options && options.all || false;
     const setRootSvgXYtoOrigin = options && options.setRootSvgXYtoOrigin || false;
     const numOfDecimalPlaces = options && options.numOfDecimalPlaces;
@@ -65,11 +67,9 @@ export function construct(pe: ParsedElement, options?: SvgConstructOptions): Svg
             case "svg":
             setBaseAttrs(pe.attrs, tag);
             // Mostly to deal with mouse event of nested svg tag. Nested svg shape size of collision detection strangely is the same size of inner shapes of that.
-            if (insertRect) {
-                const dummyRect = new SvgTag("rect").uattr("width", pe.attrs.width).uattr("height", pe.attrs.height);
-                if (svgRealMap[pe.uuid]) dummyRect.attr("transform", toString(inverse(shaper(pe.uuid).allTransform())));
-                if (transparent) dummyRect.importantAttr("opacity", 0);
-                else dummyRect.attr("fill", "gray").attr("stroke", "black");
+            if (insertRectForSvg) {
+                const dummyRect = new SvgTag("rect").uattr("x", pe.attrs.x).uattr("y", pe.attrs.y).uattr("width", pe.attrs.width).uattr("height", pe.attrs.height);
+                // if (svgRealMap[pe.uuid]) dummyRect.attr("transform", toString(inverse(shaper(pe.uuid).allTransform())));
                 tag.children(dummyRect);
             }
             makeChildren(pe.children, tag, options);
@@ -129,6 +129,23 @@ export function construct(pe: ParsedElement, options?: SvgConstructOptions): Svg
                 .uattr("textLength", pe.attrs.textLength)
                 .attr("lengthAdjust", pe.attrs.lengthAdjust)
                 .text(pe.text);
+            case "g":
+            setBaseAttrs(pe.attrs, tag);
+            setPresentationAttrs(pe.attrs, tag);
+            makeChildren(pe.children, tag, options);
+            // Click detection for groups.
+            if (insertRectForGroup && svgRealMap[pe.uuid]) {
+                const leftTop = shaper(pe.uuid).leftTop()!;
+                const gsize = shaper(pe.uuid).size()!;
+                const dummyRect = new SvgTag("rect")
+                    .uattr("x", {unit: null, value: leftTop.x, attrName: "x"})
+                    .uattr("y", {unit: null, value: leftTop.y, attrName: "y"})
+                    .uattr("width", {unit: null, value: gsize.x, attrName: "width"})
+                    .uattr("height", {unit: null, value: gsize.y, attrName: "height"});
+                if (setListeners) tag.listener("mousedown", event => onShapeMouseDown(<MouseEvent>event, pe.uuid));
+                tag.children(dummyRect);
+            }
+            return tag;
             default:
             assertNever(pe);
         }

@@ -25,6 +25,7 @@ export type ParsedElement = (
     ParsedPolylineElement |
     ParsedPathElement |
     ParsedTextElement |
+    ParsedGroupElement |
     ParsedUnknownElement
 ) & {
     uuid: string;
@@ -67,6 +68,12 @@ interface ParsedTextElement {
     tag: "text",
     attrs: ParsedTextAttr,
     text: string | null
+}
+
+interface ParsedGroupElement {
+    tag: "g",
+    attrs: ParsedGroupAttr,
+    children: ParsedElement[]
 }
 
 interface ParsedUnknownElement {
@@ -142,6 +149,9 @@ interface ParsedTextAttr extends ParsedBaseAttr, ParsedPresentationAttr {
     dy: Length | null;
     textLength: Length | null;
     lengthAdjust: LengthAdjust | null;
+}
+
+interface ParsedGroupAttr extends ParsedBaseAttr, ParsedPresentationAttr {
 }
 
 export type LengthUnit = "em" | "ex" | "px" | "in" | "cm" | "mm" | "pt" | "pc" | "%" | null;
@@ -271,6 +281,9 @@ export function parse(element: xmldoc.XmlElement, parent: string | null): Parsed
     } else if (element.name === "text") {
         const attrs = parseAttrs(element, pushWarns).text();
         return {result: {tag: "text", attrs, uuid, parent, isRoot, text}, warns};
+    } else if (element.name === "g") {
+        const attrs = parseAttrs(element, pushWarns).g();
+        return {result: {tag: "g", attrs, children, uuid, parent, isRoot}, warns};
     } else {
         const attrs: Assoc = element.attr;
         return {result: {tag: "unknown", tag$real: element.name, attrs, children, text, uuid, parent, isRoot}, warns: [{range: toRange(element), message: `${element.name} is unsupported element.`}]};
@@ -414,6 +427,15 @@ function parseAttrs(element: xmldoc.XmlElement, onWarns: (ws: Warning[]) => void
             };
             onWarns(warns);
             return validTextAttrs;
+        },
+        g: () => {
+            const validGroupAttrs: ParsedGroupAttr = {
+                ...globalValidAttrs,
+                ...getPresentationAttrs(),
+                unknown: unknownAttrs(attrs, element, pushWarns)
+            };
+            onWarns(warns);
+            return validGroupAttrs;
         }
     }
 }

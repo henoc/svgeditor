@@ -1,5 +1,5 @@
 import { Transform, TransformDescriptor } from "./domParser";
-import { assertNever } from "./utils";
+import { assertNever, iterate } from "./utils";
 import { transform, rotateDEG, scale, skew, translate, identity } from "transformation-matrix";
 
 /**
@@ -120,3 +120,9 @@ export function descriptorToMatrix(descriptor: TransformDescriptor): Matrix {
     }
 }
 
+export function equals(p: Matrix, q: Matrix): boolean {
+    iterate(p, (key) => {
+        if (p[key] !== q[key]) return false;
+    });
+    return true;
+}

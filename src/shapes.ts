@@ -4,7 +4,7 @@ import {svgPathManager} from "./pathHelpers";
 import { convertToPixel, convertFromPixel } from "./measureUnits";
 import { svgVirtualMap, svgRealMap, configuration } from "./main";
 import { identity, transform, scale, translate, rotate, rotateDEG, applyToPoint, inverse } from "transformation-matrix";
-import { appendDescriptor, replaceLastDescriptor, descriptorToMatrix } from "./transformHelpers";
+import { appendDescriptor, replaceLastDescriptor, descriptorToMatrix, equals } from "./transformHelpers";
 import { font } from "./fontHelpers";
 
 interface ShaperFunctions {
@@ -54,7 +54,7 @@ export function shaper(uuid: string): ShaperFunctions {
     };
     const transformDefaultImpl = <T extends {transform: Transform | null}>(attrs: T) => (matrix?: Matrix) => {
         if (matrix) {
-            attrs.transform = {descriptors: [{type: "matrix", ...matrix}], matrices: [matrix]};
+            if (!equals(matrix, identity())) attrs.transform = {descriptors: [{type: "matrix", ...matrix}], matrices: [matrix]};
         } else {
             return attrs.transform && transform(...attrs.transform.matrices) || identity();
         }
@@ -74,6 +74,12 @@ export function shaper(uuid: string): ShaperFunctions {
             if (pe.attrs.transform === null) pe.attrs.transform = {descriptors: [], matrices: []};
             appendDescriptor(pe.attrs.transform, rotateDescriptor);
         }
+    }
+    const intoTargetCoordinate = (point: Vec2, targetUuid: string) => {
+        return vfp(applyToPoint(inverse(shaper(targetUuid).transform()!), point));
+    }
+    const escapeFromTargetCoordinate = (point: Vec2, targetUuid: string) => {
+        return vfp(applyToPoint(shaper(targetUuid).transform()!, point));
     }
     switch (pe.tag) {
         case "svg":
@@ -396,6 +402,64 @@ export function shaper(uuid: string): ShaperFunctions {
                     const width = pe.attrs.textLength ? px(pe.attrs.textLength) : fontInfo.width;
                     const height = fontInfo.height.lineHeight;
                     return v(width, height);
+                }
+            },
+            transform: transformDefaultImpl(pe.attrs),
+            size2,
+            leftTop,
+            allTransform,
+            rotate: rotateCenter
+        }
+        case "g":
+        return {
+            move: (diff: Vec2) => {
+                const oldCenter = self().center()!;
+                const newCenter = oldCenter.add(diff);
+                for(let c of pe.children) {
+                    const oldInC = intoTargetCoordinate(oldCenter, c.uuid);
+                    const newInC = intoTargetCoordinate(newCenter, c.uuid);
+                    shaper(c.uuid).move(newInC.sub(oldInC));
+                }
+            },
+            center: (point?: Vec2) => {
+                if (point) {
+                    const oldCenter = self().center()!;
+                    self().move(point.sub(oldCenter));
+                } else {
+                    let [minX, minY, maxX, maxY] = <(null | number)[]>[null, null, null, null];
+                    for (let c of pe.children) {
+                        const leftTop = shaper(c.uuid).leftTop()!;
+                        const size = shaper(c.uuid).size()!;
+                        for (let corner of [leftTop, leftTop.add(v(size.x, 0)), leftTop.add(v(0, size.y)), leftTop.add(size)]) {
+                            const cornerInGroup = escapeFromTargetCoordinate(corner, c.uuid);
+                            if (minX === null || minX > cornerInGroup.x) minX = cornerInGroup.x;
+                            if (minY === null || minY > cornerInGroup.y) minY = cornerInGroup.y;
+                            if (maxX === null || maxX < cornerInGroup.x) maxX = cornerInGroup.x;
+                            if (maxY === null || maxY < cornerInGroup.y) maxY = cornerInGroup.y;
+                        }
+                    }
+                    return v(minX || 0, minY || 0).add(v(maxX || 0, maxY || 0)).div(v(2, 2));
+                }
+            },
+            size: (wh?: Vec2) => {
+                if (wh) {
+                    for (let c of pe.children) {
+                        shaper(c.uuid).size(wh);
+                    }
+                } else {
+                    let [minX, minY, maxX, maxY] = <(null | number)[]>[null, null, null, null];
+                    for (let c of pe.children) {
+                        const leftTop = shaper(c.uuid).leftTop()!;
+                        const size = shaper(c.uuid).size()!;
+                        for (let corner of [leftTop, leftTop.add(v(size.x, 0)), leftTop.add(v(0, size.y)), leftTop.add(size)]) {
+                            const cornerInGroup = escapeFromTargetCoordinate(corner, c.uuid);
+                            if (minX === null || minX > cornerInGroup.x) minX = cornerInGroup.x;
+                            if (minY === null || minY > cornerInGroup.y) minY = cornerInGroup.y;
+                            if (maxX === null || maxX < cornerInGroup.x) maxX = cornerInGroup.x;
+                            if (maxY === null || maxY < cornerInGroup.y) maxY = cornerInGroup.y;
+                        }
+                    }
+                    return v((maxX || 0) - (minX || 0), (maxY || 0) - (minY || 0));
                 }
             },
             transform: transformDefaultImpl(pe.attrs),

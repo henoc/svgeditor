@@ -1,8 +1,9 @@
 import { Component } from "./component";
 import { SvgTag } from "./svg";
 import { ParsedPresentationAttr, ParsedBaseAttr } from "./domParser";
-import { drawState } from "./main";
+import { drawState, svgRealMap } from "./main";
 import { OperatorName } from "./menuComponent";
+import { Vec2, v } from "./utils";
 
 export abstract class Mode {
     abstract onShapeMouseDownLeft(event: MouseEvent, uu: string): void;

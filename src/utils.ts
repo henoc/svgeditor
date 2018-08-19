@@ -103,7 +103,12 @@ function join2(sep: (i: number) => string, strs: string[]) {
 
 /**
  * Syntax sugar for elementOpen, elementClose, elementVoid.
- * ``el`li :key="list-element" class="non-static-class-a non-static-class-b" *id="static-ident" onclick=${variable} ...${["data-optional1", "foo", "data-optional2", "bar"]}`; text("some"); el`br/`; text("text"); el`/li` ``
+ ```
+ el`li :key="list-element" class="non-static-class-a non-static-class-b" *id="static-ident" onclick=${variable} ...${["data-optional1", "foo", "data-optional2", "bar"]}`;
+ text("some");
+ el`br/`;
+ text("text"); el`/li`
+ ```
  * 
  * note: ``el`li foo="list-${variable}"` `` is incorrect. Use ``el`li foo=${`list-${variable}`}` ``
  */
