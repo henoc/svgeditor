@@ -28,7 +28,7 @@ export function textMode(inputText: string | undefined, isfinished: (uu: string 
             };
             root.children.push(pe);
             refleshContent();   // make real Element
-            shaper(uuid).center(shaper(root.uuid).center()!);
+            shaper(uuid).center = shaper(root.uuid).center;
             refleshContent();
             isfinished(uuid);
         }

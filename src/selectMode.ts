@@ -45,7 +45,7 @@ export class SelectMode implements Mode {
             this.selectedShapeUuids.push(uu);
             const uuids = this.selectedShapeUuids;
             this.startCursorPos = vfp(this.inTargetCoordinate({x: event.offsetX, y: event.offsetY}, uuids));
-            this.startShapeCenter = multiShaper(uuids).center()!;
+            this.startShapeCenter = multiShaper(uuids).center;
             this.isDraggingShape = true;
             this.shapeHandlers = this.createShapeHandlers(this.selectedShapeUuids);
             refleshContent();
@@ -53,14 +53,14 @@ export class SelectMode implements Mode {
             // select already multiple selected shaeps
             const uuids = this.selectedShapeUuids;
             this.startCursorPos = vfp(this.inTargetCoordinate({x: event.offsetX, y: event.offsetY}, uuids));
-            this.startShapeCenter = multiShaper(uuids).center()!;
+            this.startShapeCenter = multiShaper(uuids).center;
             this.isDraggingShape = true;
         } else {
             // single selection
             this.selectedShapeUuids = [uu];
             this.commonParent = svgVirtualMap[uu].parent;
             this.startCursorPos = vfp(this.inTargetCoordinate({x: event.offsetX, y: event.offsetY}, [uu]));
-            this.startShapeCenter = shaper(uu).center()!;
+            this.startShapeCenter = shaper(uu).center;
             this.isDraggingShape = true;
             this.shapeHandlers = this.createShapeHandlers(this.selectedShapeUuids);
             refleshContent();
@@ -73,7 +73,7 @@ export class SelectMode implements Mode {
         if (this.selectedShapeUuids) {
             let currentCursorPos = vfp(this.inTargetCoordinate({x: event.offsetX, y: event.offsetY}, this.selectedShapeUuids));
             if (this.isDraggingShape && this.startCursorPos && this.startShapeCenter) {
-                multiShaper(this.selectedShapeUuids).center(this.startShapeCenter.add(currentCursorPos.sub(this.startCursorPos)));
+                multiShaper(this.selectedShapeUuids).center = this.startShapeCenter.add(currentCursorPos.sub(this.startCursorPos));
                 this.shapeHandlers = this.createShapeHandlers(this.selectedShapeUuids);
                 refleshContent();
             } else if (this.isDraggingHandler && this.startCursorPos && this.startShapeFixedPoint && this.startShapeSize) {
@@ -98,7 +98,7 @@ export class SelectMode implements Mode {
     onDocumentMouseUp() {
         if (this.selectedShapeUuids && configuration.collectTransform) {
             for (let uuid of this.selectedShapeUuids) {
-                shaper(uuid).transform(shaper(uuid).transform()!);
+                shaper(uuid).transform = shaper(uuid).transform;
             }
         }
         this.isDraggingShape = false;
@@ -146,8 +146,8 @@ export class SelectMode implements Mode {
         sendBackToEditor();
     }
     private createShapeHandlers(uus: OneOrMore<string>): SvgTag[] {
-        const center = multiShaper(uus).center()!;
-        const halfSize = multiShaper(uus).size()!.div(v(2, 2));
+        const center = multiShaper(uus).center;
+        const halfSize = multiShaper(uus).size.div(v(2, 2));
         const leftTop = center.sub(halfSize);
         const elems: SvgTag[] = [];
         for (let i = 0; i < 9; i++) {
@@ -185,7 +185,7 @@ export class SelectMode implements Mode {
                     y: Number(this.shapeHandlers[8 - index].data.attrs["cy"])
                 }, this.selectedShapeUuids));
             this.startCursorPos = vfp(this.inTargetCoordinate({x: event.offsetX, y: event.offsetY}, this.selectedShapeUuids));
-            this.startShapeSize = multiShaper(this.selectedShapeUuids).size()!;
+            this.startShapeSize = multiShaper(this.selectedShapeUuids).size;
             this.previousRawCursorPos = v(event.offsetX, event.offsetY);
         }
     }

@@ -7,7 +7,7 @@ ul {
     display: inline-block;
     color: var(--vscode-sideBar-foreground);
     background-color: var(--vscode-sideBar-background);
-    min-width: 50px;
+    width: calc(100% / 8);
     text-align: center;
 }
 .svgeditor-menu:hover:not(.svgeditor-selected) {

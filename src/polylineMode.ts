@@ -40,7 +40,7 @@ export class PolylineMode implements Mode {
                     }
                     root.children.push(pe);
                     refleshContent();
-                    shaper(this.makeTargetUuid).center(cursor);
+                    shaper(this.makeTargetUuid).center = cursor;
                 }
                 refleshContent();
             }

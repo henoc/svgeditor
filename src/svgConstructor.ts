@@ -134,8 +134,8 @@ export function construct(pe: ParsedElement, options?: SvgConstructOptions): Svg
             makeChildren(pe.children, tag, options);
             // Click detection for groups.
             if (insertRectForGroup && svgRealMap[pe.uuid]) {
-                const leftTop = shaper(pe.uuid).leftTop()!;
-                const gsize = shaper(pe.uuid).size()!;
+                const leftTop = shaper(pe.uuid).leftTop;
+                const gsize = shaper(pe.uuid).size;
                 const dummyRect = new SvgTag("rect")
                     .uattr("x", {unit: null, value: leftTop.x, attrName: "x"})
                     .uattr("y", {unit: null, value: leftTop.y, attrName: "y"})

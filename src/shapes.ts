@@ -1,6 +1,6 @@
 import { ParsedElement, Length, Transform, isLength } from "./domParser";
 import { Vec2, v, vfp, OneOrMore } from "./utils";
-import {svgPathManager} from "./pathHelpers";
+import { svgPathManager } from "./pathHelpers";
 import { convertToPixel, convertFromPixel } from "./measureUnits";
 import { svgVirtualMap, svgRealMap, configuration } from "./main";
 import { identity, transform, scale, translate, rotate, rotateDEG, applyToPoint, inverse } from "transformation-matrix";
@@ -9,14 +9,14 @@ import { font } from "./fontHelpers";
 import equal from "fast-deep-equal";
 
 interface ShaperFunctions {
-    center: (point?: Vec2) => undefined | Vec2;
-    leftTop: (point?: Vec2) => undefined | Vec2;
-    move: (diff: Vec2) => void;
-    size: (wh?: Vec2) => Vec2 | undefined;
-    size2: (newSize: Vec2, fixedPoint: Vec2) => void;
-    transform: (matrix?: Matrix) => Matrix | undefined;
-    allTransform: () => Matrix;
-    rotate: (deg: number) => void;
+    center: Vec2;
+    leftTop: Vec2;
+    move(diff: Vec2): void;
+    size: Vec2;
+    size2(newSize: Vec2, fixedPoint: Vec2): void;
+    transform: Matrix;
+    allTransform(): Matrix;
+    rotate(deg: number): void;
 }
 
 /**
@@ -32,304 +32,323 @@ export function shaper(uuid: string): ShaperFunctions {
     }
     const fromPx = (unitValue: Length | null, attrName: string, pxValue: number): Length => {
         return unitValue ?
-            convertFromPixel({unit: "px", attrName, value: pxValue}, unitValue.unit, uuid) :
-            {value: pxValue, unit: null, attrName};
+            convertFromPixel({ unit: "px", attrName, value: pxValue }, unitValue.unit, uuid) :
+            { value: pxValue, unit: null, attrName };
     }
-    const leftTop = (point?: Vec2) => {
-        if (point) {
-            const newCent = point.add(self().size()!.div(v(2, 2)));
-            self().center(newCent);
-        } else {
-            const cent = self().center()!;
-            const size = self().size()!;
+    const leftTop = {
+        getter: () => {
+            const cent = self().center;
+            const size = self().size;
             return cent.sub(size.div(v(2, 2)));
+        },
+        setter: (point: Vec2) => {
+            const newCent = point.add(self().size.div(v(2, 2)));
+            self().center = newCent;
         }
     }
     const self = () => shaper(uuid);
     const size2 = (newSize: Vec2, fixedPoint: Vec2) => {
-        let oldSize = self().size()!;
-        let center = self().center()!;
-        self().size(newSize);
+        let oldSize = self().size;
+        let center = self().center;
+        self().size = newSize;
         let diff = oldSize.sub(newSize).div(v(2, 2)).mul(v(fixedPoint.x - center.x > 0 ? 1 : -1, fixedPoint.y - center.y > 0 ? 1 : -1));
         self().move(diff);
     };
-    const transformDefaultImpl = <T extends {transform: Transform | null}>(attrs: T) => (matrix?: Matrix) => {
-        if (matrix) {
-            if (!equal(matrix, identity())) attrs.transform = {descriptors: [{type: "matrix", ...matrix}], matrices: [matrix]};
-        } else {
-            return attrs.transform && attrs.transform.matrices.length !== 0 && transform(...attrs.transform.matrices) || identity();
+    const transformDefaultImpl = <T extends { transform: Transform | null }>(attrs: T) => {
+        return {
+            getter: () => {
+                return attrs.transform && attrs.transform.matrices.length !== 0 && transform(...attrs.transform.matrices) || identity();
+            },
+            setter: (matrix: Matrix) => {
+                if (!equal(matrix, identity())) attrs.transform = { descriptors: [{ type: "matrix", ...matrix }], matrices: [matrix] };
+            }
         }
     }
     const allTransform = () => {
         if (pe.parent) {
             const past = shaper(pe.parent).allTransform();
-            return transform(past, self().transform()!);
+            return transform(past, self().transform);
         } else {
-            return self().transform()!;
+            return self().transform;
         }
     }
     const rotateCenter = (deg: number) => {
         if (pe.tag !== "unknown" && "transform" in pe.attrs) {
-            const center = self().center()!;
-            const rotateDescriptor = {type: <"rotate">"rotate", angle: deg, cx: center.x, cy: center.y};
-            if (pe.attrs.transform === null) pe.attrs.transform = {descriptors: [], matrices: []};
+            const center = self().center;
+            const rotateDescriptor = { type: <"rotate">"rotate", angle: deg, cx: center.x, cy: center.y };
+            if (pe.attrs.transform === null) pe.attrs.transform = { descriptors: [], matrices: [] };
             appendDescriptor(pe.attrs.transform, rotateDescriptor);
         }
     }
     switch (pe.tag) {
         case "svg":
-        return {
-            center: (point?: Vec2) => {
-                if (point) {
-                    pe.attrs.x = fromPx(pe.attrs.x, "x",
-                        point.x - px(pe.attrs.width) / 2
-                    );
-                    pe.attrs.y = fromPx(pe.attrs.y, "y",
-                        point.y - px(pe.attrs.height) / 2
-                    );
-                } else {
+            const attrs = pe.attrs;
+            return {
+                get center() {
                     return v(
-                        px(pe.attrs.x) + px(pe.attrs.width) / 2,
-                        px(pe.attrs.y) + px(pe.attrs.height) / 2
+                        px(attrs.x) + px(attrs.width) / 2,
+                        px(attrs.y) + px(attrs.height) / 2
                     );
-                }
-            },
-            move: (diff: Vec2) => {
-                pe.attrs.x = fromPx(pe.attrs.x, "x",
-                    px(pe.attrs.x) + diff.x
-                );
-                pe.attrs.y = fromPx(pe.attrs.y, "y",
-                    px(pe.attrs.y) + diff.y
-                );
-            },
-            size: (wh?: Vec2) => {
-                if (wh) {
-                    let center = self().center()!;
-                    pe.attrs.width = fromPx(pe.attrs.width, "width", wh.x);
-                    pe.attrs.height = fromPx(pe.attrs.height, "height", wh.y);
-                    self().center(center);
-                } else return v(px(pe.attrs.width), px(pe.attrs.height));
-            },
-            size2,
-            leftTop,
-            transform: () => {
-                const w = pe.attrs.width && convertToPixel(pe.attrs.width, uuid);
-                const h = pe.attrs.height && convertToPixel(pe.attrs.height, uuid);
-                const viewBox = pe.attrs.viewBox;
-                if (viewBox && w && h && w !== 0 && h !== 0) {
-                    const vw = viewBox[1].x - viewBox[0].x;
-                    const vh = viewBox[1].y - viewBox[0].y;
-                    const vx = viewBox[0].x;
-                    const vy = viewBox[0].y;
-                    if (vw !== 0 && vh !== 0) {
-                        return vh / h > vw / w ? transform(
-                            scale(h / vh, h / vh),
-                            translate((w - vw * h / vh) / 2 * h/vh - vx, -vy)
-                        ) : transform(
-                            scale(w / vw, w / vw),
-                            translate(-vx, (h - vh * w / vw) / 2 * w/vw - vy)
-                        );
+                },
+                set center(point: Vec2) {
+                    attrs.x = fromPx(attrs.x, "x",
+                        point.x - px(attrs.width) / 2
+                    );
+                    attrs.y = fromPx(attrs.y, "y",
+                        point.y - px(attrs.height) / 2
+                    );
+                },
+                move(diff: Vec2) {
+                    attrs.x = fromPx(attrs.x, "x",
+                        px(attrs.x) + diff.x
+                    );
+                    attrs.y = fromPx(attrs.y, "y",
+                        px(attrs.y) + diff.y
+                    );
+                },
+                get size() {
+                    return v(px(attrs.width), px(attrs.height));
+                },
+                set size(wh: Vec2) {
+                    let center = self().center;
+                    attrs.width = fromPx(attrs.width, "width", wh.x);
+                    attrs.height = fromPx(attrs.height, "height", wh.y);
+                    self().center = center;
+                },
+                size2,
+                get leftTop() {
+                    return leftTop.getter();
+                },
+                set leftTop(point: Vec2) {
+                    leftTop.setter(point);
+                },
+                get transform() {
+                    const w = attrs.width && convertToPixel(attrs.width, uuid);
+                    const h = attrs.height && convertToPixel(attrs.height, uuid);
+                    const viewBox = attrs.viewBox;
+                    if (viewBox && w && h && w !== 0 && h !== 0) {
+                        const vw = viewBox[1].x - viewBox[0].x;
+                        const vh = viewBox[1].y - viewBox[0].y;
+                        const vx = viewBox[0].x;
+                        const vy = viewBox[0].y;
+                        if (vw !== 0 && vh !== 0) {
+                            return vh / h > vw / w ? transform(
+                                scale(h / vh, h / vh),
+                                translate((w - vw * h / vh) / 2 * h / vh - vx, -vy)
+                            ) : transform(
+                                scale(w / vw, w / vw),
+                                translate(-vx, (h - vh * w / vw) / 2 * w / vw - vy)
+                            );
+                        }
                     }
-                }
-                return identity();
-            },
-            allTransform,
-            rotate: () => undefined
-        }
+                    return identity();
+                },
+                allTransform,
+                rotate: () => undefined
+            }
         case "circle":
-        return {
-            center: (point?: Vec2) => {
-                if (point) {
-                    pe.attrs.cx = fromPx(pe.attrs.cx, "cx", point.x);
-                    pe.attrs.cy = fromPx(pe.attrs.cy, "cy", point.y);
-                } else {
-                    return v(px(pe.attrs.cx), px(pe.attrs.cy));
-                }
-            },
-            move: (diff: Vec2) => {
-                pe.attrs.cx = fromPx(pe.attrs.cx, "cx",
-                    px(pe.attrs.cx) + diff.x
-                );
-                pe.attrs.cy = fromPx(pe.attrs.cy, "cy",
-                    px(pe.attrs.cy) + diff.y
-                );
-            },
-            size: (wh?: Vec2) => {
-                if (wh && wh.x === wh.y) {
-                    pe.attrs.r = fromPx(pe.attrs.r, "r", wh.x / 2);
-                } else if (wh) {
-                    // @ts-ignore
-                    pe.tag = "ellipse";
-                    delete pe.attrs.r;
-                    // @ts-ignore
-                    pe.attrs.rx = fromPx(pe.attrs.r, "rx", wh.x / 2);
-                    // @ts-ignore
-                    pe.attrs.ry = fromPx(pe.attrs.r, "ry", wh.y / 2);
-                } else return v(px(pe.attrs.r) * 2, px(pe.attrs.r) * 2);
-            },
-            transform: transformDefaultImpl(pe.attrs),
-            size2,
-            leftTop,
-            allTransform,
-            rotate: rotateCenter
-        }
+            const cattrs = pe.attrs;
+            return {
+                get center() {
+                    return v(px(cattrs.cx), px(cattrs.cy));
+                },
+                set center(point: Vec2) {
+                    cattrs.cx = fromPx(cattrs.cx, "cx", point.x);
+                    cattrs.cy = fromPx(cattrs.cy, "cy", point.y);
+                },
+                move(diff: Vec2) {
+                    cattrs.cx = fromPx(cattrs.cx, "cx",
+                        px(cattrs.cx) + diff.x
+                    );
+                    cattrs.cy = fromPx(cattrs.cy, "cy",
+                        px(cattrs.cy) + diff.y
+                    );
+                },
+                get size() {
+                    return v(px(cattrs.r) * 2, px(cattrs.r) * 2);
+                },
+                set size(wh: Vec2) {
+                    if (wh && wh.x === wh.y) {
+                        cattrs.r = fromPx(cattrs.r, "r", wh.x / 2);
+                    } else {
+                        // @ts-ignore
+                        pe.tag = "ellipse";
+                        delete cattrs.r;
+                        // @ts-ignore
+                        cattrs.rx = fromPx(cattrs.r, "rx", wh.x / 2);
+                        // @ts-ignore
+                        cattrs.ry = fromPx(cattrs.r, "ry", wh.y / 2);
+                    }
+                },
+                get transform() { return transformDefaultImpl(cattrs).getter(); }, set transform(matrix: Matrix) { transformDefaultImpl(cattrs).setter(matrix); },
+                size2,
+                get leftTop() { return leftTop.getter(); }, set leftTop(point: Vec2) { leftTop.setter(point); },
+                allTransform,
+                rotate: rotateCenter
+            }
         case "rect":
-        return {
-            center: (point?: Vec2) => {
-                if (point) {
-                    pe.attrs.x = fromPx(pe.attrs.x, "x",
-                        point.x - px(pe.attrs.width) / 2
-                    );
-                    pe.attrs.y = fromPx(pe.attrs.y, "y",
-                        point.y - px(pe.attrs.height) / 2
-                    );
-                } else {
+            const rattrs = pe.attrs;
+            return {
+                get center() {
                     return v(
-                        px(pe.attrs.x) + px(pe.attrs.width) / 2,
-                        px(pe.attrs.y) + px(pe.attrs.height) / 2
+                        px(rattrs.x) + px(rattrs.width) / 2,
+                        px(rattrs.y) + px(rattrs.height) / 2
                     );
-                }
-            },
-            move: (diff: Vec2) => {
-                pe.attrs.x = fromPx(pe.attrs.x, "x",
-                    px(pe.attrs.x) + diff.x
-                );
-                pe.attrs.y = fromPx(pe.attrs.y, "y",
-                    px(pe.attrs.y) + diff.y
-                );
-            },
-            size: (wh?: Vec2) => {
-                if (wh) {
-                    let center = self().center()!;
-                    pe.attrs.width = fromPx(pe.attrs.width, "width", wh.x);
-                    pe.attrs.height = fromPx(pe.attrs.height, "height", wh.y);
-                    self().center(center);
-                } else return v(px(pe.attrs.width), px(pe.attrs.height));
-            },
-            transform: transformDefaultImpl(pe.attrs),
-            size2,
-            leftTop,
-            allTransform,
-            rotate: rotateCenter
-        }
+                },
+                set center(point: Vec2) {
+                    rattrs.x = fromPx(rattrs.x, "x",
+                        point.x - px(rattrs.width) / 2
+                    );
+                    rattrs.y = fromPx(rattrs.y, "y",
+                        point.y - px(rattrs.height) / 2
+                    );
+                },
+                move(diff: Vec2) {
+                    rattrs.x = fromPx(rattrs.x, "x",
+                        px(rattrs.x) + diff.x
+                    );
+                    rattrs.y = fromPx(rattrs.y, "y",
+                        px(rattrs.y) + diff.y
+                    );
+                },
+                get size() {
+                    return v(px(rattrs.width), px(rattrs.height));
+                },
+                set size(wh: Vec2) {
+                    let center = self().center;
+                    rattrs.width = fromPx(rattrs.width, "width", wh.x);
+                    rattrs.height = fromPx(rattrs.height, "height", wh.y);
+                    self().center = center;
+                },
+                get transform() { return transformDefaultImpl(rattrs).getter(); }, set transform(matrix: Matrix) { transformDefaultImpl(rattrs).setter(matrix); },
+                size2,
+                get leftTop() { return leftTop.getter(); }, set leftTop(point: Vec2) { leftTop.setter(point); },
+                allTransform,
+                rotate: rotateCenter
+            }
         case "ellipse":
-        return {
-            center: (point?: Vec2) => {
-                if (point) {
-                    pe.attrs.cx = fromPx(pe.attrs.cx, "cx", point.x);
-                    pe.attrs.cy = fromPx(pe.attrs.cy, "cy", point.y);
-                } else {
-                    return v(px(pe.attrs.cx), px(pe.attrs.cy));
-                }
-            },
-            move: (diff: Vec2) => {
-                pe.attrs.cx = fromPx(pe.attrs.cx, "cx",
-                px(pe.attrs.cx) + diff.x
-                );
-                pe.attrs.cy = fromPx(pe.attrs.cy, "cy",
-                    px(pe.attrs.cy) + diff.y
-                );
-            },
-            size: (wh?: Vec2) => {
-                if (wh) {
-                    pe.attrs.rx = fromPx(pe.attrs.rx, "rx", wh.x / 2);
-                    pe.attrs.ry = fromPx(pe.attrs.ry, "ry", wh.y / 2);
-                } else {
-                    return v(px(pe.attrs.rx) * 2, px(pe.attrs.ry) * 2);
-                }
-            },
-            transform: transformDefaultImpl(pe.attrs),
-            size2,
-            leftTop,
-            allTransform,
-            rotate: rotateCenter
-        }
+            const eattrs = pe.attrs;
+            return {
+                get center() {
+                    return v(px(eattrs.cx), px(eattrs.cy));
+                },
+                set center(point: Vec2) {
+                    eattrs.cx = fromPx(eattrs.cx, "cx", point.x);
+                    eattrs.cy = fromPx(eattrs.cy, "cy", point.y);
+                },
+                move: (diff: Vec2) => {
+                    eattrs.cx = fromPx(eattrs.cx, "cx",
+                        px(eattrs.cx) + diff.x
+                    );
+                    eattrs.cy = fromPx(eattrs.cy, "cy",
+                        px(eattrs.cy) + diff.y
+                    );
+                },
+                get size() {
+                    return v(px(eattrs.rx) * 2, px(eattrs.ry) * 2);
+                },
+                set size(wh: Vec2) {
+                    eattrs.rx = fromPx(eattrs.rx, "rx", wh.x / 2);
+                    eattrs.ry = fromPx(eattrs.ry, "ry", wh.y / 2);
+                },
+                get transform() { return transformDefaultImpl(eattrs).getter(); }, set transform(matrix: Matrix) { transformDefaultImpl(eattrs).setter(matrix); },
+                size2,
+                get leftTop() { return leftTop.getter(); }, set leftTop(point: Vec2) { leftTop.setter(point); },
+                allTransform,
+                rotate: rotateCenter
+            }
         case "polyline":
-        return {
-            center: (point?: Vec2) => {
-                if (point) {
-                    const oldCenter = self().center()!;
-                    self().move(point.sub(oldCenter));
-                } else {
-                    const minX = pe.attrs.points && Math.min(...pe.attrs.points.map(pair => pair.x)) || 0;
-                    const maxX = pe.attrs.points && Math.max(...pe.attrs.points.map(pair => pair.x)) || 0;
-                    const minY = pe.attrs.points && Math.min(...pe.attrs.points.map(pair => pair.y)) || 0;
-                    const maxY = pe.attrs.points && Math.max(...pe.attrs.points.map(pair => pair.y)) || 0;
+            const pattrs = pe.attrs;
+            return {
+                get center() {
+                    const minX = pattrs.points && Math.min(...pattrs.points.map(pair => pair.x)) || 0;
+                    const maxX = pattrs.points && Math.max(...pattrs.points.map(pair => pair.x)) || 0;
+                    const minY = pattrs.points && Math.min(...pattrs.points.map(pair => pair.y)) || 0;
+                    const maxY = pattrs.points && Math.max(...pattrs.points.map(pair => pair.y)) || 0;
                     return v(maxX + minX, maxY + minY).div(v(2, 2));
-                }
-            },
-            move: (diff: Vec2) => {
-                if (pe.attrs.points) for(let i = 0; i < pe.attrs.points.length; i++) {
-                    pe.attrs.points[i] = v(pe.attrs.points[i].x, pe.attrs.points[i].y).add(diff);
-                }
-            },
-            size: (wh?: Vec2) => {
-                if (wh) {
-                    const oldCenter = self().center()!;
-                    const leftTop = self().leftTop()!;
-                    const oldSize = self().size()!;
+                },
+                set center(point: Vec2) {
+                    const oldCenter = self().center;
+                    self().move(point.sub(oldCenter));
+                },
+                move: (diff: Vec2) => {
+                    if (pattrs.points) for (let i = 0; i < pattrs.points.length; i++) {
+                        pattrs.points[i] = v(pattrs.points[i].x, pattrs.points[i].y).add(diff);
+                    }
+                },
+                get size() {
+                    const minX = pattrs.points && Math.min(...pattrs.points.map(pair => pair.x)) || 0;
+                    const maxX = pattrs.points && Math.max(...pattrs.points.map(pair => pair.x)) || 0;
+                    const minY = pattrs.points && Math.min(...pattrs.points.map(pair => pair.y)) || 0;
+                    const maxY = pattrs.points && Math.max(...pattrs.points.map(pair => pair.y)) || 0;
+                    return v(maxX - minX, maxY - minY);
+                },
+                set size(wh: Vec2) {
+                    const oldCenter = self().center;
+                    const leftTop = self().leftTop;
+                    const oldSize = self().size;
                     const ratio = wh.div(oldSize, () => 1);
                     const acc: Vec2[] = [];
-                    for (let point of pe.attrs.points || []) {
+                    for (let point of pattrs.points || []) {
                         const newPoint = leftTop.add(v(point.x, point.y).sub(leftTop).mul(ratio));
                         acc.push(newPoint);
                     }
-                    pe.attrs.points = acc;
-                    self().center(oldCenter);
-                } else {
-                    const minX = pe.attrs.points && Math.min(...pe.attrs.points.map(pair => pair.x)) || 0;
-                    const maxX = pe.attrs.points && Math.max(...pe.attrs.points.map(pair => pair.x)) || 0;
-                    const minY = pe.attrs.points && Math.min(...pe.attrs.points.map(pair => pair.y)) || 0;
-                    const maxY = pe.attrs.points && Math.max(...pe.attrs.points.map(pair => pair.y)) || 0;
-                    return v(maxX - minX, maxY - minY);
-                }
-            },
-            transform: transformDefaultImpl(pe.attrs),
-            size2,
-            leftTop,
-            allTransform,
-            rotate: rotateCenter
-        }
+                    pattrs.points = acc;
+                    self().center = oldCenter;
+                },
+                get transform() { return transformDefaultImpl(pattrs).getter(); }, set transform(matrix: Matrix) { transformDefaultImpl(pattrs).setter(matrix); },
+                size2,
+                get leftTop() { return leftTop.getter(); }, set leftTop(point: Vec2) { leftTop.setter(point); },
+                allTransform,
+                rotate: rotateCenter
+            }
         case "path":
-        return {
-            center: (point?: Vec2) => {
-                if (point) {
-                    const oldCenter = self().center()!;
-                    self().move(point.sub(oldCenter));
-                } else {
-                    const parsedDAttr = svgPathManager(pe.attrs.d || []);
+            const pathAttrs = pe.attrs;
+            return {
+                get center() {
+                    const parsedDAttr = svgPathManager(pathAttrs.d || []);
                     const vertexes = parsedDAttr.getVertexes();
                     const minX = Math.min(...vertexes.map(vec2 => vec2.x));
                     const maxX = Math.max(...vertexes.map(vec2 => vec2.x));
                     const minY = Math.min(...vertexes.map(vec2 => vec2.y));
                     const maxY = Math.max(...vertexes.map(vec2 => vec2.y));
                     return v(maxX + minX, maxY + minY).div(v(2, 2));
-                }
-            },
-            move: (diff: Vec2) => {
-                console.log(pe.attrs.d || []);
-                const parsedDAttr = svgPathManager(pe.attrs.d || []);
-                parsedDAttr.proceed(p => p.unarc()).safeIterate(([s, ...t], i, p) => {
-                    if (s === "V") {
-                        t[0] += diff.y;
-                    } else if (s === "H") {
-                        t[0] += diff.x;
-                    } else {
-                        for (let j = 0; j < t.length; j += 2) {
-                            t[j] += diff.x;
-                            t[j+1] += diff.y;
+                },
+                set center(point: Vec2) {
+                    const oldCenter = self().center;
+                    self().move(point.sub(oldCenter));
+                },
+                move: (diff: Vec2) => {
+                    const parsedDAttr = svgPathManager(pathAttrs.d || []);
+                    parsedDAttr.proceed(p => p.unarc()).safeIterate(([s, ...t], i, p) => {
+                        if (s === "V") {
+                            t[0] += diff.y;
+                        } else if (s === "H") {
+                            t[0] += diff.x;
+                        } else {
+                            for (let j = 0; j < t.length; j += 2) {
+                                t[j] += diff.x;
+                                t[j + 1] += diff.y;
+                            }
                         }
-                    }
-                    return [s, ...t];
-                });
-                pe.attrs.d = parsedDAttr.segments;
-            },
-            size: (wh?: Vec2) => {
-                if (wh) {
-                    const oldCenter = self().center()!;
-                    const parsedDAttr = svgPathManager(pe.attrs.d || []).proceed(p => p.unarc());
-                    const ratio = wh.div(self().size()!, () => 1);
-                    const leftTop = self().leftTop()!;
+                        return [s, ...t];
+                    });
+                    pathAttrs.d = parsedDAttr.segments;
+                },
+                get size() {
+                    const parsedDAttr = svgPathManager(pathAttrs.d || []);
+                    const vertexes = parsedDAttr.getVertexes();
+                    const minX = Math.min(...vertexes.map(vec2 => vec2.x));
+                    const maxX = Math.max(...vertexes.map(vec2 => vec2.x));
+                    const minY = Math.min(...vertexes.map(vec2 => vec2.y));
+                    const maxY = Math.max(...vertexes.map(vec2 => vec2.y));
+                    return v(maxX - minX, maxY - minY);
+                },
+                set size(wh: Vec2) {
+                    const oldCenter = self().center;
+                    const parsedDAttr = svgPathManager(pathAttrs.d || []).proceed(p => p.unarc());
+                    const ratio = wh.div(self().size, () => 1);
+                    const leftTop = self().leftTop;
                     parsedDAttr.safeIterate(([s, ...t], i, p) => {
                         if (s === "V") {
                             t[0] = v(p.x, t[0]).sub(leftTop).mul(ratio).add(leftTop).y;
@@ -344,87 +363,75 @@ export function shaper(uuid: string): ShaperFunctions {
                         }
                         return [s, ...t];
                     });
-                    pe.attrs.d = parsedDAttr.segments;
-                    self().center(oldCenter);
-                } else {
-                    const parsedDAttr = svgPathManager(pe.attrs.d || []);
-                    const vertexes = parsedDAttr.getVertexes();
-                    const minX = Math.min(...vertexes.map(vec2 => vec2.x));
-                    const maxX = Math.max(...vertexes.map(vec2 => vec2.x));
-                    const minY = Math.min(...vertexes.map(vec2 => vec2.y));
-                    const maxY = Math.max(...vertexes.map(vec2 => vec2.y));
-                    return v(maxX - minX, maxY - minY);
-                }
-            },
-            transform: transformDefaultImpl(pe.attrs),
-            size2,
-            leftTop,
-            allTransform,
-            rotate: rotateCenter
-        }
+                    pathAttrs.d = parsedDAttr.segments;
+                    self().center = oldCenter;
+                },
+                get transform() { return transformDefaultImpl(pathAttrs).getter(); }, set transform(matrix: Matrix) { transformDefaultImpl(pathAttrs).setter(matrix); },
+                size2,
+                get leftTop() { return leftTop.getter(); }, set leftTop(point: Vec2) { leftTop.setter(point); },
+                allTransform,
+                rotate: rotateCenter
+            }
         case "text":
-        const fontInfo = font(pe.text || "", styleDeclaration.fontFamily || "", parseFloat(styleDeclaration.fontSize || "16"), styleDeclaration.fontWeight || "", styleDeclaration.fontStyle || "");
-        return {
-            center: (point?: Vec2) => {
-                if (point) {
-                    const oldCenter = self().center()!;
-                    self().move(point.sub(oldCenter));
-                } else {
-                    const size = self().size()!;
-                    const topX = px(pe.attrs.x);
-                    const topY = px(pe.attrs.y) - fontInfo.height.baseline;
+            const fontInfo = font(pe.text || "", styleDeclaration.fontFamily || "", parseFloat(styleDeclaration.fontSize || "16"), styleDeclaration.fontWeight || "", styleDeclaration.fontStyle || "");
+            const tattrs = pe.attrs;
+            return {
+                get center() {
+                    const size = self().size;
+                    const topX = px(tattrs.x);
+                    const topY = px(tattrs.y) - fontInfo.height.baseline;
                     return v(topX + size.x / 2, topY + size.y / 2);
-                }
-            },
-            move: (diff: Vec2) => {
-                pe.attrs.x = fromPx(pe.attrs.x, "x",
-                    px(pe.attrs.x) + diff.x
-                );
-                pe.attrs.y = fromPx(pe.attrs.y, "y",
-                    px(pe.attrs.y) + diff.y
-                );
-            },
-            size: (wh?: Vec2) => {
-                if (wh) {
-                    let center = self().center()!;
-                    let fontSize = pe.attrs["font-size"];
-                    pe.attrs["font-size"] = fromPx(fontSize !== null && isLength(fontSize) && fontSize || null, "font-size",
-                        fontInfo.heightToSize("lineHeight", wh.y) || 1
+                },
+                set center(point: Vec2) {
+                    const oldCenter = self().center;
+                    self().move(point.sub(oldCenter));
+                },
+                move: (diff: Vec2) => {
+                    tattrs.x = fromPx(tattrs.x, "x",
+                        px(tattrs.x) + diff.x
                     );
-                    pe.attrs.textLength = fromPx(pe.attrs.textLength, "textLength", wh.x);
-                    self().center(center);
-                } else {
-                    const width = pe.attrs.textLength ? px(pe.attrs.textLength) : fontInfo.width;
+                    tattrs.y = fromPx(tattrs.y, "y",
+                        px(tattrs.y) + diff.y
+                    );
+                },
+                get size() {
+                    const width = tattrs.textLength ? px(tattrs.textLength) : fontInfo.width;
                     const height = fontInfo.height.lineHeight;
                     return v(width, height);
-                }
-            },
-            transform: transformDefaultImpl(pe.attrs),
-            size2,
-            leftTop,
-            allTransform,
-            rotate: rotateCenter
-        }
+                },
+                set size(wh: Vec2) {
+                    let center = self().center;
+                    let fontSize = tattrs["font-size"];
+                    tattrs["font-size"] = fromPx(fontSize !== null && isLength(fontSize) && fontSize || null, "font-size",
+                        fontInfo.heightToSize("lineHeight", wh.y) || 1
+                    );
+                    tattrs.textLength = fromPx(tattrs.textLength, "textLength", wh.x);
+                    self().center = center;
+                },
+                get transform() { return transformDefaultImpl(tattrs).getter(); }, set transform(matrix: Matrix) { transformDefaultImpl(tattrs).setter(matrix); },
+                size2,
+                get leftTop() { return leftTop.getter(); }, set leftTop(point: Vec2) { leftTop.setter(point); },
+                allTransform,
+                rotate: rotateCenter
+            }
         case "g":
-        return {
-            move: (diff: Vec2) => {
-                const oldCenter = self().center()!;
-                const newCenter = oldCenter.add(diff);
-                for(let c of pe.children) {
-                    const oldInC = intoTargetCoordinate(oldCenter, c.uuid);
-                    const newInC = intoTargetCoordinate(newCenter, c.uuid);
-                    shaper(c.uuid).move(newInC.sub(oldInC));
-                }
-            },
-            center: (point?: Vec2) => {
-                if (point) {
-                    const oldCenter = self().center()!;
-                    self().move(point.sub(oldCenter));
-                } else {
-                    let [minX, minY, maxX, maxY] = <(null | number)[]>[null, null, null, null];
+            const gattrs = pe.attrs;
+            const gchildren = pe.children;
+            return {
+                move: (diff: Vec2) => {
+                    const oldCenter = self().center;
+                    const newCenter = oldCenter.add(diff);
                     for (let c of pe.children) {
-                        const leftTop = shaper(c.uuid).leftTop()!;
-                        const size = shaper(c.uuid).size()!;
+                        const oldInC = intoTargetCoordinate(oldCenter, c.uuid);
+                        const newInC = intoTargetCoordinate(newCenter, c.uuid);
+                        shaper(c.uuid).move(newInC.sub(oldInC));
+                    }
+                },
+                get center() {
+                    let [minX, minY, maxX, maxY] = <(null | number)[]>[null, null, null, null];
+                    for (let c of gchildren) {
+                        const leftTop = shaper(c.uuid).leftTop;
+                        const size = shaper(c.uuid).size;
                         for (let corner of [leftTop, leftTop.add(v(size.x, 0)), leftTop.add(v(0, size.y)), leftTop.add(size)]) {
                             const cornerInGroup = escapeFromTargetCoordinate(corner, c.uuid);
                             if (minX === null || minX > cornerInGroup.x) minX = cornerInGroup.x;
@@ -434,18 +441,16 @@ export function shaper(uuid: string): ShaperFunctions {
                         }
                     }
                     return v(minX || 0, minY || 0).add(v(maxX || 0, maxY || 0)).div(v(2, 2));
-                }
-            },
-            size: (wh?: Vec2) => {
-                if (wh) {
-                    for (let c of pe.children) {
-                        shaper(c.uuid).size(wh);
-                    }
-                } else {
+                },
+                set center(point: Vec2) {
+                    const oldCenter = self().center;
+                    self().move(point.sub(oldCenter));
+                },
+                get size() {
                     let [minX, minY, maxX, maxY] = <(null | number)[]>[null, null, null, null];
-                    for (let c of pe.children) {
-                        const leftTop = shaper(c.uuid).leftTop()!;
-                        const size = shaper(c.uuid).size()!;
+                    for (let c of gchildren) {
+                        const leftTop = shaper(c.uuid).leftTop;
+                        const size = shaper(c.uuid).size;
                         for (let corner of [leftTop, leftTop.add(v(size.x, 0)), leftTop.add(v(0, size.y)), leftTop.add(size)]) {
                             const cornerInGroup = escapeFromTargetCoordinate(corner, c.uuid);
                             if (minX === null || minX > cornerInGroup.x) minX = cornerInGroup.x;
@@ -455,16 +460,20 @@ export function shaper(uuid: string): ShaperFunctions {
                         }
                     }
                     return v((maxX || 0) - (minX || 0), (maxY || 0) - (minY || 0));
-                }
-            },
-            transform: transformDefaultImpl(pe.attrs),
-            size2,
-            leftTop,
-            allTransform,
-            rotate: rotateCenter
-        }
+                },
+                set size(wh: Vec2) {
+                    for (let c of gchildren) {
+                        shaper(c.uuid).size = wh;
+                    }
+                },
+                get transform() { return transformDefaultImpl(gattrs).getter(); }, set transform(matrix: Matrix) { transformDefaultImpl(gattrs).setter(matrix); },
+                size2,
+                get leftTop() { return leftTop.getter(); }, set leftTop(point: Vec2) { leftTop.setter(point); },
+                allTransform,
+                rotate: rotateCenter
+            }
         case "unknown":
-        throw new Error("Unknown shape cannot move.");
+            throw new Error("Unknown shape cannot move.");
     }
 }
 
@@ -480,117 +489,118 @@ export function multiShaper(uuids: OneOrMore<string>, useMultiEvenIfSingle: bool
         const self = () => multiShaper(uuids);
         return {
             move: (diff: Vec2) => {
-                const oldCenter = self().center()!;
+                const oldCenter = self().center;
                 const newCenter = oldCenter.add(diff);
-                for(let c of pes) {
+                for (let c of pes) {
                     const oldInC = intoTargetCoordinate(oldCenter, c.uuid);
                     const newInC = intoTargetCoordinate(newCenter, c.uuid);
                     shaper(c.uuid).move(newInC.sub(oldInC));
                 }
             },
-            center: (point?: Vec2) => {
-                if (point) {
-                    const oldCenter = self().center()!;
-                    self().move(point.sub(oldCenter));
-                } else {
-                    let [minX, minY, maxX, maxY] = <(null | number)[]>[null, null, null, null];
-                    for (let c of pes) {
-                        const leftTop = shaper(c.uuid).leftTop()!;
-                        const size = shaper(c.uuid).size()!;
-                        for (let corner of [leftTop, leftTop.add(v(size.x, 0)), leftTop.add(v(0, size.y)), leftTop.add(size)]) {
-                            const cornerInGroup = escapeFromTargetCoordinate(corner, c.uuid);
-                            if (minX === null || minX > cornerInGroup.x) minX = cornerInGroup.x;
-                            if (minY === null || minY > cornerInGroup.y) minY = cornerInGroup.y;
-                            if (maxX === null || maxX < cornerInGroup.x) maxX = cornerInGroup.x;
-                            if (maxY === null || maxY < cornerInGroup.y) maxY = cornerInGroup.y;
-                        }
+            get center() {
+                let [minX, minY, maxX, maxY] = <(null | number)[]>[null, null, null, null];
+                for (let c of pes) {
+                    const leftTop = shaper(c.uuid).leftTop;
+                    const size = shaper(c.uuid).size;
+                    for (let corner of [leftTop, leftTop.add(v(size.x, 0)), leftTop.add(v(0, size.y)), leftTop.add(size)]) {
+                        const cornerInGroup = escapeFromTargetCoordinate(corner, c.uuid);
+                        if (minX === null || minX > cornerInGroup.x) minX = cornerInGroup.x;
+                        if (minY === null || minY > cornerInGroup.y) minY = cornerInGroup.y;
+                        if (maxX === null || maxX < cornerInGroup.x) maxX = cornerInGroup.x;
+                        if (maxY === null || maxY < cornerInGroup.y) maxY = cornerInGroup.y;
                     }
-                    return v(minX || 0, minY || 0).add(v(maxX || 0, maxY || 0)).div(v(2, 2));
+                }
+                return v(minX || 0, minY || 0).add(v(maxX || 0, maxY || 0)).div(v(2, 2));
+            },
+            set center(point: Vec2) {
+                const oldCenter = self().center;
+                self().move(point.sub(oldCenter));
+            },
+            get size() {
+                type Four<T> = [T, T, T, T];
+                let [minX, minY, maxX, maxY] = <Four<null | number>>[null, null, null, null];
+                for (let c of pes) {
+                    const leftTop = shaper(c.uuid).leftTop;
+                    const size = shaper(c.uuid).size;
+                    for (let corner of [leftTop, leftTop.add(v(size.x, 0)), leftTop.add(v(0, size.y)), leftTop.add(size)]) {
+                        const cornerInGroup = escapeFromTargetCoordinate(corner, c.uuid);
+                        if (minX === null || minX > cornerInGroup.x) minX = cornerInGroup.x;
+                        if (minY === null || minY > cornerInGroup.y) minY = cornerInGroup.y;
+                        if (maxX === null || maxX < cornerInGroup.x) maxX = cornerInGroup.x;
+                        if (maxY === null || maxY < cornerInGroup.y) maxY = cornerInGroup.y;
+                    }
+                }
+                return v((maxX || 0) - (minX || 0), (maxY || 0) - (minY || 0));
+            },
+            set size(wh: Vec2) {
+                const globalRatio = wh.div(self().size, () => 1);
+                const lineLength = ([start, end]: Vec2[]) => {
+                    return Math.sqrt(Math.pow(end.x - start.x, 2) + Math.pow(end.y - start.y, 2));
+                }
+                for (let c of pes) {
+                    const preLeftTop = multiShaper([c.uuid], true).leftTop;
+                    const preRectSize = multiShaper([c.uuid], true).size;
+                    const preXLine = [preLeftTop, preLeftTop.add(v(preRectSize.x, 0))];
+                    const preYLine = [preLeftTop, preLeftTop.add(v(0, preRectSize.y))];
+                    const leftTop = multiShaper([c.uuid], true).leftTop;
+                    const rectSize = preRectSize.mul(globalRatio);
+                    const xLine = [leftTop, leftTop.add(v(rectSize.x, 0))];
+                    const yLine = [leftTop, leftTop.add(v(0, rectSize.y))];
+                    const preXLineInC = preXLine.map(p => intoTargetCoordinate(p, c.uuid));
+                    const preYLineInC = preYLine.map(p => intoTargetCoordinate(p, c.uuid));
+                    const xLineInC = xLine.map(p => intoTargetCoordinate(p, c.uuid));
+                    const yLineInC = yLine.map(p => intoTargetCoordinate(p, c.uuid));
+                    const ratioInC = v(lineLength(xLineInC) / lineLength(preXLineInC), lineLength(yLineInC) / lineLength(preYLineInC));
+                    const center = shaper(c.uuid).center;
+                    if (c.tag !== "unknown" && "transform" in c.attrs) {
+                        if (c.attrs.transform === null) c.attrs.transform = { descriptors: [], matrices: [] };
+                        appendDescriptorsLeft(c.attrs.transform,
+                            { type: "matrix", ...translate(center.x, center.y) }, //translateDescriptor(center.x, center.y),
+                            { type: "matrix", ...scale(ratioInC.x, ratioInC.y) },//scaleDescriptor(ratioInC.x, ratioInC.y),
+                            { type: "matrix", ...translate(-center.x, -center.y) }//translateDescriptor(-center.x, -center.y)
+                        );
+                    }
                 }
             },
-            size: (wh?: Vec2) => {
-                if (wh) {
-                    const globalRatio =  wh.div(self().size()!, () => 1);
-                    const lineLength = ([start, end] :Vec2[]) => {
-                        return Math.sqrt(Math.pow(end.x - start.x, 2) + Math.pow(end.y - start.y, 2));
-                    }
-                    for (let c of pes) {
-                        const preLeftTop = multiShaper([c.uuid], true).leftTop()!;
-                        const preRectSize = multiShaper([c.uuid], true).size()!;
-                        const preXLine = [preLeftTop, preLeftTop.add(v(preRectSize.x, 0))];
-                        const preYLine = [preLeftTop, preLeftTop.add(v(0, preRectSize.y))];
-                        const leftTop = multiShaper([c.uuid], true).leftTop()!;
-                        const rectSize = preRectSize.mul(globalRatio);
-                        const xLine = [leftTop, leftTop.add(v(rectSize.x, 0))];
-                        const yLine = [leftTop, leftTop.add(v(0, rectSize.y))];
-                        const preXLineInC = preXLine.map(p => intoTargetCoordinate(p, c.uuid));
-                        const preYLineInC = preYLine.map(p => intoTargetCoordinate(p, c.uuid));
-                        const xLineInC = xLine.map(p => intoTargetCoordinate(p, c.uuid));
-                        const yLineInC = yLine.map(p => intoTargetCoordinate(p, c.uuid));
-                        const ratioInC = v(lineLength(xLineInC) / lineLength(preXLineInC), lineLength(yLineInC) / lineLength(preYLineInC));
-                        const center = shaper(c.uuid).center()!;
-                        if (c.tag !== "unknown" && "transform" in c.attrs) {
-                            if (c.attrs.transform === null) c.attrs.transform = {descriptors: [], matrices: []};
-                            appendDescriptorsLeft(c.attrs.transform,
-                                {type: "matrix", ...translate(center.x, center.y)}, //translateDescriptor(center.x, center.y),
-                                {type: "matrix", ...scale(ratioInC.x, ratioInC.y)},//scaleDescriptor(ratioInC.x, ratioInC.y),
-                                {type: "matrix", ...translate(-center.x, -center.y)}//translateDescriptor(-center.x, -center.y)
-                            );
-                        }
-                    }
-                } else {
-                    type Four<T> = [T,T,T,T];
-                    let [minX, minY, maxX, maxY] = <Four<null|number>>[null, null, null, null];
-                        for (let c of pes) {
-                            const leftTop = shaper(c.uuid).leftTop()!;
-                            const size = shaper(c.uuid).size()!;
-                            for (let corner of [leftTop, leftTop.add(v(size.x, 0)), leftTop.add(v(0, size.y)), leftTop.add(size)]) {
-                                const cornerInGroup = escapeFromTargetCoordinate(corner, c.uuid);
-                                if (minX === null || minX > cornerInGroup.x) minX = cornerInGroup.x;
-                                if (minY === null || minY > cornerInGroup.y) minY = cornerInGroup.y;
-                                if (maxX === null || maxX < cornerInGroup.x) maxX = cornerInGroup.x;
-                                if (maxY === null || maxY < cornerInGroup.y) maxY = cornerInGroup.y;
-                            }
-                        }
-                        return v((maxX || 0) - (minX || 0), (maxY || 0) - (minY || 0));
-                }
+            get transform() {
+                throw new Error("No define transform property of muliple selected shapes.");
+
             },
-            transform: (matrix?: Matrix) => {
+            set transform(matrix: Matrix) {
                 throw new Error("No define transform property of muliple selected shapes.");
             },
             allTransform: () => {
                 return commonParent && shaper(commonParent).allTransform() || identity();
             },
             rotate: (deg: number) => {
-                const center = self().center()!;
+                const center = self().center;
                 for (let c of pes) {
                     if (c.tag !== "unknown" && "transform" in c.attrs) {
-                        if (c.attrs.transform === null) c.attrs.transform = {descriptors: [], matrices: []};
-                        appendDescriptorLeft(c.attrs.transform, {type: "matrix", ...rotateDEG(deg, center.x, center.y)});
+                        if (c.attrs.transform === null) c.attrs.transform = { descriptors: [], matrices: [] };
+                        appendDescriptorLeft(c.attrs.transform, { type: "matrix", ...rotateDEG(deg, center.x, center.y) });
                     }
                 }
             },
-            leftTop: (point?: Vec2) => {
-                if (point) {
-                    const newCent = point.add(self().size()!.div(v(2, 2)));
-                    self().center(newCent);
-                } else {
-                    const cent = self().center()!;
-                    const size = self().size()!;
-                    return cent.sub(size.div(v(2, 2)));
-                }
+            get leftTop() {
+                const cent = self().center;
+                const size = self().size;
+                return cent.sub(size.div(v(2, 2)));
+            },
+            set leftTop(point: Vec2) {
+                const newCent = point.add(self().size.div(v(2, 2)));
+                self().center = newCent;
             },
             size2: (newSize: Vec2, fixedPoint: Vec2) => {
-                let oldSize = self().size()!;
-                let oldCenter = self().center()!;
-                const oldCenterOfCs = pes.map(pe => escapeFromTargetCoordinate(shaper(pe.uuid).center()!, pe.uuid));
+                let oldSize = self().size;
+                let oldCenter = self().center;
+                const oldCenterOfCs = pes.map(pe => escapeFromTargetCoordinate(shaper(pe.uuid).center, pe.uuid));
                 const oldCenterOfCsFromOldCenter = oldCenterOfCs.map(c => c.sub(oldCenter));
-                self().size(newSize);
+                self().size = newSize;
                 let diff = oldSize.sub(newSize).div(v(2, 2)).mul(v(fixedPoint.x - oldCenter.x > 0 ? 1 : -1, fixedPoint.y - oldCenter.y > 0 ? 1 : -1));
                 const newCenter = diff.add(oldCenter);
                 for (let i = 0; i < uuids.length; i++) {
                     const diffCenterOfC = oldCenterOfCsFromOldCenter[i].mul(newSize.div(oldSize));
-                    shaper(uuids[i]).center(intoTargetCoordinate(newCenter.add(diffCenterOfC), uuids[i]));
+                    shaper(uuids[i]).center = intoTargetCoordinate(newCenter.add(diffCenterOfC), uuids[i]);
                 }
             }
         }
@@ -598,8 +608,8 @@ export function multiShaper(uuids: OneOrMore<string>, useMultiEvenIfSingle: bool
 }
 
 function intoTargetCoordinate(point: Vec2, targetUuid: string) {
-    return vfp(applyToPoint(inverse(shaper(targetUuid).transform()!), point));
+    return vfp(applyToPoint(inverse(shaper(targetUuid).transform), point));
 }
-function escapeFromTargetCoordinate (point: Vec2, targetUuid: string) {
-    return vfp(applyToPoint(shaper(targetUuid).transform()!, point));
+function escapeFromTargetCoordinate(point: Vec2, targetUuid: string) {
+    return vfp(applyToPoint(shaper(targetUuid).transform, point));
 }

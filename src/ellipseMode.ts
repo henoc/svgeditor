@@ -40,7 +40,7 @@ export class EllipseMode implements Mode {
                 };
                 root.children.push(pe);
                 refleshContent();   // make real Element
-                shaper(this.dragTargetUuid).center(this.startCursorPos);
+                shaper(this.dragTargetUuid).center = this.startCursorPos;
                 refleshContent();
             }
         }
@@ -53,8 +53,8 @@ export class EllipseMode implements Mode {
             const {x: cx, y: cy} = this.inTargetCoordinate({x: event.offsetX, y: event.offsetY}, this.dragTargetUuid);
             const leftTop = v(Math.min(cx, this.startCursorPos.x), Math.min(cy, this.startCursorPos.y));
             const size = v(Math.abs(cx - this.startCursorPos.x), Math.abs(cy - this.startCursorPos.y));
-            shaper(this.dragTargetUuid).size(size);
-            shaper(this.dragTargetUuid).leftTop(leftTop);
+            shaper(this.dragTargetUuid).size = size;
+            shaper(this.dragTargetUuid).leftTop = leftTop;
             refleshContent();
         }
     }
