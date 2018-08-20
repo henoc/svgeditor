@@ -1,5 +1,5 @@
 import { svgVirtualMap, refleshContent, svgRealMap, sendBackToEditor, configuration, svgdata } from "./main";
-import { Vec2, v, vfp, assertNever, deepCopy, OneOrMore } from "./utils";
+import { Vec2, v, vfp, assertNever, deepCopy, OneOrMore, iterate } from "./utils";
 import { shaper, multiShaper } from "./shapes";
 import { SvgTag } from "./svg";
 import { Mode } from "./modeInterface";
@@ -113,9 +113,9 @@ export class SelectMode implements Mode {
         this.onDocumentMouseUp();
     }
     onOperatorClicked(name: OperatorName) {
+        const uuids = this.selectedShapeUuids;
         switch (name) {
             case "duplicate":
-            const uuids = this.selectedShapeUuids;
             if (uuids && this.commonParent) {
                 let parentPe = svgVirtualMap[this.commonParent];
                 const copiedUuids: string[] = [];
@@ -137,6 +137,31 @@ export class SelectMode implements Mode {
                     this.selectedShapeUuids ? this.selectedShapeUuids.push(copiedUuid) : this.selectedShapeUuids = [copiedUuid];
                 }
                 if (this.selectedShapeUuids) this.shapeHandlers = this.createShapeHandlers(this.selectedShapeUuids);
+            }
+            break;
+            case "group":
+            if (uuids && this.commonParent) {
+                let parentPe = svgVirtualMap[this.commonParent];
+                if ("children" in parentPe) {
+                    const childrenPe = uuids.map(uu => svgVirtualMap[uu]);
+                    const groupUuid = uuidStatic.v4();
+                    childrenPe.forEach(c => c.parent = groupUuid);
+                    parentPe.children.push({
+                        uuid: groupUuid,
+                        tag: "g",
+                        isRoot: false,
+                        parent: this.commonParent,
+                        attrs: {
+                            ...Mode.baseAttrsDefaultImpl(),
+                            ...Mode.presentationAttrsDefaultImpl()
+                        },
+                        children: childrenPe
+                    });
+                    parentPe.children = parentPe.children.filter(c => uuids.indexOf(c.uuid) === -1);
+                    refleshContent();       // make real elements
+                    this.selectedShapeUuids = [groupUuid];
+                    this.shapeHandlers = this.createShapeHandlers(this.selectedShapeUuids);
+                }
             }
             break;
             default:

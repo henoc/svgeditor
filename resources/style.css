@@ -20,11 +20,12 @@ ul {
 }
 .svgeditor-operator {
     display: inline-block;
-    color: var(--link-color);
+    color: var(--vscode-editorLineNumber-foreground);
+    width: calc(100% / 8);
     text-align: center;
 }
 .svgeditor-operator:hover {
-    color: var(--link-active-color);
+    color: var(--vscode-editorLineNumber-activeForeground);
     text-decoration: underline;
 }
 .svgeditor-button {

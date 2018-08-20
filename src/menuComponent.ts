@@ -10,7 +10,7 @@ import { PathMode } from "./pathMode";
 import { assertNever, el, iterate } from "./utils";
 
 export type ModeName = "select" | "node" | "rect" | "ellipse" | "polyline" | "path" | "text";
-export type OperatorName = "duplicate";
+export type OperatorName = "duplicate" | "group";
 
 class MenuComponent implements Component {
 
@@ -68,7 +68,7 @@ class OperatorComponent implements Component {
 
 export class MenuListComponent implements Component {
 
-    menuComponents = {
+    menuComponents: Record<ModeName, MenuComponent> = {
         select: new MenuComponent("select", (name) => this.changeSelectedMode(name), true),
         node: new MenuComponent("node", (name) => this.changeSelectedMode(name)),
         rect: new MenuComponent("rect", (name) => this.changeSelectedMode(name)),
@@ -78,8 +78,9 @@ export class MenuListComponent implements Component {
         text: new MenuComponent("text", name => this.changeSelectedMode(name))
     }
 
-    operatorComponents = {
-        duplicate: new OperatorComponent("duplicate")
+    operatorComponents: Record<OperatorName, OperatorComponent> = {
+        duplicate: new OperatorComponent("duplicate"),
+        group: new OperatorComponent("group")
     }
     
 
