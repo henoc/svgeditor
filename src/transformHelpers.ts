@@ -71,6 +71,10 @@ export function appendDescriptor(transformAttribute: Transform, descriptor: Tran
     }
 }
 
+export function appendDescriptors(transformAttribute: Transform, ...descriptors: TransformDescriptor[]): void {
+    descriptors.forEach(d => appendDescriptor(transformAttribute, d));
+}
+
 export function appendDescriptorLeft(transformAttribute: Transform, descriptor: TransformDescriptor): void {
     if (transformAttribute.descriptors.length === 0) {
         transformAttribute.descriptors.unshift(descriptor);

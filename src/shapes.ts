@@ -1,10 +1,10 @@
-import { ParsedElement, Length, Transform, isLength } from "./domParser";
+import { ParsedElement, Length, Transform, isLength, TransformDescriptor } from "./domParser";
 import { Vec2, v, vfp, OneOrMore } from "./utils";
 import { svgPathManager } from "./pathHelpers";
 import { convertToPixel, convertFromPixel } from "./measureUnits";
 import { svgVirtualMap, svgRealMap, configuration } from "./main";
 import { identity, transform, scale, translate, rotate, rotateDEG, applyToPoint, inverse } from "transformation-matrix";
-import { appendDescriptor, replaceLastDescriptor, descriptorToMatrix, appendDescriptorsLeft, translateDescriptor, scaleDescriptor, rotateDescriptor, appendDescriptorLeft } from "./transformHelpers";
+import { appendDescriptor, replaceLastDescriptor, descriptorToMatrix, appendDescriptorsLeft, translateDescriptor, scaleDescriptor, rotateDescriptor, appendDescriptorLeft, appendDescriptors } from "./transformHelpers";
 import { font } from "./fontHelpers";
 import equal from "fast-deep-equal";
 
@@ -15,6 +15,7 @@ interface ShaperFunctions {
     size: Vec2;
     size2(newSize: Vec2, fixedPoint: Vec2): void;
     transform: Matrix;
+    appendTransformDescriptors(descriptors: TransformDescriptor[], from: "left" | "right"): void;
     allTransform(): Matrix;
     rotate(deg: number): void;
 }
@@ -70,6 +71,14 @@ export function shaper(uuid: string): ShaperFunctions {
             return transform(past, self().transform);
         } else {
             return self().transform;
+        }
+    }
+    const appendTransformDescriptors = <T extends { transform: Transform | null }>(attrs: T) => (descriptors: TransformDescriptor[], from: "left" | "right") => {
+        if (attrs.transform === null) attrs.transform = {descriptors: [], matrices: []};
+        if (from === "left") {
+            appendDescriptorsLeft(attrs.transform, ...descriptors);
+        } else {
+            appendDescriptors(attrs.transform, ...descriptors);
         }
     }
     const rotateCenter = (deg: number) => {
@@ -144,6 +153,11 @@ export function shaper(uuid: string): ShaperFunctions {
                     return identity();
                 },
                 allTransform,
+                appendTransformDescriptors: (descriptors: TransformDescriptor[], from: "left" | "right") => {
+                    for (let c of pe.children) {
+                        shaper(c.uuid).appendTransformDescriptors(descriptors, from);
+                    }
+                },
                 rotate: () => undefined
             }
         case "circle":
@@ -184,6 +198,7 @@ export function shaper(uuid: string): ShaperFunctions {
                 size2,
                 get leftTop() { return leftTop.getter(); }, set leftTop(point: Vec2) { leftTop.setter(point); },
                 allTransform,
+                appendTransformDescriptors: appendTransformDescriptors(cattrs),
                 rotate: rotateCenter
             }
         case "rect":
@@ -224,6 +239,7 @@ export function shaper(uuid: string): ShaperFunctions {
                 size2,
                 get leftTop() { return leftTop.getter(); }, set leftTop(point: Vec2) { leftTop.setter(point); },
                 allTransform,
+                appendTransformDescriptors: appendTransformDescriptors(rattrs),
                 rotate: rotateCenter
             }
         case "ellipse":
@@ -255,6 +271,7 @@ export function shaper(uuid: string): ShaperFunctions {
                 size2,
                 get leftTop() { return leftTop.getter(); }, set leftTop(point: Vec2) { leftTop.setter(point); },
                 allTransform,
+                appendTransformDescriptors: appendTransformDescriptors(eattrs),
                 rotate: rotateCenter
             }
         case "polyline":
@@ -300,6 +317,7 @@ export function shaper(uuid: string): ShaperFunctions {
                 size2,
                 get leftTop() { return leftTop.getter(); }, set leftTop(point: Vec2) { leftTop.setter(point); },
                 allTransform,
+                appendTransformDescriptors: appendTransformDescriptors(pattrs),
                 rotate: rotateCenter
             }
         case "path":
@@ -370,6 +388,7 @@ export function shaper(uuid: string): ShaperFunctions {
                 size2,
                 get leftTop() { return leftTop.getter(); }, set leftTop(point: Vec2) { leftTop.setter(point); },
                 allTransform,
+                appendTransformDescriptors: appendTransformDescriptors(pathAttrs),
                 rotate: rotateCenter
             }
         case "text":
@@ -412,6 +431,7 @@ export function shaper(uuid: string): ShaperFunctions {
                 size2,
                 get leftTop() { return leftTop.getter(); }, set leftTop(point: Vec2) { leftTop.setter(point); },
                 allTransform,
+                appendTransformDescriptors: appendTransformDescriptors(tattrs),
                 rotate: rotateCenter
             }
         case "g":
@@ -508,6 +528,7 @@ export function shaper(uuid: string): ShaperFunctions {
                 },
                 get leftTop() { return leftTop.getter(); }, set leftTop(point: Vec2) { leftTop.setter(point); },
                 allTransform,
+                appendTransformDescriptors: appendTransformDescriptors(gattrs),
                 rotate: rotateCenter
             }
         case "unknown":
@@ -639,6 +660,11 @@ export function multiShaper(uuids: OneOrMore<string>, useMultiEvenIfSingle: bool
                 for (let i = 0; i < uuids.length; i++) {
                     const diffCenterOfC = oldCenterOfCsFromOldCenter[i].mul(newSize.div(oldSize));
                     shaper(uuids[i]).center = intoTargetCoordinate(newCenter.add(diffCenterOfC), uuids[i]);
+                }
+            },
+            appendTransformDescriptors: (descriptors: TransformDescriptor[], from: "left" | "right") => {
+                for (let c of pes) {
+                    shaper(c.uuid).appendTransformDescriptors(descriptors, from);
                 }
             }
         }

@@ -8,6 +8,7 @@ import { OperatorName } from "./menuComponent";
 import { convertFromPixel, convertToPixel } from "./measureUnits";
 import uuidStatic from "uuid";
 import { ParsedElement } from "./domParser";
+import { appendDescriptorsLeft } from "./transformHelpers";
 
 export class SelectMode implements Mode {
 
@@ -161,6 +162,23 @@ export class SelectMode implements Mode {
                     refleshContent();       // make real elements
                     this.selectedShapeUuids = [groupUuid];
                     this.shapeHandlers = this.createShapeHandlers(this.selectedShapeUuids);
+                }
+            }
+            break;
+            case "ungroup":
+            if (uuids && uuids.length === 1) {
+                const pe = svgVirtualMap[uuids[0]];
+                if (pe.tag === "g" && pe.parent) {
+                    const gParent = pe.parent;
+                    const parentPe = svgVirtualMap[gParent];
+                    for (let c of pe.children) {
+                        c.parent = gParent;
+                        if ("children" in parentPe) parentPe.children.push(c);
+                        if (pe.attrs.transform) shaper(c.uuid).appendTransformDescriptors(pe.attrs.transform.descriptors, "left");
+                    }
+                    if ("children" in parentPe) parentPe.children = parentPe.children.filter(c => c.uuid !== pe.uuid);
+                    this.selectedShapeUuids = null;
+                    this.shapeHandlers = [];
                 }
             }
             break;
