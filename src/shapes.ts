@@ -447,7 +447,8 @@ export function shaper(uuid: string): ShaperFunctions {
                     self().move(point.sub(oldCenter));
                 },
                 get size() {
-                    let [minX, minY, maxX, maxY] = <(null | number)[]>[null, null, null, null];
+                    type Four<T> = [T, T, T, T];
+                    let [minX, minY, maxX, maxY] = <Four<null | number>>[null, null, null, null];
                     for (let c of gchildren) {
                         const leftTop = shaper(c.uuid).leftTop;
                         const size = shaper(c.uuid).size;
@@ -462,12 +463,49 @@ export function shaper(uuid: string): ShaperFunctions {
                     return v((maxX || 0) - (minX || 0), (maxY || 0) - (minY || 0));
                 },
                 set size(wh: Vec2) {
+                    const globalRatio = wh.div(self().size, () => 1);
+                    const lineLength = ([start, end]: Vec2[]) => {
+                        return Math.sqrt(Math.pow(end.x - start.x, 2) + Math.pow(end.y - start.y, 2));
+                    }
                     for (let c of gchildren) {
-                        shaper(c.uuid).size = wh;
+                        const preLeftTop = multiShaper([c.uuid], true).leftTop;
+                        const preRectSize = multiShaper([c.uuid], true).size;
+                        const preXLine = [preLeftTop, preLeftTop.add(v(preRectSize.x, 0))];
+                        const preYLine = [preLeftTop, preLeftTop.add(v(0, preRectSize.y))];
+                        const leftTop = multiShaper([c.uuid], true).leftTop;
+                        const rectSize = preRectSize.mul(globalRatio);
+                        const xLine = [leftTop, leftTop.add(v(rectSize.x, 0))];
+                        const yLine = [leftTop, leftTop.add(v(0, rectSize.y))];
+                        const preXLineInC = preXLine.map(p => intoTargetCoordinate(p, c.uuid));
+                        const preYLineInC = preYLine.map(p => intoTargetCoordinate(p, c.uuid));
+                        const xLineInC = xLine.map(p => intoTargetCoordinate(p, c.uuid));
+                        const yLineInC = yLine.map(p => intoTargetCoordinate(p, c.uuid));
+                        const ratioInC = v(lineLength(xLineInC) / lineLength(preXLineInC), lineLength(yLineInC) / lineLength(preYLineInC));
+                        const center = shaper(c.uuid).center;
+                        if (c.tag !== "unknown" && "transform" in c.attrs) {
+                            if (c.attrs.transform === null) c.attrs.transform = { descriptors: [], matrices: [] };
+                            appendDescriptorsLeft(c.attrs.transform,
+                                { type: "matrix", ...translate(center.x, center.y) }, //translateDescriptor(center.x, center.y),
+                                { type: "matrix", ...scale(ratioInC.x, ratioInC.y) },//scaleDescriptor(ratioInC.x, ratioInC.y),
+                                { type: "matrix", ...translate(-center.x, -center.y) }//translateDescriptor(-center.x, -center.y)
+                            );
+                        }
                     }
                 },
                 get transform() { return transformDefaultImpl(gattrs).getter(); }, set transform(matrix: Matrix) { transformDefaultImpl(gattrs).setter(matrix); },
-                size2,
+                size2: (newSize: Vec2, fixedPoint: Vec2) => {
+                    let oldSize = self().size;
+                    let oldCenter = self().center;
+                    const oldCenterOfCs = gchildren.map(pe => escapeFromTargetCoordinate(shaper(pe.uuid).center, pe.uuid));
+                    const oldCenterOfCsFromOldCenter = oldCenterOfCs.map(c => c.sub(oldCenter));
+                    self().size = newSize;
+                    let diff = oldSize.sub(newSize).div(v(2, 2)).mul(v(fixedPoint.x - oldCenter.x > 0 ? 1 : -1, fixedPoint.y - oldCenter.y > 0 ? 1 : -1));
+                    const newCenter = diff.add(oldCenter);
+                    for (let i = 0; i < gchildren.length; i++) {
+                        const diffCenterOfC = oldCenterOfCsFromOldCenter[i].mul(newSize.div(oldSize));
+                        shaper(gchildren[i].uuid).center = intoTargetCoordinate(newCenter.add(diffCenterOfC), gchildren[i].uuid);
+                    }
+                },
                 get leftTop() { return leftTop.getter(); }, set leftTop(point: Vec2) { leftTop.setter(point); },
                 allTransform,
                 rotate: rotateCenter
