@@ -42,7 +42,6 @@ export class SvgContainerComponent implements Component {
                     editMode.mode.render();
                 el`/svg`;
             el`/svg`;
-            text(`${this.scalePercent}% `);
         }
     }
 }

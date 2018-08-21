@@ -9,6 +9,7 @@ import { MenuListComponent, ModeName } from "./menuComponent";
 import { Component, WindowComponent } from "./component";
 import { SvgContainerComponent } from "./svgContainerComponent";
 import { StyleConfigComponent } from "./styleConfigComponent";
+import { el } from "./utils";
 
 declare function acquireVsCodeApi(): any;
 
@@ -43,9 +44,15 @@ class ContentChildrenComponent implements Component {
     styleConfigComponent = new StyleConfigComponent();
 
     render() {
+        el`header`;
         this.menuListComponent.render();
+        el`/header`;
+        el`div :key="body" *class="svgeditor-body"`;
         this.svgContainerComponent.render();
+        el`/div`;
+        el`footer`;
         this.styleConfigComponent.render();
+        el`/footer`;
     }
 }
 

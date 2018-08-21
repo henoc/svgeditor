@@ -1,5 +1,5 @@
 import { elementOpen, elementClose, text, elementVoid } from "incremental-dom";
-import { drawState, refleshContent, openWindows } from "./main";
+import { drawState, refleshContent, openWindows, contentChildrenComponent } from "./main";
 import { Paint, PaintFormat } from "./domParser";
 import tinycolor from "tinycolor2";
 import { Component, WindowComponent } from "./component";
@@ -264,10 +264,11 @@ export class StyleConfigComponent implements Component {
     colorPicker: ColorPickerComponent | null = null;
 
     render() {
+        text(`${contentChildrenComponent.svgContainerComponent.scalePercent}% `);
         el`span *class="svgeditor-bold"`;
-        text("fill: ");
+        text(" fill: ");
         this.colorBoxRender(this.colorBoxFillBackground, "fill");
-        text("stroke: ");
+        text(" stroke: ");
         this.colorBoxRender(this.colorBoxStrokeBackground, "stroke");
         el`/span`;
         if (this.colorPicker) this.colorPicker.render();

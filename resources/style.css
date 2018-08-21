@@ -1,6 +1,25 @@
 * {
     user-select: none;
 }
+
+/* For scrollable content */
+html, body {
+    height: 100%;
+    margin: 0;
+}
+header, footer {
+    flex-shrink: 0;
+}
+#svgeditor-content {
+    height: 100%;
+    display: flex;
+    flex-direction: column;
+}
+.svgeditor-body {
+    flex-grow: 1;
+    overflow: auto;
+}
+
 ul {
     margin: 0.2em;
     padding: 0px;
