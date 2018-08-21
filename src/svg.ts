@@ -85,7 +85,7 @@ export class SvgTag implements Component {
         }
         return this;
     }
-    dattr(key: string, value: PathCommand[] | null): SvgTag {
+    dattr(key: "d", value: PathCommand[] | null): SvgTag {
         if (value !== null && this.data.important.indexOf(key) === -1) {
             value = this.fixDecimalPlaces(value);
             const parsedDAttr = svgPathManager(value);
@@ -93,14 +93,14 @@ export class SvgTag implements Component {
         }
         return this;
     }
-    tattr(key: string, value: Transform | null): SvgTag {
+    tattr(key: "transform", value: Transform | null): SvgTag {
         if (value !== null && this.data.important.indexOf(key) === -1) {
             value = this.fixDecimalPlaces(value);
             this.data.attrs[key] = toTransformStrWithoutCollect(value);
         }
         return this;
     }
-    fsattr(key: string, value: FontSize | null): SvgTag {
+    fsattr(key: "font-size", value: FontSize | null): SvgTag {
         if (value !== null && this.data.important.indexOf(key) === -1) {
             if (typeof value !== "string") {
                 this.uattr(key, value);

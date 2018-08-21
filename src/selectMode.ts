@@ -1,14 +1,14 @@
-import { svgVirtualMap, refleshContent, svgRealMap, sendBackToEditor, configuration, svgdata } from "./main";
+import { svgVirtualMap, refleshContent, svgRealMap, sendBackToEditor, configuration, svgdata, contentChildrenComponent } from "./main";
 import { Vec2, v, vfp, assertNever, deepCopy, OneOrMore, iterate, el } from "./utils";
 import { shaper, multiShaper } from "./shapes";
 import { SvgTag } from "./svg";
 import { Mode } from "./modeInterface";
-import { identity, transform, applyToPoint, inverse } from "transformation-matrix";
+import { identity, transform, applyToPoint, inverse, toString } from "transformation-matrix";
 import { OperatorName } from "./menuComponent";
 import { convertFromPixel, convertToPixel } from "./measureUnits";
 import uuidStatic from "uuid";
 import { ParsedElement } from "./domParser";
-import { appendDescriptorsLeft } from "./transformHelpers";
+import { appendDescriptorsLeft, scale2 } from "./transformHelpers";
 
 export class SelectMode extends Mode {
 
@@ -46,7 +46,7 @@ export class SelectMode extends Mode {
             // multiple selection
             this.selectedShapeUuids.push(uu);
             const uuids = this.selectedShapeUuids;
-            this.startCursorPos = vfp(this.inTargetCoordinate({x: event.offsetX, y: event.offsetY}, uuids));
+            this.startCursorPos = vfp(this.inTargetCoordinate(this.cursor(event), uuids));
             this.startShapeCenter = multiShaper(uuids).center;
             this.isDraggingShape = true;
             this.shapeHandlers = this.createShapeHandlers(this.selectedShapeUuids);
@@ -54,14 +54,14 @@ export class SelectMode extends Mode {
         } else if (this.selectedShapeUuids && this.selectedShapeUuids.length > 1) {
             // select already multiple selected shaeps
             const uuids = this.selectedShapeUuids;
-            this.startCursorPos = vfp(this.inTargetCoordinate({x: event.offsetX, y: event.offsetY}, uuids));
+            this.startCursorPos = vfp(this.inTargetCoordinate(this.cursor(event), uuids));
             this.startShapeCenter = multiShaper(uuids).center;
             this.isDraggingShape = true;
         } else {
             // single selection
             this.selectedShapeUuids = [uu];
             this.commonParent = svgVirtualMap[uu].parent;
-            this.startCursorPos = vfp(this.inTargetCoordinate({x: event.offsetX, y: event.offsetY}, [uu]));
+            this.startCursorPos = vfp(this.inTargetCoordinate(this.cursor(event), [uu]));
             this.startShapeCenter = shaper(uu).center;
             this.isDraggingShape = true;
             this.shapeHandlers = this.createShapeHandlers(this.selectedShapeUuids);
@@ -73,14 +73,14 @@ export class SelectMode extends Mode {
     }
     onDocumentMouseMove(event: MouseEvent) {
         if (this.selectedShapeUuids) {
-            let currentCursorPos = vfp(this.inTargetCoordinate({x: event.offsetX, y: event.offsetY}, this.selectedShapeUuids));
+            let currentCursorPos = vfp(this.inTargetCoordinate(this.cursor(event), this.selectedShapeUuids));
             if (this.isDraggingShape && this.startCursorPos && this.startShapeCenter) {
                 multiShaper(this.selectedShapeUuids).center = this.startShapeCenter.add(currentCursorPos.sub(this.startCursorPos));
                 this.shapeHandlers = this.createShapeHandlers(this.selectedShapeUuids);
                 refleshContent();
             } else if (this.isDraggingHandler && this.startCursorPos && this.startShapeFixedPoint && this.startShapeSize) {
                 if (this.selectedHandlerIndex === 4 && this.previousRawCursorPos) {
-                    let currentRawCursorPos = v(event.offsetX, event.offsetY);
+                    let currentRawCursorPos = this.cursor(event);
                     multiShaper(this.selectedShapeUuids).rotate(currentRawCursorPos.x - this.previousRawCursorPos.x);
                     this.previousRawCursorPos = currentRawCursorPos;
                 } else {
@@ -115,6 +115,7 @@ export class SelectMode extends Mode {
         this.onDocumentMouseUp();
     }
     onOperatorClicked(name: OperatorName) {
+        super.onOperatorClicked(name);
         const uuids = this.selectedShapeUuids;
         switch (name) {
             case "duplicate":
@@ -195,8 +196,6 @@ export class SelectMode extends Mode {
                 }
             }
             break;
-            default:
-            assertNever(name);
         }
         refleshContent();
         sendBackToEditor();
@@ -215,18 +214,24 @@ export class SelectMode extends Mode {
         this.shapeHandlers.forEach(h => h.render());
     }
 
+    updateHandlers() {
+        if (this.selectedShapeUuids) this.shapeHandlers = this.createShapeHandlers(this.selectedShapeUuids);
+    }
+
     private createShapeHandlers(uus: OneOrMore<string>): SvgTag[] {
         const center = multiShaper(uus).center;
         const halfSize = multiShaper(uus).size.div(v(2, 2));
         const leftTop = center.sub(halfSize);
         const elems: SvgTag[] = [];
+        const viewerScale = contentChildrenComponent.svgContainerComponent.scalePercent / 100;
         for (let i = 0; i < 9; i++) {
             if (i === 4) {
                 const escaped = this.escapeToNormalCoordinate({x: leftTop.x + halfSize.x, y: leftTop.y - halfSize.y}, uus);
                 const e = new SvgTag("circle").attr("r", 6)
                     .attr("cx", escaped.x)
                     .attr("cy", escaped.y)
-                    .class("svgeditor-shape-handler");
+                    .class("svgeditor-shape-handler")
+                    .attr("transform", toString(scale2(1/viewerScale, 1/viewerScale, escaped.x, escaped.y)));
                 e.listener("mousedown", (event) => this.onShapeHandlerMouseDown(<MouseEvent>event, i));                
                 elems.push(e);
             } else {
@@ -236,7 +241,8 @@ export class SelectMode extends Mode {
                 const e = new SvgTag("circle").attr("r", 5)
                     .attr("cx", escaped.x)
                     .attr("cy", escaped.y)
-                    .class("svgeditor-shape-handler");
+                    .class("svgeditor-shape-handler")
+                    .attr("transform", toString(scale2(1/viewerScale, 1/viewerScale, escaped.x, escaped.y)));
                 e.listener("mousedown", (event) => this.onShapeHandlerMouseDown(<MouseEvent>event, i));
                 elems.push(e);
             }
@@ -254,9 +260,9 @@ export class SelectMode extends Mode {
                     x: Number(this.shapeHandlers[8 - index].data.attrs["cx"]),
                     y: Number(this.shapeHandlers[8 - index].data.attrs["cy"])
                 }, this.selectedShapeUuids));
-            this.startCursorPos = vfp(this.inTargetCoordinate({x: event.offsetX, y: event.offsetY}, this.selectedShapeUuids));
+            this.startCursorPos = vfp(this.inTargetCoordinate(this.cursor(event), this.selectedShapeUuids));
             this.startShapeSize = multiShaper(this.selectedShapeUuids).size;
-            this.previousRawCursorPos = v(event.offsetX, event.offsetY);
+            this.previousRawCursorPos = this.cursor(event);
         }
     }
 

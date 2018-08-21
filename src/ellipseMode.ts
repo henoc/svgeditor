@@ -21,7 +21,7 @@ export class EllipseMode extends Mode {
             const root = svgVirtualMap[uu];
             event.stopPropagation();
             this.isDragging = true;
-            this.startCursorPos = vfp(this.inTargetCoordinate({x: event.offsetX, y: event.offsetY}, uu));
+            this.startCursorPos = vfp(this.inTargetCoordinate(this.cursor(event), uu));
             this.dragTargetUuid = uuidStatic.v4();
             if (root.tag === "svg") {
                 const pe: ParsedElement = {
@@ -50,7 +50,7 @@ export class EllipseMode extends Mode {
     }
     onDocumentMouseMove(event: MouseEvent): void {
         if (this.isDragging && this.startCursorPos && this.dragTargetUuid) {
-            const {x: cx, y: cy} = this.inTargetCoordinate({x: event.offsetX, y: event.offsetY}, this.dragTargetUuid);
+            const {x: cx, y: cy} = this.inTargetCoordinate(this.cursor(event), this.dragTargetUuid);
             const leftTop = v(Math.min(cx, this.startCursorPos.x), Math.min(cy, this.startCursorPos.y));
             const size = v(Math.abs(cx - this.startCursorPos.x), Math.abs(cy - this.startCursorPos.y));
             shaper(this.dragTargetUuid).size = size;
@@ -63,9 +63,6 @@ export class EllipseMode extends Mode {
     }
     onDocumentMouseLeave(event: MouseEvent): void {
         this.onDocumentMouseUp();
-    }
-    onOperatorClicked() {
-        
     }
 
     /**

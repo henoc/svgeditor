@@ -1,11 +1,12 @@
-import { svgVirtualMap, refleshContent, svgRealMap, sendBackToEditor } from "./main";
+import { svgVirtualMap, refleshContent, svgRealMap, sendBackToEditor, contentChildrenComponent } from "./main";
 import { SvgTag } from "./svg";
 import { svgPathManager } from "./pathHelpers";
 import { Vec2, v, vfp } from "./utils";
 import { PathCommand } from "./domParser";
 import { Mode } from "./modeInterface";
-import { applyToPoint, inverse } from "transformation-matrix";
+import { applyToPoint, inverse, toString } from "transformation-matrix";
 import { shaper } from "./shapes";
+import { scale2 } from "./transformHelpers";
 
 export class NodeMode extends Mode {
 
@@ -43,7 +44,7 @@ export class NodeMode extends Mode {
     }
     onDocumentMouseMove(event: MouseEvent): void {
         if (this.selectedShapeUuid && this.isDraggingHandler && this.selectedHandlerIndex !== null) {
-            let cursor = vfp(this.inTargetCoordinate({x: event.offsetX, y: event.offsetY}, this.selectedShapeUuid));
+            let cursor = vfp(this.inTargetCoordinate(this.cursor(event), this.selectedShapeUuid));
             const selected = svgVirtualMap[this.selectedShapeUuid];
             if (selected.tag === "polyline" && selected.attrs.points) {
                 selected.attrs.points[this.selectedHandlerIndex] = cursor;
@@ -120,9 +121,14 @@ export class NodeMode extends Mode {
         this.shapeHandlers.forEach(h => h.render());
     }
 
+    updateHandlers() {
+        if (this.selectedShapeUuid) this.shapeHandlers = this.createShapeHandlers(this.selectedShapeUuid);
+    }
+
     private createShapeHandlers(uu: string): SvgTag[] {
         const selected = svgVirtualMap[uu];
         const elems: SvgTag[] = [];
+        const viewerScale = contentChildrenComponent.svgContainerComponent.scalePercent / 100;
         const registEndPoint = (p: Vec2, index: number) => {
             const escaped = this.escapeToNormalCoordinate(p, uu);
             const e = new SvgTag("rect")
@@ -130,7 +136,8 @@ export class NodeMode extends Mode {
                 .attr("height", 10)
                 .attr("x", escaped.x - 5)
                 .attr("y", escaped.y - 5)
-                .class("svgeditor-shape-handler");
+                .class("svgeditor-shape-handler")
+                .attr("transform", toString(scale2(1/viewerScale, 1/viewerScale, escaped.x, escaped.y)));
             e.listener("mousedown", event => this.onShapeHandlerMouseDown(<MouseEvent>event, index));
             elems.push(e);
         }
@@ -140,7 +147,8 @@ export class NodeMode extends Mode {
                 .attr("r", 5)
                 .attr("cx", escaped.x)
                 .attr("cy", escaped.y)
-                .class("svgeditor-shape-handler" + (index === null && "-fake" || ""));
+                .class("svgeditor-shape-handler" + (index === null && "-fake" || ""))
+                .attr("transform", toString(scale2(1/viewerScale, 1/viewerScale, escaped.x, escaped.y)));
             if (index !== null) e.listener("mousedown", event => this.onShapeHandlerMouseDown(<MouseEvent>event, index));
             else e.listener("mousedown", event => event.stopPropagation());
             for (let from of froms) {
@@ -205,9 +213,6 @@ export class NodeMode extends Mode {
             });
         }
         return elems;
-    }
-    onOperatorClicked() {
-        
     }
 
     private onShapeHandlerMouseDown(event: MouseEvent, index: number) {

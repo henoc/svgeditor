@@ -27,6 +27,19 @@ export function convertToPixel(length: Length, uuid: string): number {
     }
 }
 
+export function convertToPixelForOutermostFrame(length: Length, font: string): number {
+    switch (length.unit) {
+        case null:
+        return length.value;
+
+        case "%":
+        return 400;
+
+        default:
+        return length.value * measure(font, length.unit);
+    }
+}
+
 function outermostPx(attrKind: AttrKind, re: Element): number {
     switch (attrKind) {
         case "vertical":

@@ -171,3 +171,7 @@ export function descriptorToMatrix(descriptor: TransformDescriptor): Matrix {
         return translate(descriptor.tx, descriptor.ty);
     }
 }
+
+export function scale2(sx: number, sy: number, cx: number, cy: number): Matrix {
+    return transform(translate(cx, cy), scale(sx, sy), translate(-cx, -cy));
+}
