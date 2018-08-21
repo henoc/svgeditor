@@ -6,23 +6,17 @@ import { el } from "./utils";
 import { cssVar } from "./styleHelpers";
 
 /**
- * +------conainer(svg)------------+
- * | +------------image----------+  <- to deal with url scheme unresolve in iframe problem
- * | | +------wrapper(svg)-----+    <- for insert outer WebView environment (ex. font)
- * | | | +-----user's svg----+ | | |
- * | | | |                   | | | |
- * | | | +-------------------+ | | |
- * | | +-----------------------+ | |
- * | +---------------------------+ |
- * | +-----transparent(svg)------+  <- mouse detection
- * | |                           | |
- * | |                           | |
- * | +---------------------------+ |
- * | +------shapeHanlder(svg)----+  <- draw handler objects (to avoid the transform effect of outermost user's svg)
- * | |                           | |
- * | |                           | |
- * | +---------------------------+ |
- * +-------------------------------+
+```xml
+( <svg(wrapper)>                  // for insert outer WebView environment (ex. font)
+    <svg(written by user) />
+  </svg> )
+
+<svg(container)>
+  <image href="data:image svg(wrapper)" />   // to deal with unresolving url scheme in iframe problem
+  <svg(transparent) />            // shapes with opacity 0 for mouse detection
+  <svg(shapeHandler) />           // draw handler objects
+</svg>
+```
  */
 export class SvgContainerComponent implements Component {
 

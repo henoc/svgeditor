@@ -141,6 +141,16 @@ export class SelectMode extends Mode {
                 if (this.selectedShapeUuids) this.shapeHandlers = this.createShapeHandlers(this.selectedShapeUuids);
             }
             break;
+            case "delete":
+            if (uuids && this.commonParent) {
+                let parentPe = svgVirtualMap[this.commonParent];
+                if ("children" in parentPe) {
+                    parentPe.children = parentPe.children.filter(c => uuids.indexOf(c.uuid) === -1);
+                    this.selectedShapeUuids = null;
+                    this.shapeHandlers = [];
+                }
+            }
+            break;
             case "group":
             if (uuids && this.commonParent) {
                 let parentPe = svgVirtualMap[this.commonParent];
