@@ -7,13 +7,13 @@ import { SvgTag } from "./svg";
 import { applyToPoint, inverse } from "transformation-matrix";
 import { shaper } from "./shapes";
 
-export class PathMode implements Mode {
+export class PathMode extends Mode {
 
     isDragging: boolean = false;
     makeTargetUuid: string | null = null;
     readonly shapeHandlers: SvgTag[] = [];
 
-    constructor(public finished?: (uu: string | null) => void) {}
+    constructor(public finished?: (uu: string | null) => void) {super()}
 
     onShapeMouseDownLeft(event: MouseEvent, uu: string): void {
         if (svgVirtualMap[uu].isRoot) {

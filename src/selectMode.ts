@@ -1,5 +1,5 @@
 import { svgVirtualMap, refleshContent, svgRealMap, sendBackToEditor, configuration, svgdata } from "./main";
-import { Vec2, v, vfp, assertNever, deepCopy, OneOrMore, iterate } from "./utils";
+import { Vec2, v, vfp, assertNever, deepCopy, OneOrMore, iterate, el } from "./utils";
 import { shaper, multiShaper } from "./shapes";
 import { SvgTag } from "./svg";
 import { Mode } from "./modeInterface";
@@ -10,7 +10,7 @@ import uuidStatic from "uuid";
 import { ParsedElement } from "./domParser";
 import { appendDescriptorsLeft } from "./transformHelpers";
 
-export class SelectMode implements Mode {
+export class SelectMode extends Mode {
 
     selectedShapeUuids: OneOrMore<string> | null = null;
     commonParent: string | null = null;
@@ -25,6 +25,7 @@ export class SelectMode implements Mode {
     shapeHandlers: SvgTag[] = [];
 
     constructor(initialSelectedShapeUuid?: string) {
+        super();
         if (initialSelectedShapeUuid) {
             this.selectedShapeUuids = [initialSelectedShapeUuid];
             this.shapeHandlers = this.createShapeHandlers(this.selectedShapeUuids);
@@ -154,7 +155,9 @@ export class SelectMode implements Mode {
                         parent: this.commonParent,
                         attrs: {
                             ...Mode.baseAttrsDefaultImpl(),
-                            ...Mode.presentationAttrsDefaultImpl()
+                            ...Mode.presentationAttrsDefaultImpl(),
+                            fill: null,
+                            stroke: null
                         },
                         children: childrenPe
                     });
@@ -188,6 +191,20 @@ export class SelectMode implements Mode {
         refleshContent();
         sendBackToEditor();
     }
+
+    render() {
+        // Decorate groups.
+        let pe: ParsedElement;
+        if (this.selectedShapeUuids && this.selectedShapeUuids.length === 1 && (pe = svgVirtualMap[this.selectedShapeUuids[0]]) && pe.tag === "g") {
+            const corners: Vec2[] = [];
+            for (let i of [0, 2, 8, 6]) {
+                corners.push(v(+this.shapeHandlers[i].data.attrs.cx, +this.shapeHandlers[i].data.attrs.cy));
+            }
+            el`polygon :key="g-decorator" *class="svgeditor-group" points=${corners.map(c => `${c.x} ${c.y}`).join(" ")} /`;
+        }
+        this.shapeHandlers.forEach(h => h.render());
+    }
+
     private createShapeHandlers(uus: OneOrMore<string>): SvgTag[] {
         const center = multiShaper(uus).center;
         const halfSize = multiShaper(uus).size.div(v(2, 2));

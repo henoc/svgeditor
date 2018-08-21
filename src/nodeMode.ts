@@ -7,7 +7,7 @@ import { Mode } from "./modeInterface";
 import { applyToPoint, inverse } from "transformation-matrix";
 import { shaper } from "./shapes";
 
-export class NodeMode implements Mode {
+export class NodeMode extends Mode {
 
     shapeHandlers: SvgTag[] = [];
     selectedShapeUuid: string | null = null;
@@ -15,6 +15,7 @@ export class NodeMode implements Mode {
     isDraggingHandler: boolean = false;
 
     constructor(initialSelectedShapeUuid?: string) {
+        super();
         if (initialSelectedShapeUuid) {
             let uu = initialSelectedShapeUuid;
             if (svgVirtualMap[uu].tag === "path" || svgVirtualMap[uu].tag === "polyline") {

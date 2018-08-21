@@ -93,3 +93,8 @@ select option {
     min-width: 1em;
     min-height: 1em;
 }
+.svgeditor-group {
+    fill: none;
+    stroke: var(--vscode-inputValidation-warningBorder);
+    stroke-dasharray: 4px;
+}

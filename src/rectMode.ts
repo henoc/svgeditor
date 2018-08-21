@@ -7,14 +7,14 @@ import { Mode } from "./modeInterface";
 import { SvgTag } from "./svg";
 import { applyToPoint, inverse } from "transformation-matrix";
 
-export class RectMode implements Mode {
+export class RectMode extends Mode {
 
     isDragging: boolean = false;
     startCursorPos: Vec2 | null = null;
     dragTargetUuid: string | null = null;
     readonly shapeHandlers: SvgTag[] = [];
 
-    constructor(public finished?: (uu: string | null) => void) {}
+    constructor(public finished?: (uu: string | null) => void) {super()}
 
     onShapeMouseDownLeft(event: MouseEvent, uu: string): void {
         if (svgVirtualMap[uu].isRoot) {

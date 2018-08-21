@@ -5,14 +5,14 @@ import { drawState, svgRealMap } from "./main";
 import { OperatorName } from "./menuComponent";
 import { Vec2, v } from "./utils";
 
-export abstract class Mode {
+export abstract class Mode implements Component {
     abstract onShapeMouseDownLeft(event: MouseEvent, uu: string): void;
     abstract onShapeMouseDownRight(event: MouseEvent, uu: string): void;
     abstract onDocumentMouseMove(event: MouseEvent): void;
     abstract onDocumentMouseUp(event: MouseEvent): void;
     abstract onDocumentMouseLeave(event: Event): void;
     abstract onOperatorClicked(name: OperatorName): void;
-    abstract readonly shapeHandlers: SvgTag[];
+    render(): void {}
 
     static baseAttrsDefaultImpl: () => ParsedBaseAttr = () => {
         return {
