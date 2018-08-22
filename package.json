@@ -26,7 +26,8 @@
   },
   "activationEvents": [
     "onCommand:svgeditor.openSvgEditor",
-    "onCommand:svgeditor.newSvgEditor"
+    "onCommand:svgeditor.newSvgEditor",
+    "onCommand:svgeditor.reopenRelatedTextEditor"
   ],
   "main": "./out/extension",
   "contributes": {
@@ -38,6 +39,10 @@
       {
         "command": "svgeditor.newSvgEditor",
         "title": "New File with SVG Editor"
+      },
+      {
+        "command": "svgeditor.reopenRelatedTextEditor",
+        "title": "Reopen Text Editor Related to Current SVG Editor"
       }
     ],
     "menus": {

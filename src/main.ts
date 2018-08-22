@@ -58,6 +58,7 @@ class ContentChildrenComponent implements Component {
 
 export const contentChildrenComponent = new ContentChildrenComponent();
 
+
 vscode.postMessage({
     command: "svg-request"
 });

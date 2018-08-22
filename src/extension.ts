@@ -4,7 +4,6 @@ import * as path from "path";
 import * as xmldoc from "xmldoc";
 import { render } from "ejs";
 import { parse } from "./domParser";
-import uuid from "uuid";
 const format = require('xml-formatter');
 
 export function activate(context: vscode.ExtensionContext) {
@@ -17,17 +16,18 @@ export function activate(context: vscode.ExtensionContext) {
     let templateSvg = readResource("template.svg");
     let bundleJsPath = vscode.Uri.file(path.join(context.extensionPath, "resources", "bundle.js")).with({ scheme: "vscode-resource"});
     let cssPath = vscode.Uri.file(path.join(context.extensionPath, "resources", "style.css")).with({ scheme: "vscode-resource"});
-
-    let panelSets: {editor: vscode.TextEditor, panel: vscode.WebviewPanel, uuid: string}[] = [];
-    let prevendSend: {[uuid: string]: boolean} = {};
     let diagnostics = vscode.languages.createDiagnosticCollection("svgeditor");
 
+    let panelSet: { panel: vscode.WebviewPanel, editor: vscode.TextEditor} | null = null;
+    let text: string | null = null;
+    let prevendSend = false;
+
     let createPanel = (editor: vscode.TextEditor) => {
-        const config = vscode.workspace.getConfiguration("svgeditor", editor.document.uri);
+        text = editor.document.getText();
         const panel = vscode.window.createWebviewPanel(
             "svgeditor",
             "SVG Editor",
-            vscode.ViewColumn.Two, {
+            vscode.ViewColumn.Beside, {
                 enableScripts: true,
                 localResourceRoots: [
                     vscode.Uri.file(path.join(context.extensionPath, "resources"))
@@ -35,19 +35,26 @@ export function activate(context: vscode.ExtensionContext) {
             }
         );
         panel.webview.html = render(viewer, {bundleJsPath, cssPath});
-        const uu = uuid.v4();
+        setListener(panel, editor);
+        panelSet = {panel, editor};
+        prevendSend = false;
+    }
+
+    let setListener = (panel: vscode.WebviewPanel, editor: vscode.TextEditor) => {
+        const config = vscode.workspace.getConfiguration("svgeditor", editor.document.uri);
         panel.webview.onDidReceiveMessage(async message => {
             switch (message.command) {
                 case "modified":
+                    text = format(message.data);
                     editor.edit(editBuilder => {
-                        editBuilder.replace(allRange(editor), format(message.data));
+                        editBuilder.replace(allRange(editor), text!);
                     });
-                    prevendSend[uu] = true;
+                    prevendSend = true;
                     return;
                 case "svg-request":
                     panel.webview.postMessage({
                         command: "modified",
-                        data: parseSvg(editor.document.getText(), editor, diagnostics)
+                        data: parseSvg(text || editor.document.getText(), editor, diagnostics)
                     });
                     panel.webview.postMessage({
                         command: "configuration",
@@ -71,29 +78,29 @@ export function activate(context: vscode.ExtensionContext) {
                     return;
             }
         }, undefined, context.subscriptions);
-        
-        panelSets.push({editor, panel, uuid: uu});
-        prevendSend[uu] = false;
+
+        panel.onDidDispose(() => {
+            panelSet = null;
+        }, undefined, context.subscriptions);
     }
 
     context.subscriptions.push(vscode.workspace.onDidChangeTextDocument((e: vscode.TextDocumentChangeEvent) => {
-        panelSets.forEach(sets => {
-            if (sets.editor.document === e.document) {
-                if (prevendSend[sets.uuid]) {
-                    prevendSend[sets.uuid] = false;
-                } else {
-                    sets.panel.webview.postMessage({
-                        command: "modified",
-                        data: parseSvg(e.document.getText(), sets.editor, diagnostics)
-                    });
-                }
+        if (panelSet && panelSet.editor.document === e.document) {
+            if (prevendSend) {
+                prevendSend = false;
+            } else {
+                panelSet.panel.webview.postMessage({
+                    command: "modified",
+                    data: parseSvg(text = e.document.getText(), panelSet.editor, diagnostics)
+                });
             }
-        });
+        }
     }));
 
     context.subscriptions.push(vscode.commands.registerCommand("svgeditor.openSvgEditor", () => {
         const editor = vscode.window.activeTextEditor;
-        if (editor) {
+        if (panelSet) panelSet.panel.reveal();
+        else if (editor) {
             createPanel(editor);
         } else {
             showError("Not found active text editor.");
@@ -101,9 +108,9 @@ export function activate(context: vscode.ExtensionContext) {
     }));
 
     context.subscriptions.push(vscode.commands.registerCommand("svgeditor.newSvgEditor", async () => {
-        try {
-            await vscode.commands.executeCommand("workbench.action.files.newUntitledFile");
-            const editor = vscode.window.activeTextEditor!;
+        if (panelSet) panelSet.panel.reveal();
+        else try {
+            const editor = await newUntitled(vscode.ViewColumn.One);
             await editor.edit(editbuilder => {
                 editbuilder.insert(new vscode.Position(0, 0), templateSvg);
             });
@@ -111,6 +118,14 @@ export function activate(context: vscode.ExtensionContext) {
         } catch (error) {
             showError(error);
         }
+    }));
+
+    context.subscriptions.push(vscode.commands.registerCommand("svgeditor.reopenRelatedTextEditor", async () => {
+            if (panelSet) {
+                let editor = await newUntitled(vscode.ViewColumn.Beside);
+                panelSet.editor = editor;
+                setListener(panelSet.panel, panelSet.editor);
+            }
     }));
 }
 
@@ -142,4 +157,8 @@ function parseSvg(svgText: string, editor: vscode.TextEditor, diagnostics: vscod
         };
     }));
     return parsed.result
+}
+
+function newUntitled(viewColumn: vscode.ViewColumn) {
+    return vscode.window.showTextDocument(vscode.Uri.parse("untitled://Untitled/SVG-Editor-Untitiled"), {viewColumn});
 }
