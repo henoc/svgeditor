@@ -43,7 +43,8 @@ ul {
 .svgeditor-operator {
     display: inline-block;
     color: var(--vscode-editorLineNumber-foreground);
-    width: calc(100% / 8);
+    min-width: calc(100% / 9);
+    margin: 0 0.25em;
     text-align: center;
 }
 .svgeditor-operator:hover {
