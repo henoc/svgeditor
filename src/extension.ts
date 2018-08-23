@@ -110,10 +110,7 @@ export function activate(context: vscode.ExtensionContext) {
     context.subscriptions.push(vscode.commands.registerCommand("svgeditor.newSvgEditor", async () => {
         if (panelSet) panelSet.panel.reveal();
         else try {
-            const editor = await newUntitled(vscode.ViewColumn.One);
-            await editor.edit(editbuilder => {
-                editbuilder.insert(new vscode.Position(0, 0), templateSvg);
-            });
+            const editor = await newUntitled(vscode.ViewColumn.One, templateSvg);
             createPanel(editor);
         } catch (error) {
             showError(error);
@@ -121,8 +118,8 @@ export function activate(context: vscode.ExtensionContext) {
     }));
 
     context.subscriptions.push(vscode.commands.registerCommand("svgeditor.reopenRelatedTextEditor", async () => {
-            if (panelSet) {
-                let editor = await newUntitled(vscode.ViewColumn.Beside);
+            if (panelSet && text) {
+                let editor = await newUntitled(vscode.ViewColumn.Beside, text);
                 panelSet.editor = editor;
                 setListener(panelSet.panel, panelSet.editor);
             }
@@ -159,6 +156,8 @@ function parseSvg(svgText: string, editor: vscode.TextEditor, diagnostics: vscod
     return parsed.result
 }
 
-function newUntitled(viewColumn: vscode.ViewColumn) {
-    return vscode.window.showTextDocument(vscode.Uri.parse("untitled://Untitled/SVG-Editor-Untitiled"), {viewColumn});
+async function newUntitled(viewColumn: vscode.ViewColumn, content: string) {
+    const config = vscode.workspace.getConfiguration("svgeditor");
+    const document = await vscode.workspace.openTextDocument({language: config.get<string>("filenameExtension"), content});
+    return vscode.window.showTextDocument(document, viewColumn);
 }

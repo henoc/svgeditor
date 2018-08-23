@@ -56,6 +56,11 @@
     "configuration": {
       "title": "SVG Editor configurations",
       "properties": {
+        "svgeditor.filenameExtension": {
+          "type": "string",
+          "default": "svg",
+          "description": "Initial filename extension of new untitled file."
+        },
         "svgeditor.showAll": {
           "type": "boolean",
           "default": true,
