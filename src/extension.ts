@@ -18,12 +18,11 @@ export function activate(context: vscode.ExtensionContext) {
     let cssPath = vscode.Uri.file(path.join(context.extensionPath, "resources", "style.css")).with({ scheme: "vscode-resource"});
     let diagnostics = vscode.languages.createDiagnosticCollection("svgeditor");
 
-    let panelSet: { panel: vscode.WebviewPanel, editor: vscode.TextEditor} | null = null;
-    let text: string | null = null;
+    let panelSet: { panel: vscode.WebviewPanel, editor: vscode.TextEditor, text: string} | null = null;
     let prevendSend = false;
 
     let createPanel = (editor: vscode.TextEditor) => {
-        text = editor.document.getText();
+        let text = editor.document.getText();
         const panel = vscode.window.createWebviewPanel(
             "svgeditor",
             "SVG Editor",
@@ -35,28 +34,28 @@ export function activate(context: vscode.ExtensionContext) {
             }
         );
         panel.webview.html = render(viewer, {bundleJsPath, cssPath});
-        setListener(panel, editor);
-        panelSet = {panel, editor};
+        panelSet = {panel, editor, text};
+        setListener(panelSet);
         prevendSend = false;
     }
 
-    let setListener = (panel: vscode.WebviewPanel, editor: vscode.TextEditor) => {
-        const config = vscode.workspace.getConfiguration("svgeditor", editor.document.uri);
-        panel.webview.onDidReceiveMessage(async message => {
+    let setListener = (pset : {panel: vscode.WebviewPanel, editor: vscode.TextEditor, text: string} ) => {
+        const config = vscode.workspace.getConfiguration("svgeditor", pset.editor.document.uri);
+        pset.panel.webview.onDidReceiveMessage(async message => {
             switch (message.command) {
                 case "modified":
-                    text = format(message.data);
-                    editor.edit(editBuilder => {
-                        editBuilder.replace(allRange(editor), text!);
+                    pset.text = format(message.data);
+                    pset.editor.edit(editBuilder => {
+                        editBuilder.replace(allRange(pset.editor), pset.text);
                     });
                     prevendSend = true;
                     return;
                 case "svg-request":
-                    panel.webview.postMessage({
+                    pset.panel.webview.postMessage({
                         command: "modified",
-                        data: parseSvg(text || editor.document.getText(), editor, diagnostics)
+                        data: parseSvg(pset.text, pset.editor, diagnostics)
                     });
-                    panel.webview.postMessage({
+                    pset.panel.webview.postMessage({
                         command: "configuration",
                         data: {
                             showAll: config.get<boolean>("showAll"),
@@ -68,7 +67,7 @@ export function activate(context: vscode.ExtensionContext) {
                     return;
                 case "input-request":
                     const result = await vscode.window.showInputBox({placeHolder: message.data})
-                    panel.webview.postMessage({
+                    pset.panel.webview.postMessage({
                         command: "input-response",
                         data: result
                     });
@@ -79,7 +78,7 @@ export function activate(context: vscode.ExtensionContext) {
             }
         }, undefined, context.subscriptions);
 
-        panel.onDidDispose(() => {
+        pset.panel.onDidDispose(() => {
             panelSet = null;
         }, undefined, context.subscriptions);
     }
@@ -91,7 +90,7 @@ export function activate(context: vscode.ExtensionContext) {
             } else {
                 panelSet.panel.webview.postMessage({
                     command: "modified",
-                    data: parseSvg(text = e.document.getText(), panelSet.editor, diagnostics)
+                    data: parseSvg(panelSet.text = e.document.getText(), panelSet.editor, diagnostics)
                 });
             }
         }
@@ -118,10 +117,10 @@ export function activate(context: vscode.ExtensionContext) {
     }));
 
     context.subscriptions.push(vscode.commands.registerCommand("svgeditor.reopenRelatedTextEditor", async () => {
-            if (panelSet && text) {
-                let editor = await newUntitled(vscode.ViewColumn.Beside, text);
+            if (panelSet) {
+                let editor = await newUntitled(vscode.ViewColumn.Beside, panelSet.text);
                 panelSet.editor = editor;
-                setListener(panelSet.panel, panelSet.editor);
+                setListener(panelSet);
             }
     }));
 }
