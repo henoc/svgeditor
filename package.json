@@ -132,6 +132,7 @@
     "hammerjs": "^2.0.8",
     "incremental-dom": "^0.5.1",
     "jsdom": "^11.12.0",
+    "object-copy": "^1.0.0",
     "parse-color": "^1.0.0",
     "pickr-widget": "^0.1.7",
     "svgpath": "2.2.1",

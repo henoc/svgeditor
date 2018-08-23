@@ -189,4 +189,22 @@ export function deepCopy<T>(obj: T): T {
     return JSON.parse(JSON.stringify(obj));
 }
 
+/**
+ * Object assign with descriptors.
+ */
+function smartAssign<P, Q>(target: P, source: Q): P & Q {
+    return <P & Q>Object.getOwnPropertyNames(source).reduce((prev, curr) => {
+        let descriptor = Object.getOwnPropertyDescriptor(source, curr)!;
+        Object.defineProperty(prev, curr, descriptor);
+        return prev;
+    }, target);
+}
+
 export type OneOrMore<T> = [T, ...T[]];
+
+export class Merger<T> {
+    constructor(readonly object: T) {}
+    merge<S>(source: S): Merger<S & T> {
+        return new Merger(smartAssign(this.object, source));
+    }
+}

@@ -218,6 +218,18 @@ export class SelectMode extends Mode {
                 });
             }
             break;
+            case "align left":
+            this.align("left");
+            break;
+            case "align right":
+            this.align("right");
+            break;
+            case "align top":
+            this.align("top");
+            break;
+            case "align bottom":
+            this.align("bottom");
+            break;
         }
         refleshContent();
         sendBackToEditor();
@@ -307,6 +319,53 @@ export class SelectMode extends Mode {
         if ("children" in pe) {
             for(let i = 0; i < pe.children.length; i++) {
                 this.traverse(pe.children[i], fn, i, pe);
+            }
+        }
+    }
+
+    private align(dir: "left" | "right" | "top" | "bottom"): void {
+        const minOrMax = (dir === "left" || dir === "top") ? Math.min : Math.max;
+        const xOrY = (dir === "left" || dir === "right") ? "x" : "y";
+        type Corner = "leftTop" | "leftBottom" | "rightTop" | "rightBottom";
+        const cornerNames =
+            (<() => [Corner, Corner]>(() => {
+                switch (dir) {
+                    case "left":
+                    return ["leftTop", "leftBottom"];
+                    case "right":
+                    return ["rightTop", "rightBottom"];
+                    case "top":
+                    return ["leftTop", "rightTop"];
+                    case "bottom":
+                    return ["leftBottom", "rightBottom"];
+                }
+            }))();
+        if (this.selectedShapeUuids) {
+            let edge: number | null = null;
+            const corners: {[uuid: string]: {cornerName: Corner, escapedPoint: Point}} = {};
+            for (let uuid of this.selectedShapeUuids) {
+                const [nameFirst, nameSecond] = cornerNames;
+                let escapedCornerFirst = this.escapeToNormalCoordinate(shaper(uuid)[nameFirst], [uuid]);
+                let escapedCornerSecond = this.escapeToNormalCoordinate(shaper(uuid)[nameSecond], [uuid]);
+                let tmp: number;
+                if ((tmp = minOrMax(escapedCornerFirst[xOrY], escapedCornerSecond[xOrY])) === escapedCornerFirst[xOrY]) {
+                    corners[uuid] = {
+                        cornerName: nameFirst,
+                        escapedPoint: escapedCornerFirst
+                    }
+                } else {
+                    corners[uuid] = {
+                        cornerName: nameSecond,
+                        escapedPoint: escapedCornerSecond
+                    }
+                }
+                edge = edge !== null && minOrMax(tmp, edge) || tmp;
+            }
+            if (edge !== null) for (let uuid of this.selectedShapeUuids) {
+                const cornersData = corners[uuid];
+                cornersData.escapedPoint[xOrY] = edge;
+                const targetCorner = this.inTargetCoordinate(cornersData.escapedPoint, [uuid]);
+                shaper(uuid)[cornersData.cornerName] = vfp(targetCorner);
             }
         }
     }

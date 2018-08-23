@@ -10,7 +10,8 @@ import { PathMode } from "./pathMode";
 import { assertNever, el, iterate } from "./utils";
 
 export type ModeName = "select" | "node" | "rect" | "ellipse" | "polyline" | "path" | "text";
-export type OperatorName = "duplicate" | "delete" | "scale-up" | "scale-down" | "group" | "ungroup" | "bring forward" | "send backward";
+export type OperatorName = "duplicate" | "delete" | "scale-up" | "scale-down" | "group" | "ungroup" | "bring forward" | "send backward" |
+    "align left" | "align right" | "align bottom" | "align top";
 
 class MenuComponent implements Component {
 
@@ -86,7 +87,11 @@ export class MenuListComponent implements Component {
         group: new OperatorComponent("group"),
         ungroup: new OperatorComponent("ungroup"),
         "bring forward": new OperatorComponent("bring forward"),
-        "send backward": new OperatorComponent("send backward")
+        "send backward": new OperatorComponent("send backward"),
+        "align left": new OperatorComponent("align left"),
+        "align right" :new OperatorComponent("align right"),
+        "align top" : new OperatorComponent("align top"),
+        "align bottom": new OperatorComponent("align bottom")
     }
     
 

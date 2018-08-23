@@ -1,5 +1,5 @@
 import { ParsedElement, Length, Transform, isLength, TransformDescriptor } from "./domParser";
-import { Vec2, v, vfp, OneOrMore } from "./utils";
+import { Vec2, v, vfp, OneOrMore, Merger } from "./utils";
 import { svgPathManager } from "./pathHelpers";
 import { convertToPixel, convertFromPixel } from "./measureUnits";
 import { svgVirtualMap, svgRealMap, configuration } from "./main";
@@ -11,6 +11,9 @@ import equal from "fast-deep-equal";
 interface ShaperFunctions {
     center: Vec2;
     leftTop: Vec2;
+    leftBottom: Vec2;
+    rightTop: Vec2;
+    rightBottom: Vec2;
     move(diff: Vec2): void;
     size: Vec2;
     size2(newSize: Vec2, fixedPoint: Vec2): void;
@@ -37,16 +40,49 @@ export function shaper(uuid: string): ShaperFunctions {
             { value: pxValue, unit: null, attrName };
     }
     const leftTop = {
-        getter: () => {
+        get leftTop() {
             const cent = self().center;
             const size = self().size;
             return cent.sub(size.div(v(2, 2)));
         },
-        setter: (point: Vec2) => {
-            const newCent = point.add(self().size.div(v(2, 2)));
-            self().center = newCent;
+        set leftTop(point: Vec2) {
+            self().center = point.add(self().size.div(v(2, 2)));
         }
     }
+    const rightTop = {
+        get rightTop() {
+            const cent = self().center;
+            const size = self().size;
+            return cent.add(v(size.x / 2, - size.y / 2));
+        },
+        set rightTop(point: Vec2) {
+            const size = self().size;
+            self().center = point.add(v(- size.x / 2, size.y / 2));;
+        }
+    }
+    const leftBottom = {
+        get leftBottom() {
+            const cent = self().center;
+            const size = self().size;
+            return cent.add(v(- size.x / 2, size.y / 2));
+        },
+        set leftBottom(point: Vec2) {
+            const size = self().size;
+            self().center = point.add(v(size.x / 2, - size.y / 2));
+        }
+    }
+    const rightBottom = {
+        get rightBottom() {
+            const cent = self().center;
+            const size = self().size;
+            return cent.add(size.div(v(2, 2)));
+        },
+        set rightBottom(point: Vec2) {
+            const size = self().size;
+            self().center = point.sub(size.div(v(2, 2)));
+        }
+    }
+    const corners = new Merger(leftTop).merge(leftBottom).merge(rightTop).merge(rightBottom).object;
     const self = () => shaper(uuid);
     const size2 = (newSize: Vec2, fixedPoint: Vec2) => {
         let oldSize = self().size;
@@ -55,14 +91,12 @@ export function shaper(uuid: string): ShaperFunctions {
         let diff = oldSize.sub(newSize).div(v(2, 2)).mul(v(fixedPoint.x - center.x > 0 ? 1 : -1, fixedPoint.y - center.y > 0 ? 1 : -1));
         self().move(diff);
     };
-    const transformDefaultImpl = <T extends { transform: Transform | null }>(attrs: T) => {
-        return {
-            getter: () => {
-                return attrs.transform && attrs.transform.matrices.length !== 0 && transform(...attrs.transform.matrices) || identity();
-            },
-            setter: (matrix: Matrix) => {
-                if (!equal(matrix, identity())) attrs.transform = { descriptors: [{ type: "matrix", ...matrix }], matrices: [matrix] };
-            }
+    const transformProps = {
+        get transform() {
+            return pe.tag !== "unknown" && "transform" in pe.attrs && pe.attrs.transform && pe.attrs.transform.matrices.length !== 0 && transform(...pe.attrs.transform.matrices) || identity();
+        },
+        set transform(matrix: Matrix) {
+            if (pe.tag !== "unknown" && "transform" in pe.attrs && !equal(matrix, identity())) pe.attrs.transform = { descriptors: [{ type: "matrix", ...matrix }], matrices: [matrix] };
         }
     }
     const allTransform = () => {
@@ -92,7 +126,7 @@ export function shaper(uuid: string): ShaperFunctions {
     switch (pe.tag) {
         case "svg":
             const attrs = pe.attrs;
-            return {
+            return new Merger({
                 get center() {
                     return v(
                         px(attrs.x) + px(attrs.width) / 2,
@@ -125,12 +159,6 @@ export function shaper(uuid: string): ShaperFunctions {
                     self().center = center;
                 },
                 size2,
-                get leftTop() {
-                    return leftTop.getter();
-                },
-                set leftTop(point: Vec2) {
-                    leftTop.setter(point);
-                },
                 get transform() {
                     const w = attrs.width && convertToPixel(attrs.width, uuid);
                     const h = attrs.height && convertToPixel(attrs.height, uuid);
@@ -159,10 +187,10 @@ export function shaper(uuid: string): ShaperFunctions {
                     }
                 },
                 rotate: () => undefined
-            }
+            }).merge(corners).object;
         case "circle":
             const cattrs = pe.attrs;
-            return {
+            return new Merger({
                 get center() {
                     return v(px(cattrs.cx), px(cattrs.cy));
                 },
@@ -194,16 +222,14 @@ export function shaper(uuid: string): ShaperFunctions {
                         cattrs.ry = fromPx(cattrs.r, "ry", wh.y / 2);
                     }
                 },
-                get transform() { return transformDefaultImpl(cattrs).getter(); }, set transform(matrix: Matrix) { transformDefaultImpl(cattrs).setter(matrix); },
                 size2,
-                get leftTop() { return leftTop.getter(); }, set leftTop(point: Vec2) { leftTop.setter(point); },
                 allTransform,
                 appendTransformDescriptors: appendTransformDescriptors(cattrs),
                 rotate: rotateCenter
-            }
+            }).merge(corners).merge(transformProps).object;
         case "rect":
             const rattrs = pe.attrs;
-            return {
+            return new Merger({
                 get center() {
                     return v(
                         px(rattrs.x) + px(rattrs.width) / 2,
@@ -235,16 +261,14 @@ export function shaper(uuid: string): ShaperFunctions {
                     rattrs.height = fromPx(rattrs.height, "height", wh.y);
                     self().center = center;
                 },
-                get transform() { return transformDefaultImpl(rattrs).getter(); }, set transform(matrix: Matrix) { transformDefaultImpl(rattrs).setter(matrix); },
                 size2,
-                get leftTop() { return leftTop.getter(); }, set leftTop(point: Vec2) { leftTop.setter(point); },
                 allTransform,
                 appendTransformDescriptors: appendTransformDescriptors(rattrs),
                 rotate: rotateCenter
-            }
+            }).merge(corners).merge(transformProps).object;
         case "ellipse":
             const eattrs = pe.attrs;
-            return {
+            return new Merger({
                 get center() {
                     return v(px(eattrs.cx), px(eattrs.cy));
                 },
@@ -267,16 +291,14 @@ export function shaper(uuid: string): ShaperFunctions {
                     eattrs.rx = fromPx(eattrs.rx, "rx", wh.x / 2);
                     eattrs.ry = fromPx(eattrs.ry, "ry", wh.y / 2);
                 },
-                get transform() { return transformDefaultImpl(eattrs).getter(); }, set transform(matrix: Matrix) { transformDefaultImpl(eattrs).setter(matrix); },
                 size2,
-                get leftTop() { return leftTop.getter(); }, set leftTop(point: Vec2) { leftTop.setter(point); },
                 allTransform,
                 appendTransformDescriptors: appendTransformDescriptors(eattrs),
                 rotate: rotateCenter
-            }
+            }).merge(corners).merge(transformProps).object;
         case "polyline":
             const pattrs = pe.attrs;
-            return {
+            return new Merger({
                 get center() {
                     const minX = pattrs.points && Math.min(...pattrs.points.map(pair => pair.x)) || 0;
                     const maxX = pattrs.points && Math.max(...pattrs.points.map(pair => pair.x)) || 0;
@@ -313,16 +335,14 @@ export function shaper(uuid: string): ShaperFunctions {
                     pattrs.points = acc;
                     self().center = oldCenter;
                 },
-                get transform() { return transformDefaultImpl(pattrs).getter(); }, set transform(matrix: Matrix) { transformDefaultImpl(pattrs).setter(matrix); },
                 size2,
-                get leftTop() { return leftTop.getter(); }, set leftTop(point: Vec2) { leftTop.setter(point); },
                 allTransform,
                 appendTransformDescriptors: appendTransformDescriptors(pattrs),
                 rotate: rotateCenter
-            }
+            }).merge(corners).merge(transformProps).object;
         case "path":
             const pathAttrs = pe.attrs;
-            return {
+            return new Merger({
                 get center() {
                     const parsedDAttr = svgPathManager(pathAttrs.d || []);
                     const vertexes = parsedDAttr.getVertexes();
@@ -384,17 +404,15 @@ export function shaper(uuid: string): ShaperFunctions {
                     pathAttrs.d = parsedDAttr.segments;
                     self().center = oldCenter;
                 },
-                get transform() { return transformDefaultImpl(pathAttrs).getter(); }, set transform(matrix: Matrix) { transformDefaultImpl(pathAttrs).setter(matrix); },
                 size2,
-                get leftTop() { return leftTop.getter(); }, set leftTop(point: Vec2) { leftTop.setter(point); },
                 allTransform,
                 appendTransformDescriptors: appendTransformDescriptors(pathAttrs),
                 rotate: rotateCenter
-            }
+            }).merge(corners).merge(transformProps).object;
         case "text":
             const fontInfo = font(pe.text || "", styleDeclaration.fontFamily || "", parseFloat(styleDeclaration.fontSize || "16"), styleDeclaration.fontWeight || "", styleDeclaration.fontStyle || "");
             const tattrs = pe.attrs;
-            return {
+            return new Merger({
                 get center() {
                     const size = self().size;
                     const topX = px(tattrs.x);
@@ -427,17 +445,15 @@ export function shaper(uuid: string): ShaperFunctions {
                     tattrs.textLength = fromPx(tattrs.textLength, "textLength", wh.x);
                     self().center = center;
                 },
-                get transform() { return transformDefaultImpl(tattrs).getter(); }, set transform(matrix: Matrix) { transformDefaultImpl(tattrs).setter(matrix); },
                 size2,
-                get leftTop() { return leftTop.getter(); }, set leftTop(point: Vec2) { leftTop.setter(point); },
                 allTransform,
                 appendTransformDescriptors: appendTransformDescriptors(tattrs),
                 rotate: rotateCenter
-            }
+            }).merge(corners).merge(transformProps).object;
         case "g":
             const gattrs = pe.attrs;
             const gchildren = pe.children;
-            return {
+            return new Merger({
                 move: (diff: Vec2) => {
                     const oldCenter = self().center;
                     const newCenter = oldCenter.add(diff);
@@ -512,7 +528,6 @@ export function shaper(uuid: string): ShaperFunctions {
                         }
                     }
                 },
-                get transform() { return transformDefaultImpl(gattrs).getter(); }, set transform(matrix: Matrix) { transformDefaultImpl(gattrs).setter(matrix); },
                 size2: (newSize: Vec2, fixedPoint: Vec2) => {
                     let oldSize = self().size;
                     let oldCenter = self().center;
@@ -526,11 +541,10 @@ export function shaper(uuid: string): ShaperFunctions {
                         shaper(gchildren[i].uuid).center = intoTargetCoordinate(newCenter.add(diffCenterOfC), gchildren[i].uuid);
                     }
                 },
-                get leftTop() { return leftTop.getter(); }, set leftTop(point: Vec2) { leftTop.setter(point); },
                 allTransform,
                 appendTransformDescriptors: appendTransformDescriptors(gattrs),
                 rotate: rotateCenter
-            }
+            }).merge(corners).merge(transformProps).object;
         case "unknown":
             throw new Error("Unknown shape cannot move.");
     }
@@ -546,7 +560,51 @@ export function multiShaper(uuids: OneOrMore<string>, useMultiEvenIfSingle: bool
         const pes = uuids.map(uuid => svgVirtualMap[uuid]);
         const commonParent = pes[0].parent;
         const self = () => multiShaper(uuids);
-        return {
+        const leftTop = {
+            get leftTop() {
+                const cent = self().center;
+                const size = self().size;
+                return cent.sub(size.div(v(2, 2)));
+            },
+            set leftTop(point: Vec2) {
+                self().center = point.add(self().size.div(v(2, 2)));
+            }
+        }
+        const rightTop = {
+            get rightTop() {
+                const cent = self().center;
+                const size = self().size;
+                return cent.add(v(size.x / 2, - size.y / 2));
+            },
+            set rightTop(point: Vec2) {
+                const size = self().size;
+                self().center = point.add(v(- size.x / 2, size.y / 2));;
+            }
+        }
+        const leftBottom = {
+            get leftBottom() {
+                const cent = self().center;
+                const size = self().size;
+                return cent.add(v(- size.x / 2, size.y / 2));
+            },
+            set leftBottom(point: Vec2) {
+                const size = self().size;
+                self().center = point.add(v(size.x / 2, - size.y / 2));
+            }
+        }
+        const rightBottom = {
+            get rightBottom() {
+                const cent = self().center;
+                const size = self().size;
+                return cent.add(size.div(v(2, 2)));
+            },
+            set rightBottom(point: Vec2) {
+                const size = self().size;
+                self().center = point.sub(size.div(v(2, 2)));
+            }
+        }
+        const corners = new Merger(leftTop).merge(leftBottom).merge(rightTop).merge(rightBottom).object;
+        return new Merger({
             move: (diff: Vec2) => {
                 const oldCenter = self().center;
                 const newCenter = oldCenter.add(diff);
@@ -640,15 +698,6 @@ export function multiShaper(uuids: OneOrMore<string>, useMultiEvenIfSingle: bool
                     }
                 }
             },
-            get leftTop() {
-                const cent = self().center;
-                const size = self().size;
-                return cent.sub(size.div(v(2, 2)));
-            },
-            set leftTop(point: Vec2) {
-                const newCent = point.add(self().size.div(v(2, 2)));
-                self().center = newCent;
-            },
             size2: (newSize: Vec2, fixedPoint: Vec2) => {
                 let oldSize = self().size;
                 let oldCenter = self().center;
@@ -667,7 +716,7 @@ export function multiShaper(uuids: OneOrMore<string>, useMultiEvenIfSingle: bool
                     shaper(c.uuid).appendTransformDescriptors(descriptors, from);
                 }
             }
-        }
+        }).merge(corners).object;
     }
 }
 
