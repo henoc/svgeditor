@@ -1,4 +1,4 @@
-import { ParsedElement, Length, Transform, isLength, TransformDescriptor } from "./domParser";
+import { ParsedElement, Length, Transform, isLength, TransformDescriptor, Paint } from "./domParser";
 import { Vec2, v, vfp, OneOrMore, Merger } from "./utils";
 import { svgPathManager } from "./pathHelpers";
 import { convertToPixel, convertFromPixel } from "./measureUnits";
@@ -14,6 +14,8 @@ interface ShaperFunctions {
     leftBottom: Vec2;
     rightTop: Vec2;
     rightBottom: Vec2;
+    fill: Paint | null;
+    stroke: Paint | null;
     move(diff: Vec2): void;
     size: Vec2;
     size2(newSize: Vec2, fixedPoint: Vec2): void;
@@ -83,6 +85,23 @@ export function shaper(uuid: string): ShaperFunctions {
         }
     }
     const corners = new Merger(leftTop).merge(leftBottom).merge(rightTop).merge(rightBottom).object;
+    const fill = {
+        get fill() {
+            return pe.tag !== "unknown" && "fill" in pe.attrs && pe.attrs.fill || null;
+        },
+        set fill(paint: Paint | null) {
+            if (pe.tag !== "unknown" && "fill" in pe.attrs) pe.attrs.fill = paint;
+        }
+    }
+    const stroke = {
+        get stroke() {
+            return pe.tag !== "unknown" && "stroke" in pe.attrs && pe.attrs.stroke || null;
+        },
+        set stroke(paint: Paint | null) {
+            if (pe.tag !== "unknown" && "stroke" in pe.attrs) pe.attrs.stroke = paint;
+        }
+    }
+    const colors = new Merger(fill).merge(stroke).object;
     const self = () => shaper(uuid);
     const size2 = (newSize: Vec2, fixedPoint: Vec2) => {
         let oldSize = self().size;
@@ -187,7 +206,7 @@ export function shaper(uuid: string): ShaperFunctions {
                     }
                 },
                 rotate: () => undefined
-            }).merge(corners).object;
+            }).merge(corners).merge(colors).object;
         case "circle":
             const cattrs = pe.attrs;
             return new Merger({
@@ -226,7 +245,7 @@ export function shaper(uuid: string): ShaperFunctions {
                 allTransform,
                 appendTransformDescriptors: appendTransformDescriptors(cattrs),
                 rotate: rotateCenter
-            }).merge(corners).merge(transformProps).object;
+            }).merge(corners).merge(colors).merge(transformProps).object;
         case "rect":
             const rattrs = pe.attrs;
             return new Merger({
@@ -265,7 +284,7 @@ export function shaper(uuid: string): ShaperFunctions {
                 allTransform,
                 appendTransformDescriptors: appendTransformDescriptors(rattrs),
                 rotate: rotateCenter
-            }).merge(corners).merge(transformProps).object;
+            }).merge(corners).merge(colors).merge(transformProps).object;
         case "ellipse":
             const eattrs = pe.attrs;
             return new Merger({
@@ -295,7 +314,7 @@ export function shaper(uuid: string): ShaperFunctions {
                 allTransform,
                 appendTransformDescriptors: appendTransformDescriptors(eattrs),
                 rotate: rotateCenter
-            }).merge(corners).merge(transformProps).object;
+            }).merge(corners).merge(colors).merge(transformProps).object;
         case "polyline":
             const pattrs = pe.attrs;
             return new Merger({
@@ -339,7 +358,7 @@ export function shaper(uuid: string): ShaperFunctions {
                 allTransform,
                 appendTransformDescriptors: appendTransformDescriptors(pattrs),
                 rotate: rotateCenter
-            }).merge(corners).merge(transformProps).object;
+            }).merge(corners).merge(colors).merge(transformProps).object;
         case "path":
             const pathAttrs = pe.attrs;
             return new Merger({
@@ -408,7 +427,7 @@ export function shaper(uuid: string): ShaperFunctions {
                 allTransform,
                 appendTransformDescriptors: appendTransformDescriptors(pathAttrs),
                 rotate: rotateCenter
-            }).merge(corners).merge(transformProps).object;
+            }).merge(corners).merge(colors).merge(transformProps).object;
         case "text":
             const fontInfo = font(pe.text || "", styleDeclaration.fontFamily || "", parseFloat(styleDeclaration.fontSize || "16"), styleDeclaration.fontWeight || "", styleDeclaration.fontStyle || "");
             const tattrs = pe.attrs;
@@ -449,7 +468,7 @@ export function shaper(uuid: string): ShaperFunctions {
                 allTransform,
                 appendTransformDescriptors: appendTransformDescriptors(tattrs),
                 rotate: rotateCenter
-            }).merge(corners).merge(transformProps).object;
+            }).merge(corners).merge(colors).merge(transformProps).object;
         case "g":
             const gattrs = pe.attrs;
             const gchildren = pe.children;
@@ -544,7 +563,7 @@ export function shaper(uuid: string): ShaperFunctions {
                 allTransform,
                 appendTransformDescriptors: appendTransformDescriptors(gattrs),
                 rotate: rotateCenter
-            }).merge(corners).merge(transformProps).object;
+            }).merge(corners).merge(colors).merge(transformProps).object;
         case "unknown":
             throw new Error("Unknown shape cannot move.");
     }
@@ -604,6 +623,33 @@ export function multiShaper(uuids: OneOrMore<string>, useMultiEvenIfSingle: bool
             }
         }
         const corners = new Merger(leftTop).merge(leftBottom).merge(rightTop).merge(rightBottom).object;
+        const fill = {
+            get fill() {
+                for (let pe of pes) {
+                    if (pe.tag !== "unknown" && "fill" in pe.attrs) return pe.attrs.fill;
+                }
+                return null;
+            },
+            set fill(paint: Paint | null) {
+                for (let pe of pes) {
+                    if (pe.tag !== "unknown" && "fill" in pe.attrs) pe.attrs.fill = paint;
+                }
+            }
+        }
+        const stroke = {
+            get stroke() {
+                for (let pe of pes) {
+                    if (pe.tag !== "unknown" && "stroke" in pe.attrs) return pe.attrs.stroke;
+                }
+                return null;
+            },
+            set stroke(paint: Paint | null) {
+                for (let pe of pes) {
+                    if (pe.tag !== "unknown" && "stroke" in pe.attrs) pe.attrs.stroke = paint;
+                }
+            }
+        }
+        const colors = new Merger(fill).merge(stroke).object;
         return new Merger({
             move: (diff: Vec2) => {
                 const oldCenter = self().center;
@@ -716,7 +762,7 @@ export function multiShaper(uuids: OneOrMore<string>, useMultiEvenIfSingle: bool
                     shaper(c.uuid).appendTransformDescriptors(descriptors, from);
                 }
             }
-        }).merge(corners).object;
+        }).merge(corners).merge(colors).object;
     }
 }
 

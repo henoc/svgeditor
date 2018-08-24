@@ -28,6 +28,7 @@ export class SelectMode extends Mode {
         super();
         if (initialSelectedShapeUuid) {
             this.selectedShapeUuids = [initialSelectedShapeUuid];
+            contentChildrenComponent.styleConfigComponent.affectedShapeUuids = this.selectedShapeUuids;
             this.shapeHandlers = this.createShapeHandlers(this.selectedShapeUuids);
         }
     }
@@ -41,7 +42,6 @@ export class SelectMode extends Mode {
             this.commonParent = null;
             this.selectedHandlerIndex = null;
             this.shapeHandlers = [];
-            refleshContent();
         } else if (event.shiftKey && this.selectedShapeUuids && pe.parent === this.commonParent && this.selectedShapeUuids.indexOf(uu) === -1) {
             // multiple selection
             this.selectedShapeUuids.push(uu);
@@ -50,7 +50,6 @@ export class SelectMode extends Mode {
             this.startShapeCenter = multiShaper(uuids).center;
             this.isDraggingShape = true;
             this.shapeHandlers = this.createShapeHandlers(this.selectedShapeUuids);
-            refleshContent();
         } else if (this.selectedShapeUuids && this.selectedShapeUuids.length > 1) {
             // select already multiple selected shaeps
             const uuids = this.selectedShapeUuids;
@@ -65,8 +64,9 @@ export class SelectMode extends Mode {
             this.startShapeCenter = shaper(uu).center;
             this.isDraggingShape = true;
             this.shapeHandlers = this.createShapeHandlers(this.selectedShapeUuids);
-            refleshContent();
         }
+        contentChildrenComponent.styleConfigComponent.affectedShapeUuids = this.selectedShapeUuids;
+        refleshContent();
     }
 
     onShapeMouseDownRight(event: MouseEvent, uu: string) {
@@ -139,6 +139,7 @@ export class SelectMode extends Mode {
                     shaper(copiedUuid).move(v(fourPercentX, fourPercentY));
                     this.selectedShapeUuids ? this.selectedShapeUuids.push(copiedUuid) : this.selectedShapeUuids = [copiedUuid];
                 }
+                contentChildrenComponent.styleConfigComponent.affectedShapeUuids = this.selectedShapeUuids;
                 if (this.selectedShapeUuids) this.shapeHandlers = this.createShapeHandlers(this.selectedShapeUuids);
             }
             break;
@@ -175,6 +176,7 @@ export class SelectMode extends Mode {
                     parentPe.children = parentPe.children.filter(c => uuids.indexOf(c.uuid) === -1);
                     refleshContent();       // make real elements
                     this.selectedShapeUuids = [groupUuid];
+                    contentChildrenComponent.styleConfigComponent.affectedShapeUuids = this.selectedShapeUuids;
                     this.shapeHandlers = this.createShapeHandlers(this.selectedShapeUuids);
                 }
             }

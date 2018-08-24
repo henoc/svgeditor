@@ -3,7 +3,8 @@ import { drawState, refleshContent, openWindows, contentChildrenComponent } from
 import { Paint, PaintFormat } from "./domParser";
 import tinycolor from "tinycolor2";
 import { Component, WindowComponent } from "./component";
-import { el } from "./utils";
+import { el, OneOrMore } from "./utils";
+import { multiShaper } from "./shapes";
 
 class ButtonComponent implements Component {
     constructor(public name: string, public key: string, public onclick: () => void) {}
@@ -262,6 +263,7 @@ export class StyleConfigComponent implements Component {
     colorBoxFillBackground: Paint | null = drawState.fill;
     colorBoxStrokeBackground: Paint | null = drawState.stroke;
     colorPicker: ColorPickerComponent | null = null;
+    private _affectedShapeUuids: OneOrMore<string> | null = null;
 
     render() {
         text(`${contentChildrenComponent.svgContainerComponent.scalePercent}% `);
@@ -272,6 +274,22 @@ export class StyleConfigComponent implements Component {
         this.colorBoxRender(this.colorBoxStrokeBackground, "stroke");
         el`/span`;
         if (this.colorPicker) this.colorPicker.render();
+    }
+
+    set affectedShapeUuids(uuids: OneOrMore<string> | null) {
+        if (uuids) {
+            this.colorBoxFillBackground = multiShaper(uuids).fill;
+            this.colorBoxStrokeBackground = multiShaper(uuids).stroke;
+            this._affectedShapeUuids = uuids;
+        } else {
+            this.colorBoxFillBackground = drawState.fill;
+            this.colorBoxStrokeBackground = drawState.stroke;
+            this._affectedShapeUuids = null;
+        }
+    }
+
+    get affectedShapeUuids(): OneOrMore<string> | null {
+        return this._affectedShapeUuids;
     }
 
     private colorBoxRender(paint: Paint | null, relatedProperty: "fill" | "stroke") {
@@ -302,9 +320,11 @@ export class StyleConfigComponent implements Component {
             switch (relatedProperty) {
                 case "fill":
                 this.colorBoxFillBackground = drawState.fill = colorpicker.getPaint(drawState.fill && drawState.fill.format);
+                if (this.affectedShapeUuids) multiShaper(this.affectedShapeUuids).fill = drawState.fill;
                 break;
                 case "stroke":
                 this.colorBoxStrokeBackground = drawState.stroke = colorpicker.getPaint(drawState.stroke && drawState.stroke.format);
+                if (this.affectedShapeUuids) multiShaper(this.affectedShapeUuids).stroke = drawState.stroke;
                 break;
             }
             this.colorPicker = null;
