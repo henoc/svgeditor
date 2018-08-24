@@ -1,6 +1,6 @@
 import SvgPath from "svgpath";
 import {PathCommand} from "./domParser";
-import { Vec2, v } from "./utils";
+import { Vec2, v, deepCopy } from "./utils";
 
 /**
  * SvgPath wrapper class
@@ -51,6 +51,7 @@ class SvgPathManager {
                 const ret = iter(<any>s, i , v(x, y));
                 // resolve with library bug(?)
                 if (ret) {
+                    s.length = ret.length;
                     for (let j = 0; j < s.length; j++) {
                         s[j] = ret[j];
                     }
@@ -67,7 +68,7 @@ class SvgPathManager {
                     } else if (s[0] === "h") {
                         s[1] -= x;
                     } else {
-                        for (let j = 0; j < s.length; j+=2) {
+                        for (let j = 1; j < s.length; j+=2) {
                             s[j] -= x;
                             s[j+1] -= y;
                         }
@@ -85,8 +86,14 @@ class SvgPathManager {
         return this;
     }
 
+    rel(): this {
+        // @ts-ignore
+        this.svgpath.rel();
+        return this;
+    }
+
     getVertexes(): Vec2[] {
-        const clone = svgPathManager([...this.segments]).unvh().proceed(p => p.unshort().unarc());
+        const clone = svgPathManager(deepCopy(this.segments)).unvh().proceed(p => p.unshort().unarc());
         const acc: Vec2[] = [];
         clone.safeIterate(([s, ...t]) => {
             for (let i = 0; i < t.length; i += 2) {

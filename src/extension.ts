@@ -9,9 +9,9 @@ const format = require('xml-formatter');
 export function activate(context: vscode.ExtensionContext) {
 
     let readResource =
-        (filename: string) => fs.readFileSync(path.join(__dirname, "..", "resources", filename), "UTF-8");
+        (filename: string) => fs.readFileSync(path.join(__dirname, "..", "..", "resources", filename), "UTF-8");
     let readOthers =
-        (filename: string) => fs.readFileSync(path.join(__dirname, "..", filename), "UTF-8");
+        (filename: string) => fs.readFileSync(path.join(__dirname, "..", "..", filename), "UTF-8");
     let viewer = readResource("viewer.html");
     let templateSvg = readResource("template.svg");
     let bundleJsPath = vscode.Uri.file(path.join(context.extensionPath, "resources", "bundle.js")).with({ scheme: "vscode-resource"});
