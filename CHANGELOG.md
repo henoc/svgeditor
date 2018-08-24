@@ -2,6 +2,7 @@
 
 - 2.0.0
   - Reimplement with typescript again😫
+  - VSCode theme color is now reflected because of VSCode WebView API
   - Indicates whether tags or attributes written by user is now supported by svgeditor or not
   - Support unit🎉
   - Support transform attribute🎉
