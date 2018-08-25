@@ -173,7 +173,7 @@ export function isLengthUnit(unit: string | null): unit is LengthUnit {
 }
 
 export function isLength(obj: Object): obj is Length {
-    return "unit" in obj && "value" in obj && "attrName" in obj;
+    return obj instanceof Object && "unit" in obj && "value" in obj && "attrName" in obj;
 }
 
 export type PaintFormat = "none" | "currentColor" | "inherit" | "name" | "hex" | "hex6" | "hex3" | "hex4" | "hex8" | "rgb" | "prgb" | "hsl";
@@ -187,7 +187,7 @@ export interface Paint {
 }
 
 export function isPaint(obj: Object): obj is Paint {
-    return "format" in obj && "r" in obj && "g" in obj && "b" in obj && "a" in obj;
+    return obj instanceof Object && "format" in obj && "r" in obj && "g" in obj && "b" in obj && "a" in obj;
 }
 
 export interface Point {
@@ -229,7 +229,7 @@ export interface Transform {
 }
 
 export function isTransform(obj: Object): obj is Transform {
-    return "descriptors" in obj && "matrices" in obj;
+    return obj instanceof Object && "descriptors" in obj && "matrices" in obj;
 }
 
 export type FontSize = "xx-small" | "x-small" | "small" | "medium" | "large" | "x-large" | "xx-large" | "larger" | "smaller" | Length;
@@ -566,8 +566,8 @@ function validateOnly<T>(someAttr: string, element: xmldoc.XmlElement, onWarn: (
 
 function fontSizeAttr(pair: {name: string, value: string | null}, element: xmldoc.XmlElement, onWarn: (w: Warning) => void): FontSize | undefined {
     if (pair.value === null) return;
-    if (isFontSize(pair.value)) {
-        return pair.value;  // string & Length = never
+    if (isFontSize(pair.value) /* Use only for judging font-size string representation */) {
+        return pair.value;
     } else {
         return lengthAttr(pair, element, onWarn);
     }

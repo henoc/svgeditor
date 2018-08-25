@@ -112,7 +112,7 @@ function join2(sep: (i: number) => string, strs: string[]) {
  * 
  * note: ``el`li foo="list-${variable}"` `` is incorrect. Use ``el`li foo=${`list-${variable}`}` ``
  */
-export function el(template: TemplateStringsArray, ...args: any[]) {
+export function el(template: TemplateStringsArray, ...args: any[]): Element {
     if (template[0].charAt(0) === "/") {
         return elementClose(template[0].slice(1).trim());
     } else {
@@ -124,9 +124,9 @@ export function el(template: TemplateStringsArray, ...args: any[]) {
             ...parseResult.nonStatics.map(nst => typeof nst === "number" ? args[nst] : nst).concat(...parseResult.arrayNonStatics.map(i => args[i]))
         ];
         if (parseResult.selfContained) {
-            elementVoid(...elementOpenArgs);
+            return elementVoid(...elementOpenArgs);
         } else {
-            elementOpen(...elementOpenArgs);
+            return elementOpen(...elementOpenArgs);
         }
     }
 }

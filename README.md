@@ -2,7 +2,7 @@
 
 ![sample](images/out.gif)
 
-**ver 2.0**: Complete code rewrite😫 Support transform attribute, unit (em, cm, %, etc.)🎉
+**ver 2.0**: Complete code rewrite😫 Support transform attribute, unit (em, cm, %, etc.), and more🎉
 
 Now your VSCode can mutate to an interactive visual & literal SVG editor😎
 
@@ -41,7 +41,7 @@ You can create shapes using the SVG's coder or directly creating shapes with the
 - circle: cx, cy, r, `<presentation attributes>`
 - rect: x, y, width, height, rx, ry, `<presentation attributes>`
 - ellipse: cx, cy, rx, ry, `<presentation attributes>`
-- polyline: points, `<presentation attributes>`
+- polyline/polygon: points, `<presentation attributes>`
 - path: d, `<presentation attributes>`
 - text: x, y, dx, dy, textLength, lengthAdjust, `<presentation attributes>`
 - g: `<presentation attributes>`
