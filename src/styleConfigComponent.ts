@@ -1,5 +1,5 @@
 import { elementOpen, elementClose, text, elementVoid } from "incremental-dom";
-import { drawState, refleshContent, openWindows, contentChildrenComponent } from "./main";
+import { drawState, refleshContent, openWindows, contentChildrenComponent, editMode } from "./main";
 import { Paint, PaintFormat } from "./domParser";
 import tinycolor from "tinycolor2";
 import { Component, WindowComponent } from "./component";
@@ -266,7 +266,7 @@ export class StyleConfigComponent implements Component {
     private _affectedShapeUuids: OneOrMore<string> | null = null;
 
     render() {
-        text(`${contentChildrenComponent.svgContainerComponent.scalePercent}% `);
+        this.scaleSelector();
         el`span *class="svgeditor-bold"`;
         text(" fill: ");
         this.colorBoxRender(this.colorBoxFillBackground, "fill");
@@ -334,6 +334,25 @@ export class StyleConfigComponent implements Component {
             refleshContent();
         });
         openWindows["colorpicker"] = this.colorPicker;
+        refleshContent();
+    }
+
+    private scaleSelector() {
+        const percent = contentChildrenComponent.svgContainerComponent.scalePercent;
+        el`select :key="scale-selector" *onchange=${(event: Event) => this.onChangeScale(event)}`;
+        for (let pc of (new Array(11)).fill(0).map((_, i) => percent - 500 + i * 100).filter(v => v >= 20)) {
+            el`option value=${pc}`;
+            text(pc + "%");
+            el`/option`;
+        }
+        const selectElem = <HTMLSelectElement>el`/select`;
+        selectElem.value = String(percent);
+    }
+
+    private onChangeScale(event: Event) {
+        const percent = Number((<HTMLSelectElement>event.target).value);
+        contentChildrenComponent.svgContainerComponent.scalePercent = percent;
+        editMode.mode.updateHandlers();
         refleshContent();
     }
 }

@@ -114,7 +114,7 @@ function join2(sep: (i: number) => string, strs: string[]) {
  */
 export function el(template: TemplateStringsArray, ...args: any[]) {
     if (template[0].charAt(0) === "/") {
-        elementClose(template[0].slice(1).trim());
+        return elementClose(template[0].slice(1).trim());
     } else {
         const parseResult = memoizedElopenParser(template);
         const elementOpenArgs = <[string, string | undefined, any[], ...any[]]>[
