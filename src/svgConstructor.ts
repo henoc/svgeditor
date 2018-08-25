@@ -110,6 +110,7 @@ export function construct(pe: ParsedElement, options?: SvgConstructOptions): Svg
                 .uattr("rx", pe.attrs.rx)
                 .uattr("ry", pe.attrs.ry);
             case "polyline":
+            case "polygon":
             setBaseAttrs(pe.attrs, tag);
             setPresentationAttrs(pe.attrs, tag);
             const pointsStr = pe.attrs.points && pe.attrs.points.map(point => `${point.x},${point.y}`).join(" ");

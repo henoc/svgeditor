@@ -23,6 +23,7 @@ export type ParsedElement = (
     ParsedRectElement |
     ParsedEllipseElement |
     ParsedPolylineElement |
+    ParsedPolygonElement |
     ParsedPathElement |
     ParsedTextElement |
     ParsedGroupElement |
@@ -56,6 +57,11 @@ interface ParsedEllipseElement {
 
 interface ParsedPolylineElement {
     tag: "polyline",
+    attrs: ParsedPolylineAttr
+}
+
+interface ParsedPolygonElement {
+    tag: "polygon",
     attrs: ParsedPolylineAttr
 }
 
@@ -275,6 +281,9 @@ export function parse(element: xmldoc.XmlElement, parent: string | null): Parsed
     } else if (element.name === "polyline") {
         const attrs = parseAttrs(element, pushWarns).polyline();
         return {result: {tag: "polyline", attrs, uuid, parent, isRoot}, warns};
+    } else if (element.name === "polygon") {
+        const attrs = parseAttrs(element, pushWarns).polyline();
+        return {result: {tag: "polygon", attrs, uuid, parent, isRoot}, warns};
     } else if (element.name === "path") {
         const attrs = parseAttrs(element, pushWarns).path();
         return {result: {tag: "path", attrs, uuid, parent, isRoot}, warns};

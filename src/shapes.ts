@@ -316,6 +316,7 @@ export function shaper(uuid: string): ShaperFunctions {
                 rotate: rotateCenter
             }).merge(corners).merge(colors).merge(transformProps).object;
         case "polyline":
+        case "polygon":
             const pattrs = pe.attrs;
             return new Merger({
                 get center() {

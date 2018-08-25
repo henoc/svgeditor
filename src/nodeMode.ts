@@ -19,7 +19,7 @@ export class NodeMode extends Mode {
         super();
         if (initialSelectedShapeUuid) {
             let uu = initialSelectedShapeUuid;
-            if (svgVirtualMap[uu].tag === "path" || svgVirtualMap[uu].tag === "polyline") {
+            if (/^(path|poly(line|gon))$/.test(svgVirtualMap[uu].tag)) {
                 this.selectedShapeUuid = uu;
                 this.shapeHandlers = this.createShapeHandlers(this.selectedShapeUuid);
             }
@@ -33,7 +33,7 @@ export class NodeMode extends Mode {
             this.selectedHandlerIndex = null;
             this.shapeHandlers = [];
             refleshContent();
-        } else if (svgVirtualMap[uu].tag === "path" || svgVirtualMap[uu].tag === "polyline") {
+        } else if (/^(path|poly(line|gon))$/.test(svgVirtualMap[uu].tag)) {
             this.selectedShapeUuid = uu;
             this.shapeHandlers = this.createShapeHandlers(this.selectedShapeUuid);
             refleshContent();
@@ -46,7 +46,7 @@ export class NodeMode extends Mode {
         if (this.selectedShapeUuid && this.isDraggingHandler && this.selectedHandlerIndex !== null) {
             let cursor = vfp(this.inTargetCoordinate(this.cursor(event), this.selectedShapeUuid));
             const selected = svgVirtualMap[this.selectedShapeUuid];
-            if (selected.tag === "polyline" && selected.attrs.points) {
+            if ((selected.tag === "polyline" || selected.tag === "polygon") && selected.attrs.points) {
                 selected.attrs.points[this.selectedHandlerIndex] = cursor;
             } else if (selected.tag === "path" && selected.attrs.d) {
                 let i = 0;
@@ -165,7 +165,7 @@ export class NodeMode extends Mode {
             }
             elems.push(e);
         }
-        if (selected.tag === "polyline" && selected.attrs.points) {
+        if ((selected.tag === "polyline" || selected.tag === "polygon") && selected.attrs.points) {
             for (let i = 0; i < selected.attrs.points.length; i++) {
                 const point = selected.attrs.points[i];
                 registEndPoint(v(point.x, point.y), i);
