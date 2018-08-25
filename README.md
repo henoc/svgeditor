@@ -1,6 +1,6 @@
 # SVG Editor
 
-![sample](images/out.gif)
+![sample](images/capture.png)
 
 **ver 2.0**: Complete code rewrite😫 Support transform attribute, unit (em, cm, %, etc.), and more🎉
 

@@ -36,7 +36,7 @@ export class SvgContainerComponent implements Component {
             const scaledHeight = height * this.scalePercent / 100;
             const wrapper = new SvgTag("svg").attr("width", scaledWidth).attr("height", scaledHeight).attr("viewBox", viewBox).attr("style", `font:${outerFontEnv}`).children(svgtag);
             el`svg :key="svgcontainer" *class="svgeditor-svgcontainer" *xmlns="http://www.w3.org/2000/svg" *xmlns:xlink="http://www.w3.org/1999/xlink" width=${scaledWidth} height=${scaledHeight} viewBox=${viewBox}`;
-                el`image width=${width} height=${height} xlink:href=${`data:image/svg+xml,${encodeURIComponent(wrapper.build().outerHTML)}`} /`;
+                el`image width=${width} height=${height} xlink:href=${`data:image/svg+xml,${encodeURIComponent(wrapper.toString())}`} /`;
                 transparentSvgtag.render();
                 el`svg :key="shapeHandler" width=${width} height=${height}`;
                     editMode.mode.render();

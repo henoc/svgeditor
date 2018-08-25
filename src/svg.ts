@@ -1,4 +1,4 @@
-import { iterate, assertNever, deepCopy } from "./utils";
+import { iterate, assertNever, deepCopy, escapeHtml } from "./utils";
 import { Length, Paint, PathCommand, Transform, isLength, isPaint, isTransform, FontSize } from "./domParser";
 import tinycolor from "tinycolor2";
 import { svgPathManager } from "./pathHelpers";
@@ -152,6 +152,27 @@ export class SvgTag implements Component {
                 elem.addEventListener(key, value);
             });
             return elem;
+        } else {
+            throw new Error("In class Tag, no tag name found when build.");
+        }
+    }
+
+    toString(): string {
+        if (this.data.tag) {
+            if (this.data.tag === "svg") {
+                this.data.attrs.xmlns = svgns;
+                this.data.attrs["xmlns:xlink"] = xlinkns;
+            }
+            const attrs: string[] = [];
+            iterate(this.data.attrs, (key, value) => {
+                attrs.push(`${key}="${escapeHtml(String(value))}"`);
+            });
+            const head = [this.data.tag];
+            if (attrs.length > 0) head.push(attrs.join(" "));
+            if (this.data.class.length > 0) head.push(`class="${this.data.class.join(" ")}"`);
+            return (this.data.text || this.data.children.length !== 0) ?
+                `<${head.join(" ")}>${this.data.children.map(c => c.toString()).join("")}${this.data.text && this.data.text.trim() || ""}</${this.data.tag}>` :
+                `<${head.join(" ")}/>`;
         } else {
             throw new Error("In class Tag, no tag name found when build.");
         }

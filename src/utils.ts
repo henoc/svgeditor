@@ -208,3 +208,17 @@ export class Merger<T> {
         return new Merger(smartAssign(this.object, source));
     }
 }
+
+export function escapeHtml(str: string) {
+    const escape = {
+        '<': '&lt;',
+        '>': '&gt;',
+        '&': '&amp;',
+        '"': '&quot;',
+        "'": '&#39;',
+        '`': '&#x60;'
+    };
+    return str.replace(/[<>&"'`]/g, (match) => {
+        return escape[<"<"|">"|"&"|"\""|"'"|"`">match];
+    });
+}
