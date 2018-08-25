@@ -1,8 +1,10 @@
 # SVG Editor
 
-![sample](images/out.gif)
+![sample](images/capture.png)
 
-Now your VSCode can mutate to an interactive visual & literal SVG editor 😎
+**ver 2.0**: Complete code rewrite😫 Support transform attribute, unit (em, cm, %, etc.), and more🎉
+
+Now your VSCode can mutate to an interactive visual & literal SVG editor😎
 
 You can create shapes using the SVG's coder or directly creating shapes with the shaping tool.
 
@@ -11,71 +13,47 @@ You can create shapes using the SVG's coder or directly creating shapes with the
 - New File with SVG Editor
   - Open untitled file with SVG template.
 - Open SVG Editor
-  - Target active SVG tab to edit with SVG Editor.
+  - Target active SVG file to edit with SVG Editor.
+- Reopen Related TextEditor
+  - Reopen files from SVG Editor tab.
 
-## Kinds of operation
+## Configuration
 
-- Select mode
-  - Scale and translate.
-- Node mode
-  - Edit node of polyline, polygon.
-- Rectangle, ellipse, polygon, path, text mode
-  - Make new objects.
-- Gradient mode
-  - Define linear or radial gradients.
+- svgeditor.filenameExtension
+  - Initial filename extension of new untitled file.
+  - default: svg
+- svgeditor.showAll
+  - Send all attributes and tags to WebView regardless of SVG Editor support.
+  - default: true
+- svgeditor.defaultUnit
+  - Specifies the unit when creating some shapes.
+  - default: null
+- svgeditor.decimalPlaces
+  - The number of decimal places.
+  - default: 1
+- svgeditor.collectTransformMatrix
+  - Collect two or more transform functions into a matrix.
+  - default: true
+
+## Current support tags and attributes
+
+- svg: xmlns, xmlns:xlink, version, viewBox, x, y, width, height
+- circle: cx, cy, r, `<presentation attributes>`
+- rect: x, y, width, height, rx, ry, `<presentation attributes>`
+- ellipse: cx, cy, rx, ry, `<presentation attributes>`
+- polyline/polygon: points, `<presentation attributes>`
+- path: d, `<presentation attributes>`
+- text: x, y, dx, dy, textLength, lengthAdjust, `<presentation attributes>`
+- g: `<presentation attributes>`
+
+`<presentation attributes>`: fill, stroke, transform, font-family, font-size, font-style, font-weight
 
 ## Future plans
 
-- [x] Reimplement rotation
-- [x] Reimplement path mode
-- [x] Reimplement text mode
-- [ ] Reimplement group and ungroup
-- [x] Reflect embedded CSS in SVG
-- [ ] Attributes output style options
-- [ ] Scale objects with fixed aspect ratio mode
-- [x] `defs` tag
-- [ ] `use` tag
-- [ ] `marker` tag
-- [ ] unit
-- [x] Gradation colors
-- [ ] Transform attribute
-- [x] Zoom
-- [ ] Handle images
+- [ ] Embedded CSS
+- [ ] Gradation colors
 - [ ] Filters
-
-## ChangeLog
-
-- 1.0.0 Add text mode again, remove dependency of elm-mdl
-- 0.17.0 Enable to move text
-- 0.16.0 It was changed to reference always a content of latest active editor 
-- 0.15.1 Fix align bug
-- 0.15.0 Add node increment and decrement operation
-- 0.14.1 Fix a bug text disappears
-- 0.14.0 Support scale-up and scale-down
-- 0.13.0 Support align
-- 0.12.0 Implement rotation again
-- 0.11.0 Support "object to path" operation
-- 0.10.2 Fix path bug
-- 0.10.1 Fix opacity bug
-- 0.10.0 Introduce SVGO for each output
-- 0.9.0 Support some stroke attributes
-- 0.8.1 Get better
-- 0.8.0 Renewal gradient features as gradient mode
-- 0.7.0 Support linear and radial gradients
-- 0.6.0 Use elm-mdl
-- 0.5.3 Fix display size
-- 0.5.2 Fix color in hand mode
-- 0.5.1 Get better
-- 0.5.0 Enable to resolve reference. Elements filled with linearGradient are recognized correct for example.
-- 0.4.5 Fix bug of new file command
-- 0.4.4 Add path mode again
-- 0.4.3 Add opacity adjustment button and fix style bugs
-- 0.4.2 Enable to select path element again
-- 0.4.1 Support embedded CSS again
-- 0.4.0 Reimplement with Elm. Many things have improved, but some functions are temporary unavailable 😥
-- 0.3.0 Added group and ungroup button, improved right click menu
-- 0.2.0 Affected embedded CSS in SVG
-- 0.1.0 Released
+- [ ] Images
 
 ## License
 

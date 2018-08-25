@@ -2,7 +2,7 @@
   "name": "svgeditor",
   "displayName": "SVG Editor",
   "description": "Visual and literal SVG editor for VSCode.",
-  "version": "1.0.0",
+  "version": "2.0.0",
   "publisher": "henoc",
   "icon": "images/SVG_logo.png",
   "galleryBanner": {
@@ -22,13 +22,14 @@
     "Other"
   ],
   "engines": {
-    "vscode": "^0.10.7"
+    "vscode": "^1.25.0"
   },
   "activationEvents": [
     "onCommand:svgeditor.openSvgEditor",
-    "onCommand:svgeditor.newSvgEditor"
+    "onCommand:svgeditor.newSvgEditor",
+    "onCommand:svgeditor.reopenRelatedTextEditor"
   ],
-  "main": "./out/extension",
+  "main": "./out/src/extension",
   "contributes": {
     "commands": [
       {
@@ -38,6 +39,10 @@
       {
         "command": "svgeditor.newSvgEditor",
         "title": "New File with SVG Editor"
+      },
+      {
+        "command": "svgeditor.reopenRelatedTextEditor",
+        "title": "Reopen Text Editor Related to Current SVG Editor"
       }
     ],
     "menus": {
@@ -47,26 +52,98 @@
           "when": "resourceLangId == svg"
         }
       ]
+    },
+    "configuration": {
+      "title": "SVG Editor configurations",
+      "properties": {
+        "svgeditor.filenameExtension": {
+          "type": "string",
+          "default": "svg",
+          "description": "Initial filename extension of new untitled file."
+        },
+        "svgeditor.showAll": {
+          "type": "boolean",
+          "default": true,
+          "description": "Send all attributes and tags to WebView regardless of SVG Editor support.",
+          "scope": "resource"
+        },
+        "svgeditor.defaultUnit": {
+          "type": [
+            "string",
+            "null"
+          ],
+          "enum": [
+            "em",
+            "ex",
+            "px",
+            "in",
+            "cm",
+            "mm",
+            "pt",
+            "pc",
+            "%"
+          ],
+          "default": null,
+          "description": "Specifies the unit when creating some shapes.",
+          "scope": "resource"
+        },
+        "svgeditor.decimalPlaces": {
+          "type": "number",
+          "default": 1,
+          "description": "The number of decimal places.",
+          "scope": "resource"
+        },
+        "svgeditor.collectTransformMatrix": {
+          "type": "boolean",
+          "default": true,
+          "description": "Collect two or more transform functions into a matrix.",
+          "scope": "resource"
+        }
+      }
     }
   },
   "scripts": {
     "vscode:prepublish": "npm run compile",
-    "compile": "tsc -p ./ && npm run elm",
-    "elm": "elm make src/Main.elm --output resources/main.js",
-    "postinstall": "node ./node_modules/vscode/bin/install"
+    "compile": "tsc -p ./ && npm run browserify",
+    "browserify": "browserify out/src/main.js -o resources/bundle.js",
+    "postinstall": "node ./node_modules/vscode/bin/install",
+    "test": "npm run compile && mocha ./out/test/*.test.js"
   },
   "devDependencies": {
-    "@types/node": "^9.4.0",
     "@types/ejs": "^2.5.0",
+    "@types/hammerjs": "^2.0.35",
+    "@types/incremental-dom": "^0.5.0",
+    "@types/jsdom": "^11.0.6",
+    "@types/mocha": "^5.2.5",
+    "@types/node": "^10.9.1",
+    "@types/tinycolor2": "^1.4.0",
+    "@types/uuid": "^3.4.3",
+    "@types/xmldoc": "^1.1.3",
+    "browserify": "^16.2.2",
     "tslint": "^5.9.1",
-    "typescript": "^2.6.2",
-    "vscode": "^1.1.10"
+    "typescript": "^3.0.1",
+    "utility-types": "^2.0.0",
+    "vscode": "^1.1.18",
+    "mocha": "^5.2.0"
   },
   "dependencies": {
     "ejs": "^2.5.7",
-    "html": "^1.0.0",
-    "js-yaml": "^3.10.0",
-    "svgo": "^1.0.3",
-    "svgpath": "^2.2.1"
+    "fast-deep-equal": "^2.0.1",
+    "fast-memoize": "^2.5.1",
+    "font-measure": "^1.2.2",
+    "hammerjs": "^2.0.8",
+    "incremental-dom": "^0.5.1",
+    "jsdom": "^11.12.0",
+    "object-copy": "^1.0.0",
+    "parse-color": "^1.0.0",
+    "pickr-widget": "^0.1.7",
+    "svgpath": "2.2.1",
+    "text-width": "^1.2.0",
+    "tinycolor2": "^1.4.1",
+    "transformation-matrix": "^1.12.0",
+    "uuid": "^3.3.2",
+    "vue": "^2.5.16",
+    "xml-formatter": "^1.0.1",
+    "xmldoc": "^1.1.2"
   }
 }

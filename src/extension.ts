@@ -1,142 +1,162 @@
-"use strict";
-
 import * as vscode from "vscode";
 import * as fs from "fs";
 import * as path from "path";
-import * as yaml from "js-yaml";
-import {render} from "ejs";
-import * as SvgoConstructor from "svgo";
-import * as svgpath from "svgpath";
+import * as xmldoc from "xmldoc";
+import { render } from "ejs";
+import { parse } from "./domParser";
+const format = require('xml-formatter');
 
 export function activate(context: vscode.ExtensionContext) {
 
-  let previewUri = vscode.Uri.parse("svgeditor://authority/svgeditor");
-  let readResource =
-    (filename: string) => fs.readFileSync(path.join(__dirname, "..", "resources", filename), "UTF-8");
-  let readOthers =
-    (filename: string) => fs.readFileSync(path.join(__dirname, "..", filename), "UTF-8");
-  let viewer = readResource("viewer.ejs");
-  let mainJs = readResource("main.js");
-  let externalJs = readResource("externals.js");
-  let templateSvg = readResource("template.svg");
-  let style = readResource("style.css");
-  let svgoConfig = yaml.safeLoad(readOthers(".svgo.yml"));
+    let readResource =
+        (filename: string) => fs.readFileSync(path.join(__dirname, "..", "..", "resources", filename), "UTF-8");
+    let readOthers =
+        (filename: string) => fs.readFileSync(path.join(__dirname, "..", "..", filename), "UTF-8");
+    let viewer = readResource("viewer.html");
+    let templateSvg = readResource("template.svg");
+    let bundleJsPath = vscode.Uri.file(path.join(context.extensionPath, "resources", "bundle.js")).with({ scheme: "vscode-resource"});
+    let cssPath = vscode.Uri.file(path.join(context.extensionPath, "resources", "style.css")).with({ scheme: "vscode-resource"});
+    let diagnostics = vscode.languages.createDiagnosticCollection("svgeditor");
 
-  // svgo instance
-  let svgo = new SvgoConstructor(svgoConfig);
+    let panelSet: { panel: vscode.WebviewPanel, editor: vscode.TextEditor, text: string} | null = null;
+    let prevendSend = false;
 
-  class TextDocumentContentProvider implements vscode.TextDocumentContentProvider {
-    public editor: vscode.TextEditor;
-    private _onDidChange: vscode.EventEmitter<vscode.Uri> = new vscode.EventEmitter<vscode.Uri>();
-
-    public provideTextDocumentContent(uri: vscode.Uri): string {
-      return this.createCssSnippet();
-    }
-
-    get onDidChange(): vscode.Event<vscode.Uri> {
-      return this._onDidChange.event;
-    }
-
-    public update(uri: vscode.Uri) {
-      this._onDidChange.fire(uri);
-    }
-
-    private createCssSnippet(): string {
-      // 前処理
-      const svg = this.editor.document.getText()
-        .replace(/`/g, "")
-        // パス文字列について、絶対座標にしてH,L,Aを変換
-        .replace(/\s+d\s*=\s*"([^"]+)"/g, (match, p1) => " d=\"" + <any>svgpath(p1).abs().unarc().rotate(0.00001).toString() + "\"");
-      const external2 = externalJs.replace("{{svg}}", svg);
-      const html = render(viewer, {
-        main: mainJs,
-        externals: external2,
-        style: style
-      });
-      // let logDir = path.join(__dirname, "..", "log");
-      // if (!fs.existsSync(logDir)) {
-      //   fs.mkdirSync(logDir);
-      // }
-      // fs.writeFileSync(path.join(__dirname, "..", "log", "log.html"), html);
-      return html;
-    }
-  }
-
-  let disposables: vscode.Disposable[] = [];
-
-  let provider = new TextDocumentContentProvider();
-  let registration = vscode.workspace.registerTextDocumentContentProvider("svgeditor", provider);
-  disposables.push(registration);
-
-  vscode.workspace.onDidChangeTextDocument((e: vscode.TextDocumentChangeEvent) => {
-    if (e.document === vscode.window.activeTextEditor.document) {
-      provider.update(previewUri);
-    }
-  });
-
-  vscode.window.onDidChangeActiveTextEditor((e: vscode.TextEditor) => {
-    if (vscode.window.activeTextEditor.document.uri !== previewUri) {
-      provider.editor = vscode.window.activeTextEditor;
-      provider.update(previewUri);
-    }
-  });
-
-  disposables.push(vscode.commands.registerCommand("svgeditor.openSvgEditor", () => {
-    provider.editor = vscode.window.activeTextEditor;
-    return vscode.commands.executeCommand("vscode.previewHtml", previewUri, vscode.ViewColumn.Two, "SVG Editor").then((success) => undefined, (reason) => {
-      vscode.window.showErrorMessage(reason);
-    });
-  }));
-
-  disposables.push(vscode.commands.registerCommand("svgeditor.newSvgEditor", () => {
-    return vscode.commands.executeCommand("workbench.action.files.newUntitledFile").then(
-      (success) => {
-        setTimeout(
-          () => {
-            provider.editor = vscode.window.activeTextEditor;
-            provider.editor.edit(editbuilder => {
-              editbuilder.insert(new vscode.Position(0, 0), templateSvg);
-            }).then(
-              (success) => {
-                vscode.commands.executeCommand("vscode.previewHtml", previewUri, vscode.ViewColumn.Two, "SVG Editor").then(
-                (success) => {
-                  provider.update(previewUri);
-                },
-                showError);
-              },
-              showError);
-          },
-          0
+    let createPanel = (editor: vscode.TextEditor) => {
+        let text = editor.document.getText();
+        const panel = vscode.window.createWebviewPanel(
+            "svgeditor",
+            "SVG Editor",
+            vscode.ViewColumn.Beside, {
+                enableScripts: true,
+                localResourceRoots: [
+                    vscode.Uri.file(path.join(context.extensionPath, "resources"))
+                ]
+            }
         );
-      },
-      showError);
-  }));
+        panel.webview.html = render(viewer, {bundleJsPath, cssPath});
+        panelSet = {panel, editor, text};
+        setListener(panelSet);
+        prevendSend = false;
+    }
 
-  context.subscriptions.push(...disposables);
+    let setListener = (pset : {panel: vscode.WebviewPanel, editor: vscode.TextEditor, text: string} ) => {
+        const config = vscode.workspace.getConfiguration("svgeditor", pset.editor.document.uri);
+        pset.panel.webview.onDidReceiveMessage(async message => {
+            switch (message.command) {
+                case "modified":
+                    pset.text = format(message.data);
+                    pset.editor.edit(editBuilder => {
+                        editBuilder.replace(allRange(pset.editor), pset.text);
+                    });
+                    prevendSend = true;
+                    return;
+                case "svg-request":
+                    pset.panel.webview.postMessage({
+                        command: "modified",
+                        data: parseSvg(pset.text, pset.editor, diagnostics)
+                    });
+                    pset.panel.webview.postMessage({
+                        command: "configuration",
+                        data: {
+                            showAll: config.get<boolean>("showAll"),
+                            defaultUnit: config.get<string | null>("defaultUnit"),
+                            decimalPlaces: config.get<number>("decimalPlaces"),
+                            collectTransform: config.get<boolean>("collectTransformMatrix")
+                        }
+                    });
+                    return;
+                case "input-request":
+                    const result = await vscode.window.showInputBox({placeHolder: message.data})
+                    pset.panel.webview.postMessage({
+                        command: "input-response",
+                        data: result
+                    });
+                    return;
+                case "error":
+                    showError(message.data);
+                    return;
+            }
+        }, undefined, context.subscriptions);
 
-  /**
-   * Call only by previewer
-   */
-  vscode.commands.registerCommand("svgeditor.reflectToEditor", (text: string) => {
-    // svgo optimization
-    svgo.optimize(text).then(result => {
-      provider.editor!.edit(editbuilder => {
-        editbuilder.replace(allRange(provider.editor!), result.data);
-      });
-    });
-  });
+        pset.panel.onDidDispose(() => {
+            panelSet = null;
+        }, undefined, context.subscriptions);
+    }
+
+    context.subscriptions.push(vscode.workspace.onDidChangeTextDocument((e: vscode.TextDocumentChangeEvent) => {
+        if (panelSet && panelSet.editor.document === e.document) {
+            if (prevendSend) {
+                prevendSend = false;
+            } else {
+                panelSet.panel.webview.postMessage({
+                    command: "modified",
+                    data: parseSvg(panelSet.text = e.document.getText(), panelSet.editor, diagnostics)
+                });
+            }
+        }
+    }));
+
+    context.subscriptions.push(vscode.commands.registerCommand("svgeditor.openSvgEditor", () => {
+        const editor = vscode.window.activeTextEditor;
+        if (panelSet) panelSet.panel.reveal();
+        else if (editor) {
+            createPanel(editor);
+        } else {
+            showError("Not found active text editor.");
+        }
+    }));
+
+    context.subscriptions.push(vscode.commands.registerCommand("svgeditor.newSvgEditor", async () => {
+        if (panelSet) panelSet.panel.reveal();
+        else try {
+            const editor = await newUntitled(vscode.ViewColumn.One, templateSvg);
+            createPanel(editor);
+        } catch (error) {
+            showError(error);
+        }
+    }));
+
+    context.subscriptions.push(vscode.commands.registerCommand("svgeditor.reopenRelatedTextEditor", async () => {
+            if (panelSet) {
+                let editor = await newUntitled(vscode.ViewColumn.Beside, panelSet.text);
+                panelSet.editor = editor;
+                setListener(panelSet);
+            }
+    }));
 }
 
 function allRange(textEditor: vscode.TextEditor): vscode.Range {
-  let firstLine = textEditor.document.lineAt(0);
-  let lastLine = textEditor.document.lineAt(textEditor.document.lineCount - 1);
-  let textRange = new vscode.Range(0,
-                                   firstLine.range.start.character,
-                                   textEditor.document.lineCount - 1,
-                                   lastLine.range.end.character);
-  return textRange;
+    let firstLine = textEditor.document.lineAt(0);
+    let lastLine = textEditor.document.lineAt(textEditor.document.lineCount - 1);
+    let textRange = new vscode.Range(0,
+        firstLine.range.start.character,
+        textEditor.document.lineCount - 1,
+        lastLine.range.end.character);
+    return textRange;
 }
 
 function showError(reason: any) {
-  vscode.window.showErrorMessage(reason);
+    vscode.window.showErrorMessage(reason);
+}
+
+function parseSvg(svgText: string, editor: vscode.TextEditor, diagnostics: vscode.DiagnosticCollection): any {
+    const dom = new xmldoc.XmlDocument(svgText);
+    const parsed = parse(dom, null);
+    diagnostics.set(editor.document.uri, parsed.warns.map(warn => {
+        const startLine = warn.range.line - (svgText.slice(warn.range.startTagPosition, warn.range.position).split("\n").length - 1);
+        const startColumn = warn.range.startTagPosition - svgText.slice(undefined, warn.range.startTagPosition).lastIndexOf("\n") - 2;
+        return {
+            source: "svgeditor",
+            message: warn.message,
+            range: new vscode.Range(startLine, startColumn, warn.range.line, warn.range.column),
+            severity: vscode.DiagnosticSeverity.Warning
+        };
+    }));
+    return parsed.result
+}
+
+async function newUntitled(viewColumn: vscode.ViewColumn, content: string) {
+    const config = vscode.workspace.getConfiguration("svgeditor");
+    const document = await vscode.workspace.openTextDocument({language: config.get<string>("filenameExtension"), content});
+    return vscode.window.showTextDocument(document, viewColumn);
 }
