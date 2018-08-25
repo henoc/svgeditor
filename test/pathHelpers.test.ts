@@ -7,16 +7,18 @@ describe("SvgPathManager", () => {
 
     let rectPath: ReturnType<typeof svgPathManager>
     let relavtiveRectPath: ReturnType<typeof svgPathManager>
+    let decimalPath: ReturnType<typeof svgPathManager>
 
     beforeEach(() => {
         rectPath = svgPathManager("M 0 0 H 10 V 10 H 0 Z");
         relavtiveRectPath = svgPathManager(deepCopy(rectPath.segments)).rel();
+        decimalPath = svgPathManager("M 13 6 l -1.5 1.3 h 2.4 l -2 2 h -4 v -4 l 2 -2 v 2.7 l 1.8 -1.5 z");
     });
 
     it("parse", () => {
-        const absResult = rectPath.segments;
+        const result = rectPath.segments;
         assert.deepStrictEqual(
-            absResult,
+            result,
             [
                 ["M", 0, 0],
                 ["H", 10],
@@ -25,6 +27,23 @@ describe("SvgPathManager", () => {
                 ["Z"]
             ]
         );
+
+        const result2 = decimalPath.segments;
+        assert.deepStrictEqual(
+            result2,
+            [
+                ["M", 13, 6],
+                ["l", -1.5, 1.3],
+                ["h", 2.4],
+                ["l", -2, 2],
+                ["h", -4],
+                ["v", -4],
+                ["l", 2, -2],
+                ["v", 2.7],
+                ["l", 1.8, -1.5],
+                ["z"]
+            ]
+        )
     });
 
     it("unvh", () => {

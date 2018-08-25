@@ -183,7 +183,7 @@ export class NodeMode extends Mode {
                     registEndPoint(v(t[0], start.y), i++);
                     break;
                     case "V":
-                    registEndPoint(v(start.x, t[1]), i++);
+                    registEndPoint(v(start.x, t[0]), i++);
                     break;
                     case "C": // (x1,y1, x2,y2, x,y)
                     registCtrlPoint(points[0], i++, start);
