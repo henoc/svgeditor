@@ -158,7 +158,9 @@ export class NodeMode extends Mode {
                     .attr("y1", escapedf.y)
                     .attr("x2", escaped.x)
                     .attr("y2", escaped.y)
-                    .class("svgeditor-shape-handler-line" + (index === null && "-fake" || ""));
+                    .class("svgeditor-shape-handler-line" + (index === null && "-fake" || ""))
+                    .attr("stroke-width", 2 /* px */ / viewerScale);
+                if (index === null) l.attr("stroke-dasharray", 4 /* px */ / viewerScale)
                 elems.push(l);
             }
             elems.push(e);
