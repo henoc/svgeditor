@@ -1,5 +1,5 @@
 import * as xmldoc from "xmldoc";
-import { iterate, Vec2, v, objectValues } from "./utils";
+import { iterate, Vec2, v, objectValues, Some, Option, None } from "./utils";
 import { Assoc } from "./svg";
 import uuidStatic from "uuid";
 import tinycolor from "tinycolor2";
@@ -321,22 +321,24 @@ function parseAttrs(element: xmldoc.XmlElement, onWarns: (ws: Warning[]) => void
     const warns: Warning[] = [];
     const attrs: Assoc = element.attr;
 
+    const tryParse = (name: string) => attrOf(element, warns, attrs, name);
+
     // for global attributes
-    let tmp: {name: string, value: string | null};
+    let tmp: string | null;
     const globalValidAttrs: Omit<ParsedBaseAttr, "unknown"> = {
-        id: pop(attrs, "id").value,
-        class: (tmp = pop(attrs, "class")) && tmp.value && tmp.value.split(" ") || null
+        id: pop(attrs, "id"),
+        class: (tmp = pop(attrs, "class")) && tmp && tmp.split(" ") || null
     };
 
     const getPresentationAttrs: () => ParsedPresentationAttr = () => {
         return {
-            fill: (tmp = pop(attrs, "fill")) && paintAttr(tmp, element, pushWarns) || null,
-            stroke: (tmp = pop(attrs, "stroke")) && paintAttr(tmp, element, pushWarns) || null,
-            transform: (tmp = pop(attrs, "transform")) && tmp.value && transformAttr(tmp.value, element, pushWarns) || null,
-            "font-family": pop(attrs, "font-family").value,
-            "font-size": (tmp = pop(attrs, "font-size")) && fontSizeAttr(tmp, element, pushWarns) || null,
-            "font-style": (tmp = pop(attrs, "font-style")) && tmp.value && validateOnly(tmp.value, element, pushWarns, isFontStyle) || null,
-            "font-weight": (tmp = pop(attrs, "font-weight")) && tmp.value && validateOnly(tmp.value, element, pushWarns, isFontWeight) || null,
+            fill: tryParse("fill").map(a => a.paint()).get,
+            stroke: tryParse("stroke").map(a => a.paint()).get,
+            transform: tryParse("transform").map(a => a.transform()).get,
+            "font-family": pop(attrs, "font-family"),
+            "font-size": tryParse("font-size").map(a => a.fontSize()).get,
+            "font-style": tryParse("font-style").map(a => a.validate(isFontStyle)).get,
+            "font-weight": tryParse("font-weight").map(a => a.validate(isFontWeight)).get
         }
     }
 
@@ -349,14 +351,14 @@ function parseAttrs(element: xmldoc.XmlElement, onWarns: (ws: Warning[]) => void
         svg: () => {
             const validSvgAttrs: ParsedSvgAttr = {
                 ...globalValidAttrs,
-                xmlns: pop(attrs, "xmlns").value,
-                x: (tmp = pop(attrs, "x")) && lengthAttr(tmp, element, pushWarns) || null,
-                y: (tmp = pop(attrs, "y")) && lengthAttr(tmp, element, pushWarns) || null,
-                width: (tmp = pop(attrs, "width")) && lengthAttr(tmp, element, pushWarns) || null,
-                height: (tmp = pop(attrs, "height")) && lengthAttr(tmp, element, pushWarns) || null,
-                "xmlns:xlink": pop(attrs, "xmlns:xlink").value,
-                version: (tmp = pop(attrs, "version")) && tmp.value && numberAttr(tmp.value, element, pushWarns) || null,
-                viewBox: (tmp = pop(attrs, "viewBox")) && tmp.value && viewBoxAttr(tmp.value, element, pushWarns) || null,
+                xmlns: pop(attrs, "xmlns"),
+                x: tryParse("x").map(a => a.length()).get,
+                y: tryParse("y").map(a => a.length()).get,
+                width: tryParse("width").map(a => a.length()).get,
+                height: tryParse("height").map(a => a.length()).get,
+                "xmlns:xlink": pop(attrs, "xmlns:xlink"),
+                version: tryParse("version").map(a => a.number()).get,
+                viewBox: tryParse("viewBox").map(a => a.viewBox()).get,
                 unknown: unknownAttrs(attrs, element, pushWarns)
             };
             onWarns(warns);
@@ -366,9 +368,9 @@ function parseAttrs(element: xmldoc.XmlElement, onWarns: (ws: Warning[]) => void
             const validCircleAttrs: ParsedCircleAttr = {
                 ...globalValidAttrs,
                 ...getPresentationAttrs(),
-                cx: (tmp = pop(attrs, "cx")) && lengthAttr(tmp, element, pushWarns) || null,
-                cy: (tmp = pop(attrs, "cy")) && lengthAttr(tmp, element, pushWarns) || null,
-                r: (tmp = pop(attrs, "r")) && lengthAttr(tmp, element, pushWarns) || null,
+                cx: tryParse("cx").map(a => a.length()).get,
+                cy: tryParse("cy").map(a => a.length()).get,
+                r: tryParse("r").map(a => a.length()).get,
                 unknown: unknownAttrs(attrs, element, pushWarns)
             };
             onWarns(warns);
@@ -378,12 +380,12 @@ function parseAttrs(element: xmldoc.XmlElement, onWarns: (ws: Warning[]) => void
             const validRectAttrs: ParsedRectAttr = {
                 ...globalValidAttrs,
                 ...getPresentationAttrs(),
-                x: (tmp = pop(attrs, "x")) && lengthAttr(tmp, element, pushWarns) || null,
-                y: (tmp = pop(attrs, "y")) && lengthAttr(tmp, element, pushWarns) || null,
-                width: (tmp = pop(attrs, "width")) && lengthAttr(tmp, element, pushWarns) || null,
-                height: (tmp = pop(attrs, "height")) && lengthAttr(tmp, element, pushWarns) || null,
-                rx: (tmp = pop(attrs, "rx")) && lengthAttr(tmp, element, pushWarns) || null,
-                ry: (tmp = pop(attrs, "ry")) && lengthAttr(tmp, element, pushWarns) || null,
+                x: tryParse("x").map(a => a.length()).get,
+                y: tryParse("y").map(a => a.length()).get,
+                width: tryParse("width").map(a => a.length()).get,
+                height: tryParse("height").map(a => a.length()).get,
+                rx: tryParse("rx").map(a => a.length()).get,
+                ry: tryParse("ry").map(a => a.length()).get,
                 unknown: unknownAttrs(attrs, element, pushWarns)
             };
             onWarns(warns);
@@ -393,10 +395,10 @@ function parseAttrs(element: xmldoc.XmlElement, onWarns: (ws: Warning[]) => void
             const validEllipseAttrs: ParsedEllipseAttr = {
                 ...globalValidAttrs,
                 ...getPresentationAttrs(),
-                cx: (tmp = pop(attrs, "cx")) && lengthAttr(tmp, element, pushWarns) || null,
-                cy: (tmp = pop(attrs, "cy")) && lengthAttr(tmp, element, pushWarns) || null,
-                rx: (tmp = pop(attrs, "rx")) && lengthAttr(tmp, element, pushWarns) || null,
-                ry: (tmp = pop(attrs, "ry")) && lengthAttr(tmp, element, pushWarns) || null,
+                cx: tryParse("cx").map(a => a.length()).get,
+                cy: tryParse("cy").map(a => a.length()).get,
+                rx: tryParse("rx").map(a => a.length()).get,
+                ry: tryParse("ry").map(a => a.length()).get,
                 unknown: unknownAttrs(attrs, element, pushWarns)
             };
             onWarns(warns);
@@ -406,7 +408,7 @@ function parseAttrs(element: xmldoc.XmlElement, onWarns: (ws: Warning[]) => void
             const validPolylineAttrs: ParsedPolylineAttr = {
                 ...globalValidAttrs,
                 ...getPresentationAttrs(),
-                points: (tmp = pop(attrs, "points")) && tmp.value && pointsAttr(tmp.value, element, pushWarns) || null,
+                points: tryParse("points").map(a => a.points()).get,
                 unknown: unknownAttrs(attrs, element, pushWarns)
             };
             onWarns(warns);
@@ -416,7 +418,7 @@ function parseAttrs(element: xmldoc.XmlElement, onWarns: (ws: Warning[]) => void
             const validPathAttrs: ParsedPathAttr = {
                 ...globalValidAttrs,
                 ...getPresentationAttrs(),
-                d: (tmp = pop(attrs, "d")) && tmp.value && pathDefinitionAttr(tmp.value, element, pushWarns) || null,
+                d: tryParse("d").map(a => a.pathDefinition()).get,
                 unknown: unknownAttrs(attrs, element, pushWarns)
             };
             onWarns(warns);
@@ -426,12 +428,12 @@ function parseAttrs(element: xmldoc.XmlElement, onWarns: (ws: Warning[]) => void
             const validTextAttrs: ParsedTextAttr = {
                 ...globalValidAttrs,
                 ...getPresentationAttrs(),
-                x: (tmp = pop(attrs, "x")) && lengthAttr(tmp, element, pushWarns) || null,
-                y: (tmp = pop(attrs, "y")) && lengthAttr(tmp, element, pushWarns) || null,
-                dx: (tmp = pop(attrs, "x")) && lengthAttr(tmp, element, pushWarns) || null,
-                dy: (tmp = pop(attrs, "y")) && lengthAttr(tmp, element, pushWarns) || null,
-                lengthAdjust: (tmp = pop(attrs, "lengthAdjust")) && tmp.value && validateOnly(tmp.value, element, pushWarns, isLengthAdjust) || null,
-                textLength: (tmp = pop(attrs, "textLength")) && lengthAttr(tmp, element, pushWarns) || null,
+                x: tryParse("x").map(a => a.length()).get,
+                y: tryParse("y").map(a => a.length()).get,
+                dx: tryParse("x").map(a => a.length()).get,
+                dy: tryParse("y").map(a => a.length()).get,
+                lengthAdjust: tryParse("lengthAdjust").map(a => a.validate(isLengthAdjust)).get,
+                textLength: tryParse("textLength").map(a => a.length()).get,
                 unknown: unknownAttrs(attrs, element, pushWarns)
             };
             onWarns(warns);
@@ -453,9 +455,9 @@ function pop(attrs: Assoc, name: string) {
     if (name in attrs) {
         const value = attrs[name];
         delete attrs[name];
-        return {name, value};
+        return value;
     } else {
-        return {name, value: null};
+        return null;
     }
 }
 
@@ -466,109 +468,140 @@ function unknownAttrs(attrs: Assoc, element: xmldoc.XmlElement, onWarns: (ws: Wa
     return attrs;
 }
 
-function lengthAttr(pair: {name: string, value: string | null}, element: xmldoc.XmlElement, onWarn: (w: Warning) => void): Length | undefined {
-    if (pair.value === null) return void 0;
-    let tmp;
-    if (tmp = /^[+-]?[0-9]+(\.[0-9]*)?([eE][+-]?[0-9]+)?(em|ex|px|in|cm|mm|pt|pc|%)?$/.exec(pair.value)) {
-        return {
-            unit: <any>tmp[3] || null,
-            value: parseFloat(pair.value),
-            attrName: pair.name
-        };
-    } else {
-        onWarn({range: toRange(element), message: `${JSON.stringify(pair)} is a invalid number with unit.`});
-        return void 0;
-    }
+type AttrOfMethods = {
+    length: () => Length | null,
+    number: () => number | null,
+    viewBox: () => [Point, Point] | null,
+    paint: () => Paint | null,
+    points: () => Point[],
+    pathDefinition: () => PathCommand[] | null,
+    transform: () => Transform | null,
+    validate: <T>(validator: (obj: Object) => obj is T) => T & string | null,
+    fontSize: () => FontSize | null
 }
 
-function numberAttr(maybeNumber: string, element: xmldoc.XmlElement, onWarn: (w: Warning) => void): number | undefined {
-    if (/^[+-]?[0-9]+(\.[0-9]*)?([eE][+-]?[0-9]+)?$/.test(maybeNumber)) {
-        return Number(maybeNumber);
+function attrOf(element: xmldoc.XmlElement, warns: Warning[], attrs: Assoc, name: string): Option<AttrOfMethods> {
+    let value: string;
+    if (name in attrs) {
+        value = attrs[name];
     } else {
-        onWarn({range: toRange(element), message: `${maybeNumber} is not a number.`});
-        return void 0;
+        return new None();
     }
-}
 
-function viewBoxAttr(maybeViewBox: string, element: xmldoc.XmlElement, onWarn: (w: Warning) => void): [Point, Point] | undefined {
-    const ret = pointsAttr(maybeViewBox, element, onWarn);
-    if (ret.length !== 2) {
-        onWarn({range: toRange(element), message: `${maybeViewBox} is a invalid viewBox value.`});
-        return void 0;
-    } else {
-        return [ret[0], ret[1]];
-    }
-}
-
-function paintAttr(pair: {name: string, value: string | null}, element: xmldoc.XmlElement, onWarn: (w: Warning) => void): Paint | undefined {
-    if (pair.value === null) return void 0;
-    let tcolor: tinycolorInstance = tinycolor(pair.value);
-    if (tcolor.getFormat() && tcolor.getFormat() !== "hsv") {
-        return {
-            format: <any>tcolor.getFormat(),
-            ...tcolor.toRgb()
+    function convertToPoints() {
+        const floatRegExp = /[+-]?[0-9]+(\.[0-9]*)?([eE][+-]?[0-9]+)?/g;
+        let tmp: RegExpExecArray | null;
+        const acc: number[] = [];
+        while ((tmp = floatRegExp.exec(value)) !== null) {
+            acc.push(Number(tmp[0]));
         }
-    } else if (/^(none|currentColor|inherit)$/.test(pair.value)) {
-        return {
-            format: <any>pair.value,
-            r: 0, g: 0, b: 0, a: 0
+        const points: Point[] = [];
+        for (let i = 0; i < acc.length; i+=2) {
+            points.push(v(acc[i], acc[i + 1]));
         }
-    } else if (/^url\([^\)]*\)$/.test(pair.value)) {
-        onWarn({range: toRange(element), message: `FuncIRI notation ${JSON.stringify(pair)} is unsupported.` });
-        return void 0;
-    } else {
-        onWarn({range: toRange(element), message: `${JSON.stringify(pair)} is unsupported paint value.`});
-        return void 0;        
+        return points;
     }
-}
 
-function pointsAttr(maybePoints: string, element: xmldoc.XmlElement, onWarn: (w: Warning) => void): Point[] {
-    const floatRegExp = /[+-]?[0-9]+(\.[0-9]*)?([eE][+-]?[0-9]+)?/g;
-    let tmp: RegExpExecArray | null;
-    const acc: number[] = [];
-    while ((tmp = floatRegExp.exec(maybePoints)) !== null) {
-        acc.push(Number(tmp[0]));
+    function self() {
+        return attrOf(element, warns, attrs, name);
     }
-    const points: Point[] = [];
-    for (let i = 0; i < acc.length; i+=2) {
-        points.push(v(acc[i], acc[i + 1]));
-    }
-    return points;
-}
 
-function pathDefinitionAttr(maybeDAttr: string, element: xmldoc.XmlElement, onWarn: (w: Warning) => void): PathCommand[] | undefined {
-    const parsedDAttr = svgPathManager(maybeDAttr);
-    if (parsedDAttr.err) {
-        onWarn({range: toRange(element), message: parsedDAttr.err});
-        return void 0;
-    } else {
-        return parsedDAttr.segments;
-    }
-}
+    const methods = {
+        length: () => {
+            let tmp;
+            if (tmp = /^[+-]?[0-9]+(\.[0-9]*)?([eE][+-]?[0-9]+)?(em|ex|px|in|cm|mm|pt|pc|%)?$/.exec(value)) {
+                delete attrs[name];
+                return <Length>{
+                    unit: <any>tmp[3] || null,
+                    value: parseFloat(value),
+                    attrName: name
+                };
+            } else {
+                warns.push({range: toRange(element), message: `${name}: ${value} is a invalid number with unit.`});
+                return null;
+            }
+        },
+        number: () => {
+            if (/^[+-]?[0-9]+(\.[0-9]*)?([eE][+-]?[0-9]+)?$/.test(value)) {
+                delete attrs[name];
+                return Number(value);
+            } else {
+                warns.push({range: toRange(element), message: `${name}: ${value} is not a number.`});
+                return null;
+            }
+        },
+        viewBox: () => {
+            const ret = convertToPoints();
+            if (ret.length !== 2) {
+                warns.push({range: toRange(element), message: `${value} is a invalid viewBox value.`});
+                return null;
+            } else {
+                delete attrs[name];
+                return <[Point, Point]>[ret[0], ret[1]];
+            }
+        },
+        paint: () => {
+            let tcolor: tinycolorInstance = tinycolor(value);
+            if (tcolor.getFormat() && tcolor.getFormat() !== "hsv") {
+                delete attrs[name];
+                return {
+                    format: <any>tcolor.getFormat(),
+                    ...tcolor.toRgb()
+                }
+            } else if (/^(none|currentColor|inherit)$/.test(value)) {
+                return <Paint>{
+                    format: <any>value,
+                    r: 0, g: 0, b: 0, a: 0
+                }
+            } else if (/^url\([^\)]*\)$/.test(value)) {
+                warns.push({range: toRange(element), message: `FuncIRI notation ${name}: ${value} is unsupported.` });
+                return null;
+            } else {
+                warns.push({range: toRange(element), message: `${name}: ${value} is unsupported paint value.`});
+                return null;        
+            }
+        },
+        points: () => {
+            delete attrs[name];
+            return convertToPoints();
+        },
+        pathDefinition: () => {
+            const parsedDAttr = svgPathManager(value);
+            if (parsedDAttr.err) {
+                warns.push({range: toRange(element), message: parsedDAttr.err});
+                return null;
+            } else {
+                delete attrs[name];
+                return parsedDAttr.segments;
+            }
+        },
+        transform: () => {
+            try {
+                delete attrs[name];
+                return fromTransformAttribute(value);
+            } catch (error) {
+                warns.push({range: toRange(element), message: `at transform attribute: ${error}`});
+                return null;
+            }
+        },
+        validate: <T>(validator: (obj: Object) => obj is T) => {
+            if (validator(value)) {
+                delete attrs[name];
+                return value;
+            } else {
+                warns.push({range: toRange(element), message: `${value} is unsupported value.`});
+                return null;
+            }
+        },
+        fontSize: () => {
+            if (isFontSize(value) /* Use only for judging font-size string representation */) {
+                delete attrs[name];
+                return value;
+            } else {
+                return self().map(x => x.length()).get;
+            }
+        }
+    };
 
-function transformAttr(maybeTransformAttr: string, element: xmldoc.XmlElement, onWarn: (w: Warning) => void): Transform | undefined {
-    try {
-        return fromTransformAttribute(maybeTransformAttr);
-    } catch (error) {
-        onWarn({range: toRange(element), message: `at transform attribute: ${error}`});
-        return void 0;
-    }
-}
-
-function validateOnly<T>(someAttr: string, element: xmldoc.XmlElement, onWarn: (w: Warning) => void, validator: (obj: Object) => obj is T): T | undefined {
-    if (validator(someAttr)) {
-        return someAttr;
-    } else {
-        onWarn({range: toRange(element), message: `${someAttr} is unsupported value.`});
-        return void 0;
-    }
-}
-
-function fontSizeAttr(pair: {name: string, value: string | null}, element: xmldoc.XmlElement, onWarn: (w: Warning) => void): FontSize | undefined {
-    if (pair.value === null) return;
-    if (isFontSize(pair.value) /* Use only for judging font-size string representation */) {
-        return pair.value;
-    } else {
-        return lengthAttr(pair, element, onWarn);
-    }
+    return new Some<AttrOfMethods>(methods);
 }

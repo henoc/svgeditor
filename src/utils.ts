@@ -222,3 +222,23 @@ export function escapeHtml(str: string) {
         return escape[<"<"|">"|"&"|"\""|"'"|"`">match];
     });
 }
+
+export interface Option<T> {
+    map: <U>(fn: (t: T) => U) => Option<U>
+    get: T | null;
+}
+
+export class Some<T> implements Option<T> {
+    constructor(public elem: T) {}
+    map<U>(fn: (t: T) => U): Option<U> {
+        return new Some(fn(this.elem));
+    }
+    get = this.elem;
+}
+
+export class None<T> implements Option<T> {
+    map<U>(fn: (t: T) => U): Option<U> {
+        return new None<U>();
+    }
+    get = null;
+}
