@@ -232,6 +232,9 @@ export class SelectMode extends Mode {
             case "align bottom":
             this.align("bottom");
             break;
+            case "object to path":
+            if (uuids) multiShaper(uuids).toPath();
+            break;
         }
         refleshContent();
         sendBackToEditor();

@@ -1,4 +1,4 @@
-import { ParsedElement, Length, Transform, isLength, TransformDescriptor, Paint } from "./domParser";
+import { ParsedElement, Length, Transform, isLength, TransformDescriptor, Paint, PathCommand } from "./domParser";
 import { Vec2, v, vfp, OneOrMore, Merger } from "./utils";
 import { svgPathManager } from "./pathHelpers";
 import { convertToPixel, convertFromPixel } from "./measureUnits";
@@ -23,6 +23,7 @@ interface ShaperFunctions {
     appendTransformDescriptors(descriptors: TransformDescriptor[], from: "left" | "right"): void;
     allTransform(): Matrix;
     rotate(deg: number): void;
+    toPath(): void;
 }
 
 /**
@@ -205,7 +206,12 @@ export function shaper(uuid: string): ShaperFunctions {
                         shaper(c.uuid).appendTransformDescriptors(descriptors, from);
                     }
                 },
-                rotate: () => undefined
+                rotate: () => undefined,
+                toPath() {
+                    for (let c of pe.children) {
+                        shaper(c.uuid).toPath();
+                    }
+                }
             }).merge(corners).merge(colors).object;
         case "circle":
             const cattrs = pe.attrs;
@@ -240,6 +246,16 @@ export function shaper(uuid: string): ShaperFunctions {
                         // @ts-ignore
                         cattrs.ry = fromPx(cattrs.r, "ry", wh.y / 2);
                     }
+                },
+                toPath() {
+                    // @ts-ignore
+                    pe.tag = "ellipse";
+                    delete cattrs.r;
+                    // @ts-ignore
+                    cattrs.rx = cattrs.r;
+                    // @ts-ignore
+                    cattrs.ry = cattrs.r;
+                    self().toPath();
                 },
                 size2,
                 allTransform,
@@ -280,6 +296,18 @@ export function shaper(uuid: string): ShaperFunctions {
                     rattrs.height = fromPx(rattrs.height, "height", wh.y);
                     self().center = center;
                 },
+                toPath() {
+                    // @ts-ignore
+                    pe.tag = "path";
+                    // @ts-ignore
+                    rattrs.d = [
+                        ["M", px(rattrs.x), px(rattrs.y)],
+                        ["L", px(rattrs.x) + px(rattrs.width), px(rattrs.y)],
+                        ["L", px(rattrs.x) + px(rattrs.width), px(rattrs.y) + px(rattrs.height)],
+                        ["L", px(rattrs.x), px(rattrs.y) + px(rattrs.height)],
+                        ["Z"]
+                    ];
+                },
                 size2,
                 allTransform,
                 appendTransformDescriptors: appendTransformDescriptors(rattrs),
@@ -309,6 +337,32 @@ export function shaper(uuid: string): ShaperFunctions {
                 set size(wh: Vec2) {
                     eattrs.rx = fromPx(eattrs.rx, "rx", wh.x / 2);
                     eattrs.ry = fromPx(eattrs.ry, "ry", wh.y / 2);
+                },
+                /**
+                 * https://stackoverflow.com/questions/2172798/how-to-draw-an-oval-in-html5-canvas
+                 */
+                toPath() {
+                    const kappa = 0.5522848;
+                    const [x, y, ox, oy, xe, ye, xm, ym] = [
+                        self().leftTop.x,
+                        self().leftTop.y,
+                        px(eattrs.rx) * kappa,
+                        px(eattrs.ry) * kappa,
+                        self().rightBottom.x,
+                        self().rightBottom.y,
+                        px(eattrs.cx),
+                        px(eattrs.cy)
+                    ];
+                    // @ts-ignore
+                    pe.tag = "path";
+                    // @ts-ignore
+                    eattrs.d = [
+                        ["M", x, ym],
+                        ["C", x, ym - oy, xm - ox, y, xm, y],
+                        ["C", xm + ox, y, xe, ym - oy, xe, ym],
+                        ["C", xe, ym + oy, xm + ox, ye, xm, ye],
+                        ["C", xm - ox, ye, x, ym + oy, x, ym]
+                    ]
                 },
                 size2,
                 allTransform,
@@ -354,6 +408,20 @@ export function shaper(uuid: string): ShaperFunctions {
                     }
                     pattrs.points = acc;
                     self().center = oldCenter;
+                },
+                toPath() {
+                    const d: PathCommand[] = [];
+                    if (pattrs.points) for (let i = 0; i < pattrs.points.length; i++) {
+                        const p = pattrs.points[i];
+                        if (i === 0) d.push(["M", p.x, p.y]);
+                        else d.push(["L", p.x, p.y]);
+                    }
+                    if (pe.tag === "polygon") d.push(["Z"]);
+
+                    // @ts-ignore
+                    pe.tag = "path";
+                    // @ts-ignore
+                    pattrs.d = d;
                 },
                 size2,
                 allTransform,
@@ -424,6 +492,8 @@ export function shaper(uuid: string): ShaperFunctions {
                     pathAttrs.d = parsedDAttr.segments;
                     self().center = oldCenter;
                 },
+                toPath() {
+                },
                 size2,
                 allTransform,
                 appendTransformDescriptors: appendTransformDescriptors(pathAttrs),
@@ -464,6 +534,9 @@ export function shaper(uuid: string): ShaperFunctions {
                     );
                     tattrs.textLength = fromPx(tattrs.textLength, "textLength", wh.x);
                     self().center = center;
+                },
+                toPath() {
+                    // todo?
                 },
                 size2,
                 allTransform,
@@ -559,6 +632,11 @@ export function shaper(uuid: string): ShaperFunctions {
                     for (let i = 0; i < gchildren.length; i++) {
                         const diffCenterOfC = oldCenterOfCsFromOldCenter[i].mul(newSize.div(oldSize));
                         shaper(gchildren[i].uuid).center = intoTargetCoordinate(newCenter.add(diffCenterOfC), gchildren[i].uuid);
+                    }
+                },
+                toPath() {
+                    for (let c of gchildren) {
+                        shaper(c.uuid).toPath();
                     }
                 },
                 allTransform,
@@ -761,6 +839,11 @@ export function multiShaper(uuids: OneOrMore<string>, useMultiEvenIfSingle: bool
             appendTransformDescriptors: (descriptors: TransformDescriptor[], from: "left" | "right") => {
                 for (let c of pes) {
                     shaper(c.uuid).appendTransformDescriptors(descriptors, from);
+                }
+            },
+            toPath() {
+                for (let c of pes) {
+                    shaper(c.uuid).toPath();
                 }
             }
         }).merge(corners).merge(colors).object;

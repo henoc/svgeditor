@@ -11,7 +11,7 @@ import { assertNever, el, iterate } from "./utils";
 
 export type ModeName = "select" | "node" | "rect" | "ellipse" | "polyline" | "path" | "text";
 export type OperatorName = "duplicate" | "delete" | "scale-up" | "scale-down" | "group" | "ungroup" | "bring forward" | "send backward" |
-    "align left" | "align right" | "align bottom" | "align top";
+    "align left" | "align right" | "align bottom" | "align top" | "object to path";
 
 class MenuComponent implements Component {
 
@@ -91,7 +91,8 @@ export class MenuListComponent implements Component {
         "align left": new OperatorComponent("align left"),
         "align right" :new OperatorComponent("align right"),
         "align top" : new OperatorComponent("align top"),
-        "align bottom": new OperatorComponent("align bottom")
+        "align bottom": new OperatorComponent("align bottom"),
+        "object to path": new OperatorComponent("object to path")
     }
     
 
