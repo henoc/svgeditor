@@ -68,7 +68,8 @@ export function construct(pe: ParsedElement, options?: SvgConstructOptions): Svg
             setBaseAttrs(pe.attrs, tag);
             // Mostly to deal with mouse event of nested svg tag. Nested svg shape size of collision detection strangely is the same size of inner shapes of that.
             if (insertRectForSvg) {
-                const dummyRect = new SvgTag("rect").uattr("x", pe.attrs.x).uattr("y", pe.attrs.y).uattr("width", pe.attrs.width).uattr("height", pe.attrs.height);
+                const dummyRect = new SvgTag("rect").uattr("x", pe.attrs.x).uattr("y", pe.attrs.y).uattr("width", pe.attrs.width).uattr("height", pe.attrs.height)
+                    .attr("opacity", 0);
                 tag.children(dummyRect);
             }
             makeChildren(pe.children, tag, options);
@@ -141,7 +142,8 @@ export function construct(pe: ParsedElement, options?: SvgConstructOptions): Svg
                     .uattr("x", {unit: null, value: leftTop.x, attrName: "x"})
                     .uattr("y", {unit: null, value: leftTop.y, attrName: "y"})
                     .uattr("width", {unit: null, value: gsize.x, attrName: "width"})
-                    .uattr("height", {unit: null, value: gsize.y, attrName: "height"});
+                    .uattr("height", {unit: null, value: gsize.y, attrName: "height"})
+                    .attr("opacity", 0);
                 if (setListeners) tag.listener("mousedown", event => onShapeMouseDown(<MouseEvent>event, pe.uuid));
                 tag.children(dummyRect);
             }
