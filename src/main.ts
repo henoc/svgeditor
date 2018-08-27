@@ -21,6 +21,7 @@ export let svgVirtualMap: { [uu: string]: ParsedElement } = {};
 export let svgRealMap: { [uu: string]: Element } = {};
 export let editMode: {mode: Mode} = {mode: new SelectMode()};
 export let openWindows: { [id: string]: WindowComponent } = {};
+export let fontList: { [family: string]: string[] /* subFamiles */ } | null = null;
 export const configuration = {
     showAll: true,
     defaultUnit: <LengthUnit>null,
@@ -29,7 +30,8 @@ export const configuration = {
 }
 export const drawState = {
     fill: <Paint | null>{ format: "rgb", r: 255, g: 255, b: 255, a: 1 },
-    stroke: <Paint | null>null
+    stroke: <Paint | null>null,
+    "font-family": <string | null>null
 }
 
 /**
@@ -62,6 +64,9 @@ export const contentChildrenComponent = new ContentChildrenComponent();
 vscode.postMessage({
     command: "svg-request"
 });
+vscode.postMessage({
+    command: "fontList-request"
+});
 
 // set listeners
 window.addEventListener("message", event => {
@@ -82,6 +87,10 @@ window.addEventListener("message", event => {
             break;
         case "input-response":
             textMode(message.data, (uu: string | null) => contentChildrenComponent.menuListComponent.menuComponents.text.changeMode("select", uu || undefined));
+            break;
+        case "fontList-response":
+            fontList = message.data;
+            refleshContent();
             break;
     }
 });

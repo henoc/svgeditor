@@ -1,11 +1,8 @@
 import { Component } from "./component";
 import { construct } from "./svgConstructor";
 import { svgdata, configuration, editMode } from "./main";
-import { SvgTag } from "./svg";
 import { el } from "./utils";
-import { cssVar } from "./styleHelpers";
 import { convertToPixelForOutermostFrame } from "./measureUnits";
-import { text } from "incremental-dom";
 
 /**
 ```xml

@@ -1,19 +1,30 @@
 import process from "process";
 import path from "path";
 import fs from "fs";
-import opentype from "opentype.js";
+import {load} from "opentype.js";
 import memoize from "fast-memoize";
+
+export const systemFonts = memoize(collectSystemFonts);
 
 /**
  * Collect system fonts!
  * @param dirs User specified directory paths
  */
-export async function collectSystemFonts(dirs: string[] = []): Promise<opentype.Font[]> {
+export async function collectSystemFonts(dirs: string[] = []): Promise<{[family: string]: {[subFamily: string]: opentype.Font}}> {
     const paths = await collectSystemFontFilePaths(dirs);
-    return Promise.all(paths.map(memoizedPLoad));
+    return Promise.all(paths.map(p => pload(p).catch(_ => null))).then(fonts => {
+        const ret: {[p:string]:{[sub:string]: opentype.Font}} = {};
+        for (let f of fonts) {
+            if (f) {
+                if (ret[f.names.fontFamily.en] === undefined) ret[f.names.fontFamily.en] = {};
+                ret[f.names.fontFamily.en][f.names.fontSubfamily.en] = f;
+            }
+        }
+        return ret;
+    });
 }
 
-async function collectSystemFontFilePaths(dirs: string[] = []): Promise<string[]> {
+export async function collectSystemFontFilePaths(dirs: string[] = []): Promise<string[]> {
     const dirPaths: string[] = dirs;
     switch (process.platform) {
         case "darwin":
@@ -90,7 +101,7 @@ function preaddir(pathLike: fs.PathLike): Promise<string[]> {
  */
 function pload(url: string): Promise<opentype.Font> {
     return new Promise((resolve, reject) => {
-        opentype.load(url, (err, font) => {
+        load(url, (err, font) => {
             if (err) {
                 reject(err);
             } else {
@@ -100,4 +111,3 @@ function pload(url: string): Promise<opentype.Font> {
     });
 }
 
-const memoizedPLoad = memoize(pload);

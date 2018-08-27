@@ -1,9 +1,9 @@
 import { elementOpen, elementClose, text, elementVoid } from "incremental-dom";
-import { drawState, refleshContent, openWindows, contentChildrenComponent, editMode } from "./main";
+import { drawState, refleshContent, openWindows, contentChildrenComponent, editMode, fontList } from "./main";
 import { Paint, PaintFormat } from "./domParser";
 import tinycolor from "tinycolor2";
 import { Component, WindowComponent } from "./component";
-import { el, OneOrMore } from "./utils";
+import { el, OneOrMore, iterate } from "./utils";
 import { multiShaper } from "./shapes";
 
 class ButtonComponent implements Component {
@@ -272,6 +272,8 @@ export class StyleConfigComponent implements Component {
         this.colorBoxRender(this.colorBoxFillBackground, "fill");
         text(" stroke: ");
         this.colorBoxRender(this.colorBoxStrokeBackground, "stroke");
+        text(" font-family: ");
+        this.fontFamilySelector();
         el`/span`;
         if (this.colorPicker) this.colorPicker.render();
     }
@@ -354,5 +356,27 @@ export class StyleConfigComponent implements Component {
         contentChildrenComponent.svgContainerComponent.scalePercent = percent;
         editMode.mode.updateHandlers();
         refleshContent();
+    }
+
+    private fontFamilySelector() {
+        if (fontList) {
+            el`select :key="font-family-selector" *onchange=${(event: Event) => this.onChangeFontFamily(event)}`;
+                el`option value="no attribute"`;
+                text("no attribute");
+                el`/option`;
+            iterate(fontList, (family) => {
+                el`option value=${family} style=${`font-family: "${family}"`}`;
+                text(family);
+                el`/option`;
+            });
+            el`/select`;
+        } else {
+            text("sync...");
+        }
+    }
+
+    private onChangeFontFamily(event: Event) {
+        const family = (<HTMLSelectElement>event.target).value;
+        drawState["font-family"] = family === "no attribute" ? null : family;
     }
 }
