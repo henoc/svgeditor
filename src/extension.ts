@@ -4,6 +4,7 @@ import * as path from "path";
 import * as xmldoc from "xmldoc";
 import { render } from "ejs";
 import { parse } from "./domParser";
+import { collectSystemFonts } from "./fontFileProcedures";
 const format = require('xml-formatter');
 
 export function activate(context: vscode.ExtensionContext) {
@@ -71,6 +72,13 @@ export function activate(context: vscode.ExtensionContext) {
                         command: "input-response",
                         data: result
                     });
+                    return;
+                case "fontList-request":
+                    const fonts = await collectSystemFonts();
+                    pset.panel.webview.postMessage({
+                        command: "fontList-response",
+                        data: fonts.map(f => f.names.fontFamily)
+                    })
                     return;
                 case "error":
                     showError(message.data);
