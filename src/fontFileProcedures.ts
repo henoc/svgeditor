@@ -64,7 +64,7 @@ async function getFontFileNames(pathString: string): Promise<string[]> {
             return fontFiles.reduce((p, c) => p.concat(c));
         } else if (stats.isFile()) {
             const extname = path.extname(pathString).toLowerCase();
-            if (extname === ".ttf" || extname === ".otf") return [pathString];
+            if (extname === ".ttf" || extname === ".otf" || extname === ".woff") return [pathString];
         }
     } catch (err) {
         // no file or directory exist.
