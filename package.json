@@ -142,6 +142,7 @@
     "transformation-matrix": "^1.12.0",
     "uuid": "^3.3.2",
     "xml-formatter": "^1.0.1",
-    "xmldoc": "^1.1.2"
+    "xmldoc": "^1.1.2",
+    "ttfinfo": "git://github.com/rBurgett/ttfinfo.git"
   }
 }
