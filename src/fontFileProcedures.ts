@@ -1,7 +1,6 @@
 import process from "process";
 import path from "path";
 import fs from "fs";
-import {load} from "opentype.js";
 import memoize from "fast-memoize";
 const ttfinfo =  require("ttfinfo");
 
@@ -93,21 +92,6 @@ function preaddir(pathLike: fs.PathLike): Promise<string[]> {
                 reject(err);
             } else {
                 resolve(files);
-            }
-        });
-    });
-}
-
-/**
- * Promise version of opentype.load
- */
-function pload(url: string): Promise<opentype.Font> {
-    return new Promise((resolve, reject) => {
-        load(url, (err, font) => {
-            if (err) {
-                reject(err);
-            } else {
-                resolve(font!);
             }
         });
     });
