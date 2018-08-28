@@ -114,8 +114,8 @@ export class SelectMode extends Mode {
     onDocumentMouseLeave(event: Event) {
         this.onDocumentMouseUp();
     }
-    onOperatorClicked(name: OperatorName) {
-        super.onOperatorClicked(name);
+    onOperatorClicked(event: Event, name: OperatorName) {
+        super.onOperatorClicked(event, name);
         const uuids = this.selectedShapeUuids;
         switch (name) {
             case "duplicate":

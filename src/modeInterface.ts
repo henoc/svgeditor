@@ -12,20 +12,24 @@ export abstract class Mode implements Component {
     abstract onDocumentMouseUp(event: MouseEvent): void;
     abstract onDocumentMouseLeave(event: Event): void;
     
-    onOperatorClicked(name: OperatorName): void {
+    onOperatorClicked(event: Event, name: OperatorName): void {
         switch (name) {
             case "scale-up":
             contentChildrenComponent.svgContainerComponent.scalePercent += 20;
             editMode.mode.updateHandlers();
+            refleshContent();
             break;
             case "scale-down":
             if (contentChildrenComponent.svgContainerComponent.scalePercent > 20) {
                 contentChildrenComponent.svgContainerComponent.scalePercent -= 20;
                 editMode.mode.updateHandlers();
+                refleshContent();
             }
             break;
+            case "font":
+            contentChildrenComponent.styleConfigComponent.openFontWindow(event);
+            break;
         }
-        refleshContent();
     };
 
     /**

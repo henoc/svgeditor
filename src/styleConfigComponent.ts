@@ -258,11 +258,45 @@ class ColorPickerComponent implements WindowComponent {
     }
 }
 
+class FontComponent implements WindowComponent {
+    constructor(public onClose: () => void) {
+    }
+
+    render(): void {
+        el`div :key="font-component" *class="svgeditor-colorpicker" *onclick=${(event: MouseEvent) => event.stopPropagation()}`;
+        this.fontFamilySelector();
+        el`/div`;
+    }
+
+    private fontFamilySelector() {
+        if (fontList) {
+            el`select :key="font-family-selector" *onchange=${(event: Event) => this.onChangeFontFamily(event)}`;
+                el`option value="no attribute"`;
+                text("no attribute");
+                el`/option`;
+            iterate(fontList, (family) => {
+                el`option value=${family} style=${`font-family: "${family}"`}`;
+                text(family);
+                el`/option`;
+            });
+            el`/select`;
+        } else {
+            text("sync...");
+        }
+    }
+
+    private onChangeFontFamily(event: Event) {
+        const family = (<HTMLSelectElement>event.target).value;
+        drawState["font-family"] = family === "no attribute" ? null : family;
+    }
+}
+
 export class StyleConfigComponent implements Component {
 
     colorBoxFillBackground: Paint | null = drawState.fill;
     colorBoxStrokeBackground: Paint | null = drawState.stroke;
     colorPicker: ColorPickerComponent | null = null;
+    fontComponent: FontComponent | null = null;
     private _affectedShapeUuids: OneOrMore<string> | null = null;
 
     render() {
@@ -272,10 +306,21 @@ export class StyleConfigComponent implements Component {
         this.colorBoxRender(this.colorBoxFillBackground, "fill");
         text(" stroke: ");
         this.colorBoxRender(this.colorBoxStrokeBackground, "stroke");
-        text(" font-family: ");
-        this.fontFamilySelector();
         el`/span`;
         if (this.colorPicker) this.colorPicker.render();
+        if (this.fontComponent) this.fontComponent.render();
+    }
+
+    openFontWindow(event: Event) {
+        event.stopPropagation();
+        if (this.fontComponent === null) {
+            this.fontComponent = new FontComponent(() => {
+                this.fontComponent = null;
+                refleshContent();
+            });
+            openWindows["fontComponent"] = this.fontComponent;
+            refleshContent();
+        }
     }
 
     set affectedShapeUuids(uuids: OneOrMore<string> | null) {
@@ -356,27 +401,5 @@ export class StyleConfigComponent implements Component {
         contentChildrenComponent.svgContainerComponent.scalePercent = percent;
         editMode.mode.updateHandlers();
         refleshContent();
-    }
-
-    private fontFamilySelector() {
-        if (fontList) {
-            el`select :key="font-family-selector" *onchange=${(event: Event) => this.onChangeFontFamily(event)}`;
-                el`option value="no attribute"`;
-                text("no attribute");
-                el`/option`;
-            iterate(fontList, (family) => {
-                el`option value=${family} style=${`font-family: "${family}"`}`;
-                text(family);
-                el`/option`;
-            });
-            el`/select`;
-        } else {
-            text("sync...");
-        }
-    }
-
-    private onChangeFontFamily(event: Event) {
-        const family = (<HTMLSelectElement>event.target).value;
-        drawState["font-family"] = family === "no attribute" ? null : family;
     }
 }
