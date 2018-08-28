@@ -23,7 +23,7 @@ class ColorPickerCanvasComponent implements Component {
     initialColor: tinycolorInstance;
     downRegion: "grad" | "hue" | "opacity" | null = null;
 
-    constructor(public width: number, public height: number, public color: tinycolorInstance) {
+    constructor(public width: number, public height: number, public color: tinycolorInstance, public onChange: () => void) {
         this.initialColor = color.clone();
     }
 
@@ -62,6 +62,7 @@ class ColorPickerCanvasComponent implements Component {
         this.drawGrad();
         this.drawSlider();
         this.drawCursors();
+        this.onChange();
     }
 
     down(event: MouseEvent) {
@@ -200,13 +201,9 @@ class ColorPickerComponent implements WindowComponent {
     CANVAS_DEFAULT_COLOR = {r: 255, g: 255, b: 255, a: 1};
     selectorValue: string = "color";
     canvasComponent: ColorPickerCanvasComponent | null;
-    saveButton = new ButtonComponent("save", "colorpicker-save", () => this.onSave(this));
-    cancelButton = new ButtonComponent("cancel", "colorpicker-cancel", () => this.onCancel(this));
-    onClose: () => void;
 
-    constructor(public relatedProperty: "fill" | "stroke", public onSave: (self: ColorPickerComponent) => void, public onCancel: (self: ColorPickerComponent) => void) {
-        this.canvasComponent = new ColorPickerCanvasComponent(200, 100, tinycolor(drawState[relatedProperty] || this.CANVAS_DEFAULT_COLOR));
-        this.onClose = () => this.onCancel(this);
+    constructor(public relatedProperty: "fill" | "stroke", public onChange: (self: ColorPickerComponent) => void, public onClose: () => void) {
+        this.canvasComponent = new ColorPickerCanvasComponent(200, 100, tinycolor(drawState[relatedProperty] || this.CANVAS_DEFAULT_COLOR), () => onChange(this));
     }
 
     render() {
@@ -214,14 +211,11 @@ class ColorPickerComponent implements WindowComponent {
         this.selectorRender();
         el`br/`;
         if (this.canvasComponent) this.canvasComponent.render();
-        el`br/`;
-        this.saveButton.render();
-        this.cancelButton.render();
         el`/div`;
     }
 
     getPaint(destFormat: PaintFormat | null): Paint | null {
-        const color = this.canvasComponent && this.canvasComponent.color || tinycolor(drawState[this.relatedProperty] || this.CANVAS_DEFAULT_COLOR);
+        const color = this.canvasComponent && (this.canvasComponent.tmpColor || this.canvasComponent.color) || tinycolor(drawState[this.relatedProperty] || this.CANVAS_DEFAULT_COLOR);
         if (this.selectorValue === "no attribute") {
             return null;
         } else if (this.selectorValue === "none" || this.selectorValue === "currentColor" || this.selectorValue === "inherit") {
@@ -250,20 +244,21 @@ class ColorPickerComponent implements WindowComponent {
     private selectorOnChange(event: Event) {
         this.selectorValue = (<HTMLSelectElement>event.target).value;
         if (this.selectorValue === "color") {
-            this.canvasComponent = new ColorPickerCanvasComponent(200, 100, tinycolor(drawState[this.relatedProperty] || this.CANVAS_DEFAULT_COLOR));
+            this.canvasComponent = new ColorPickerCanvasComponent(200, 100, tinycolor(drawState[this.relatedProperty] || this.CANVAS_DEFAULT_COLOR), () => this.onChange(this));
         } else {
             this.canvasComponent = null;
         }
-        refleshContent();
+        this.onChange(this);
     }
 }
 
 class FontComponent implements WindowComponent {
-    constructor(public onClose: () => void) {
+    constructor(public initialFontFamily: string | null, public onChange: (family: string) => void, public onClose: () => void) {
     }
 
     render(): void {
         el`div :key="font-component" *class="svgeditor-colorpicker" *onclick=${(event: MouseEvent) => event.stopPropagation()}`;
+        text("font: ");
         this.fontFamilySelector();
         el`/div`;
     }
@@ -271,14 +266,14 @@ class FontComponent implements WindowComponent {
     private fontFamilySelector() {
         if (fontList) {
             el`select :key="font-family-selector" *onchange=${(event: Event) => this.onChangeFontFamily(event)}`;
-                el`option value="no attribute"`;
+                el`option value="no attribute" selected=${this.initialFontFamily === null || undefined}`;
                 text("no attribute");
                 el`/option`;
-            iterate(fontList, (family) => {
-                el`option value=${family} style=${`font-family: "${family}"`}`;
-                text(family);
-                el`/option`;
-            });
+                iterate(fontList, (family) => {
+                    el`option value=${family} style=${`font-family: "${family}"`} selected=${this.initialFontFamily === family || undefined}`;
+                    text(family);
+                    el`/option`;
+                });
             el`/select`;
         } else {
             text("sync...");
@@ -287,7 +282,7 @@ class FontComponent implements WindowComponent {
 
     private onChangeFontFamily(event: Event) {
         const family = (<HTMLSelectElement>event.target).value;
-        drawState["font-family"] = family === "no attribute" ? null : family;
+        this.onChange(family);
     }
 }
 
@@ -296,6 +291,7 @@ export class StyleConfigComponent implements Component {
     colorBoxFillBackground: Paint | null = drawState.fill;
     colorBoxStrokeBackground: Paint | null = drawState.stroke;
     colorPicker: ColorPickerComponent | null = null;
+    fontFamily: string | null = drawState["font-family"];
     fontComponent: FontComponent | null = null;
     private _affectedShapeUuids: OneOrMore<string> | null = null;
 
@@ -314,7 +310,12 @@ export class StyleConfigComponent implements Component {
     openFontWindow(event: Event) {
         event.stopPropagation();
         if (this.fontComponent === null) {
-            this.fontComponent = new FontComponent(() => {
+            this.fontComponent = new FontComponent(this.fontFamily, (family) => {
+                const nullableFamily = family === "no attribute" ? null : family;
+                this.fontFamily = drawState["font-family"] = nullableFamily;
+                if (this.affectedShapeUuids) multiShaper(this.affectedShapeUuids).fontFamily = nullableFamily;
+                refleshContent();
+            }, () => {
                 this.fontComponent = null;
                 refleshContent();
             });
@@ -327,10 +328,12 @@ export class StyleConfigComponent implements Component {
         if (uuids) {
             this.colorBoxFillBackground = multiShaper(uuids).fill;
             this.colorBoxStrokeBackground = multiShaper(uuids).stroke;
+            this.fontFamily = multiShaper(uuids).fontFamily;
             this._affectedShapeUuids = uuids;
         } else {
             this.colorBoxFillBackground = drawState.fill;
             this.colorBoxStrokeBackground = drawState.stroke;
+            this.fontFamily = drawState["font-family"];
             this._affectedShapeUuids = null;
         }
     }
@@ -374,7 +377,6 @@ export class StyleConfigComponent implements Component {
                 if (this.affectedShapeUuids) multiShaper(this.affectedShapeUuids).stroke = drawState.stroke;
                 break;
             }
-            this.colorPicker = null;
             refleshContent();
         }, () => {
             this.colorPicker = null;
