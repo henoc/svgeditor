@@ -10,7 +10,7 @@ import { PathMode } from "./pathMode";
 import { assertNever, el, iterate } from "./utils";
 
 export type ModeName = "select" | "node" | "rect" | "ellipse" | "polyline" | "path" | "text";
-export type OperatorName = "duplicate" | "delete" | "scale-up" | "scale-down" | "group" | "ungroup" | "bring forward" | "send backward" |
+export type OperatorName = "duplicate" | "delete" | "scale-up" | "scale-down" | "group" | "ungroup" | "font" | "bring forward" | "send backward" |
     "align left" | "align right" | "align bottom" | "align top" | "object to path";
 
 class MenuComponent implements Component {
@@ -61,7 +61,7 @@ class OperatorComponent implements Component {
     constructor(public name: OperatorName) {}
 
     render() {
-        el`li :key=${this.name} *class="svgeditor-operator" *onclick=${() => editMode.mode.onOperatorClicked(this.name)}`;
+        el`li :key=${this.name} *class="svgeditor-operator" *onclick=${(event: Event) => editMode.mode.onOperatorClicked(event, this.name)}`;
         text(this.name);
         el`/li`;
     }
@@ -86,6 +86,7 @@ export class MenuListComponent implements Component {
         "scale-down": new OperatorComponent("scale-down"),
         group: new OperatorComponent("group"),
         ungroup: new OperatorComponent("ungroup"),
+        font: new OperatorComponent("font"),
         "bring forward": new OperatorComponent("bring forward"),
         "send backward": new OperatorComponent("send backward"),
         "align left": new OperatorComponent("align left"),

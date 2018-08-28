@@ -1,5 +1,5 @@
 import { Mode } from "./modeInterface";
-import { svgdata, configuration, refleshContent } from "./main";
+import { svgdata, configuration, refleshContent, drawState } from "./main";
 import { ParsedElement } from "./domParser";
 import uuidStatic from "uuid";
 import { shaper } from "./shapes";
@@ -22,7 +22,8 @@ export function textMode(inputText: string | undefined, isfinished: (uu: string 
                     textLength: null,
                     lengthAdjust: null,
                     ...Mode.baseAttrsDefaultImpl(),
-                    ...Mode.presentationAttrsDefaultImpl()
+                    ...Mode.presentationAttrsDefaultImpl(),
+                    "font-family": drawState["font-family"]
                 },
                 text: inputText
             };

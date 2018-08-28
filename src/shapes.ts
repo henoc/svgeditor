@@ -16,6 +16,7 @@ interface ShaperFunctions {
     rightBottom: Vec2;
     fill: Paint | null;
     stroke: Paint | null;
+    fontFamily: string | null;
     move(diff: Vec2): void;
     size: Vec2;
     size2(newSize: Vec2, fixedPoint: Vec2): void;
@@ -102,7 +103,15 @@ export function shaper(uuid: string): ShaperFunctions {
             if (pe.tag !== "unknown" && "stroke" in pe.attrs) pe.attrs.stroke = paint;
         }
     }
-    const colors = new Merger(fill).merge(stroke).object;
+    const fontFamily = {
+        get fontFamily() {
+            return pe.tag !== "unknown" && "font-family" in pe.attrs && pe.attrs["font-family"] || null;
+        },
+        set fontFamily(family: string | null) {
+            if (pe.tag !== "unknown" && "font-family" in pe.attrs) pe.attrs["font-family"] = family;
+        }
+    }
+    const presentationAttrs = new Merger(fill).merge(stroke).merge(fontFamily).object;
     const self = () => shaper(uuid);
     const size2 = (newSize: Vec2, fixedPoint: Vec2) => {
         let oldSize = self().size;
@@ -212,7 +221,7 @@ export function shaper(uuid: string): ShaperFunctions {
                         shaper(c.uuid).toPath();
                     }
                 }
-            }).merge(corners).merge(colors).object;
+            }).merge(corners).merge(presentationAttrs).object;
         case "circle":
             const cattrs = pe.attrs;
             return new Merger({
@@ -261,7 +270,7 @@ export function shaper(uuid: string): ShaperFunctions {
                 allTransform,
                 appendTransformDescriptors: appendTransformDescriptors(cattrs),
                 rotate: rotateCenter
-            }).merge(corners).merge(colors).merge(transformProps).object;
+            }).merge(corners).merge(presentationAttrs).merge(transformProps).object;
         case "rect":
             const rattrs = pe.attrs;
             return new Merger({
@@ -312,7 +321,7 @@ export function shaper(uuid: string): ShaperFunctions {
                 allTransform,
                 appendTransformDescriptors: appendTransformDescriptors(rattrs),
                 rotate: rotateCenter
-            }).merge(corners).merge(colors).merge(transformProps).object;
+            }).merge(corners).merge(presentationAttrs).merge(transformProps).object;
         case "ellipse":
             const eattrs = pe.attrs;
             return new Merger({
@@ -368,7 +377,7 @@ export function shaper(uuid: string): ShaperFunctions {
                 allTransform,
                 appendTransformDescriptors: appendTransformDescriptors(eattrs),
                 rotate: rotateCenter
-            }).merge(corners).merge(colors).merge(transformProps).object;
+            }).merge(corners).merge(presentationAttrs).merge(transformProps).object;
         case "polyline":
         case "polygon":
             const pattrs = pe.attrs;
@@ -427,7 +436,7 @@ export function shaper(uuid: string): ShaperFunctions {
                 allTransform,
                 appendTransformDescriptors: appendTransformDescriptors(pattrs),
                 rotate: rotateCenter
-            }).merge(corners).merge(colors).merge(transformProps).object;
+            }).merge(corners).merge(presentationAttrs).merge(transformProps).object;
         case "path":
             const pathAttrs = pe.attrs;
             return new Merger({
@@ -498,7 +507,7 @@ export function shaper(uuid: string): ShaperFunctions {
                 allTransform,
                 appendTransformDescriptors: appendTransformDescriptors(pathAttrs),
                 rotate: rotateCenter
-            }).merge(corners).merge(colors).merge(transformProps).object;
+            }).merge(corners).merge(presentationAttrs).merge(transformProps).object;
         case "text":
             const fontInfo = font(pe.text || "", styleDeclaration.fontFamily || "", parseFloat(styleDeclaration.fontSize || "16"), styleDeclaration.fontWeight || "", styleDeclaration.fontStyle || "");
             const tattrs = pe.attrs;
@@ -542,7 +551,7 @@ export function shaper(uuid: string): ShaperFunctions {
                 allTransform,
                 appendTransformDescriptors: appendTransformDescriptors(tattrs),
                 rotate: rotateCenter
-            }).merge(corners).merge(colors).merge(transformProps).object;
+            }).merge(corners).merge(presentationAttrs).merge(transformProps).object;
         case "g":
             const gattrs = pe.attrs;
             const gchildren = pe.children;
@@ -642,7 +651,7 @@ export function shaper(uuid: string): ShaperFunctions {
                 allTransform,
                 appendTransformDescriptors: appendTransformDescriptors(gattrs),
                 rotate: rotateCenter
-            }).merge(corners).merge(colors).merge(transformProps).object;
+            }).merge(corners).merge(presentationAttrs).merge(transformProps).object;
         case "unknown":
             throw new Error("Unknown shape cannot move.");
     }
@@ -728,7 +737,20 @@ export function multiShaper(uuids: OneOrMore<string>, useMultiEvenIfSingle: bool
                 }
             }
         }
-        const colors = new Merger(fill).merge(stroke).object;
+        const fontFamily = {
+            get fontFamily() {
+                for (let pe of pes) {
+                    if (pe.tag !== "unknown" && "font-family" in pe.attrs) return pe.attrs["font-family"];
+                }
+                return null;
+            },
+            set fontFamily(family: string | null) {
+                for (let pe of pes) {
+                    if (pe.tag !== "unknown" && "font-family" in pe.attrs) pe.attrs["font-family"] = family;
+                }
+            }
+        }
+        const presentationAttrs = new Merger(fill).merge(stroke).merge(fontFamily).object;
         return new Merger({
             move: (diff: Vec2) => {
                 const oldCenter = self().center;
@@ -846,7 +868,7 @@ export function multiShaper(uuids: OneOrMore<string>, useMultiEvenIfSingle: bool
                     shaper(c.uuid).toPath();
                 }
             }
-        }).merge(corners).merge(colors).object;
+        }).merge(corners).merge(presentationAttrs).object;
     }
 }
 
