@@ -169,3 +169,24 @@ async function newUntitled(viewColumn: vscode.ViewColumn, content: string) {
     const document = await vscode.workspace.openTextDocument({language: config.get<string>("filenameExtension"), content});
     return vscode.window.showTextDocument(document, viewColumn);
 }
+
+export function diffProcedure(diffResults: JsDiff.IDiffResult[], editBuilder: vscode.TextEditorEdit) {
+    let startLine = 0, startCharacter = 0;
+    for (let diffResult of diffResults) {
+        let lines = diffResult.value.split(/\r?\n/);
+        let newlineCodes = lines.length - 1;
+        let endLine = startLine + newlineCodes;
+        let endCharacter = newlineCodes === 0 ? startCharacter + diffResult.value.length : lines[newlineCodes].length;
+
+        if (diffResult.added) {
+            editBuilder.insert(new vscode.Position(startLine, startCharacter), diffResult.value);
+        } else if (diffResult.removed) {
+            editBuilder.delete(new vscode.Range(startLine, startCharacter, endLine, endCharacter));
+        }
+
+        if (!diffResult.removed) {
+            startLine = endLine;
+            startCharacter = endCharacter;
+        }
+    }
+}
