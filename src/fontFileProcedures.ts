@@ -2,7 +2,7 @@ import process from "process";
 import path from "path";
 import fs from "fs";
 import memoize from "fast-memoize";
-const ttfinfo =  require("ttfinfo");
+import {load} from "opentype.js";
 
 /**
  * Collect system fonts!
@@ -10,13 +10,13 @@ const ttfinfo =  require("ttfinfo");
  */
 export async function collectSystemFonts(dirs: string[] = []): Promise<{[family: string]: {[subFamily: string]: string}}> {
     const paths = await collectSystemFontFilePaths(dirs);
-    return Promise.all(paths.map(p => pttfinfoGet(p).catch(_ => null))).then(infos => {
+    return Promise.all(paths.map(p => pload(p).catch(_ => null))).then(fonts => {
         const ret: {[p:string]:{[sub:string]: string}} = {};
-        for (let i = 0; i < infos.length; i++) {
-            const info = infos[i];
-            if (info) {
-                const familyName = info.tables.name["1"];
-                const familySubName = info.tables.name["2"];
+        for (let i = 0; i < fonts.length; i++) {
+            const font = fonts[i];
+            if (font) {
+                const familyName = font.names.fontFamily.en;
+                const familySubName = font.names.fontSubfamily.en;
                 if (ret[familyName] === undefined) ret[familyName] = {};
                 ret[familyName][familySubName] = paths[i];
             }
@@ -97,13 +97,13 @@ function preaddir(pathLike: fs.PathLike): Promise<string[]> {
     });
 }
 
-function pttfinfoGet(url: string): Promise<any> {
+function pload(url: string): Promise<opentype.Font> {
     return new Promise((resolve, reject) => {
-        ttfinfo.get(url, (err: any, info: any) => {
+        load(url, (err, font) => {
             if (err) {
                 reject(err);
             } else {
-                resolve(info);
+                resolve(font);
             }
         });
     });
