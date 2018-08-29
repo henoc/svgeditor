@@ -1,8 +1,8 @@
 import process from "process";
 import path from "path";
 import fs from "fs";
-import memoize from "fast-memoize";
-import {load} from "opentype.js";
+import util from "util";
+import { readTtfName } from "./readTrueTypeFont";
 
 /**
  * Collect system fonts!
@@ -10,13 +10,13 @@ import {load} from "opentype.js";
  */
 export async function collectSystemFonts(dirs: string[] = []): Promise<{[family: string]: {[subFamily: string]: string}}> {
     const paths = await collectSystemFontFilePaths(dirs);
-    return Promise.all(paths.map(p => pload(p).catch(_ => null))).then(fonts => {
+    return Promise.all(paths.map(p => readTtfName(p).catch(_ => null))).then(fonts => {
         const ret: {[p:string]:{[sub:string]: string}} = {};
         for (let i = 0; i < fonts.length; i++) {
             const font = fonts[i];
             if (font) {
-                const familyName = font.names.fontFamily.en;
-                const familySubName = font.names.fontSubfamily.en;
+                const familyName = font[1];
+                const familySubName = font[2];
                 if (ret[familyName] === undefined) ret[familyName] = {};
                 ret[familyName][familySubName] = paths[i];
             }
@@ -65,7 +65,7 @@ async function getFontFileNames(pathString: string): Promise<string[]> {
             return fontFiles.reduce((p, c) => p.concat(c));
         } else if (stats.isFile()) {
             const extname = path.extname(pathString).toLowerCase();
-            if (extname === ".ttf" || extname === ".otf" || extname === ".woff") return [pathString];
+            if (extname === ".ttf" || extname === ".otf") return [pathString];
         }
     } catch (err) {
         // no file or directory exist.
@@ -73,38 +73,7 @@ async function getFontFileNames(pathString: string): Promise<string[]> {
     return [];
 }
 
-function pstat(pathLike: fs.PathLike): Promise<fs.Stats> {
-    return new Promise((resolve, reject) => {
-        fs.stat(pathLike, (err, stats) => {
-            if (err) {
-                reject(err);
-            } else {
-                resolve(stats);
-            }
-        });
-    });
-}
+const pstat = util.promisify(fs.stat);
+const preaddir = util.promisify(fs.readdir);
 
-function preaddir(pathLike: fs.PathLike): Promise<string[]> {
-    return new Promise((resolve, reject) => {
-        fs.readdir(pathLike, (err, files) => {
-            if (err) {
-                reject(err);
-            } else {
-                resolve(files);
-            }
-        });
-    });
-}
 
-function pload(url: string): Promise<opentype.Font> {
-    return new Promise((resolve, reject) => {
-        load(url, (err, font) => {
-            if (err) {
-                reject(err);
-            } else {
-                resolve(font);
-            }
-        });
-    });
-}
