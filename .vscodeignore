@@ -1,4 +1,5 @@
 **/*.ts
 **/tsconfig.json
 **/tslint.json
+**/*.ttf
 tmp

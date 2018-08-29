@@ -1,6 +1,9 @@
 # CHANGELOG
 
-- 2.1.0 Fix auto deletion unsupported attributes bug, add basic font selection window
+- 2.1.0
+  - Fix auto deletion unsupported attributes bug
+  - add basic font selection window
+  - add "object to path" operation
 - 2.0.0
   - Reimplement with typescript again😫
   - VSCode theme color is now reflected because of VSCode WebView API
