@@ -184,7 +184,7 @@ export function diffProcedure(diffResults: JsDiff.IDiffResult[], editBuilder: vs
             editBuilder.delete(new vscode.Range(startLine, startCharacter, endLine, endCharacter));
         }
 
-        if (!diffResult.removed) {
+        if (!diffResult.added) {
             startLine = endLine;
             startCharacter = endCharacter;
         }
