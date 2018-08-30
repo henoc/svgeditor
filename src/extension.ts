@@ -6,6 +6,7 @@ import { render } from "ejs";
 import { parse } from "./domParser";
 import { collectSystemFonts } from "./fontFileProcedures";
 import { iterate } from "./utils";
+import { diffChars } from "diff";
 const format = require('xml-formatter');
 
 export function activate(context: vscode.ExtensionContext) {
@@ -46,9 +47,10 @@ export function activate(context: vscode.ExtensionContext) {
         pset.panel.webview.onDidReceiveMessage(async message => {
             switch (message.command) {
                 case "modified":
+                    const oldText = pset.text;
                     pset.text = format(message.data);
                     pset.editor.edit(editBuilder => {
-                        editBuilder.replace(allRange(pset.editor), pset.text);
+                        diffProcedure(diffChars(oldText, pset.text), editBuilder)
                     });
                     prevendSend = true;
                     return;
