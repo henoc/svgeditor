@@ -6,6 +6,7 @@ import { render } from "ejs";
 import { parse } from "./domParser";
 import { collectSystemFonts } from "./fontFileProcedures";
 import { iterate } from "./utils";
+import { diffChars } from "diff";
 const format = require('xml-formatter');
 
 export function activate(context: vscode.ExtensionContext) {
@@ -46,9 +47,10 @@ export function activate(context: vscode.ExtensionContext) {
         pset.panel.webview.onDidReceiveMessage(async message => {
             switch (message.command) {
                 case "modified":
+                    const oldText = pset.text;
                     pset.text = format(message.data);
                     pset.editor.edit(editBuilder => {
-                        editBuilder.replace(allRange(pset.editor), pset.text);
+                        diffProcedure(diffChars(oldText, pset.text), editBuilder)
                     });
                     prevendSend = true;
                     return;
@@ -134,16 +136,6 @@ export function activate(context: vscode.ExtensionContext) {
     }));
 }
 
-function allRange(textEditor: vscode.TextEditor): vscode.Range {
-    let firstLine = textEditor.document.lineAt(0);
-    let lastLine = textEditor.document.lineAt(textEditor.document.lineCount - 1);
-    let textRange = new vscode.Range(0,
-        firstLine.range.start.character,
-        textEditor.document.lineCount - 1,
-        lastLine.range.end.character);
-    return textRange;
-}
-
 function showError(reason: any) {
     vscode.window.showErrorMessage(reason);
 }
@@ -164,8 +156,29 @@ function parseSvg(svgText: string, editor: vscode.TextEditor, diagnostics: vscod
     return parsed.result
 }
 
-async function newUntitled(viewColumn: vscode.ViewColumn, content: string) {
+export async function newUntitled(viewColumn: vscode.ViewColumn, content: string) {
     const config = vscode.workspace.getConfiguration("svgeditor");
     const document = await vscode.workspace.openTextDocument({language: config.get<string>("filenameExtension"), content});
     return vscode.window.showTextDocument(document, viewColumn);
+}
+
+export function diffProcedure(diffResults: JsDiff.IDiffResult[], editBuilder: vscode.TextEditorEdit) {
+    let startLine = 0, startCharacter = 0;
+    for (let diffResult of diffResults) {
+        let lines = diffResult.value.split(/\r?\n/);
+        let newlineCodes = lines.length - 1;
+        let endLine = startLine + newlineCodes;
+        let endCharacter = newlineCodes === 0 ? startCharacter + diffResult.value.length : lines[newlineCodes].length;
+
+        if (diffResult.added) {
+            editBuilder.insert(new vscode.Position(startLine, startCharacter), diffResult.value);
+        } else if (diffResult.removed) {
+            editBuilder.delete(new vscode.Range(startLine, startCharacter, endLine, endCharacter));
+        }
+
+        if (!diffResult.added) {
+            startLine = endLine;
+            startCharacter = endCharacter;
+        }
+    }
 }

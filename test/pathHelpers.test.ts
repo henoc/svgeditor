@@ -1,7 +1,6 @@
 import { svgPathManager } from "../src/pathHelpers";
-import ast from "assert";
+import * as assert from 'assert';
 import { deepCopy } from "../src/utils";
-const assert = ast.strict;
 
 describe("SvgPathManager", () => {
 
