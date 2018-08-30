@@ -164,7 +164,7 @@ function parseSvg(svgText: string, editor: vscode.TextEditor, diagnostics: vscod
     return parsed.result
 }
 
-async function newUntitled(viewColumn: vscode.ViewColumn, content: string) {
+export async function newUntitled(viewColumn: vscode.ViewColumn, content: string) {
     const config = vscode.workspace.getConfiguration("svgeditor");
     const document = await vscode.workspace.openTextDocument({language: config.get<string>("filenameExtension"), content});
     return vscode.window.showTextDocument(document, viewColumn);
