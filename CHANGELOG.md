@@ -1,5 +1,7 @@
 # CHANGELOG
 
+- 2.2.0
+  - Update only differences when modifying SVG code
 - 2.1.0
   - Fix auto deletion unsupported attributes bug
   - add basic font selection window

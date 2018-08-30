@@ -1,5 +1,5 @@
 import { iterate, assertNever, deepCopy, escapeHtml } from "./utils";
-import { Length, Paint, PathCommand, Transform, isLength, isPaint, isTransform, FontSize } from "./domParser";
+import { Length, Paint, PathCommand, Transform, isLength, isPaint, isTransform, FontSize, isColor } from "./domParser";
 import tinycolor from "tinycolor2";
 import { svgPathManager } from "./pathHelpers";
 import { elementOpenStart, elementOpenEnd, attr, text, elementClose } from "incremental-dom";
@@ -76,10 +76,10 @@ export class SvgTag implements Component {
     pattr(key: string, value: Paint | null): SvgTag {
         if (value !== null && this.data.important.indexOf(key) === -1) {
             value = this.fixDecimalPlaces(value);
-            const tcolor = tinycolor(value);
-            if (value.format === "none" || value.format === "currentColor" || value.format === "inherit") {
-                this.data.attrs[key] = value.format;
+            if (value && !isColor(value)) {
+                this.data.attrs[key] = value;
             } else {
+                const tcolor = tinycolor(value);
                 this.data.attrs[key] = tcolor.toString(value.format);
             }
         }

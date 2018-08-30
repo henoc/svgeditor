@@ -176,9 +176,11 @@ export function isLength(obj: Object): obj is Length {
     return obj instanceof Object && "unit" in obj && "value" in obj && "attrName" in obj;
 }
 
-export type PaintFormat = "none" | "currentColor" | "inherit" | "name" | "hex" | "hex6" | "hex3" | "hex4" | "hex8" | "rgb" | "prgb" | "hsl";
+export type PaintFormat = "name" | "hex" | "hex6" | "hex3" | "hex4" | "hex8" | "rgb" | "prgb" | "hsl";
 
-export interface Paint {
+export type Paint = "none" | "currentColor" | "inherit" | Color;
+
+type Color = {
     format: PaintFormat;
     r: number;
     g: number;
@@ -186,8 +188,12 @@ export interface Paint {
     a: number;
 }
 
-export function isPaint(obj: Object): obj is Paint {
+export function isColor(obj: Object): obj is Color {
     return obj instanceof Object && "format" in obj && "r" in obj && "g" in obj && "b" in obj && "a" in obj;
+}
+
+export function isPaint(obj: Object): obj is Paint {
+    return (typeof obj === "string" && (obj === "none" || obj === "currentColor" || obj === "inherit")) || isColor(obj);
 }
 
 export interface Point {
@@ -549,10 +555,7 @@ function attrOf(element: xmldoc.XmlElement, warns: Warning[], attrs: Assoc, name
                     ...tcolor.toRgb()
                 }
             } else if (/^(none|currentColor|inherit)$/.test(value)) {
-                return <Paint>{
-                    format: <any>value,
-                    r: 0, g: 0, b: 0, a: 0
-                }
+                return <Paint>value;
             } else if (/^url\([^\)]*\)$/.test(value)) {
                 warns.push({range: toRange(element), message: `FuncIRI notation ${name}: ${value} is unsupported.` });
                 return null;

@@ -1,6 +1,6 @@
 import { elementOpen, elementClose, text, elementVoid } from "incremental-dom";
 import { drawState, refleshContent, openWindows, contentChildrenComponent, editMode, fontList } from "./main";
-import { Paint, PaintFormat } from "./domParser";
+import { Paint, PaintFormat, isColor } from "./domParser";
 import tinycolor from "tinycolor2";
 import { Component, WindowComponent } from "./component";
 import { el, OneOrMore, iterate } from "./utils";
@@ -202,8 +202,9 @@ class ColorPickerComponent implements WindowComponent {
     selectorValue: string = "color";
     canvasComponent: ColorPickerCanvasComponent | null;
 
-    constructor(public relatedProperty: "fill" | "stroke", public onChange: (self: ColorPickerComponent) => void, public onClose: () => void) {
-        this.canvasComponent = new ColorPickerCanvasComponent(200, 100, tinycolor(drawState[relatedProperty] || this.CANVAS_DEFAULT_COLOR), () => onChange(this));
+    constructor(initialPaint: Paint | null, public relatedProperty: "fill" | "stroke", public onChange: (self: ColorPickerComponent) => void, public onClose: () => void) {
+        const paint = initialPaint;
+        this.canvasComponent = new ColorPickerCanvasComponent(200, 100, tinycolor(paint && isColor(paint) && paint || this.CANVAS_DEFAULT_COLOR), () => onChange(this));
     }
 
     render() {
@@ -215,13 +216,14 @@ class ColorPickerComponent implements WindowComponent {
     }
 
     getPaint(destFormat: PaintFormat | null): Paint | null {
-        const color = this.canvasComponent && (this.canvasComponent.tmpColor || this.canvasComponent.color) || tinycolor(drawState[this.relatedProperty] || this.CANVAS_DEFAULT_COLOR);
+        const paint = drawState[this.relatedProperty];
+        const color = this.canvasComponent && (this.canvasComponent.tmpColor || this.canvasComponent.color) || tinycolor(paint && isColor(paint) && paint || this.CANVAS_DEFAULT_COLOR);
         if (this.selectorValue === "no attribute") {
             return null;
         } else if (this.selectorValue === "none" || this.selectorValue === "currentColor" || this.selectorValue === "inherit") {
-            return {format: this.selectorValue, ...color.toRgb()};
+            return this.selectorValue;
         } else {
-            if (destFormat !== "none" && destFormat !== "currentColor" && destFormat !== "inherit" && destFormat !== null) {
+            if (destFormat !== null) {
                 return {format: destFormat, ...color.toRgb()};
             } else {
                 return {format: "rgb", ...color.toRgb()};
@@ -244,7 +246,8 @@ class ColorPickerComponent implements WindowComponent {
     private selectorOnChange(event: Event) {
         this.selectorValue = (<HTMLSelectElement>event.target).value;
         if (this.selectorValue === "color") {
-            this.canvasComponent = new ColorPickerCanvasComponent(200, 100, tinycolor(drawState[this.relatedProperty] || this.CANVAS_DEFAULT_COLOR), () => this.onChange(this));
+            const paint = drawState[this.relatedProperty];
+            this.canvasComponent = new ColorPickerCanvasComponent(200, 100, tinycolor(paint && isColor(paint) && paint || this.CANVAS_DEFAULT_COLOR), () => this.onChange(this));
         } else {
             this.canvasComponent = null;
         }
@@ -346,8 +349,8 @@ export class StyleConfigComponent implements Component {
         const style = {backgroundColor: "transparent"};
         let textContent: null | string = null;
         if (paint) {
-            if (paint.format === "none" || paint.format === "currentColor" || paint.format === "inherit") {
-                textContent = paint.format;
+            if (!isColor(paint)) {
+                textContent = paint;
             } else {
                 style.backgroundColor = tinycolor(paint).toString("rgb");
             }
@@ -366,14 +369,17 @@ export class StyleConfigComponent implements Component {
 
     private openColorPicker(event: MouseEvent, relatedProperty: "fill" | "stroke") {
         event.stopPropagation();
-        this.colorPicker = new ColorPickerComponent(relatedProperty, (colorpicker) => {
+        this.colorPicker = new ColorPickerComponent(relatedProperty === "fill" ? this.colorBoxFillBackground : this.colorBoxStrokeBackground, relatedProperty, (colorpicker) => {
+            let paint: Paint | null;
             switch (relatedProperty) {
                 case "fill":
-                this.colorBoxFillBackground = drawState.fill = colorpicker.getPaint(drawState.fill && drawState.fill.format);
+                paint = drawState.fill;
+                this.colorBoxFillBackground = drawState.fill = colorpicker.getPaint(paint && isColor(paint) && paint.format || null);
                 if (this.affectedShapeUuids) multiShaper(this.affectedShapeUuids).fill = drawState.fill;
                 break;
                 case "stroke":
-                this.colorBoxStrokeBackground = drawState.stroke = colorpicker.getPaint(drawState.stroke && drawState.stroke.format);
+                paint = drawState.stroke;
+                this.colorBoxStrokeBackground = drawState.stroke = colorpicker.getPaint(paint && isColor(paint) && paint.format || null);
                 if (this.affectedShapeUuids) multiShaper(this.affectedShapeUuids).stroke = drawState.stroke;
                 break;
             }
