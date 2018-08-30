@@ -136,16 +136,6 @@ export function activate(context: vscode.ExtensionContext) {
     }));
 }
 
-function allRange(textEditor: vscode.TextEditor): vscode.Range {
-    let firstLine = textEditor.document.lineAt(0);
-    let lastLine = textEditor.document.lineAt(textEditor.document.lineCount - 1);
-    let textRange = new vscode.Range(0,
-        firstLine.range.start.character,
-        textEditor.document.lineCount - 1,
-        lastLine.range.end.character);
-    return textRange;
-}
-
 function showError(reason: any) {
     vscode.window.showErrorMessage(reason);
 }
