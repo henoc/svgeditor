@@ -7,7 +7,6 @@ import { identity, transform, scale, translate, rotate, rotateDEG, applyToPoint,
 import { appendDescriptor, replaceLastDescriptor, descriptorToMatrix, appendDescriptorsLeft, translateDescriptor, scaleDescriptor, rotateDescriptor, appendDescriptorLeft, appendDescriptors } from "./transformHelpers";
 import { font } from "./fontHelpers";
 import equal from "fast-deep-equal";
-import { PaintServer } from "./paintServer";
 
 interface ShaperFunctions {
     center: Vec2;
@@ -18,7 +17,6 @@ interface ShaperFunctions {
     fill: Paint | null;
     stroke: Paint | null;
     fontFamily: string | null;
-    paintServer: PaintServer | null;
     move(diff: Vec2): void;
     size: Vec2;
     size2(newSize: Vec2, fixedPoint: Vec2): void;
@@ -549,6 +547,9 @@ export function shaper(uuid: string): ShaperFunctions {
                 toPath() {
                     // todo?
                 },
+                get paintServer() {
+                    return null;
+                },
                 size2,
                 allTransform,
                 appendTransformDescriptors: appendTransformDescriptors(tattrs),
@@ -561,7 +562,7 @@ export function shaper(uuid: string): ShaperFunctions {
                 move: (diff: Vec2) => {
                     const oldCenter = self().center;
                     const newCenter = oldCenter.add(diff);
-                    for (let c of pe.children) {
+                    for (let c of pe.children) if (hasEntity(c)) {
                         const oldInC = intoTargetCoordinate(oldCenter, c.uuid);
                         const newInC = intoTargetCoordinate(newCenter, c.uuid);
                         shaper(c.uuid).move(newInC.sub(oldInC));
@@ -569,7 +570,7 @@ export function shaper(uuid: string): ShaperFunctions {
                 },
                 get center() {
                     let [minX, minY, maxX, maxY] = <(null | number)[]>[null, null, null, null];
-                    for (let c of gchildren) {
+                    for (let c of gchildren) if (hasEntity(c)) {
                         const leftTop = shaper(c.uuid).leftTop;
                         const size = shaper(c.uuid).size;
                         for (let corner of [leftTop, leftTop.add(v(size.x, 0)), leftTop.add(v(0, size.y)), leftTop.add(size)]) {
@@ -589,7 +590,7 @@ export function shaper(uuid: string): ShaperFunctions {
                 get size() {
                     type Four<T> = [T, T, T, T];
                     let [minX, minY, maxX, maxY] = <Four<null | number>>[null, null, null, null];
-                    for (let c of gchildren) {
+                    for (let c of gchildren) if (hasEntity(c)) {
                         const leftTop = shaper(c.uuid).leftTop;
                         const size = shaper(c.uuid).size;
                         for (let corner of [leftTop, leftTop.add(v(size.x, 0)), leftTop.add(v(0, size.y)), leftTop.add(size)]) {
@@ -607,7 +608,7 @@ export function shaper(uuid: string): ShaperFunctions {
                     const lineLength = ([start, end]: Vec2[]) => {
                         return Math.sqrt(Math.pow(end.x - start.x, 2) + Math.pow(end.y - start.y, 2));
                     }
-                    for (let c of gchildren) {
+                    for (let c of gchildren) if(hasEntity(c)) {
                         const preLeftTop = multiShaper([c.uuid], true).leftTop;
                         const preRectSize = multiShaper([c.uuid], true).size;
                         const preXLine = [preLeftTop, preLeftTop.add(v(preRectSize.x, 0))];
@@ -640,13 +641,13 @@ export function shaper(uuid: string): ShaperFunctions {
                     self().size = newSize;
                     let diff = oldSize.sub(newSize).div(v(2, 2)).mul(v(fixedPoint.x - oldCenter.x > 0 ? 1 : -1, fixedPoint.y - oldCenter.y > 0 ? 1 : -1));
                     const newCenter = diff.add(oldCenter);
-                    for (let i = 0; i < gchildren.length; i++) {
+                    for (let i = 0; i < gchildren.length; i++) if (hasEntity(gchildren[i])) {
                         const diffCenterOfC = oldCenterOfCsFromOldCenter[i].mul(newSize.div(oldSize));
                         shaper(gchildren[i].uuid).center = intoTargetCoordinate(newCenter.add(diffCenterOfC), gchildren[i].uuid);
                     }
                 },
                 toPath() {
-                    for (let c of gchildren) {
+                    for (let c of gchildren) if (hasEntity(c)) {
                         shaper(c.uuid).toPath();
                     }
                 },
@@ -655,13 +656,8 @@ export function shaper(uuid: string): ShaperFunctions {
                 rotate: rotateCenter
             }).merge(corners).merge(presentationAttrs).merge(transformProps).object;
         case "linearGradient":
-            return new Merger({
-
-            }).merge(corners).merge(presentationAttrs).merge(transformProps).object;
         case "stop":
-            return new Merger({
-
-            }).merge(corners).merge(presentationAttrs).merge(transformProps).object;
+            throw new Error("Definiton only shape cannot move.");
         case "unknown":
             throw new Error("Unknown shape cannot move.");
     }
@@ -765,7 +761,7 @@ export function multiShaper(uuids: OneOrMore<string>, useMultiEvenIfSingle: bool
             move: (diff: Vec2) => {
                 const oldCenter = self().center;
                 const newCenter = oldCenter.add(diff);
-                for (let c of pes) {
+                for (let c of pes) if (hasEntity(c)) {
                     const oldInC = intoTargetCoordinate(oldCenter, c.uuid);
                     const newInC = intoTargetCoordinate(newCenter, c.uuid);
                     shaper(c.uuid).move(newInC.sub(oldInC));
@@ -773,7 +769,7 @@ export function multiShaper(uuids: OneOrMore<string>, useMultiEvenIfSingle: bool
             },
             get center() {
                 let [minX, minY, maxX, maxY] = <(null | number)[]>[null, null, null, null];
-                for (let c of pes) {
+                for (let c of pes) if (hasEntity(c)) {
                     const leftTop = shaper(c.uuid).leftTop;
                     const size = shaper(c.uuid).size;
                     for (let corner of [leftTop, leftTop.add(v(size.x, 0)), leftTop.add(v(0, size.y)), leftTop.add(size)]) {
@@ -793,7 +789,7 @@ export function multiShaper(uuids: OneOrMore<string>, useMultiEvenIfSingle: bool
             get size() {
                 type Four<T> = [T, T, T, T];
                 let [minX, minY, maxX, maxY] = <Four<null | number>>[null, null, null, null];
-                for (let c of pes) {
+                for (let c of pes) if (hasEntity(c)) {
                     const leftTop = shaper(c.uuid).leftTop;
                     const size = shaper(c.uuid).size;
                     for (let corner of [leftTop, leftTop.add(v(size.x, 0)), leftTop.add(v(0, size.y)), leftTop.add(size)]) {
@@ -811,7 +807,7 @@ export function multiShaper(uuids: OneOrMore<string>, useMultiEvenIfSingle: bool
                 const lineLength = ([start, end]: Vec2[]) => {
                     return Math.sqrt(Math.pow(end.x - start.x, 2) + Math.pow(end.y - start.y, 2));
                 }
-                for (let c of pes) {
+                for (let c of pes) if(hasEntity(c)) {
                     const preLeftTop = multiShaper([c.uuid], true).leftTop;
                     const preRectSize = multiShaper([c.uuid], true).size;
                     const preXLine = [preLeftTop, preLeftTop.add(v(preRectSize.x, 0))];
@@ -848,7 +844,7 @@ export function multiShaper(uuids: OneOrMore<string>, useMultiEvenIfSingle: bool
             },
             rotate: (deg: number) => {
                 const center = self().center;
-                for (let c of pes) {
+                for (let c of pes) if(hasEntity(c)) {
                     if (c.tag !== "unknown" && "transform" in c.attrs) {
                         if (c.attrs.transform === null) c.attrs.transform = { descriptors: [], matrices: [] };
                         appendDescriptorLeft(c.attrs.transform, { type: "matrix", ...rotateDEG(deg, center.x, center.y) });
@@ -863,18 +859,18 @@ export function multiShaper(uuids: OneOrMore<string>, useMultiEvenIfSingle: bool
                 self().size = newSize;
                 let diff = oldSize.sub(newSize).div(v(2, 2)).mul(v(fixedPoint.x - oldCenter.x > 0 ? 1 : -1, fixedPoint.y - oldCenter.y > 0 ? 1 : -1));
                 const newCenter = diff.add(oldCenter);
-                for (let i = 0; i < uuids.length; i++) {
+                for (let i = 0; i < uuids.length; i++) if(hasEntity(pes[i])) {
                     const diffCenterOfC = oldCenterOfCsFromOldCenter[i].mul(newSize.div(oldSize));
                     shaper(uuids[i]).center = intoTargetCoordinate(newCenter.add(diffCenterOfC), uuids[i]);
                 }
             },
             appendTransformDescriptors: (descriptors: TransformDescriptor[], from: "left" | "right") => {
-                for (let c of pes) {
+                for (let c of pes) if(hasEntity(c)) {
                     shaper(c.uuid).appendTransformDescriptors(descriptors, from);
                 }
             },
             toPath() {
-                for (let c of pes) {
+                for (let c of pes) if(hasEntity(c)) {
                     shaper(c.uuid).toPath();
                 }
             }
@@ -887,4 +883,8 @@ function intoTargetCoordinate(point: Vec2, targetUuid: string) {
 }
 function escapeFromTargetCoordinate(point: Vec2, targetUuid: string) {
     return vfp(applyToPoint(shaper(targetUuid).transform, point));
+}
+
+function hasEntity(pe: ParsedElement) {
+    return !(pe.tag === "unknown" || pe.tag === "linearGradient" || pe.tag === "stop");
 }

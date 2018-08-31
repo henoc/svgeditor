@@ -6,6 +6,7 @@ import { Component, WindowComponent } from "./component";
 import { el, OneOrMore, iterate } from "./utils";
 import { multiShaper, shaper } from "./shapes";
 import { acceptHashOnly } from "./url";
+import { paintServer, cssString } from "./paintServer";
 
 class ButtonComponent implements Component {
     constructor(public name: string, public key: string, public onclick: () => void) {}
@@ -355,8 +356,12 @@ export class StyleConfigComponent implements Component {
                 style.background = tinycolor(paint).toString("rgb");
             } else {
                 const idValue = acceptHashOnly(paint.url);
+                console.log(idValue);
                 if (idValue && svgIdUuidMap[idValue]) {
-                        style.background = convertToCssString(shaper(svgIdUuidMap[idValue]).paintServer);
+                    const pserver = paintServer(svgIdUuidMap[idValue]);
+                    console.log(pserver);
+                    if (pserver) style.background = cssString(pserver);
+                    if (pserver) console.log(cssString(pserver));
                 }
             }
         } else {
