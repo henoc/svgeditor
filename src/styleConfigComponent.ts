@@ -1,5 +1,5 @@
 import { elementOpen, elementClose, text, elementVoid } from "incremental-dom";
-import { drawState, refleshContent, openWindows, contentChildrenComponent, editMode, fontList, svgIdUuidMap } from "./main";
+import { drawState, refleshContent, openWindows, contentChildrenComponent, editMode, fontList, svgIdUuidMap, paintServers } from "./main";
 import { Paint, ColorFormat, isColor, isFuncIRI } from "./domParser";
 import tinycolor from "tinycolor2";
 import { Component, WindowComponent } from "./component";
@@ -219,10 +219,13 @@ class ColorPickerComponent implements WindowComponent {
     getPaint(destFormat: ColorFormat | null): Paint | null {
         const paint = drawState[this.relatedProperty];
         const color = this.canvasComponent && (this.canvasComponent.tmpColor || this.canvasComponent.color) || tinycolor(paint && isColor(paint) && paint || this.CANVAS_DEFAULT_COLOR);
+        let tmp: RegExpMatchArray | null;
         if (this.selectorValue === "no attribute") {
             return null;
         } else if (this.selectorValue === "none" || this.selectorValue === "currentColor" || this.selectorValue === "inherit") {
             return this.selectorValue;
+        } else if (tmp = this.selectorValue.match(/^url\((#[^\(]+)\)$/)) {
+            return {url: tmp[1]};
         } else {
             if (destFormat !== null) {
                 return {format: destFormat, ...color.toRgb()};
@@ -235,7 +238,8 @@ class ColorPickerComponent implements WindowComponent {
     private selectorRender() {
         el`select :key="colorpicker-selector" *onchange=${(event: Event) => this.selectorOnChange(event)}`;
 
-        for (let value of ["color", "no attribute", "none", "currentColor", "inherit"]) {
+        const urls = Object.keys(paintServers).map(id => `url(#${id})`);
+        for (let value of ["color", "no attribute", "none", "currentColor", "inherit", ...urls]) {
             el`option :key=${`colorpicker-option-${value}`} *value=${value}`;
             text(value);
             el`/option`;
@@ -356,12 +360,9 @@ export class StyleConfigComponent implements Component {
                 style.background = tinycolor(paint).toString("rgb");
             } else {
                 const idValue = acceptHashOnly(paint.url);
-                console.log(idValue);
                 if (idValue && svgIdUuidMap[idValue]) {
                     const pserver = paintServer(svgIdUuidMap[idValue]);
-                    console.log(pserver);
                     if (pserver) style.background = cssString(pserver);
-                    if (pserver) console.log(cssString(pserver));
                 }
             }
         } else {

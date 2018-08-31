@@ -1,6 +1,7 @@
 import { svgVirtualMap } from "./main";
 import { ParsedElement, Ratio, Paint, isColor, isFuncIRI } from "./domParser";
 import tinycolor from "tinycolor2";
+import { traverse } from "./svgConstructor";
 
 export type PaintServer = {
     kind: "linearGradient",
@@ -63,4 +64,15 @@ export function cssString(paintServer: PaintServer): string {
         }
         return `linear-gradient(to right, ${acc.join(", ")})`;
     }
+}
+
+export function collectPaintServer(pe: ParsedElement): {[id: string]: ParsedElement} {
+    const acc: {[id: string]: ParsedElement} = {};
+    traverse(pe, (pe, parentPe, index) => {
+        const ident = pe.attrs.id;
+        if (ident && pe.tag === "linearGradient") {
+            acc[ident] = pe;
+        }
+    });
+    return acc;
 }

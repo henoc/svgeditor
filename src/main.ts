@@ -10,6 +10,7 @@ import { Component, WindowComponent } from "./component";
 import { SvgContainerComponent } from "./svgContainerComponent";
 import { StyleConfigComponent } from "./styleConfigComponent";
 import { el } from "./utils";
+import { collectPaintServer } from "./paintServer";
 
 declare function acquireVsCodeApi(): any;
 
@@ -21,6 +22,7 @@ export let svgVirtualMap: { [uu: string]: ParsedElement } = {};
 export let svgRealMap: { [uu: string]: Element } = {};
 export let svgIdUuidMap: { [id: string]: string} = {};          // id -> uuid
 export let editMode: {mode: Mode} = {mode: new SelectMode()};
+export let paintServers: { [id: string] : ParsedElement } = {};
 export let openWindows: { [id: string]: WindowComponent } = {};
 export let fontList: { [family: string]: string[] /* subFamiles */ } | null = null;
 export const configuration = {
@@ -105,6 +107,7 @@ document.addEventListener("click", onDocumentClick);
 export function refleshContent() {
     svgIdUuidMap = makeIdUuidMap(svgdata);
     svgVirtualMap = makeUuidVirtualMap(svgdata);
+    paintServers = collectPaintServer(svgdata);
     patch(content, () => contentChildrenComponent.render());
 
     let transparentSvgRoot = document.querySelector("svg[data-root]");
