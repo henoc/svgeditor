@@ -1,4 +1,4 @@
-import { construct, makeUuidVirtualMap, makeUuidRealMap } from "./svgConstructor";
+import { construct, makeUuidVirtualMap, makeUuidRealMap, makeIdUuidMap } from "./svgConstructor";
 import { ParsedElement, isLengthUnit, LengthUnit, Paint } from "./domParser";
 import { onDocumentMouseMove, onDocumentMouseUp, onDocumentClick, onDocumentMouseLeave } from "./triggers";
 import { Mode } from "./modeInterface";
@@ -19,6 +19,7 @@ const vscode = acquireVsCodeApi();
 export let svgdata: ParsedElement;
 export let svgVirtualMap: { [uu: string]: ParsedElement } = {};
 export let svgRealMap: { [uu: string]: Element } = {};
+export let svgIdUuidMap: { [id: string]: string} = {};          // id -> uuid
 export let editMode: {mode: Mode} = {mode: new SelectMode()};
 export let openWindows: { [id: string]: WindowComponent } = {};
 export let fontList: { [family: string]: string[] /* subFamiles */ } | null = null;
@@ -102,6 +103,7 @@ document.addEventListener("click", onDocumentClick);
 // exported functions
 
 export function refleshContent() {
+    svgIdUuidMap = makeIdUuidMap(svgdata);
     svgVirtualMap = makeUuidVirtualMap(svgdata);
     patch(content, () => contentChildrenComponent.render());
 

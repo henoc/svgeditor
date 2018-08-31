@@ -27,6 +27,8 @@ export type ParsedElement = (
     ParsedPathElement |
     ParsedTextElement |
     ParsedGroupElement |
+    ParsedLinearGradientElement |
+    ParsedStopElement |
     ParsedUnknownElement
 ) & {
     uuid: string;
@@ -80,6 +82,17 @@ interface ParsedGroupElement {
     tag: "g",
     attrs: ParsedGroupAttr,
     children: ParsedElement[]
+}
+
+interface ParsedLinearGradientElement {
+    tag: "linearGradient",
+    attrs: ParsedLinearGradientAttr,
+    children: ParsedElement[]
+}
+
+interface ParsedStopElement {
+    tag: "stop",
+    attrs: ParsedStopAttr
 }
 
 interface ParsedUnknownElement {
@@ -160,6 +173,14 @@ interface ParsedTextAttr extends ParsedBaseAttr, ParsedPresentationAttr {
 interface ParsedGroupAttr extends ParsedBaseAttr, ParsedPresentationAttr {
 }
 
+interface ParsedLinearGradientAttr extends ParsedBaseAttr, ParsedPresentationAttr {
+}
+
+interface ParsedStopAttr extends ParsedBaseAttr, ParsedPresentationAttr {
+    offset: Ratio | null;
+    "stop-color": Paint | null;
+}
+
 export type LengthUnit = "em" | "ex" | "px" | "in" | "cm" | "mm" | "pt" | "pc" | "%" | null;
 
 export interface Length {
@@ -176,24 +197,32 @@ export function isLength(obj: Object): obj is Length {
     return obj instanceof Object && "unit" in obj && "value" in obj && "attrName" in obj;
 }
 
-export type PaintFormat = "name" | "hex" | "hex6" | "hex3" | "hex4" | "hex8" | "rgb" | "prgb" | "hsl";
+export type ColorFormat = "name" | "hex" | "hex6" | "hex3" | "hex4" | "hex8" | "rgb" | "prgb" | "hsl";
 
-export type Paint = "none" | "currentColor" | "inherit" | Color;
+export type Paint = "none" | "currentColor" | "inherit" | FuncIRI | Color;
 
 type Color = {
-    format: PaintFormat;
+    format: ColorFormat;
     r: number;
     g: number;
     b: number;
     a: number;
 }
 
+type FuncIRI = {
+    url: string;
+}
+
 export function isColor(obj: Object): obj is Color {
     return obj instanceof Object && "format" in obj && "r" in obj && "g" in obj && "b" in obj && "a" in obj;
 }
 
+export function isFuncIRI(obj: Object): obj is FuncIRI {
+    return obj instanceof Object && "url" in obj;
+}
+
 export function isPaint(obj: Object): obj is Paint {
-    return (typeof obj === "string" && (obj === "none" || obj === "currentColor" || obj === "inherit")) || isColor(obj);
+    return (typeof obj === "string" && (obj === "none" || obj === "currentColor" || obj === "inherit")) || isColor(obj) || isFuncIRI(obj);
 }
 
 export interface Point {
@@ -262,6 +291,12 @@ export function isLengthAdjust(obj: Object): obj is LengthAdjust {
     return obj === "spacing" || obj === "spacingAndGlyphs";
 }
 
+export type Ratio = number | {unit: "%", value: number}
+
+export function isRatio(obj: Object): obj is Ratio {
+    return typeof obj === "number" || (obj instanceof Object && "unit" in obj && "value" in obj);
+}
+
 export function parse(element: xmldoc.XmlElement, parent: string | null): ParsedResult {
     const uuid = uuidStatic.v4();
     const isRoot = parent === null;
@@ -299,6 +334,12 @@ export function parse(element: xmldoc.XmlElement, parent: string | null): Parsed
     } else if (element.name === "g") {
         const attrs = parseAttrs(element, pushWarns).g();
         return {result: {tag: "g", attrs, children, uuid, parent, isRoot}, warns};
+    } else if (element.name === "linearGradient") {
+        const attrs = parseAttrs(element, pushWarns).linearGradient();
+        return {result: {tag: "linearGradient", attrs, children, uuid, parent, isRoot}, warns};
+    } else if (element.name === "stop") {
+        const attrs = parseAttrs(element, pushWarns).stop();
+        return {result: {tag: "stop", attrs, uuid, parent, isRoot}, warns};
     } else {
         const attrs: Assoc = element.attr;
         return {result: {tag: "unknown", tag$real: element.name, attrs, children, text, uuid, parent, isRoot}, warns: [{range: toRange(element), message: `${element.name} is unsupported element.`}]};
@@ -453,6 +494,26 @@ function parseAttrs(element: xmldoc.XmlElement, onWarns: (ws: Warning[]) => void
             };
             onWarns(warns);
             return validGroupAttrs;
+        },
+        linearGradient: () => {
+            const validLinearGradientAttrs: ParsedLinearGradientAttr = {
+                ...globalValidAttrs,
+                ...getPresentationAttrs(),
+                unknown: unknownAttrs(attrs, element, pushWarns)
+            };
+            onWarns(warns);
+            return validLinearGradientAttrs;
+        },
+        stop: () => {
+            const validStopAttrs: ParsedStopAttr = {
+                ...globalValidAttrs,
+                ...getPresentationAttrs(),
+                offset: tryParse("offset").map(a => a.ratio()).get,
+                "stop-color": tryParse("stop-color").map(a => a.paint()).get,
+                unknown: unknownAttrs(attrs, element, pushWarns)
+            };
+            onWarns(warns);
+            return validStopAttrs;
         }
     }
 }
@@ -476,6 +537,7 @@ function unknownAttrs(attrs: Assoc, element: xmldoc.XmlElement, onWarns: (ws: Wa
 
 type AttrOfMethods = {
     length: () => Length | null,
+    ratio: () => Ratio | null,
     number: () => number | null,
     viewBox: () => [Point, Point] | null,
     paint: () => Paint | null,
@@ -527,6 +589,16 @@ function attrOf(element: xmldoc.XmlElement, warns: Warning[], attrs: Assoc, name
                 return null;
             }
         },
+        ratio: () => {
+            let tmp;
+            if (tmp = /^[+-]?[0-9]+(\.[0-9]*)?([eE][+-]?[0-9]+)?(%)?$/.exec(value)) {
+                delete attrs[name];
+                return tmp[3] ? <Ratio>{unit: "%", value: parseFloat(value)} : Number(value);
+            } else {
+                warns.push({range: toRange(element), message: `${name}: ${value} is not a number or percentage.`});
+                return null;
+            }
+        },
         number: () => {
             if (/^[+-]?[0-9]+(\.[0-9]*)?([eE][+-]?[0-9]+)?$/.test(value)) {
                 delete attrs[name];
@@ -548,6 +620,7 @@ function attrOf(element: xmldoc.XmlElement, warns: Warning[], attrs: Assoc, name
         },
         paint: () => {
             let tcolor: tinycolorInstance = tinycolor(value);
+            let tmp: RegExpMatchArray | null;
             if (tcolor.getFormat() && tcolor.getFormat() !== "hsv") {
                 delete attrs[name];
                 return {
@@ -556,9 +629,8 @@ function attrOf(element: xmldoc.XmlElement, warns: Warning[], attrs: Assoc, name
                 }
             } else if (/^(none|currentColor|inherit)$/.test(value)) {
                 return <Paint>value;
-            } else if (/^url\([^\)]*\)$/.test(value)) {
-                warns.push({range: toRange(element), message: `FuncIRI notation ${name}: ${value} is unsupported.` });
-                return null;
+            } else if ((tmp = value.match(/^url\(([^\)]+)\)$/)) && tmp) {
+                return {url: tmp[1]};
             } else {
                 warns.push({range: toRange(element), message: `${name}: ${value} is unsupported paint value.`});
                 return null;        

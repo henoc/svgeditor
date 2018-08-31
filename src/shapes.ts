@@ -7,6 +7,7 @@ import { identity, transform, scale, translate, rotate, rotateDEG, applyToPoint,
 import { appendDescriptor, replaceLastDescriptor, descriptorToMatrix, appendDescriptorsLeft, translateDescriptor, scaleDescriptor, rotateDescriptor, appendDescriptorLeft, appendDescriptors } from "./transformHelpers";
 import { font } from "./fontHelpers";
 import equal from "fast-deep-equal";
+import { PaintServer } from "./paintServer";
 
 interface ShaperFunctions {
     center: Vec2;
@@ -17,6 +18,7 @@ interface ShaperFunctions {
     fill: Paint | null;
     stroke: Paint | null;
     fontFamily: string | null;
+    paintServer: PaintServer | null;
     move(diff: Vec2): void;
     size: Vec2;
     size2(newSize: Vec2, fixedPoint: Vec2): void;
@@ -651,6 +653,14 @@ export function shaper(uuid: string): ShaperFunctions {
                 allTransform,
                 appendTransformDescriptors: appendTransformDescriptors(gattrs),
                 rotate: rotateCenter
+            }).merge(corners).merge(presentationAttrs).merge(transformProps).object;
+        case "linearGradient":
+            return new Merger({
+
+            }).merge(corners).merge(presentationAttrs).merge(transformProps).object;
+        case "stop":
+            return new Merger({
+
             }).merge(corners).merge(presentationAttrs).merge(transformProps).object;
         case "unknown":
             throw new Error("Unknown shape cannot move.");

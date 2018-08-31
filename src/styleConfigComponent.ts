@@ -1,10 +1,11 @@
 import { elementOpen, elementClose, text, elementVoid } from "incremental-dom";
-import { drawState, refleshContent, openWindows, contentChildrenComponent, editMode, fontList } from "./main";
-import { Paint, PaintFormat, isColor } from "./domParser";
+import { drawState, refleshContent, openWindows, contentChildrenComponent, editMode, fontList, svgIdUuidMap } from "./main";
+import { Paint, ColorFormat, isColor, isFuncIRI } from "./domParser";
 import tinycolor from "tinycolor2";
 import { Component, WindowComponent } from "./component";
 import { el, OneOrMore, iterate } from "./utils";
-import { multiShaper } from "./shapes";
+import { multiShaper, shaper } from "./shapes";
+import { acceptHashOnly } from "./url";
 
 class ButtonComponent implements Component {
     constructor(public name: string, public key: string, public onclick: () => void) {}
@@ -214,8 +215,7 @@ class ColorPickerComponent implements WindowComponent {
         if (this.canvasComponent) this.canvasComponent.render();
         el`/div`;
     }
-
-    getPaint(destFormat: PaintFormat | null): Paint | null {
+    getPaint(destFormat: ColorFormat | null): Paint | null {
         const paint = drawState[this.relatedProperty];
         const color = this.canvasComponent && (this.canvasComponent.tmpColor || this.canvasComponent.color) || tinycolor(paint && isColor(paint) && paint || this.CANVAS_DEFAULT_COLOR);
         if (this.selectorValue === "no attribute") {
@@ -346,13 +346,18 @@ export class StyleConfigComponent implements Component {
     }
 
     private colorBoxRender(paint: Paint | null, relatedProperty: "fill" | "stroke") {
-        const style = {backgroundColor: "transparent"};
+        const style = {background: "transparent"};
         let textContent: null | string = null;
         if (paint) {
-            if (!isColor(paint)) {
+            if (!isColor(paint) && !isFuncIRI(paint)) {
                 textContent = paint;
+            } else if (isColor(paint)) {
+                style.background = tinycolor(paint).toString("rgb");
             } else {
-                style.backgroundColor = tinycolor(paint).toString("rgb");
+                const idValue = acceptHashOnly(paint.url);
+                if (idValue && svgIdUuidMap[idValue]) {
+                        style.background = convertToCssString(shaper(svgIdUuidMap[idValue]).paintServer);
+                }
             }
         } else {
             textContent = "no attribute";
