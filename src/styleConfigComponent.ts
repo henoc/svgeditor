@@ -1,12 +1,12 @@
 import { elementOpen, elementClose, text, elementVoid } from "incremental-dom";
-import { drawState, refleshContent, openWindows, contentChildrenComponent, editMode, fontList, svgIdUuidMap, paintServers } from "./main";
-import { Paint, ColorFormat, isColor, isFuncIRI } from "./domParser";
+import { drawState, refleshContent, openWindows, contentChildrenComponent, editMode, fontList, svgIdUuidMap, paintServers, svgVirtualMap } from "./main";
+import { Paint, ColorFormat, isColor, isFuncIRI, ParsedElement } from "./domParser";
 import tinycolor from "tinycolor2";
 import { Component, WindowComponent } from "./component";
-import { el, OneOrMore, iterate } from "./utils";
+import { el, OneOrMore, iterate, assertNever } from "./utils";
 import { multiShaper, shaper } from "./shapes";
 import { acceptHashOnly } from "./url";
-import { paintServer, cssString } from "./paintServer";
+import { fetchPaintServer, cssString, StopReference, PaintServer } from "./paintServer";
 
 class ButtonComponent implements Component {
     constructor(public name: string, public key: string, public onclick: () => void) {}
@@ -18,7 +18,69 @@ class ButtonComponent implements Component {
     }
 }
 
-class ColorPickerCanvasComponent implements Component {
+const CANVAS_DEFAULT_COLOR = {r: 255, g: 255, b: 255, a: 1};
+
+interface ColorComponent extends Component {
+    getColor(): tinycolorInstance | null;
+    move(event: MouseEvent): void;
+    dragCancel(): void;
+}
+
+class GradientComponent implements ColorComponent {
+
+    activeRangeRefUuid: string | null;
+    canvasComponent: ColorPickerCanvasComponent;
+
+    constructor(private paintServer: PaintServer & {kind: "linearGradient"}) {
+        this.activeRangeRefUuid = paintServer.stops.length > 0 ? paintServer.stops[0].uuid : null;
+        const initialPaint = paintServer.stops.length > 0 ? paintServer.stops[0]["stop-color"] : null;
+        const initialColor = initialPaint && isColor(initialPaint) && initialPaint || CANVAS_DEFAULT_COLOR;
+        this.canvasComponent = new ColorPickerCanvasComponent(200, 100, tinycolor(initialColor), () => this.onCanvasChange());
+    }
+
+    render(): void {
+        for (let stop of this.paintServer.stops) {
+            const cls = stop.uuid === this.activeRangeRefUuid ? ["svgeditor-active"] : [];
+            el`input :key=${stop.uuid} *type="range" value=${stop.offset.value} *min="0" *max="100" class=${cls.join(" ")} *onchange=${(event: Event) => this.onRangeChange(event, stop.uuid)} /`;
+        }
+        this.canvasComponent.render();
+    }
+
+    getColor() {
+        return null;
+    }
+
+    move(event: MouseEvent) {
+        this.canvasComponent.move(event);
+    }
+
+    dragCancel() {
+        this.canvasComponent.dragCancel();
+    }
+
+    onRangeChange(event: Event, uuid: string) {
+        const value = Number((<HTMLInputElement>event.target).value);
+        let pe: ParsedElement;
+        if ((pe = svgVirtualMap[uuid]) && "offset" in pe.attrs) {
+            pe.attrs.offset = typeof pe.attrs.offset === "number" ? value / 100 : {unit: "%", value};
+            this.activeRangeRefUuid = uuid;
+        }
+        refleshContent();
+    }
+
+    onCanvasChange() {
+        const tcolor = this.canvasComponent.getColor();
+        let pe: ParsedElement;
+        if (this.activeRangeRefUuid && (pe = svgVirtualMap[this.activeRangeRefUuid]) && "stop-color" in pe.attrs) {
+            const currentColor = pe.attrs["stop-color"];
+            if (currentColor && isColor(currentColor)) pe.attrs["stop-color"] = {format: currentColor.format, ...tcolor.toRgb()};
+            else pe.attrs["stop-color"] = {format: "rgb", ...tcolor.toRgb()};
+        }
+        refleshContent();
+    }
+}
+
+class ColorPickerCanvasComponent implements ColorComponent {
 
     ctx: CanvasRenderingContext2D | null = null;
     tmpColor: tinycolorInstance | null = null;
@@ -27,6 +89,10 @@ class ColorPickerCanvasComponent implements Component {
 
     constructor(public width: number, public height: number, public color: tinycolorInstance, public onChange: () => void) {
         this.initialColor = color.clone();
+    }
+
+    getColor() {
+        return this.tmpColor || this.color;
     }
 
     render() {
@@ -200,25 +266,24 @@ class ColorPickerCanvasComponent implements Component {
 
 class ColorPickerComponent implements WindowComponent {
 
-    CANVAS_DEFAULT_COLOR = {r: 255, g: 255, b: 255, a: 1};
-    selectorValue: string = "color";
-    canvasComponent: ColorPickerCanvasComponent | null;
+    selectorValue: string;
+    colorComponent: ColorComponent | null = null;
 
     constructor(initialPaint: Paint | null, public relatedProperty: "fill" | "stroke", public onChange: (self: ColorPickerComponent) => void, public onClose: () => void) {
-        const paint = initialPaint;
-        this.canvasComponent = new ColorPickerCanvasComponent(200, 100, tinycolor(paint && isColor(paint) && paint || this.CANVAS_DEFAULT_COLOR), () => onChange(this));
+        this.selectorValue = initialPaint ? (isFuncIRI(initialPaint) ? `url(${initialPaint.url})` : isColor(initialPaint) ? "color" : initialPaint) : "color";
+        this.setColorComponent(initialPaint);
     }
 
     render() {
         el`div :key="colorpicker" *class="svgeditor-colorpicker" *onclick=${(event: MouseEvent) => event.stopPropagation()}`;
         this.selectorRender();
         el`br/`;
-        if (this.canvasComponent) this.canvasComponent.render();
+        if (this.colorComponent) this.colorComponent.render();
         el`/div`;
     }
     getPaint(destFormat: ColorFormat | null): Paint | null {
         const paint = drawState[this.relatedProperty];
-        const color = this.canvasComponent && (this.canvasComponent.tmpColor || this.canvasComponent.color) || tinycolor(paint && isColor(paint) && paint || this.CANVAS_DEFAULT_COLOR);
+        const color = this.colorComponent && (this.colorComponent.getColor()) || tinycolor(paint && isColor(paint) && paint || CANVAS_DEFAULT_COLOR);
         let tmp: RegExpMatchArray | null;
         if (this.selectorValue === "no attribute") {
             return null;
@@ -240,7 +305,7 @@ class ColorPickerComponent implements WindowComponent {
 
         const urls = Object.keys(paintServers).map(id => `url(#${id})`);
         for (let value of ["color", "no attribute", "none", "currentColor", "inherit", ...urls]) {
-            el`option :key=${`colorpicker-option-${value}`} *value=${value}`;
+            el`option :key=${`colorpicker-option-${value}`} *value=${value} selected=${this.selectorValue === value || undefined}`;
             text(value);
             el`/option`;
         }
@@ -250,13 +315,27 @@ class ColorPickerComponent implements WindowComponent {
 
     private selectorOnChange(event: Event) {
         this.selectorValue = (<HTMLSelectElement>event.target).value;
-        if (this.selectorValue === "color") {
-            const paint = drawState[this.relatedProperty];
-            this.canvasComponent = new ColorPickerCanvasComponent(200, 100, tinycolor(paint && isColor(paint) && paint || this.CANVAS_DEFAULT_COLOR), () => this.onChange(this));
-        } else {
-            this.canvasComponent = null;
-        }
+        this.setColorComponent(drawState[this.relatedProperty]);
         this.onChange(this);
+    }
+
+    private setColorComponent(paint: Paint | null) {
+        let tmp: RegExpMatchArray | null;
+        if (this.selectorValue === "color") {
+            this.colorComponent = new ColorPickerCanvasComponent(200, 100, tinycolor(paint && isColor(paint) && paint || CANVAS_DEFAULT_COLOR), () => this.onChange(this));
+        } else if (tmp = this.selectorValue.match(/^url\(#([^\(]+)\)$/)) {
+            const uuid = svgIdUuidMap[tmp[1]];
+            const paintServer = fetchPaintServer(uuid);
+            if (paintServer) {
+                switch (paintServer.kind) {
+                    case "linearGradient":
+                    this.colorComponent = new GradientComponent(paintServer);
+                    break;
+                }
+            }
+        } else {
+            this.colorComponent = null;
+        }
     }
 }
 
@@ -361,7 +440,7 @@ export class StyleConfigComponent implements Component {
             } else {
                 const idValue = acceptHashOnly(paint.url);
                 if (idValue && svgIdUuidMap[idValue]) {
-                    const pserver = paintServer(svgIdUuidMap[idValue]);
+                    const pserver = fetchPaintServer(svgIdUuidMap[idValue]);
                     if (pserver) style.background = cssString(pserver);
                 }
             }

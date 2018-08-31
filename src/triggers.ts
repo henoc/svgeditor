@@ -1,6 +1,5 @@
 import { editMode, openWindows, contentChildrenComponent } from "./main";
 import { iterate } from "./utils";
-import { WindowComponent } from "./component";
 
 export function onShapeMouseDown(event: MouseEvent, uu: string) {
     if (event.button === 0) editMode.mode.onShapeMouseDownLeft(event, uu);
@@ -10,22 +9,22 @@ export function onShapeMouseDown(event: MouseEvent, uu: string) {
 export function onDocumentMouseMove(event: MouseEvent) {
     editMode.mode.onDocumentMouseMove(event);
     if (contentChildrenComponent.styleConfigComponent.colorPicker &&
-        contentChildrenComponent.styleConfigComponent.colorPicker.canvasComponent
-    ) contentChildrenComponent.styleConfigComponent.colorPicker.canvasComponent.move(event);
+        contentChildrenComponent.styleConfigComponent.colorPicker.colorComponent
+    ) contentChildrenComponent.styleConfigComponent.colorPicker.colorComponent.move(event);
 }
 
 export function onDocumentMouseUp(event: MouseEvent) {
     editMode.mode.onDocumentMouseUp(event);
     if (contentChildrenComponent.styleConfigComponent.colorPicker &&
-        contentChildrenComponent.styleConfigComponent.colorPicker.canvasComponent
-    ) contentChildrenComponent.styleConfigComponent.colorPicker.canvasComponent.dragCancel();
+        contentChildrenComponent.styleConfigComponent.colorPicker.colorComponent
+    ) contentChildrenComponent.styleConfigComponent.colorPicker.colorComponent.dragCancel();
 }
 
 export function onDocumentMouseLeave(event: Event) {
     editMode.mode.onDocumentMouseLeave(event);
     if (contentChildrenComponent.styleConfigComponent.colorPicker &&
-        contentChildrenComponent.styleConfigComponent.colorPicker.canvasComponent
-    ) contentChildrenComponent.styleConfigComponent.colorPicker.canvasComponent.dragCancel();
+        contentChildrenComponent.styleConfigComponent.colorPicker.colorComponent
+    ) contentChildrenComponent.styleConfigComponent.colorPicker.colorComponent.dragCancel();
 }
 
 export function onDocumentClick(event: MouseEvent) {

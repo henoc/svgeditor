@@ -5,16 +5,16 @@ import { traverse } from "./svgConstructor";
 
 export type PaintServer = {
     kind: "linearGradient",
-    stops: Stop[]
+    stops: StopReference[]
 }
 
-export function paintServer(uuid: string): PaintServer | null {
+export function fetchPaintServer(uuid: string): PaintServer | null {
     const pe = svgVirtualMap[uuid];
     switch (pe.tag) {
         case "linearGradient":
-        const stops: Stop[] = [];
+        const stops: StopReference[] = [];
         for (let c of pe.children) {
-            let tmp = stop(c);
+            let tmp = fetchStopReference(c);
             if (tmp) stops.push(tmp);
         }
         return {
@@ -26,23 +26,25 @@ export function paintServer(uuid: string): PaintServer | null {
     }
 }
 
-type Stop = {
-    offset: number;
+export type StopReference = {
+    uuid: string;
+    offset: Exclude<Ratio, number>;
     "stop-color": Paint;        // default: black
 }
 
-function stop(pe: ParsedElement): Stop | null {
-    function offsetToNumber(offset: Ratio | null): number {
+export function fetchStopReference(pe: ParsedElement): StopReference | null {
+    function offsetToNumber(offset: Ratio | null): Exclude<Ratio, number> {
         if (offset) {
-            const offset_ = typeof offset === "number" ? offset : offset.value / 100;
-            return offset_ < 0 ? 0 : offset_ > 1 ? 1 : offset_; 
+            const offsetValue = typeof offset === "number" ? offset * 100 : offset.value;
+            return {unit: "%", value: offsetValue < 0 ? 0 : offsetValue > 100 ? 100 : offsetValue}; 
         } else {
-            return 0;
+            return {unit: "%", value: 0};
         }
     }
     switch (pe.tag) {
         case "stop":
         return {
+            uuid: pe.uuid,
             offset: offsetToNumber(pe.attrs.offset),
             "stop-color": pe.attrs["stop-color"] || {format: "rgb", r: 0, g: 0, b: 0, a: 1}
         };
@@ -59,7 +61,7 @@ export function cssString(paintServer: PaintServer): string {
             const stopColor = stop["stop-color"];
             acc.push([
                 isColor(stopColor) ? tinycolor(stopColor).toString(stopColor.format) : isFuncIRI(stopColor) ? `url(${stopColor.url})` : stopColor,
-                `${stop.offset * 100}%`
+                `${stop.offset.value}%`
             ].join(" "));
         }
         return `linear-gradient(to right, ${acc.join(", ")})`;
