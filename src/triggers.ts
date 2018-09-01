@@ -17,7 +17,7 @@ export function onDocumentMouseUp(event: MouseEvent) {
     editMode.mode.onDocumentMouseUp(event);
     if (contentChildrenComponent.styleConfigComponent.colorPicker &&
         contentChildrenComponent.styleConfigComponent.colorPicker.colorComponent
-    ) contentChildrenComponent.styleConfigComponent.colorPicker.colorComponent.dragCancel();
+    ) contentChildrenComponent.styleConfigComponent.colorPicker.colorComponent.up(event);
 }
 
 export function onDocumentMouseLeave(event: Event) {

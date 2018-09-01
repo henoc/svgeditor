@@ -55,6 +55,11 @@ export class Vec2 {
     symmetry(center: Vec2) {
         return this.sub(center).mul(v(-1, -1)).add(center);
     }
+    limit(xMin: number, xMax: number, yMin: number, yMax: number) {
+        const x = this.x < xMin ? xMin : this.x > xMax ? xMax : this.x;
+        const y = this.y < yMin ? yMin : this.y > yMax ? yMax : this.y;
+        return v(x, y);
+    }
     toString() {
         return `(${this.x}, ${this.y})`;
     }
@@ -241,4 +246,12 @@ export class None<T> implements Option<T> {
         return new None<U>();
     }
     get = null;
+}
+
+/**
+ * Cursor position from the target element.
+ */
+export function cursor(event: MouseEvent, target: Element): Vec2 {
+    const rect = target.getBoundingClientRect();
+    return v(event.clientX - rect.left, event.clientY - rect.top);
 }

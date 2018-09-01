@@ -3,7 +3,7 @@ import { drawState, refleshContent, openWindows, contentChildrenComponent, editM
 import { Paint, ColorFormat, isColor, isFuncIRI, ParsedElement } from "./domParser";
 import tinycolor from "tinycolor2";
 import { Component, WindowComponent } from "./component";
-import { el, OneOrMore, iterate, assertNever } from "./utils";
+import { el, OneOrMore, iterate, assertNever, cursor } from "./utils";
 import { multiShaper, shaper } from "./shapes";
 import { acceptHashOnly } from "./url";
 import { fetchPaintServer, cssString, StopReference, PaintServer } from "./paintServer";
@@ -23,27 +23,46 @@ const CANVAS_DEFAULT_COLOR = {r: 255, g: 255, b: 255, a: 1};
 interface ColorComponent extends Component {
     getColor(): tinycolorInstance | null;
     move(event: MouseEvent): void;
+    up(event: MouseEvent): void;
     dragCancel(): void;
 }
 
 class GradientComponent implements ColorComponent {
 
     activeRangeRefUuid: string | null;
-    canvasComponent: ColorPickerCanvasComponent;
+    canvasComponent: ColorPickerCanvasComponent | null = null;
 
-    constructor(private paintServer: PaintServer & {kind: "linearGradient"}) {
+    constructor(private uuid: string) {
+        const paintServer = fetchPaintServer(uuid)!;
         this.activeRangeRefUuid = paintServer.stops.length > 0 ? paintServer.stops[0].uuid : null;
-        const initialPaint = paintServer.stops.length > 0 ? paintServer.stops[0]["stop-color"] : null;
-        const initialColor = initialPaint && isColor(initialPaint) && initialPaint || CANVAS_DEFAULT_COLOR;
-        this.canvasComponent = new ColorPickerCanvasComponent(200, 100, tinycolor(initialColor), () => this.onCanvasChange());
+        this.setCanvas();
+    }
+
+    setCanvas() {
+        let pe: ParsedElement;
+        if (this.activeRangeRefUuid && (pe = svgVirtualMap[this.activeRangeRefUuid]) && "stop-color" in pe.attrs) {
+            const initialPaint = pe.attrs["stop-color"];
+            const initialColor = initialPaint && isColor(initialPaint) && initialPaint || CANVAS_DEFAULT_COLOR;
+            this.canvasComponent = new ColorPickerCanvasComponent(200, 100, tinycolor(initialColor), () => this.onCanvasChange());
+        }
     }
 
     render(): void {
-        for (let stop of this.paintServer.stops) {
-            const cls = stop.uuid === this.activeRangeRefUuid ? ["svgeditor-active"] : [];
-            el`input :key=${stop.uuid} *type="range" value=${stop.offset.value} *min="0" *max="100" class=${cls.join(" ")} *onchange=${(event: Event) => this.onRangeChange(event, stop.uuid)} /`;
+        const paintServer = fetchPaintServer(this.uuid)!;
+        for (let i = 0; i < paintServer.stops.length; i++) {
+            const stop = paintServer.stops[i];
+            const stopColor = stop["stop-color"];
+            const colorString = isColor(stopColor) ? tinycolor(stopColor).toRgbString() : isFuncIRI(stopColor) ? `url(${stopColor.url})` : stopColor;
+            el`style`;
+                text(`
+                .svgeditor-stop${i}::-webkit-slider-thumb {
+                    background: ${colorString};
+                }
+                `);
+            el`/style`;
+            el`input :key=${stop.uuid} *type="range" value=${stop.offset.value} *class=${`svgeditor-stop${i}`} *min="0" *max="100" *onclick=${(event: Event) => this.onRangeChange(event, stop.uuid)} *onchange=${(event: Event) => this.onRangeChange(event, stop.uuid)} /`;
         }
-        this.canvasComponent.render();
+        if (this.canvasComponent) this.canvasComponent.render();
     }
 
     getColor() {
@@ -51,11 +70,15 @@ class GradientComponent implements ColorComponent {
     }
 
     move(event: MouseEvent) {
-        this.canvasComponent.move(event);
+        if (this.canvasComponent) this.canvasComponent.move(event);
+    }
+
+    up(event: MouseEvent) {
+        if (this.canvasComponent) this.canvasComponent.up(event);
     }
 
     dragCancel() {
-        this.canvasComponent.dragCancel();
+        if (this.canvasComponent) this.canvasComponent.dragCancel();
     }
 
     onRangeChange(event: Event, uuid: string) {
@@ -64,24 +87,28 @@ class GradientComponent implements ColorComponent {
         if ((pe = svgVirtualMap[uuid]) && "offset" in pe.attrs) {
             pe.attrs.offset = typeof pe.attrs.offset === "number" ? value / 100 : {unit: "%", value};
             this.activeRangeRefUuid = uuid;
+            this.setCanvas();
         }
         refleshContent();
     }
 
     onCanvasChange() {
-        const tcolor = this.canvasComponent.getColor();
-        let pe: ParsedElement;
-        if (this.activeRangeRefUuid && (pe = svgVirtualMap[this.activeRangeRefUuid]) && "stop-color" in pe.attrs) {
-            const currentColor = pe.attrs["stop-color"];
-            if (currentColor && isColor(currentColor)) pe.attrs["stop-color"] = {format: currentColor.format, ...tcolor.toRgb()};
-            else pe.attrs["stop-color"] = {format: "rgb", ...tcolor.toRgb()};
+        if (this.canvasComponent) {
+            const tcolor = this.canvasComponent.getColor();
+            let pe: ParsedElement;
+            if (this.activeRangeRefUuid && (pe = svgVirtualMap[this.activeRangeRefUuid]) && "stop-color" in pe.attrs) {
+                const currentColor = pe.attrs["stop-color"];
+                if (currentColor && isColor(currentColor)) pe.attrs["stop-color"] = {format: currentColor.format, ...tcolor.toRgb()};
+                else pe.attrs["stop-color"] = {format: "rgb", ...tcolor.toRgb()};
+            }
+            refleshContent();
         }
-        refleshContent();
     }
 }
 
 class ColorPickerCanvasComponent implements ColorComponent {
 
+    canvas: HTMLCanvasElement | null = null;
     ctx: CanvasRenderingContext2D | null = null;
     tmpColor: tinycolorInstance | null = null;
     initialColor: tinycolorInstance;
@@ -103,6 +130,7 @@ class ColorPickerCanvasComponent implements ColorComponent {
             "onmousedown", (event: MouseEvent) => this.down(event),  // not statics. "this" may changed.
             "onmouseup", (event: MouseEvent) => this.up(event)
         );
+        this.canvas = canvas;
         this.ctx = canvas.getContext("2d")!;
         this.fillTransparent();
         this.drawHeader();
@@ -113,24 +141,24 @@ class ColorPickerCanvasComponent implements ColorComponent {
 
     // on document
     move(event: MouseEvent) {
-        const x = event.offsetX;
-        const y = event.offsetY;
-        const hsva = this.color.toHsv();
-        if (y > this.height * 0.2) {
-            if (x < this.width * 0.8 && this.downRegion === "grad") {
+        if (this.downRegion && this.canvas) {
+            let {x, y} = cursor(event, this.canvas).limit(0, this.width, this.height * 0.2, this.height);
+            const hsva = this.color.toHsv();
+            if (this.downRegion === "grad") {
+                x = x > this.width * 0.8 ? this.width * 0.8 : x;
                 this.tmpColor = tinycolor.fromRatio({h: hsva.h / 360, s: x / (this.width * 0.8), v: (y - this.height * 0.2) / (this.height * 0.8), a: hsva.a});
-            } else if (x < this.width * 0.9 && this.downRegion === "hue") {
+            } else if (this.downRegion === "hue") {
                 this.tmpColor = tinycolor.fromRatio({h: (y - this.height * 0.2) / (this.height * 0.8), s: hsva.s, v: hsva.v, a: hsva.a});
             } else if (this.downRegion === "opacity") {
                 this.tmpColor = tinycolor.fromRatio({h: hsva.h / 360, s: hsva.s, v: hsva.v, a: (y - this.height * 0.2) / (this.height * 0.8)});
             }
+            this.fillTransparent();
+            this.drawHeader();
+            this.drawGrad();
+            this.drawSlider();
+            this.drawCursors();
+            this.onChange();
         }
-        this.fillTransparent();
-        this.drawHeader();
-        this.drawGrad();
-        this.drawSlider();
-        this.drawCursors();
-        this.onChange();
     }
 
     down(event: MouseEvent) {
@@ -149,25 +177,27 @@ class ColorPickerCanvasComponent implements ColorComponent {
         this.move(event);
     }
 
+    // on document
     up(event: MouseEvent) {
-        event.stopPropagation();
-        const x = event.offsetX;
-        const y = event.offsetY;
-        const hsva = this.color.toHsv();
-        if (this.downRegion === "grad") {
-            this.color = tinycolor.fromRatio({h: hsva.h, s: x / (this.width * 0.8), v: (y - this.height * 0.2) / (this.height * 0.8), a: hsva.a});
-        } else if (this.downRegion === "hue") {
-            this.color = tinycolor.fromRatio({h: (y - this.height * 0.2) / (this.height * 0.8), s: hsva.s, v: hsva.v, a: hsva.a});
-        } else if (this.downRegion === "opacity") {
-            this.color = tinycolor.fromRatio({h: hsva.h, s: hsva.s, v: hsva.v, a: (y - this.height * 0.2) / (this.height * 0.8)});
+        if (this.canvas) {
+            let {x, y} = cursor(event, this.canvas).limit(0, this.width, this.height * 0.2, this.height);
+            const hsva = this.color.toHsv();
+            if (this.downRegion === "grad") {
+                x = x > this.width * 0.8 ? this.width * 0.8 : x;
+                this.color = tinycolor.fromRatio({h: hsva.h, s: x / (this.width * 0.8), v: (y - this.height * 0.2) / (this.height * 0.8), a: hsva.a});
+            } else if (this.downRegion === "hue") {
+                this.color = tinycolor.fromRatio({h: (y - this.height * 0.2) / (this.height * 0.8), s: hsva.s, v: hsva.v, a: hsva.a});
+            } else if (this.downRegion === "opacity") {
+                this.color = tinycolor.fromRatio({h: hsva.h, s: hsva.s, v: hsva.v, a: (y - this.height * 0.2) / (this.height * 0.8)});
+            }
+            this.downRegion = null;
+            this.tmpColor = null;
+            this.fillTransparent();
+            this.drawHeader();
+            this.drawGrad();
+            this.drawSlider();
+            this.drawCursors();
         }
-        this.downRegion = null;
-        this.tmpColor = null;
-        this.fillTransparent();
-        this.drawHeader();
-        this.drawGrad();
-        this.drawSlider();
-        this.drawCursors();
     }
 
     // on document
@@ -329,7 +359,7 @@ class ColorPickerComponent implements WindowComponent {
             if (paintServer) {
                 switch (paintServer.kind) {
                     case "linearGradient":
-                    this.colorComponent = new GradientComponent(paintServer);
+                    this.colorComponent = new GradientComponent(uuid);
                     break;
                 }
             }
