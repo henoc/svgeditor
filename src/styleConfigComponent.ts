@@ -385,6 +385,7 @@ class ColorPickerComponent implements WindowComponent {
             if (paintServer) {
                 switch (paintServer.kind) {
                     case "linearGradient":
+                    case "radialGradient":
                     this.colorComponent = new GradientComponent(uuid);
                     break;
                 }

@@ -656,6 +656,7 @@ export function shaper(uuid: string): ShaperFunctions {
                 rotate: rotateCenter
             }).merge(corners).merge(presentationAttrs).merge(transformProps).object;
         case "linearGradient":
+        case "radialGradient":
         case "stop":
             throw new Error("Definiton only shape cannot move.");
         case "unknown":
@@ -886,5 +887,5 @@ function escapeFromTargetCoordinate(point: Vec2, targetUuid: string) {
 }
 
 function hasEntity(pe: ParsedElement) {
-    return !(pe.tag === "unknown" || pe.tag === "linearGradient" || pe.tag === "stop");
+    return !(pe.tag === "unknown" || pe.tag === "linearGradient" || pe.tag === "radialGradient" || pe.tag === "stop");
 }

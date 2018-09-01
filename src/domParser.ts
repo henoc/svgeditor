@@ -28,6 +28,7 @@ export type ParsedElement = (
     ParsedTextElement |
     ParsedGroupElement |
     ParsedLinearGradientElement |
+    ParsedRadialGradientElement |
     ParsedStopElement |
     ParsedUnknownElement
 ) & {
@@ -87,6 +88,12 @@ interface ParsedGroupElement {
 interface ParsedLinearGradientElement {
     tag: "linearGradient",
     attrs: ParsedLinearGradientAttr,
+    children: ParsedElement[]
+}
+
+interface ParsedRadialGradientElement {
+    tag: "radialGradient",
+    attrs: ParsedRadialGradientAttr,
     children: ParsedElement[]
 }
 
@@ -174,6 +181,9 @@ interface ParsedGroupAttr extends ParsedBaseAttr, ParsedPresentationAttr {
 }
 
 interface ParsedLinearGradientAttr extends ParsedBaseAttr, ParsedPresentationAttr {
+}
+
+interface ParsedRadialGradientAttr extends ParsedBaseAttr, ParsedPresentationAttr {
 }
 
 interface ParsedStopAttr extends ParsedBaseAttr, ParsedPresentationAttr {
@@ -339,6 +349,9 @@ export function parse(element: xmldoc.XmlElement, parent: string | null): Parsed
     } else if (element.name === "linearGradient") {
         const attrs = parseAttrs(element, pushWarns).linearGradient();
         return {result: {tag: "linearGradient", attrs, children, uuid, parent, isRoot}, warns};
+    } else if (element.name === "radialGradient") {
+        const attrs = parseAttrs(element, pushWarns).radialGradient();
+        return {result: {tag: "radialGradient", attrs, children, uuid, parent, isRoot}, warns};
     } else if (element.name === "stop") {
         const attrs = parseAttrs(element, pushWarns).stop();
         return {result: {tag: "stop", attrs, uuid, parent, isRoot}, warns};
@@ -505,6 +518,15 @@ function parseAttrs(element: xmldoc.XmlElement, onWarns: (ws: Warning[]) => void
             };
             onWarns(warns);
             return validLinearGradientAttrs;
+        },
+        radialGradient: () => {
+            const validRadialGradientAttrs: ParsedRadialGradientAttr = {
+                ...globalValidAttrs,
+                ...getPresentationAttrs(),
+                unknown: unknownAttrs(attrs, element, pushWarns)
+            };
+            onWarns(warns);
+            return validRadialGradientAttrs;
         },
         stop: () => {
             const validStopAttrs: ParsedStopAttr = {

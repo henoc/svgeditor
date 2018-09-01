@@ -153,6 +153,11 @@ export function construct(pe: ParsedElement, options?: SvgConstructOptions): Svg
             setPresentationAttrs(pe.attrs, tag);
             makeChildren(pe.children, tag, options);
             return tag;
+            case "radialGradient":
+            setBaseAttrs(pe.attrs, tag);
+            setPresentationAttrs(pe.attrs, tag);
+            makeChildren(pe.children, tag, options);
+            return tag;
             case "stop":
             setBaseAttrs(pe.attrs, tag);
             setPresentationAttrs(pe.attrs, tag);
