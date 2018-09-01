@@ -1,5 +1,5 @@
 import { svgVirtualMap } from "./main";
-import { ParsedElement, Ratio, Paint, isColor, isFuncIRI } from "./domParser";
+import { ParsedElement, Ratio, Paint, isColor, isFuncIRI, StopColor } from "./domParser";
 import tinycolor from "tinycolor2";
 import { traverse } from "./svgConstructor";
 
@@ -29,7 +29,7 @@ export function fetchPaintServer(uuid: string): PaintServer | null {
 export type StopReference = {
     uuid: string;
     offset: Exclude<Ratio, number>;
-    "stop-color": Paint;        // default: black
+    "stop-color": StopColor;        // default: black
 }
 
 export function fetchStopReference(pe: ParsedElement): StopReference | null {

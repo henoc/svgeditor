@@ -178,7 +178,7 @@ interface ParsedLinearGradientAttr extends ParsedBaseAttr, ParsedPresentationAtt
 
 interface ParsedStopAttr extends ParsedBaseAttr, ParsedPresentationAttr {
     offset: Ratio | null;
-    "stop-color": Paint | null;
+    "stop-color": StopColor | null;
 }
 
 export type LengthUnit = "em" | "ex" | "px" | "in" | "cm" | "mm" | "pt" | "pc" | "%" | null;
@@ -212,6 +212,8 @@ type Color = {
 type FuncIRI = {
     url: string;
 }
+
+export type StopColor = "currentColor" | "inherit" | Color;
 
 export function isColor(obj: Object): obj is Color {
     return obj instanceof Object && "format" in obj && "r" in obj && "g" in obj && "b" in obj && "a" in obj;
@@ -509,7 +511,7 @@ function parseAttrs(element: xmldoc.XmlElement, onWarns: (ws: Warning[]) => void
                 ...globalValidAttrs,
                 ...getPresentationAttrs(),
                 offset: tryParse("offset").map(a => a.ratio()).get,
-                "stop-color": tryParse("stop-color").map(a => a.paint()).get,
+                "stop-color": tryParse("stop-color").map(a => a.stopColor()).get,
                 unknown: unknownAttrs(attrs, element, pushWarns)
             };
             onWarns(warns);
@@ -541,6 +543,7 @@ type AttrOfMethods = {
     number: () => number | null,
     viewBox: () => [Point, Point] | null,
     paint: () => Paint | null,
+    stopColor: () => StopColor | null,
     points: () => Point[],
     pathDefinition: () => PathCommand[] | null,
     transform: () => Transform | null,
@@ -628,11 +631,29 @@ function attrOf(element: xmldoc.XmlElement, warns: Warning[], attrs: Assoc, name
                     ...tcolor.toRgb()
                 }
             } else if (/^(none|currentColor|inherit)$/.test(value)) {
+                delete attrs[name];
                 return <Paint>value;
             } else if ((tmp = value.match(/^url\(([^\)]+)\)$/)) && tmp) {
+                delete attrs[name];
                 return {url: tmp[1]};
             } else {
                 warns.push({range: toRange(element), message: `${name}: ${value} is unsupported paint value.`});
+                return null;        
+            }
+        },
+        stopColor: () => {
+            let tcolor: tinycolorInstance = tinycolor(value);
+            if (tcolor.getFormat() && tcolor.getFormat() !== "hsv") {
+                delete attrs[name];
+                return {
+                    format: <any>tcolor.getFormat(),
+                    ...tcolor.toRgb()
+                }
+            } else if (/^(currentColor|inherit)$/.test(value)) {
+                delete attrs[name];
+                return <StopColor>value;
+            } else {
+                warns.push({range: toRange(element), message: `${name}: ${value} is unsupported stop-color value.`});
                 return null;        
             }
         },

@@ -41,8 +41,8 @@ class GradientComponent implements ColorComponent {
     setCanvas() {
         let pe: ParsedElement;
         if (this.activeRangeRefUuid && (pe = svgVirtualMap[this.activeRangeRefUuid]) && "stop-color" in pe.attrs) {
-            const initialPaint = pe.attrs["stop-color"];
-            const initialColor = initialPaint && isColor(initialPaint) && initialPaint || CANVAS_DEFAULT_COLOR;
+            const initialStopColor = pe.attrs["stop-color"];
+            const initialColor = initialStopColor && isColor(initialStopColor) && initialStopColor || CANVAS_DEFAULT_COLOR;
             this.canvasComponent = new ColorPickerCanvasComponent(200, 100, tinycolor(initialColor), () => this.onCanvasChange());
         }
     }
@@ -52,7 +52,7 @@ class GradientComponent implements ColorComponent {
         for (let i = 0; i < paintServer.stops.length; i++) {
             const stop = paintServer.stops[i];
             const stopColor = stop["stop-color"];
-            const colorString = isColor(stopColor) ? tinycolor(stopColor).toRgbString() : isFuncIRI(stopColor) ? `url(${stopColor.url})` : stopColor;
+            const colorString = isColor(stopColor) ? tinycolor(stopColor).toRgbString() : stopColor;
             el`style`;
                 text(`
                 .svgeditor-stop${i}::-webkit-slider-thumb {
