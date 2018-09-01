@@ -332,9 +332,11 @@ class ColorPickerComponent implements WindowComponent {
 
     render() {
         el`div :key="colorpicker" *class="svgeditor-colorpicker" *onclick=${(event: MouseEvent) => event.stopPropagation()}`;
-        this.selectorRender();
-        el`br/`;
-        if (this.colorComponent) this.colorComponent.render();
+            this.selectorRender();
+            this.iconRender("add new linearGradient", "#svgeditor-icon-addLinearGradient");
+            this.iconRender("add new radialGradient", "#svgeditor-icon-addRadialGradient");
+            el`br/`;
+            if (this.colorComponent) this.colorComponent.render();
         el`/div`;
     }
     getPaint(destFormat: ColorFormat | null): Paint | null {
@@ -393,6 +395,14 @@ class ColorPickerComponent implements WindowComponent {
         } else {
             this.colorComponent = null;
         }
+    }
+
+    private iconRender(title: string, href: string) {
+        el`div *title=${title} style="display: inline-block"`;
+            el`svg *class="svgeditor-icon" width="20px" height="20px"`;
+                el`use xlink:href=${href} /`;
+            el`/svg`;
+        el`/div`;
     }
 }
 
