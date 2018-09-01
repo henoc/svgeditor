@@ -7,6 +7,8 @@ import { el, OneOrMore, iterate, assertNever, cursor } from "./utils";
 import { multiShaper, shaper } from "./shapes";
 import { acceptHashOnly } from "./url";
 import { fetchPaintServer, cssString, StopReference, PaintServer } from "./paintServer";
+import { Mode } from "./modeInterface";
+import uuidStatic from "uuid";
 
 class ButtonComponent implements Component {
     constructor(public name: string, public key: string, public onclick: () => void) {}
@@ -31,11 +33,13 @@ class GradientComponent implements ColorComponent {
 
     activeRangeRefUuid: string | null;
     canvasComponent: ColorPickerCanvasComponent | null = null;
+    addStopButton: ButtonComponent;
 
     constructor(private uuid: string) {
         const paintServer = fetchPaintServer(uuid)!;
         this.activeRangeRefUuid = paintServer.stops.length > 0 ? paintServer.stops[0].uuid : null;
         this.setCanvas();
+        this.addStopButton = new ButtonComponent("new stop", "svgeditor-new-stop", () => this.onNewStopClicked());
     }
 
     setCanvas() {
@@ -49,6 +53,7 @@ class GradientComponent implements ColorComponent {
 
     render(): void {
         const paintServer = fetchPaintServer(this.uuid)!;
+        el`div style="display: inline-block; vertical-align: top; margin: 6px;"`;
         for (let i = 0; i < paintServer.stops.length; i++) {
             const stop = paintServer.stops[i];
             const stopColor = stop["stop-color"];
@@ -62,6 +67,8 @@ class GradientComponent implements ColorComponent {
             el`/style`;
             el`input :key=${stop.uuid} *type="range" value=${stop.offset.value} *class=${`svgeditor-stop${i}`} *min="0" *max="100" *onclick=${(event: Event) => this.onRangeChange(event, stop.uuid)} *onchange=${(event: Event) => this.onRangeChange(event, stop.uuid)} /`;
         }
+        this.addStopButton.render();
+        el`/div`;
         if (this.canvasComponent) this.canvasComponent.render();
     }
 
@@ -101,6 +108,25 @@ class GradientComponent implements ColorComponent {
                 if (currentColor && isColor(currentColor)) pe.attrs["stop-color"] = {format: currentColor.format, ...tcolor.toRgb()};
                 else pe.attrs["stop-color"] = {format: "rgb", ...tcolor.toRgb()};
             }
+            refleshContent();
+        }
+    }
+
+    onNewStopClicked() {
+        const gradient = svgVirtualMap[this.uuid];
+        if ("children" in gradient) {
+            gradient.children.push({
+                uuid: uuidStatic.v4(),
+                tag: "stop",
+                isRoot: false,
+                parent: this.uuid,
+                attrs: {
+                    offset: {unit: "%", value: 100},
+                    "stop-color": {format: "rgb", ...CANVAS_DEFAULT_COLOR},
+                    ...Mode.baseAttrsDefaultImpl(),
+                    ...Mode.presentationAttrsAllNull()
+                }
+            });
             refleshContent();
         }
     }

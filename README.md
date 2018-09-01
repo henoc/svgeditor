@@ -45,6 +45,8 @@ You can create shapes using the SVG's coder or directly creating shapes with the
 - path: d, `<presentation attributes>`
 - text: x, y, dx, dy, textLength, lengthAdjust, `<presentation attributes>`
 - g: `<presentation attributes>`
+- linearGradient: `<presentation attributes>`
+- stop: offset, stop-color, `<presentation attributes>`
 
 `<presentation attributes>`: fill, stroke, transform, font-family, font-size, font-style, font-weight
 
