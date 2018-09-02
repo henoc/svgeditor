@@ -1,0 +1,8 @@
+<svg id="svgeditor-icon-objectToPath" xmlns="http://www.w3.org/2000/svg" version="1.1" xmlns:xlink="http://www.w3.org/1999/xlink" width="20" height="20">
+    <circle fill="none" stroke="currentColor" r="2" cx="5" cy="3"/>
+    <circle fill="none" stroke="currentColor" r="2" cx="8.8333333" cy="9.8333333"/>
+    <circle fill="none" stroke="currentColor" r="2" cx="16.3333333" cy="7.1666667"/>
+    <circle fill="none" stroke="currentColor" r="2" cx="15.5" cy="16"/>
+    <circle fill="none" stroke="currentColor" r="2" cx="4.5" cy="17.1666667"/>
+    <path fill="none" stroke="currentColor" d="M 5.7272727 4.6363636 l 2.2727273 3.3636364 M 7.6363636 11.5454545 l -2.1818182 4 M 6.7272727 17.2727273 l 6.7272727 -1.1818182 M 16.2727273 9.3636364 l -0.4545455 4.6363636 M 14.2727273 6.3636364 l -7.0909091 -3.2727273"/>
+</svg>

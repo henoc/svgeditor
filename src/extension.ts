@@ -22,9 +22,11 @@ export function activate(context: vscode.ExtensionContext) {
     let bundleJsPath = vscode.Uri.file(path.join(context.extensionPath, "resources", "bundle.js")).with({ scheme: "vscode-resource"});
     let cssPath = vscode.Uri.file(path.join(context.extensionPath, "resources", "style.css")).with({ scheme: "vscode-resource"});
 
-    let addLinearGradient = readImage("addLinearGradient.svg");
-    let addRadialGradient = readImage("addRadialGradient.svg");
-    let icons = addLinearGradient + addRadialGradient;
+    let icons = [
+        "addLinearGradient.svg", "alignLeft.svg", "bringForward.svg", "duplicate.svg", "objectToPath.svg", "sendBackward.svg",
+        "addRadialGradient.svg", "alignRight.svg", "font.svg", "scale-down.svg",
+        "alignBottom.svg", "alignTop.svg", "delete.svg", "group.svg", "scale-up.svg", "ungroup.svg",
+    ].map(readImage).join("");
 
     let diagnostics = vscode.languages.createDiagnosticCollection("svgeditor");
 
