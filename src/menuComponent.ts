@@ -1,4 +1,4 @@
-import {Component} from "./component";
+import {Component, iconComponent} from "./component";
 import { elementOpen, text, elementClose } from "incremental-dom";
 import { editMode, refleshContent, inputRequest, sendBackToEditor } from "./main";
 import { SelectMode } from "./selectMode";
@@ -8,6 +8,7 @@ import { EllipseMode } from "./ellipseMode";
 import { PolylineMode } from "./polylineMode";
 import { PathMode } from "./pathMode";
 import { assertNever, el, iterate } from "./utils";
+import camelCase from "camelcase";
 
 export type ModeName = "select" | "node" | "rect" | "ellipse" | "polyline" | "path" | "text";
 export type OperatorName = "duplicate" | "delete" | "scale-up" | "scale-down" | "group" | "ungroup" | "font" | "bring forward" | "send backward" |
@@ -57,16 +58,6 @@ class MenuComponent implements Component {
     }
 }
 
-class OperatorComponent implements Component {
-    constructor(public name: OperatorName) {}
-
-    render() {
-        el`li :key=${this.name} *class="svgeditor-operator" *onclick=${(event: Event) => editMode.mode.onOperatorClicked(event, this.name)}`;
-        text(this.name);
-        el`/li`;
-    }
-}
-
 export class MenuListComponent implements Component {
 
     menuComponents: Record<ModeName, MenuComponent> = {
@@ -79,22 +70,8 @@ export class MenuListComponent implements Component {
         text: new MenuComponent("text", name => this.changeSelectedMode(name))
     }
 
-    operatorComponents: Record<OperatorName, OperatorComponent> = {
-        duplicate: new OperatorComponent("duplicate"),
-        delete: new OperatorComponent("delete"),
-        "scale-up": new OperatorComponent("scale-up"),
-        "scale-down": new OperatorComponent("scale-down"),
-        group: new OperatorComponent("group"),
-        ungroup: new OperatorComponent("ungroup"),
-        font: new OperatorComponent("font"),
-        "bring forward": new OperatorComponent("bring forward"),
-        "send backward": new OperatorComponent("send backward"),
-        "align left": new OperatorComponent("align left"),
-        "align right" :new OperatorComponent("align right"),
-        "align top" : new OperatorComponent("align top"),
-        "align bottom": new OperatorComponent("align bottom"),
-        "object to path": new OperatorComponent("object to path")
-    }
+    operatorNames: OperatorName[] = ["duplicate" , "delete" , "scale-up" , "scale-down" , "group" , "ungroup" , "font" , "bring forward" , "send backward" ,
+    "align left" , "align right" , "align bottom" , "align top" , "object to path"];
     
 
     render() {
@@ -104,9 +81,9 @@ export class MenuListComponent implements Component {
         });
         el`/ul`;
         el`ul`;
-        iterate(this.operatorComponents, (_key, operator) => {
-            operator.render();
-        });
+        for (let name of this.operatorNames) {
+            iconComponent(name, `#svgeditor-icon-${camelCase(name)}`, (event: Event) => editMode.mode.onOperatorClicked(event, name));
+        }
         el`/ul`;
     }
 

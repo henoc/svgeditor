@@ -2,7 +2,7 @@ import { elementOpen, elementClose, text, elementVoid } from "incremental-dom";
 import { drawState, refleshContent, openWindows, contentChildrenComponent, editMode, fontList, svgIdUuidMap, paintServers, svgVirtualMap, svgdata } from "./main";
 import { Paint, ColorFormat, isColor, isFuncIRI, ParsedElement } from "./domParser";
 import tinycolor from "tinycolor2";
-import { Component, WindowComponent } from "./component";
+import { Component, WindowComponent, ButtonComponent, iconComponent } from "./component";
 import { el, OneOrMore, iterate, assertNever, cursor } from "./utils";
 import { multiShaper, shaper } from "./shapes";
 import { acceptHashOnly } from "./url";
@@ -10,15 +10,6 @@ import { fetchPaintServer, cssString, StopReference, PaintServer } from "./paint
 import { Mode } from "./modeInterface";
 import uuidStatic from "uuid";
 
-class ButtonComponent implements Component {
-    constructor(public name: string, public key: string, public onclick: () => void) {}
-
-    render() {
-        el`div :key=${this.key} *class="svgeditor-button" onclick=${this.onclick}`;
-        text(this.name);
-        el`/div`;
-    }
-}
 
 const CANVAS_DEFAULT_COLOR = {r: 255, g: 255, b: 255, a: 1};
 
@@ -333,8 +324,8 @@ class ColorPickerComponent implements WindowComponent {
     render() {
         el`div :key="colorpicker" *class="svgeditor-colorpicker" *onclick=${(event: MouseEvent) => event.stopPropagation()}`;
             this.selectorRender();
-            this.iconRender("add new linearGradient", "#svgeditor-icon-addLinearGradient", () => this.addGradient("linearGradient"));
-            this.iconRender("add new radialGradient", "#svgeditor-icon-addRadialGradient", () => this.addGradient("radialGradient"));
+            iconComponent("add new linearGradient", "#svgeditor-icon-addLinearGradient", () => this.addGradient("linearGradient"));
+            iconComponent("add new radialGradient", "#svgeditor-icon-addRadialGradient", () => this.addGradient("radialGradient"));
             el`br/`;
             if (this.colorComponent) this.colorComponent.render();
         el`/div`;
@@ -396,14 +387,6 @@ class ColorPickerComponent implements WindowComponent {
         } else {
             this.colorComponent = null;
         }
-    }
-
-    private iconRender(title: string, href: string, onClick: () => void) {
-        el`div *title=${title} style="display: inline-block"`;
-            el`svg *class="svgeditor-icon" *width="20px" *height="20px" onclick=${onClick}`;
-                el`use xlink:href=${href} /`;
-            el`/svg`;
-        el`/div`;
     }
 
     private addGradient(tag: "linearGradient" | "radialGradient") {
