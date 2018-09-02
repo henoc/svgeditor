@@ -54,7 +54,7 @@ You can create shapes using the SVG's coder or directly creating shapes with the
 ## Future plans
 
 - [ ] Embedded CSS
-- [ ] Gradation colors
+- [x] Gradation colors
 - [ ] Filters
 - [ ] Images
 
