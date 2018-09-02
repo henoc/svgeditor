@@ -63,4 +63,16 @@ export abstract class Mode implements Component {
             "font-weight": null
         }
     }
+
+    static presentationAttrsAllNull: () => ParsedPresentationAttr = () => {
+        return {
+            fill: null,
+            stroke: null,
+            transform: null,
+            "font-family": null,
+            "font-size": null,
+            "font-style": null,
+            "font-weight": null
+        }
+    }
 }

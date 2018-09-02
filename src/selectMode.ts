@@ -9,6 +9,7 @@ import { convertFromPixel, convertToPixel } from "./measureUnits";
 import uuidStatic from "uuid";
 import { ParsedElement } from "./domParser";
 import { appendDescriptorsLeft, scale2 } from "./transformHelpers";
+import { traverse } from "./svgConstructor";
 
 export class SelectMode extends Mode {
 
@@ -200,7 +201,7 @@ export class SelectMode extends Mode {
             break;
             case "bring forward":
             if (uuids) {
-                this.traverse(svgdata, (pe, parentPe, index) => {
+                traverse(svgdata, (pe, parentPe, index) => {
                     let prePe: ParsedElement;
                     if (index !== null && index >= 1 && parentPe && (prePe = parentPe.children[index - 1]) && uuids.indexOf(pe.uuid) === -1) {
                         parentPe.children[index - 1] = pe;
@@ -211,7 +212,7 @@ export class SelectMode extends Mode {
             break;
             case "send backward":
             if (uuids) {
-                this.traverse(svgdata, (pe, parentPe, index) => {
+                traverse(svgdata, (pe, parentPe, index) => {
                     let prePe: ParsedElement;
                     if (index !== null && index >= 1 && parentPe && (prePe = parentPe.children[index - 1]) && uuids.indexOf(pe.uuid) !== -1) {
                         parentPe.children[index - 1] = pe;
@@ -314,18 +315,6 @@ export class SelectMode extends Mode {
 
     private escapeToNormalCoordinate(point: Point, targetUuids: OneOrMore<string>): Point {
         return applyToPoint(multiShaper(targetUuids).allTransform(), point);
-    }
-
-    /**
-     * dfs
-     */
-    private traverse(pe: ParsedElement, fn: (pe: ParsedElement, parentPe: ParsedElement & {children: ParsedElement[]} | null, index: number | null) => void, index: number | null = null, parentPe: ParsedElement & {children: ParsedElement[]} | null = null) {
-        fn(pe, parentPe, index);
-        if ("children" in pe) {
-            for(let i = 0; i < pe.children.length; i++) {
-                this.traverse(pe.children[i], fn, i, pe);
-            }
-        }
     }
 
     private align(dir: "left" | "right" | "top" | "bottom"): void {

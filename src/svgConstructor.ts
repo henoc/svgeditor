@@ -148,6 +148,22 @@ export function construct(pe: ParsedElement, options?: SvgConstructOptions): Svg
                 tag.children(dummyRect);
             }
             return tag;
+            case "linearGradient":
+            setBaseAttrs(pe.attrs, tag);
+            setPresentationAttrs(pe.attrs, tag);
+            makeChildren(pe.children, tag, options);
+            return tag;
+            case "radialGradient":
+            setBaseAttrs(pe.attrs, tag);
+            setPresentationAttrs(pe.attrs, tag);
+            makeChildren(pe.children, tag, options);
+            return tag;
+            case "stop":
+            setBaseAttrs(pe.attrs, tag);
+            setPresentationAttrs(pe.attrs, tag);
+            return tag
+                .pattr("stop-color", pe.attrs["stop-color"])
+                .rattr("offset", pe.attrs.offset);
             default:
             assertNever(pe);
         }
@@ -179,14 +195,34 @@ function makeChildren(pc: ParsedElement[], tag: SvgTag, options?: SvgConstructOp
     tag.children(...c);
 }
 
+export function traverse(pe: ParsedElement, fn: (pe: ParsedElement, parentPe: ParsedElement & {children: ParsedElement[]} | null, index: number | null) => void, index: number | null = null, parentPe: ParsedElement & {children: ParsedElement[]} | null = null) {
+    fn(pe, parentPe, index);
+    if ("children" in pe) {
+        for(let i = 0; i < pe.children.length; i++) {
+            traverse(pe.children[i], fn, i, pe);
+        }
+    }
+}
+
 export function makeUuidVirtualMap(pe: ParsedElement): {[uu: string]: ParsedElement} {
     const acc: {[uu: string]: ParsedElement} = {};
-    if (pe.uuid) acc[pe.uuid] = pe;
-    if ("children" in pe) {
-        pe.children.forEach(child => {
-            Object.assign(acc, makeUuidVirtualMap(child));
-        });
-    }
+    traverse(
+        pe,
+        (pe, parentPe, index) => {
+            acc[pe.uuid] = pe;
+        }
+    );
+    return acc;
+}
+
+export function makeIdUuidMap(pe: ParsedElement): {[id: string]: string} {
+    const acc: {[id: string]: string} = {};
+    traverse(
+        pe,
+        (pe, parentPe, index) => {
+            if (pe.attrs.id) acc[pe.attrs.id] = pe.uuid;
+        }
+    );
     return acc;
 }
 

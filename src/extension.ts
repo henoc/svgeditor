@@ -13,12 +13,19 @@ export function activate(context: vscode.ExtensionContext) {
 
     let readResource =
         (filename: string) => fs.readFileSync(path.join(__dirname, "..", "..", "resources", filename), "UTF-8");
+    let readImage =
+        (filename: string) => fs.readFileSync(path.join(__dirname, "..", "..", "images", filename), "UTF-8");
     let readOthers =
         (filename: string) => fs.readFileSync(path.join(__dirname, "..", "..", filename), "UTF-8");
     let viewer = readResource("viewer.html");
     let templateSvg = readResource("template.svg");
     let bundleJsPath = vscode.Uri.file(path.join(context.extensionPath, "resources", "bundle.js")).with({ scheme: "vscode-resource"});
     let cssPath = vscode.Uri.file(path.join(context.extensionPath, "resources", "style.css")).with({ scheme: "vscode-resource"});
+
+    let addLinearGradient = readImage("addLinearGradient.svg");
+    let addRadialGradient = readImage("addRadialGradient.svg");
+    let icons = addLinearGradient + addRadialGradient;
+
     let diagnostics = vscode.languages.createDiagnosticCollection("svgeditor");
 
     let panelSet: { panel: vscode.WebviewPanel, editor: vscode.TextEditor, text: string} | null = null;
@@ -36,7 +43,7 @@ export function activate(context: vscode.ExtensionContext) {
                 ]
             }
         );
-        panel.webview.html = render(viewer, {bundleJsPath, cssPath});
+        panel.webview.html = render(viewer, {bundleJsPath, cssPath, icons});
         panelSet = {panel, editor, text};
         setListener(panelSet);
         prevendSend = false;

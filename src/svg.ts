@@ -1,5 +1,5 @@
 import { iterate, assertNever, deepCopy, escapeHtml } from "./utils";
-import { Length, Paint, PathCommand, Transform, isLength, isPaint, isTransform, FontSize } from "./domParser";
+import { Length, Paint, PathCommand, Transform, isLength, isPaint, isTransform, FontSize, isColor, Ratio, isFuncIRI } from "./domParser";
 import tinycolor from "tinycolor2";
 import { svgPathManager } from "./pathHelpers";
 import { elementOpenStart, elementOpenEnd, attr, text, elementClose } from "incremental-dom";
@@ -73,13 +73,21 @@ export class SvgTag implements Component {
         }
         return this;
     }
+    rattr(key: string, value: Ratio | null): SvgTag {
+        if (value !== null && this.data.important.indexOf(key) === -1) {
+            this.data.attrs[key] = typeof value === "number" ? value : `${value.value}%`;
+        }
+        return this;
+    }
     pattr(key: string, value: Paint | null): SvgTag {
         if (value !== null && this.data.important.indexOf(key) === -1) {
             value = this.fixDecimalPlaces(value);
-            const tcolor = tinycolor(value);
-            if (value.format === "none" || value.format === "currentColor" || value.format === "inherit") {
-                this.data.attrs[key] = value.format;
+            if (value && !isColor(value) && !isFuncIRI(value)) {
+                this.data.attrs[key] = value;
+            } else if (isFuncIRI(value)) {
+                this.data.attrs[key] = `url(${value.url})`;
             } else {
+                const tcolor = tinycolor(value);
                 this.data.attrs[key] = tcolor.toString(value.format);
             }
         }
