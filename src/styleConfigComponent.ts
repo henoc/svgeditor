@@ -1,5 +1,5 @@
 import { elementOpen, elementClose, text, elementVoid } from "incremental-dom";
-import { drawState, refleshContent, openWindows, contentChildrenComponent, editMode, fontList, svgIdUuidMap, paintServers, svgVirtualMap } from "./main";
+import { drawState, refleshContent, openWindows, contentChildrenComponent, editMode, fontList, svgIdUuidMap, paintServers, svgVirtualMap, svgdata } from "./main";
 import { Paint, ColorFormat, isColor, isFuncIRI, ParsedElement } from "./domParser";
 import tinycolor from "tinycolor2";
 import { Component, WindowComponent } from "./component";
@@ -333,8 +333,8 @@ class ColorPickerComponent implements WindowComponent {
     render() {
         el`div :key="colorpicker" *class="svgeditor-colorpicker" *onclick=${(event: MouseEvent) => event.stopPropagation()}`;
             this.selectorRender();
-            this.iconRender("add new linearGradient", "#svgeditor-icon-addLinearGradient");
-            this.iconRender("add new radialGradient", "#svgeditor-icon-addRadialGradient");
+            this.iconRender("add new linearGradient", "#svgeditor-icon-addLinearGradient", () => this.addGradient("linearGradient"));
+            this.iconRender("add new radialGradient", "#svgeditor-icon-addRadialGradient", () => this.addGradient("radialGradient"));
             el`br/`;
             if (this.colorComponent) this.colorComponent.render();
         el`/div`;
@@ -368,7 +368,8 @@ class ColorPickerComponent implements WindowComponent {
             el`/option`;
         }
 
-        el`/select`;
+        const selectElem = <HTMLSelectElement>el`/select`;
+        selectElem.value = this.selectorValue;
     }
 
     private selectorOnChange(event: Event) {
@@ -397,12 +398,33 @@ class ColorPickerComponent implements WindowComponent {
         }
     }
 
-    private iconRender(title: string, href: string) {
+    private iconRender(title: string, href: string, onClick: () => void) {
         el`div *title=${title} style="display: inline-block"`;
-            el`svg *class="svgeditor-icon" width="20px" height="20px"`;
+            el`svg *class="svgeditor-icon" *width="20px" *height="20px" onclick=${onClick}`;
                 el`use xlink:href=${href} /`;
             el`/svg`;
         el`/div`;
+    }
+
+    private addGradient(tag: "linearGradient" | "radialGradient") {
+        const root = svgdata;
+        if ("children" in root) {
+            const genedId = Math.random().toString(36).slice(-8);
+            root.children.push({
+                uuid: uuidStatic.v4(),
+                isRoot: false,
+                parent: root.uuid,
+                tag: <"linearGradient">tag,
+                attrs: {
+                    ...Mode.baseAttrsDefaultImpl(),
+                    ...Mode.presentationAttrsAllNull(),
+                    id: genedId
+                },
+                children: []
+            });
+            this.selectorValue = `url(#${genedId})`;
+            refleshContent();
+        }
     }
 }
 
