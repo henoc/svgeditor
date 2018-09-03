@@ -10,6 +10,8 @@ import { diffChars } from "diff";
 import * as clipboardy from "clipboardy";
 const format = require('xml-formatter');
 
+type PanelSet = { panel: vscode.WebviewPanel, editor: vscode.TextEditor, text: string};
+
 export function activate(context: vscode.ExtensionContext) {
 
     let readResource =
@@ -31,8 +33,9 @@ export function activate(context: vscode.ExtensionContext) {
 
     let diagnostics = vscode.languages.createDiagnosticCollection("svgeditor");
 
-    let panelSet: { panel: vscode.WebviewPanel, editor: vscode.TextEditor, text: string} | null = null;
+    let panelSet: PanelSet | null = null;
     let prevendSend = false;
+    let registeredkeyEvents: vscode.Disposable[] = [];
 
     let createPanel = (editor: vscode.TextEditor) => {
         let text = editor.document.getText();
@@ -52,7 +55,7 @@ export function activate(context: vscode.ExtensionContext) {
         prevendSend = false;
     }
 
-    let setListener = (pset : {panel: vscode.WebviewPanel, editor: vscode.TextEditor, text: string} ) => {
+    let setListener = (pset : PanelSet) => {
         const config = vscode.workspace.getConfiguration("svgeditor", pset.editor.document.uri);
         pset.panel.webview.onDidReceiveMessage(async message => {
             switch (message.command) {
@@ -94,6 +97,7 @@ export function activate(context: vscode.ExtensionContext) {
                     });
                     return;
                 case "copy-response":
+                case "cut-response":
                     const str = format(message.data);
                     await clipboardy.write(str);
                     return;
@@ -150,6 +154,26 @@ export function activate(context: vscode.ExtensionContext) {
         if (panelSet && panelSet.panel.active) {
             panelSet.panel.webview.postMessage({
                 command: "copy-request"
+            });
+        }
+    }));
+
+    context.subscriptions.push(vscode.commands.registerCommand("svgeditor.paste", async () => {
+        if (panelSet && panelSet.panel.active) {
+            const svgText = await clipboardy.read();
+            const dom = new xmldoc.XmlDocument(svgText);
+            const parsed = parse(dom, null);
+            panelSet.panel.webview.postMessage({
+                command: "paste",
+                data: parsed.result
+            });
+        }
+    }));
+
+    context.subscriptions.push(vscode.commands.registerCommand("svgeditor.cut", async () => {
+        if (panelSet && panelSet.panel.active) {
+            panelSet.panel.webview.postMessage({
+                command: "cut-request"
             });
         }
     }));
