@@ -33,7 +33,6 @@ export function activate(context: vscode.ExtensionContext) {
     let diagnostics = vscode.languages.createDiagnosticCollection("svgeditor");
 
     let panelSet: PanelSet | null = null;
-    let prevendSend = false;
     let registeredkeyEvents: vscode.Disposable[] = [];
 
     let createPanel = (editor: vscode.TextEditor) => {
@@ -51,7 +50,6 @@ export function activate(context: vscode.ExtensionContext) {
         panel.webview.html = render(viewer, {bundleJs, css, icons});
         panelSet = {panel, editor, text};
         setListener(panelSet);
-        prevendSend = false;
     }
 
     let setListener = (pset : PanelSet) => {
@@ -64,7 +62,6 @@ export function activate(context: vscode.ExtensionContext) {
                     pset.editor.edit(editBuilder => {
                         diffProcedure(diffChars(oldText, pset.text), editBuilder)
                     });
-                    prevendSend = true;
                     return;
                 case "svg-request":
                     pset.panel.webview.postMessage({
@@ -107,15 +104,11 @@ export function activate(context: vscode.ExtensionContext) {
     }
 
     context.subscriptions.push(vscode.workspace.onDidChangeTextDocument((e: vscode.TextDocumentChangeEvent) => {
-        if (panelSet && panelSet.editor.document === e.document) {
-            if (prevendSend) {
-                prevendSend = false;
-            } else {
-                panelSet.panel.webview.postMessage({
-                    command: "modified",
-                    data: parseSvg(panelSet.text = e.document.getText(), panelSet.editor, diagnostics)
-                });
-            }
+        if (panelSet && panelSet.editor.document === e.document && panelSet.text !== e.document.getText()) {
+            panelSet.panel.webview.postMessage({
+                command: "modified",
+                data: parseSvg(panelSet.text = e.document.getText(), panelSet.editor, diagnostics)
+            });
         }
     }));
 
