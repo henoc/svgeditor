@@ -102,8 +102,8 @@
     }
   },
   "scripts": {
-    "vscode:prepublish": "npm run compile",
-    "compile": "tsc -p ./ && npm run browserify",
+    "vscode:prepublish": "yarn run compile",
+    "compile": "tsc -p ./ && yarn run browserify",
     "browserify": "browserify out/src/main.js -o resources/bundle.js",
     "postinstall": "node ./node_modules/vscode/bin/install"
   },

@@ -14,7 +14,7 @@ import uuidStatic from "uuid";
 const CANVAS_DEFAULT_COLOR = {r: 255, g: 255, b: 255, a: 1};
 
 interface ColorComponent extends Component {
-    getColor(): tinycolorInstance | null;
+    getColor(): tinycolor.Instance | null;
     move(event: MouseEvent): void;
     up(event: MouseEvent): void;
     dragCancel(): void;
@@ -127,11 +127,11 @@ class ColorPickerCanvasComponent implements ColorComponent {
 
     canvas: HTMLCanvasElement | null = null;
     ctx: CanvasRenderingContext2D | null = null;
-    tmpColor: tinycolorInstance | null = null;
-    initialColor: tinycolorInstance;
+    tmpColor: tinycolor.Instance | null = null;
+    initialColor: tinycolor.Instance;
     downRegion: "grad" | "hue" | "opacity" | null = null;
 
-    constructor(public width: number, public height: number, public color: tinycolorInstance, public onChange: () => void) {
+    constructor(public width: number, public height: number, public color: tinycolor.Instance, public onChange: () => void) {
         this.initialColor = color.clone();
     }
 

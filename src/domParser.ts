@@ -644,7 +644,7 @@ function attrOf(element: xmldoc.XmlElement, warns: Warning[], attrs: Assoc, name
             }
         },
         paint: () => {
-            let tcolor: tinycolorInstance = tinycolor(value);
+            let tcolor: tinycolor.Instance = tinycolor(value);
             let tmp: RegExpMatchArray | null;
             if (tcolor.getFormat() && tcolor.getFormat() !== "hsv") {
                 delete attrs[name];
@@ -664,7 +664,7 @@ function attrOf(element: xmldoc.XmlElement, warns: Warning[], attrs: Assoc, name
             }
         },
         stopColor: () => {
-            let tcolor: tinycolorInstance = tinycolor(value);
+            let tcolor: tinycolor.Instance = tinycolor(value);
             if (tcolor.getFormat() && tcolor.getFormat() !== "hsv") {
                 delete attrs[name];
                 return {
