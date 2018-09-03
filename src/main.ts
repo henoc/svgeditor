@@ -1,6 +1,6 @@
 import { construct, makeUuidVirtualMap, makeUuidRealMap, makeIdUuidMap } from "./svgConstructor";
 import { ParsedElement, isLengthUnit, LengthUnit, Paint } from "./domParser";
-import { onDocumentMouseMove, onDocumentMouseUp, onDocumentClick, onDocumentMouseLeave } from "./triggers";
+import { onDocumentMouseMove, onDocumentMouseUp, onDocumentClick, onDocumentMouseLeave, onDocumentCopy, onDocumentCut, onDocumentPaste } from "./triggers";
 import { Mode } from "./modeInterface";
 import { SelectMode } from "./selectMode";
 import { textMode } from "./textMode";
@@ -95,44 +95,15 @@ window.addEventListener("message", event => {
             fontList = message.data;
             refleshContent();
             break;
-        case "copy-request":
-        case "cut-request":
-            const isCut = message.command === "cut-request";
-            if (editMode.mode.selectedShapeUuids) {
-                const uuids = editMode.mode.selectedShapeUuids;
-                const parent = svgVirtualMap[uuids[0]].parent;
-                const parentPe = parent && svgVirtualMap[parent] || null;
-                if (parentPe && "children" in parentPe) {
-                    const orderedPes = parentPe.children.filter(c => uuids.indexOf(c.uuid) !== -1);
-                    if (isCut) parentPe.children = parentPe.children.filter(c => uuids.indexOf(c.uuid) === -1);
-                    const str = orderedPes.map(pe => {
-                        const svgTag = construct(pe);
-                        return svgTag ? svgTag.toString() : "";
-                    }).join("");
-                    vscode.postMessage({
-                        command: isCut ? "cut-response" : "copy-response",
-                        data: str
-                    });
-                    editMode.mode.selectedShapeUuids = null;
-                    refleshContent();
-                }
-            }
-            break;
-        case "paste":
-            const pe = <ParsedElement>message.data;
-            if (svgdata && "children" in svgdata) {
-                svgdata.children.push(pe);
-                pe.parent = svgdata.uuid;
-                pe.isRoot = false;
-                refleshContent();
-            }
-            break;
     }
 });
 document.addEventListener("mousemove", onDocumentMouseMove);
 document.addEventListener("mouseup", onDocumentMouseUp);
 document.addEventListener("mouseleave", onDocumentMouseLeave);
 document.addEventListener("click", onDocumentClick);
+document.addEventListener("copy", onDocumentCopy);
+document.addEventListener("cut", onDocumentCut);
+document.addEventListener("paste", onDocumentPaste);
 
 // exported functions
 

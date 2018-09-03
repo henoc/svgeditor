@@ -7,7 +7,6 @@ import { parse } from "./domParser";
 import { collectSystemFonts } from "./fontFileProcedures";
 import { iterate } from "./utils";
 import { diffChars } from "diff";
-import * as clipboardy from "clipboardy";
 const format = require('xml-formatter');
 
 type PanelSet = { panel: vscode.WebviewPanel, editor: vscode.TextEditor, text: string};
@@ -96,11 +95,6 @@ export function activate(context: vscode.ExtensionContext) {
                         data: iterate(fonts, (_, value) => Object.keys(value))
                     });
                     return;
-                case "copy-response":
-                case "cut-response":
-                    const str = format(message.data);
-                    await clipboardy.write(str);
-                    return;
                 case "error":
                     showError(message.data);
                     return;
@@ -148,34 +142,6 @@ export function activate(context: vscode.ExtensionContext) {
                 panelSet.editor = editor;
                 setListener(panelSet);
             }
-    }));
-
-    context.subscriptions.push(vscode.commands.registerCommand("svgeditor.copy", async () => {
-        if (panelSet && panelSet.panel.active) {
-            panelSet.panel.webview.postMessage({
-                command: "copy-request"
-            });
-        }
-    }));
-
-    context.subscriptions.push(vscode.commands.registerCommand("svgeditor.paste", async () => {
-        if (panelSet && panelSet.panel.active) {
-            const svgText = await clipboardy.read();
-            const dom = new xmldoc.XmlDocument(svgText);
-            const parsed = parse(dom, null);
-            panelSet.panel.webview.postMessage({
-                command: "paste",
-                data: parsed.result
-            });
-        }
-    }));
-
-    context.subscriptions.push(vscode.commands.registerCommand("svgeditor.cut", async () => {
-        if (panelSet && panelSet.panel.active) {
-            panelSet.panel.webview.postMessage({
-                command: "cut-request"
-            });
-        }
     }));
 }
 

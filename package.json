@@ -52,23 +52,6 @@
         }
       ]
     },
-    "keybindings": [
-      {
-        "command": "svgeditor.copy",
-        "key": "ctrl+c",
-        "mac": "cmd+c"
-      },
-      {
-        "command": "svgeditor.paste",
-        "key": "ctrl+v",
-        "mac": "cmd+v"
-      },
-      {
-        "command": "svgeditor.cut",
-        "key": "ctrl+x",
-        "mac": "cmd+x"
-      }
-    ],
     "configuration": {
       "title": "SVG Editor configurations",
       "properties": {
