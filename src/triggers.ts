@@ -74,6 +74,15 @@ export function onDocumentPaste(event: Event) {
     event.preventDefault();
 }
 
+export function onDocumentKeyup(event: KeyboardEvent) {
+    switch(event.key) {
+        case "Backspace":
+        case "Delete":
+        deleteShapes();
+        break;
+    }
+}
+
 function copy(clipboardData: DataTransfer, isCut: boolean = false) {
     if (editMode.mode.selectedShapeUuids) {
         const uuids = editMode.mode.selectedShapeUuids;
@@ -90,6 +99,19 @@ function copy(clipboardData: DataTransfer, isCut: boolean = false) {
             clipboardData.setData("image/svg+xml", formattedStr);
             clipboardData.setData("application/xml", formattedStr);
             clipboardData.setData("text/plain", formattedStr);
+            editMode.mode.selectedShapeUuids = null;
+            refleshContent();
+        }
+    }
+}
+
+function deleteShapes() {
+    if (editMode.mode.selectedShapeUuids) {
+        const uuids = editMode.mode.selectedShapeUuids;
+        const parent = svgVirtualMap[uuids[0]].parent;
+        const parentPe = parent && svgVirtualMap[parent] || null;
+        if (parentPe && "children" in parentPe) {
+            parentPe.children = parentPe.children.filter(c => uuids.indexOf(c.uuid) === -1);
             editMode.mode.selectedShapeUuids = null;
             refleshContent();
         }

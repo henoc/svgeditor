@@ -33,7 +33,6 @@ export function activate(context: vscode.ExtensionContext) {
     let diagnostics = vscode.languages.createDiagnosticCollection("svgeditor");
 
     let panelSet: PanelSet | null = null;
-    let registeredkeyEvents: vscode.Disposable[] = [];
 
     let createPanel = (editor: vscode.TextEditor) => {
         let text = editor.document.getText();

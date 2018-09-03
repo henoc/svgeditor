@@ -1,6 +1,6 @@
 import { construct, makeUuidVirtualMap, makeUuidRealMap, makeIdUuidMap } from "./svgConstructor";
 import { ParsedElement, isLengthUnit, LengthUnit, Paint } from "./domParser";
-import { onDocumentMouseMove, onDocumentMouseUp, onDocumentClick, onDocumentMouseLeave, onDocumentCopy, onDocumentCut, onDocumentPaste } from "./triggers";
+import { onDocumentMouseMove, onDocumentMouseUp, onDocumentClick, onDocumentMouseLeave, onDocumentCopy, onDocumentCut, onDocumentPaste, onDocumentKeyup } from "./triggers";
 import { Mode } from "./modeInterface";
 import { SelectMode } from "./selectMode";
 import { textMode } from "./textMode";
@@ -104,6 +104,7 @@ document.addEventListener("click", onDocumentClick);
 document.addEventListener("copy", onDocumentCopy);
 document.addEventListener("cut", onDocumentCut);
 document.addEventListener("paste", onDocumentPaste);
+document.addEventListener("keyup", onDocumentKeyup);
 
 // exported functions
 
