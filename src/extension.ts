@@ -22,8 +22,8 @@ export function activate(context: vscode.ExtensionContext) {
         (filename: string) => fs.readFileSync(path.join(__dirname, "..", "..", filename), "UTF-8");
     let viewer = readResource("viewer.html");
     let templateSvg = readResource("template.svg");
-    let bundleJsPath = vscode.Uri.file(path.join(context.extensionPath, "resources", "bundle.js")).with({ scheme: "vscode-resource"});
-    let cssPath = vscode.Uri.file(path.join(context.extensionPath, "resources", "style.css")).with({ scheme: "vscode-resource"});
+    let css = readResource("style.css");
+    let bundleJs = readResource("bundle.js");
 
     let icons = [
         "addLinearGradient.svg", "alignLeft.svg", "bringForward.svg", "duplicate.svg", "objectToPath.svg", "sendBackward.svg",
@@ -49,7 +49,7 @@ export function activate(context: vscode.ExtensionContext) {
                 ]
             }
         );
-        panel.webview.html = render(viewer, {bundleJsPath, cssPath, icons});
+        panel.webview.html = render(viewer, {bundleJs, css, icons});
         panelSet = {panel, editor, text};
         setListener(panelSet);
         prevendSend = false;

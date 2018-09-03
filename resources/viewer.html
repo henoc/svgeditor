@@ -1,11 +1,13 @@
 <head>
     <meta charset="UTF-8">
     <title>Main</title>
-    <link rel="stylesheet" href="<%- cssPath %>">
+    <style><%- css %></style>
 </head>
 
 <body>
     <svg width="0" height="0" style="position: absolute; z-index: -2147483648;"><symbol><%- icons %></symbol></svg>
     <div id="svgeditor-content"></div>
-    <script src="<%- bundleJsPath %>"></script>
+    <script>
+        <%- bundleJs %>
+    </script>
 </body>
