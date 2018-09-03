@@ -1,7 +1,7 @@
 import { svgVirtualMap, refleshContent, svgRealMap, sendBackToEditor, contentChildrenComponent } from "./main";
 import { SvgTag } from "./svg";
 import { svgPathManager } from "./pathHelpers";
-import { Vec2, v, vfp } from "./utils";
+import { Vec2, v, vfp, OneOrMore } from "./utils";
 import { PathCommand } from "./domParser";
 import { Mode } from "./modeInterface";
 import { applyToPoint, inverse, toString } from "transformation-matrix";
@@ -11,7 +11,7 @@ import { scale2 } from "./transformHelpers";
 export class NodeMode extends Mode {
 
     shapeHandlers: SvgTag[] = [];
-    selectedShapeUuid: string | null = null;
+    private _selectedShapeUuid: string | null = null;
     selectedHandlerIndex: number | null = null;
     isDraggingHandler: boolean = false;
 
@@ -20,8 +20,7 @@ export class NodeMode extends Mode {
         if (initialSelectedShapeUuid) {
             let uu = initialSelectedShapeUuid;
             if (/^(path|poly(line|gon))$/.test(svgVirtualMap[uu].tag)) {
-                this.selectedShapeUuid = uu;
-                this.shapeHandlers = this.createShapeHandlers(this.selectedShapeUuid);
+                this.selectedShapeUuids = [uu];
             }
         }
     }
@@ -29,13 +28,11 @@ export class NodeMode extends Mode {
     onShapeMouseDownLeft(event: MouseEvent, uu: string): void {
         event.stopPropagation();
         if (svgVirtualMap[uu].isRoot) {
-            this.selectedShapeUuid = null;
+            this.selectedShapeUuids = null;
             this.selectedHandlerIndex = null;
-            this.shapeHandlers = [];
             refleshContent();
         } else if (/^(path|poly(line|gon))$/.test(svgVirtualMap[uu].tag)) {
-            this.selectedShapeUuid = uu;
-            this.shapeHandlers = this.createShapeHandlers(this.selectedShapeUuid);
+            this.selectedShapeUuids = [uu];
             refleshContent();
         }
     }
@@ -43,9 +40,9 @@ export class NodeMode extends Mode {
         
     }
     onDocumentMouseMove(event: MouseEvent): void {
-        if (this.selectedShapeUuid && this.isDraggingHandler && this.selectedHandlerIndex !== null) {
-            let cursor = vfp(this.inTargetCoordinate(this.cursor(event), this.selectedShapeUuid));
-            const selected = svgVirtualMap[this.selectedShapeUuid];
+        if (this._selectedShapeUuid && this.isDraggingHandler && this.selectedHandlerIndex !== null) {
+            let cursor = vfp(this.inTargetCoordinate(this.cursor(event), this._selectedShapeUuid));
+            const selected = svgVirtualMap[this._selectedShapeUuid];
             if ((selected.tag === "polyline" || selected.tag === "polygon") && selected.attrs.points) {
                 selected.attrs.points[this.selectedHandlerIndex] = cursor;
             } else if (selected.tag === "path" && selected.attrs.d) {
@@ -106,7 +103,7 @@ export class NodeMode extends Mode {
                     }
                 });
             }
-            this.shapeHandlers = this.createShapeHandlers(this.selectedShapeUuid);
+            this.shapeHandlers = this.createShapeHandlers(this._selectedShapeUuid);
             refleshContent();   
         }
     }
@@ -122,7 +119,17 @@ export class NodeMode extends Mode {
     }
 
     updateHandlers() {
-        if (this.selectedShapeUuid) this.shapeHandlers = this.createShapeHandlers(this.selectedShapeUuid);
+        if (this._selectedShapeUuid) this.shapeHandlers = this.createShapeHandlers(this._selectedShapeUuid);
+    }
+
+    get selectedShapeUuids() {
+        return this._selectedShapeUuid && [this._selectedShapeUuid] || null;
+    }
+
+    set selectedShapeUuids(uuids: OneOrMore<string> | null) {
+        this._selectedShapeUuid = uuids ? uuids[0] : null;
+        this.shapeHandlers = this._selectedShapeUuid && this.createShapeHandlers(this._selectedShapeUuid) || [];
+        contentChildrenComponent.styleConfigComponent.affectedShapeUuids = uuids;
     }
 
     private createShapeHandlers(uu: string): SvgTag[] {

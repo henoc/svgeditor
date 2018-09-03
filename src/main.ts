@@ -95,6 +95,24 @@ window.addEventListener("message", event => {
             fontList = message.data;
             refleshContent();
             break;
+        case "copy-request":
+            if (editMode.mode.selectedShapeUuids) {
+                const uuids = editMode.mode.selectedShapeUuids;
+                const parent = svgVirtualMap[uuids[0]].parent;
+                const parentPe = parent && svgVirtualMap[parent] || null;
+                if (parentPe && "children" in parentPe) {
+                    const orderedPes = parentPe.children.filter(c => uuids.indexOf(c.uuid) !== -1);
+                    const str = orderedPes.map(pe => {
+                        const svgTag = construct(pe);
+                        return svgTag ? svgTag.toString() : "";
+                    }).join("");
+                    vscode.postMessage({
+                        command: "copy-response",
+                        data: str
+                    });
+                }
+            }
+            break;
     }
 });
 document.addEventListener("mousemove", onDocumentMouseMove);

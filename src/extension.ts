@@ -7,6 +7,7 @@ import { parse } from "./domParser";
 import { collectSystemFonts } from "./fontFileProcedures";
 import { iterate } from "./utils";
 import { diffChars } from "diff";
+import * as clipboardy from "clipboardy";
 const format = require('xml-formatter');
 
 export function activate(context: vscode.ExtensionContext) {
@@ -92,6 +93,10 @@ export function activate(context: vscode.ExtensionContext) {
                         data: iterate(fonts, (_, value) => Object.keys(value))
                     });
                     return;
+                case "copy-response":
+                    const str = format(message.data);
+                    await clipboardy.write(str);
+                    return;
                 case "error":
                     showError(message.data);
                     return;
@@ -116,13 +121,10 @@ export function activate(context: vscode.ExtensionContext) {
         }
     }));
 
-    context.subscriptions.push(vscode.commands.registerCommand("svgeditor.openSvgEditor", () => {
-        const editor = vscode.window.activeTextEditor;
+    context.subscriptions.push(vscode.commands.registerTextEditorCommand("svgeditor.openSvgEditor", (textEditor) => {
         if (panelSet) panelSet.panel.reveal();
-        else if (editor) {
-            createPanel(editor);
-        } else {
-            showError("Not found active text editor.");
+        else {
+            createPanel(textEditor);
         }
     }));
 
@@ -142,6 +144,14 @@ export function activate(context: vscode.ExtensionContext) {
                 panelSet.editor = editor;
                 setListener(panelSet);
             }
+    }));
+
+    context.subscriptions.push(vscode.commands.registerCommand("svgeditor.copy", async () => {
+        if (panelSet && panelSet.panel.active) {
+            panelSet.panel.webview.postMessage({
+                command: "copy-request"
+            });
+        }
     }));
 }
 

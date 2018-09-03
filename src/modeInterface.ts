@@ -3,7 +3,7 @@ import { SvgTag } from "./svg";
 import { ParsedPresentationAttr, ParsedBaseAttr } from "./domParser";
 import { drawState, svgRealMap, contentChildrenComponent, refleshContent, editMode } from "./main";
 import { OperatorName } from "./menuComponent";
-import { Vec2, v } from "./utils";
+import { Vec2, v, OneOrMore } from "./utils";
 
 export abstract class Mode implements Component {
     abstract onShapeMouseDownLeft(event: MouseEvent, uu: string): void;
@@ -43,6 +43,13 @@ export abstract class Mode implements Component {
     render(): void {}
 
     updateHandlers(): void {}
+
+    get selectedShapeUuids(): OneOrMore<string> | null {
+        return null;
+    }
+
+    set selectedShapeUuids(uuids: OneOrMore<string> | null) {
+    }
 
     static baseAttrsDefaultImpl: () => ParsedBaseAttr = () => {
         return {

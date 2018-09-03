@@ -26,8 +26,7 @@
   },
   "activationEvents": [
     "onCommand:svgeditor.openSvgEditor",
-    "onCommand:svgeditor.newSvgEditor",
-    "onCommand:svgeditor.reopenRelatedTextEditor"
+    "onCommand:svgeditor.newSvgEditor"
   ],
   "main": "./out/src/extension",
   "contributes": {
@@ -53,6 +52,13 @@
         }
       ]
     },
+    "keybindings": [
+      {
+        "command": "svgeditor.copy",
+        "key": "ctrl+c",
+        "mac": "cmd+c"
+      }
+    ],
     "configuration": {
       "title": "SVG Editor configurations",
       "properties": {
@@ -110,6 +116,7 @@
   },
   "devDependencies": {
     "@types/camelcase": "^4.1.0",
+    "@types/clipboardy": "^1.1.0",
     "@types/diff": "^3.5.1",
     "@types/ejs": "^2.5.0",
     "@types/hammerjs": "^2.0.35",
@@ -130,6 +137,7 @@
   },
   "dependencies": {
     "camelcase": "^5.0.0",
+    "clipboardy": "^1.2.3",
     "diff": "^3.5.0",
     "ejs": "^2.5.7",
     "fast-deep-equal": "^2.0.1",
