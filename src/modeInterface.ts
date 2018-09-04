@@ -12,7 +12,7 @@ export abstract class Mode implements Component {
     abstract onDocumentMouseUp(event: MouseEvent): void;
     abstract onDocumentMouseLeave(event: Event): void;
     
-    onOperatorClicked(event: Event, name: OperatorName): void {
+    onOperatorClicked(name: OperatorName): void {
         switch (name) {
             case "scale-up":
             contentChildrenComponent.svgContainerComponent.scalePercent += 20;
@@ -27,7 +27,7 @@ export abstract class Mode implements Component {
             }
             break;
             case "font":
-            contentChildrenComponent.styleConfigComponent.openFontWindow(event);
+            contentChildrenComponent.styleConfigComponent.openFontWindow();
             break;
         }
     };

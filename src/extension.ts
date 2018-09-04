@@ -91,6 +91,17 @@ export function activate(context: vscode.ExtensionContext) {
                         data: iterate(fonts, (_, value) => Object.keys(value))
                     });
                     return;
+                case "information-request":
+                    const ret = await vscode.window.showInformationMessage(message.data.message, ...message.data.items);
+                    pset.panel.webview.postMessage({
+                        command: "information-response",
+                        data: {
+                            result: ret,
+                            kind: message.data.kind,
+                            args: message.data.args
+                        }
+                    });
+                    return;
                 case "error":
                     showError(message.data);
                     return;

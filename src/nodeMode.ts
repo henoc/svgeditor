@@ -1,4 +1,4 @@
-import { svgVirtualMap, refleshContent, svgRealMap, sendBackToEditor, contentChildrenComponent } from "./main";
+import { svgVirtualMap, refleshContent, svgRealMap, sendBackToEditor, contentChildrenComponent, informationRequest } from "./main";
 import { SvgTag } from "./svg";
 import { svgPathManager } from "./pathHelpers";
 import { Vec2, v, vfp, OneOrMore } from "./utils";
@@ -7,6 +7,7 @@ import { Mode } from "./modeInterface";
 import { applyToPoint, inverse, toString } from "transformation-matrix";
 import { shaper } from "./shapes";
 import { scale2 } from "./transformHelpers";
+import { OperatorName } from "./menuComponent";
 
 export class NodeMode extends Mode {
 
@@ -34,6 +35,8 @@ export class NodeMode extends Mode {
         } else if (/^(path|poly(line|gon))$/.test(svgVirtualMap[uu].tag)) {
             this.selectedShapeUuids = [uu];
             refleshContent();
+        } else if (/^(rect|circle|ellipse)$/.test(svgVirtualMap[uu].tag)) {
+            informationRequest("Selected shape is object. Change to path?", ["yes", "no"], "object to path", [uu]);
         }
     }
     onShapeMouseDownRight(event: MouseEvent, uu: string): void {
@@ -114,6 +117,7 @@ export class NodeMode extends Mode {
     onDocumentMouseLeave(event: Event): void {
         this.onDocumentMouseUp();
     }
+
     render() {
         this.shapeHandlers.forEach(h => h.render());
     }
@@ -127,9 +131,11 @@ export class NodeMode extends Mode {
     }
 
     set selectedShapeUuids(uuids: OneOrMore<string> | null) {
-        this._selectedShapeUuid = uuids ? uuids[0] : null;
-        this.shapeHandlers = this._selectedShapeUuid && this.createShapeHandlers(this._selectedShapeUuid) || [];
-        contentChildrenComponent.styleConfigComponent.affectedShapeUuids = uuids;
+        if (uuids && /^(path|poly(line|gon))$/.test(svgVirtualMap[uuids[0]].tag) || uuids === null) {
+            this._selectedShapeUuid = uuids ? uuids[0] : null;
+            this.shapeHandlers = this._selectedShapeUuid && this.createShapeHandlers(this._selectedShapeUuid) || [];
+            contentChildrenComponent.styleConfigComponent.affectedShapeUuids = uuids;
+        }
     }
 
     private createShapeHandlers(uu: string): SvgTag[] {

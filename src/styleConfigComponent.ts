@@ -466,8 +466,7 @@ export class StyleConfigComponent implements Component {
         if (this.fontComponent) this.fontComponent.render();
     }
 
-    openFontWindow(event: Event) {
-        event.stopPropagation();
+    openFontWindow() {
         if (this.fontComponent === null) {
             this.fontComponent = new FontComponent(this.fontFamily, (family) => {
                 const nullableFamily = family === "no attribute" ? null : family;

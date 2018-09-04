@@ -11,6 +11,8 @@ import { SvgContainerComponent } from "./svgContainerComponent";
 import { StyleConfigComponent } from "./styleConfigComponent";
 import { el } from "./utils";
 import { collectPaintServer } from "./paintServer";
+import { NodeMode } from "./nodeMode";
+import { multiShaper, shaper } from "./shapes";
 
 declare function acquireVsCodeApi(): any;
 
@@ -95,6 +97,18 @@ window.addEventListener("message", event => {
             fontList = message.data;
             refleshContent();
             break;
+        case "information-response":
+            const {result, kind, args} = message.data;
+            switch (kind) {
+                case "object to path":
+                if (result === "yes") {
+                    shaper(args[0]).toPath();
+                    editMode.mode.selectedShapeUuids = [args[0]];
+                    refleshContent();
+                }
+                break;
+            }
+            break;
     }
 });
 document.addEventListener("mousemove", onDocumentMouseMove);
@@ -138,5 +152,17 @@ export function inputRequest(placeHolder?: string) {
     vscode.postMessage({
         command: "input-request",
         data: placeHolder
+    });
+}
+
+export function informationRequest(message: string, items: string[], kind: string, args: any[]) {
+    vscode.postMessage({
+        command: "information-request",
+        data: {
+            message,
+            items,
+            kind,
+            args
+        }
     });
 }

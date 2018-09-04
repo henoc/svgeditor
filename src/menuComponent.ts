@@ -82,7 +82,10 @@ export class MenuListComponent implements Component {
         el`/ul`;
         el`ul`;
         for (let name of this.operatorNames) {
-            iconComponent(name, `#svgeditor-icon-${camelCase(name)}`, (event: Event) => editMode.mode.onOperatorClicked(event, name));
+            iconComponent(name, `#svgeditor-icon-${camelCase(name)}`, (event: Event) => {
+                event.stopPropagation();
+                editMode.mode.onOperatorClicked(name);
+            });
         }
         el`/ul`;
     }
