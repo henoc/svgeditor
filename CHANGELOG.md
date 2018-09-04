@@ -1,5 +1,9 @@
 # CHANGELOG
 
+- 2.3.0
+  - Enable to use clipboard: `ctrl+c`, `ctrl+x`, `ctrl+v`
+  - Keyboard shortcut: `delete` or `backspace` to delete shapes
+  - Use yarn
 - 2.2.0
   - Update only differences when modifying SVG code
   - Support linearGradient, radialGradient again

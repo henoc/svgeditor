@@ -2,9 +2,9 @@
 
 ![sample](images/capture.png)
 
-**ver 2.0**: Complete code rewrite😫 Support transform attribute, unit (em, cm, %, etc.), and more🎉
+**ver 2.3**: `ctrl+c`, `ctrl+x`, `ctrl+v`, `delete/backspace` is now available 😅
 
-Now your VSCode can mutate to an interactive visual & literal SVG editor😎
+Now your VSCode can mutate to an interactive visual & literal SVG editor 😎
 
 You can create shapes using the SVG's coder or directly creating shapes with the shaping tool.
 
