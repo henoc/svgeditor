@@ -1,6 +1,6 @@
 import { construct, makeUuidVirtualMap, makeUuidRealMap, makeIdUuidMap } from "./svgConstructor";
 import { ParsedElement, isLengthUnit, LengthUnit, Paint } from "./domParser";
-import { onDocumentMouseMove, onDocumentMouseUp, onDocumentClick, onDocumentMouseLeave } from "./triggers";
+import { onDocumentMouseMove, onDocumentMouseUp, onDocumentClick, onDocumentMouseLeave, onDocumentCopy, onDocumentCut, onDocumentPaste, onDocumentKeyup } from "./triggers";
 import { Mode } from "./modeInterface";
 import { SelectMode } from "./selectMode";
 import { textMode } from "./textMode";
@@ -11,6 +11,8 @@ import { SvgContainerComponent } from "./svgContainerComponent";
 import { StyleConfigComponent } from "./styleConfigComponent";
 import { el } from "./utils";
 import { collectPaintServer } from "./paintServer";
+import { NodeMode } from "./nodeMode";
+import { multiShaper, shaper } from "./shapes";
 
 declare function acquireVsCodeApi(): any;
 
@@ -95,12 +97,28 @@ window.addEventListener("message", event => {
             fontList = message.data;
             refleshContent();
             break;
+        case "information-response":
+            const {result, kind, args} = message.data;
+            switch (kind) {
+                case "object to path":
+                if (result === "yes") {
+                    shaper(args[0]).toPath();
+                    editMode.mode.selectedShapeUuids = [args[0]];
+                    refleshContent();
+                }
+                break;
+            }
+            break;
     }
 });
 document.addEventListener("mousemove", onDocumentMouseMove);
 document.addEventListener("mouseup", onDocumentMouseUp);
 document.addEventListener("mouseleave", onDocumentMouseLeave);
 document.addEventListener("click", onDocumentClick);
+document.addEventListener("copy", onDocumentCopy);
+document.addEventListener("cut", onDocumentCut);
+document.addEventListener("paste", onDocumentPaste);
+document.addEventListener("keyup", onDocumentKeyup);
 
 // exported functions
 
@@ -134,5 +152,17 @@ export function inputRequest(placeHolder?: string) {
     vscode.postMessage({
         command: "input-request",
         data: placeHolder
+    });
+}
+
+export function informationRequest(message: string, items: string[], kind: string, args: any[]) {
+    vscode.postMessage({
+        command: "information-request",
+        data: {
+            message,
+            items,
+            kind,
+            args
+        }
     });
 }

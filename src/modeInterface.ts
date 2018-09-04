@@ -3,7 +3,7 @@ import { SvgTag } from "./svg";
 import { ParsedPresentationAttr, ParsedBaseAttr } from "./domParser";
 import { drawState, svgRealMap, contentChildrenComponent, refleshContent, editMode } from "./main";
 import { OperatorName } from "./menuComponent";
-import { Vec2, v } from "./utils";
+import { Vec2, v, OneOrMore } from "./utils";
 
 export abstract class Mode implements Component {
     abstract onShapeMouseDownLeft(event: MouseEvent, uu: string): void;
@@ -12,7 +12,7 @@ export abstract class Mode implements Component {
     abstract onDocumentMouseUp(event: MouseEvent): void;
     abstract onDocumentMouseLeave(event: Event): void;
     
-    onOperatorClicked(event: Event, name: OperatorName): void {
+    onOperatorClicked(name: OperatorName): void {
         switch (name) {
             case "scale-up":
             contentChildrenComponent.svgContainerComponent.scalePercent += 20;
@@ -27,7 +27,7 @@ export abstract class Mode implements Component {
             }
             break;
             case "font":
-            contentChildrenComponent.styleConfigComponent.openFontWindow(event);
+            contentChildrenComponent.styleConfigComponent.openFontWindow();
             break;
         }
     };
@@ -43,6 +43,13 @@ export abstract class Mode implements Component {
     render(): void {}
 
     updateHandlers(): void {}
+
+    get selectedShapeUuids(): OneOrMore<string> | null {
+        return null;
+    }
+
+    set selectedShapeUuids(uuids: OneOrMore<string> | null) {
+    }
 
     static baseAttrsDefaultImpl: () => ParsedBaseAttr = () => {
         return {

@@ -13,7 +13,7 @@ import { traverse } from "./svgConstructor";
 
 export class SelectMode extends Mode {
 
-    selectedShapeUuids: OneOrMore<string> | null = null;
+    private _selectedShapeUuids: OneOrMore<string> | null = null;
     commonParent: string | null = null;
     isDraggingShape: boolean = false;
     startCursorPos: Vec2 | null = null;
@@ -29,8 +29,6 @@ export class SelectMode extends Mode {
         super();
         if (initialSelectedShapeUuid) {
             this.selectedShapeUuids = [initialSelectedShapeUuid];
-            contentChildrenComponent.styleConfigComponent.affectedShapeUuids = this.selectedShapeUuids;
-            this.shapeHandlers = this.createShapeHandlers(this.selectedShapeUuids);
         }
     }
 
@@ -42,18 +40,16 @@ export class SelectMode extends Mode {
             this.selectedShapeUuids = null;
             this.commonParent = null;
             this.selectedHandlerIndex = null;
-            this.shapeHandlers = [];
-        } else if (event.shiftKey && this.selectedShapeUuids && pe.parent === this.commonParent && this.selectedShapeUuids.indexOf(uu) === -1) {
+        } else if (event.shiftKey && this._selectedShapeUuids && pe.parent === this.commonParent && this._selectedShapeUuids.indexOf(uu) === -1) {
             // multiple selection
-            this.selectedShapeUuids.push(uu);
-            const uuids = this.selectedShapeUuids;
+            this.pushSelectedShapes(uu);
+            const uuids = this._selectedShapeUuids;
             this.startCursorPos = vfp(this.inTargetCoordinate(this.cursor(event), uuids));
             this.startShapeCenter = multiShaper(uuids).center;
             this.isDraggingShape = true;
-            this.shapeHandlers = this.createShapeHandlers(this.selectedShapeUuids);
-        } else if (this.selectedShapeUuids && this.selectedShapeUuids.length > 1) {
+        } else if (this._selectedShapeUuids && this._selectedShapeUuids.length > 1) {
             // select already multiple selected shaeps
-            const uuids = this.selectedShapeUuids;
+            const uuids = this._selectedShapeUuids;
             this.startCursorPos = vfp(this.inTargetCoordinate(this.cursor(event), uuids));
             this.startShapeCenter = multiShaper(uuids).center;
             this.isDraggingShape = true;
@@ -64,25 +60,23 @@ export class SelectMode extends Mode {
             this.startCursorPos = vfp(this.inTargetCoordinate(this.cursor(event), [uu]));
             this.startShapeCenter = shaper(uu).center;
             this.isDraggingShape = true;
-            this.shapeHandlers = this.createShapeHandlers(this.selectedShapeUuids);
         }
-        contentChildrenComponent.styleConfigComponent.affectedShapeUuids = this.selectedShapeUuids;
         refleshContent();
     }
 
     onShapeMouseDownRight(event: MouseEvent, uu: string) {
     }
     onDocumentMouseMove(event: MouseEvent) {
-        if (this.selectedShapeUuids) {
-            let currentCursorPos = vfp(this.inTargetCoordinate(this.cursor(event), this.selectedShapeUuids));
+        if (this._selectedShapeUuids) {
+            let currentCursorPos = vfp(this.inTargetCoordinate(this.cursor(event), this._selectedShapeUuids));
             if (this.isDraggingShape && this.startCursorPos && this.startShapeCenter) {
-                multiShaper(this.selectedShapeUuids).center = this.startShapeCenter.add(currentCursorPos.sub(this.startCursorPos));
-                this.shapeHandlers = this.createShapeHandlers(this.selectedShapeUuids);
+                multiShaper(this._selectedShapeUuids).center = this.startShapeCenter.add(currentCursorPos.sub(this.startCursorPos));
+                this.shapeHandlers = this.createShapeHandlers(this._selectedShapeUuids);
                 refleshContent();
             } else if (this.isDraggingHandler && this.startCursorPos && this.startShapeFixedPoint && this.startShapeSize) {
                 if (this.selectedHandlerIndex === 4 && this.previousRawCursorPos) {
                     let currentRawCursorPos = this.cursor(event);
-                    multiShaper(this.selectedShapeUuids).rotate(currentRawCursorPos.x - this.previousRawCursorPos.x);
+                    multiShaper(this._selectedShapeUuids).rotate(currentRawCursorPos.x - this.previousRawCursorPos.x);
                     this.previousRawCursorPos = currentRawCursorPos;
                 } else {
                     const diff =  currentCursorPos.sub(this.startCursorPos).mul(v(this.startCursorPos.x - this.startShapeFixedPoint.x > 0 ? 1 : -1, this.startCursorPos.y - this.startShapeFixedPoint.y > 0 ? 1 : -1));
@@ -91,16 +85,16 @@ export class SelectMode extends Mode {
                     const currentSize = diff.add(this.startShapeSize);
                     if (currentSize.x < 0) currentSize.x = 0;
                     if (currentSize.y < 0) currentSize.y = 0;
-                    multiShaper(this.selectedShapeUuids).size2(currentSize, this.startShapeFixedPoint);
+                    multiShaper(this._selectedShapeUuids).size2(currentSize, this.startShapeFixedPoint);
                 }
-                this.shapeHandlers = this.createShapeHandlers(this.selectedShapeUuids);
+                this.shapeHandlers = this.createShapeHandlers(this._selectedShapeUuids);
                 refleshContent();
             }
         }
     }
     onDocumentMouseUp() {
-        if (this.selectedShapeUuids && configuration.collectTransform) {
-            for (let uuid of this.selectedShapeUuids) {
+        if (this._selectedShapeUuids && configuration.collectTransform) {
+            for (let uuid of this._selectedShapeUuids) {
                 shaper(uuid).transform = shaper(uuid).transform;
             }
         }
@@ -115,9 +109,9 @@ export class SelectMode extends Mode {
     onDocumentMouseLeave(event: Event) {
         this.onDocumentMouseUp();
     }
-    onOperatorClicked(event: Event, name: OperatorName) {
-        super.onOperatorClicked(event, name);
-        const uuids = this.selectedShapeUuids;
+    onOperatorClicked(name: OperatorName) {
+        super.onOperatorClicked(name);
+        const uuids = this._selectedShapeUuids;
         switch (name) {
             case "duplicate":
             if (uuids && this.commonParent) {
@@ -133,15 +127,14 @@ export class SelectMode extends Mode {
                     }
                 }
                 refleshContent();       // make real elements
-                this.selectedShapeUuids = null;
+                let tmp: null | OneOrMore<string> = null;
                 for (let copiedUuid of copiedUuids) {
                     const fourPercentX = convertToPixel({unit: "%", value: 4, attrName: "x"}, copiedUuid);
                     const fourPercentY = convertToPixel({unit: "%", value: 4, attrName: "y"}, copiedUuid);
                     shaper(copiedUuid).move(v(fourPercentX, fourPercentY));
-                    this.selectedShapeUuids ? this.selectedShapeUuids.push(copiedUuid) : this.selectedShapeUuids = [copiedUuid];
+                    tmp ? tmp.push(copiedUuid) : tmp = [copiedUuid];
                 }
-                contentChildrenComponent.styleConfigComponent.affectedShapeUuids = this.selectedShapeUuids;
-                if (this.selectedShapeUuids) this.shapeHandlers = this.createShapeHandlers(this.selectedShapeUuids);
+                this.selectedShapeUuids = tmp;
             }
             break;
             case "delete":
@@ -150,7 +143,6 @@ export class SelectMode extends Mode {
                 if ("children" in parentPe) {
                     parentPe.children = parentPe.children.filter(c => uuids.indexOf(c.uuid) === -1);
                     this.selectedShapeUuids = null;
-                    this.shapeHandlers = [];
                 }
             }
             break;
@@ -177,8 +169,6 @@ export class SelectMode extends Mode {
                     parentPe.children = parentPe.children.filter(c => uuids.indexOf(c.uuid) === -1);
                     refleshContent();       // make real elements
                     this.selectedShapeUuids = [groupUuid];
-                    contentChildrenComponent.styleConfigComponent.affectedShapeUuids = this.selectedShapeUuids;
-                    this.shapeHandlers = this.createShapeHandlers(this.selectedShapeUuids);
                 }
             }
             break;
@@ -195,7 +185,6 @@ export class SelectMode extends Mode {
                     }
                     if ("children" in parentPe) parentPe.children = parentPe.children.filter(c => c.uuid !== pe.uuid);
                     this.selectedShapeUuids = null;
-                    this.shapeHandlers = [];
                 }
             }
             break;
@@ -244,7 +233,7 @@ export class SelectMode extends Mode {
     render() {
         // Decorate groups.
         let pe: ParsedElement;
-        if (this.selectedShapeUuids && this.selectedShapeUuids.length === 1 && (pe = svgVirtualMap[this.selectedShapeUuids[0]]) && pe.tag === "g") {
+        if (this._selectedShapeUuids && this._selectedShapeUuids.length === 1 && (pe = svgVirtualMap[this._selectedShapeUuids[0]]) && pe.tag === "g") {
             const corners: Vec2[] = [];
             for (let i of [0, 2, 8, 6]) {
                 corners.push(v(+this.shapeHandlers[i].data.attrs.cx, +this.shapeHandlers[i].data.attrs.cy));
@@ -255,7 +244,21 @@ export class SelectMode extends Mode {
     }
 
     updateHandlers() {
-        if (this.selectedShapeUuids) this.shapeHandlers = this.createShapeHandlers(this.selectedShapeUuids);
+        if (this._selectedShapeUuids) this.shapeHandlers = this.createShapeHandlers(this._selectedShapeUuids);
+    }
+
+    get selectedShapeUuids() {
+        return this._selectedShapeUuids;
+    }
+
+    set selectedShapeUuids(uuids: OneOrMore<string> | null) {
+        this._selectedShapeUuids = uuids;
+        this.shapeHandlers = uuids && this.createShapeHandlers(uuids) || [];
+        contentChildrenComponent.styleConfigComponent.affectedShapeUuids = uuids;
+    }
+
+    pushSelectedShapes(uuid: string): void {
+        this.selectedShapeUuids = this._selectedShapeUuids && <OneOrMore<string>>this._selectedShapeUuids.concat(uuid) || [uuid];
     }
 
     private createShapeHandlers(uus: OneOrMore<string>): SvgTag[] {
@@ -294,14 +297,14 @@ export class SelectMode extends Mode {
         event.stopPropagation();
         this.selectedHandlerIndex = index;
         this.isDraggingHandler = true;
-        if (this.selectedShapeUuids) {
+        if (this._selectedShapeUuids) {
             this.startShapeFixedPoint =
                 vfp(this.inTargetCoordinate({
                     x: Number(this.shapeHandlers[8 - index].data.attrs["cx"]),
                     y: Number(this.shapeHandlers[8 - index].data.attrs["cy"])
-                }, this.selectedShapeUuids));
-            this.startCursorPos = vfp(this.inTargetCoordinate(this.cursor(event), this.selectedShapeUuids));
-            this.startShapeSize = multiShaper(this.selectedShapeUuids).size;
+                }, this._selectedShapeUuids));
+            this.startCursorPos = vfp(this.inTargetCoordinate(this.cursor(event), this._selectedShapeUuids));
+            this.startShapeSize = multiShaper(this._selectedShapeUuids).size;
             this.previousRawCursorPos = this.cursor(event);
         }
     }
@@ -334,10 +337,10 @@ export class SelectMode extends Mode {
                     return ["leftBottom", "rightBottom"];
                 }
             }))();
-        if (this.selectedShapeUuids) {
+        if (this._selectedShapeUuids) {
             let edge: number | null = null;
             const corners: {[uuid: string]: {cornerName: Corner, escapedPoint: Point}} = {};
-            for (let uuid of this.selectedShapeUuids) {
+            for (let uuid of this._selectedShapeUuids) {
                 const [nameFirst, nameSecond] = cornerNames;
                 let escapedCornerFirst = this.escapeToNormalCoordinate(shaper(uuid)[nameFirst], [uuid]);
                 let escapedCornerSecond = this.escapeToNormalCoordinate(shaper(uuid)[nameSecond], [uuid]);
@@ -355,7 +358,7 @@ export class SelectMode extends Mode {
                 }
                 edge = edge !== null && minOrMax(tmp, edge) || tmp;
             }
-            if (edge !== null) for (let uuid of this.selectedShapeUuids) {
+            if (edge !== null) for (let uuid of this._selectedShapeUuids) {
                 const cornersData = corners[uuid];
                 cornersData.escapedPoint[xOrY] = edge;
                 const targetCorner = this.inTargetCoordinate(cornersData.escapedPoint, [uuid]);

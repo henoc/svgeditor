@@ -6,12 +6,12 @@
 // ${fileExtname}: the current opened file's extension
 // ${cwd}: the current working directory of the spawned process
 
-// A task runner that calls a custom npm script that compiles the extension.
+// A task runner that calls a custom yarn script that compiles the extension.
 {
 	"version": "0.1.0",
 
-	// we want to run npm
-	"command": "npm",
+	// we want to run yarn
+	"command": "yarn",
 
 	// the command is a shell script
 	"isShellCommand": true,
