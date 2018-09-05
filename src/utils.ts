@@ -1,6 +1,8 @@
 import memoize from "fast-memoize";
 import { elementOpen, elementClose, elementVoid } from "incremental-dom";
 import { $Values } from "utility-types";
+import urlParse from "url-parse";
+import { workspacePaths } from "./main";
 
 /**
  * Mapping in object. `{a: 1, b: 2, c: 3} ->(+1) {a: 2, b: 3, c: 4}`
@@ -254,4 +256,12 @@ export class None<T> implements Option<T> {
 export function cursor(event: MouseEvent, target: Element): Vec2 {
     const rect = target.getBoundingClientRect();
     return v(event.clientX - rect.left, event.clientY - rect.top);
+}
+
+export async function imageNaturalSize(urlString: string): Vec2 | null {
+    for (let workspacePath of workspacePaths) {
+        const url = urlParse(urlString, workspacePath);
+        fetch()
+    }
+
 }

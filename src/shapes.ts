@@ -35,8 +35,8 @@ export function shaper(uuid: string): ShaperFunctions {
     const re = svgRealMap[uuid];
     const styleDeclaration = getComputedStyle(re);
 
-    const px = (unitValue: Length | null) => {
-        return unitValue ? convertToPixel(unitValue, uuid) : 0;
+    const px = (unitValue: Length | null, defaultNumber: number = 0) => {
+        return unitValue ? convertToPixel(unitValue, uuid) : defaultNumber;
     }
     const fromPx = (unitValue: Length | null, attrName: string, pxValue: number): Length => {
         return unitValue ?
@@ -653,6 +653,57 @@ export function shaper(uuid: string): ShaperFunctions {
                 },
                 allTransform,
                 appendTransformDescriptors: appendTransformDescriptors(gattrs),
+                rotate: rotateCenter
+            }).merge(corners).merge(presentationAttrs).merge(transformProps).object;
+        case "image":
+            const iattrs = pe.attrs;
+            return new Merger({
+                get center() {
+                    return v(
+                        px(iattrs.x) + px(iattrs.width || imageDefaultSize().width) / 2,
+                        px(iattrs.y) + px(iattrs.height) / 2
+                    );
+                },
+                set center(point: Vec2) {
+                    rattrs.x = fromPx(rattrs.x, "x",
+                        point.x - px(rattrs.width) / 2
+                    );
+                    rattrs.y = fromPx(rattrs.y, "y",
+                        point.y - px(rattrs.height) / 2
+                    );
+                },
+                move(diff: Vec2) {
+                    rattrs.x = fromPx(rattrs.x, "x",
+                        px(rattrs.x) + diff.x
+                    );
+                    rattrs.y = fromPx(rattrs.y, "y",
+                        px(rattrs.y) + diff.y
+                    );
+                },
+                get size() {
+                    return v(px(rattrs.width), px(rattrs.height));
+                },
+                set size(wh: Vec2) {
+                    let center = self().center;
+                    rattrs.width = fromPx(rattrs.width, "width", wh.x);
+                    rattrs.height = fromPx(rattrs.height, "height", wh.y);
+                    self().center = center;
+                },
+                toPath() {
+                    // @ts-ignore
+                    pe.tag = "path";
+                    // @ts-ignore
+                    rattrs.d = [
+                        ["M", px(rattrs.x), px(rattrs.y)],
+                        ["L", px(rattrs.x) + px(rattrs.width), px(rattrs.y)],
+                        ["L", px(rattrs.x) + px(rattrs.width), px(rattrs.y) + px(rattrs.height)],
+                        ["L", px(rattrs.x), px(rattrs.y) + px(rattrs.height)],
+                        ["Z"]
+                    ];
+                },
+                size2,
+                allTransform,
+                appendTransformDescriptors: appendTransformDescriptors(rattrs),
                 rotate: rotateCenter
             }).merge(corners).merge(presentationAttrs).merge(transformProps).object;
         case "linearGradient":

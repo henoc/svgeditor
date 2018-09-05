@@ -27,6 +27,7 @@ export let editMode: {mode: Mode} = {mode: new SelectMode()};
 export let paintServers: { [id: string] : ParsedElement } = {};
 export let openWindows: { [id: string]: WindowComponent } = {};
 export let fontList: { [family: string]: string[] /* subFamiles */ } | null = null;
+export let workspacePaths: string[] = [];
 export const configuration = {
     showAll: true,
     defaultUnit: <LengthUnit>null,
