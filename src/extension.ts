@@ -46,7 +46,7 @@ export function activate(context: vscode.ExtensionContext) {
                 ]
             }
         );
-        panel.webview.html = render(viewer, {bundleJs, css, icons});
+        panel.webview.html = render(viewer, {bundleJs, css, icons, uri: editor.document.uri.toString()});
         panelSet = {panel, editor, text};
         setListener(panelSet);
     }

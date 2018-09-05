@@ -13,6 +13,7 @@ import { el } from "./utils";
 import { collectPaintServer } from "./paintServer";
 import { NodeMode } from "./nodeMode";
 import { multiShaper, shaper } from "./shapes";
+import { LoadedImage, collectImages } from "./imageHelpters";
 
 declare function acquireVsCodeApi(): any;
 
@@ -27,7 +28,8 @@ export let editMode: {mode: Mode} = {mode: new SelectMode()};
 export let paintServers: { [id: string] : ParsedElement } = {};
 export let openWindows: { [id: string]: WindowComponent } = {};
 export let fontList: { [family: string]: string[] /* subFamiles */ } | null = null;
-export let workspacePaths: string[] = [];
+export let uri: string = document.getElementById("svgeditor-uri")!.innerText;       // target file uri, ex: file:///Users/henoc/document/sample.svg
+export let imageList: { [href: string]: LoadedImage } = {};
 export const configuration = {
     showAll: true,
     defaultUnit: <LengthUnit>null,
@@ -73,6 +75,9 @@ vscode.postMessage({
 vscode.postMessage({
     command: "fontList-request"
 });
+vscode.postMessage({
+    command: "uri-request"
+});
 
 // set listeners
 window.addEventListener("message", event => {
@@ -82,6 +87,7 @@ window.addEventListener("message", event => {
         case "modified":
             svgdata = message.data;
             editMode.mode = new SelectMode();
+            collectImages(svgdata, uri, imageList);
             refleshContent();
             break;
         case "configuration":
