@@ -1,7 +1,8 @@
-import { diffProcedure, newUntitled } from "../src/extension";
+import { diffProcedure, newUntitled, normalizeUrl } from "../src/extension";
 import { diffChars } from "diff";
-import { TextEditorEdit, Position, Range, Selection, EndOfLine, ViewColumn } from "vscode";
+import { TextEditorEdit, Position, Range, Selection, EndOfLine, ViewColumn, Uri } from "vscode";
 import * as assert from 'assert';
+import { join, isAbsolute } from "path";
 
 type Operation = {operation: "replace"|"insert"|"delete", location: Position | Range | Selection, value?: string};
 
@@ -96,5 +97,49 @@ describe("extension", () => {
 
     it("diffProcedure - complex", (done) => {
         doDiffProcesure2().then(done).catch(done);
+    });
+
+    describe("normalizeUrl", () => {
+        it("relative path", () => {
+            if (process.platform === "win32") {
+                assert.strictEqual(
+                    normalizeUrl("foo/bar", `file:///c%3A/Users/henoc/sample.svg`),
+                    "vscode-resource:/c%3A/Users/henoc/foo/bar"
+                );
+            } else {
+                assert.strictEqual(
+                    normalizeUrl("foo/bar", `file:///home/henoc/sample.svg`),
+                    "vscode-resource:/home/henoc/foo/bar"
+                )
+            }
+        });
+
+        it("absolute path", () => {
+            if (process.platform === "win32") {
+                assert.strictEqual(
+                    normalizeUrl("C:\\foo\\bar", `file:///c%3A/Users/henoc/sample.svg`),
+                    "vscode-resource:/c%3A/foo/bar"
+                );
+            } else {
+                assert.strictEqual(
+                    normalizeUrl("/foo/bar", `file:///home/henoc/sample.svg`),
+                    "vscode-resource:/foo/bar"
+                );
+            }
+        });
+
+        it("absolute url", () => {
+            if (process.platform === "win32") {
+                assert.strictEqual(
+                    normalizeUrl("https://google.co.jp", `file:///c%3A/Users/henoc`),
+                    "https://google.co.jp/"
+                );
+            } else {
+                assert.strictEqual(
+                    normalizeUrl("https://google.co.jp", `file:///home/henoc/sample.svg`),
+                    "https://google.co.jp/"
+                );
+            }
+        })
     });
 });

@@ -30,6 +30,7 @@ export type ParsedElement = (
     ParsedLinearGradientElement |
     ParsedRadialGradientElement |
     ParsedStopElement |
+    ParsedImageElement |
     ParsedUnknownElement
 ) & {
     uuid: string;
@@ -100,6 +101,11 @@ interface ParsedRadialGradientElement {
 interface ParsedStopElement {
     tag: "stop",
     attrs: ParsedStopAttr
+}
+
+interface ParsedImageElement {
+    tag: "image";
+    attrs: ParsedImageAttr;
 }
 
 interface ParsedUnknownElement {
@@ -189,6 +195,15 @@ interface ParsedRadialGradientAttr extends ParsedBaseAttr, ParsedPresentationAtt
 interface ParsedStopAttr extends ParsedBaseAttr, ParsedPresentationAttr {
     offset: Ratio | null;
     "stop-color": StopColor | null;
+}
+
+interface ParsedImageAttr extends ParsedBaseAttr, ParsedPresentationAttr {
+    "xlink:href": string | null;
+    href: string | null;
+    x: Length | null;
+    y: Length | null;
+    width: Length | null;
+    height: Length | null;
 }
 
 export type LengthUnit = "em" | "ex" | "px" | "in" | "cm" | "mm" | "pt" | "pc" | "%" | null;
@@ -355,6 +370,9 @@ export function parse(element: xmldoc.XmlElement, parent: string | null): Parsed
     } else if (element.name === "stop") {
         const attrs = parseAttrs(element, pushWarns).stop();
         return {result: {tag: "stop", attrs, uuid, parent, isRoot}, warns};
+    } else if (element.name === "image") {
+        const attrs = parseAttrs(element, pushWarns).image();
+        return {result: {tag: "image", attrs, uuid, parent, isRoot}, warns};
     } else {
         const attrs: Assoc = element.attr;
         return {result: {tag: "unknown", tag$real: element.name, attrs, children, text, uuid, parent, isRoot}, warns: [{range: toRange(element), message: `${element.name} is unsupported element.`}]};
@@ -538,6 +556,21 @@ function parseAttrs(element: xmldoc.XmlElement, onWarns: (ws: Warning[]) => void
             };
             onWarns(warns);
             return validStopAttrs;
+        },
+        image: () => {
+            const validImageAttrs: ParsedImageAttr = {
+                ...globalValidAttrs,
+                ...getPresentationAttrs(),
+                "xlink:href": pop(attrs, "xlink:href"),
+                href: pop(attrs, "href"),
+                x: tryParse("x").map(a => a.length()).get,
+                y: tryParse("y").map(a => a.length()).get,
+                width: tryParse("width").map(a => a.length()).get,
+                height: tryParse("height").map(a => a.length()).get,
+                unknown: unknownAttrs(attrs, element, pushWarns)
+            };
+            onWarns(warns);
+            return validImageAttrs;
         }
     }
 }

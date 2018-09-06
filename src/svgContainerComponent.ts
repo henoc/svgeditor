@@ -17,7 +17,16 @@ export class SvgContainerComponent implements Component {
     scalePercent: number = 100;
 
     render() {
-        const substances = construct(svgdata, {putRootAttribute: true, setRootSvgXYtoOrigin: true, putUUIDAttribute: true, setListeners: true, insertSvgSizeRect: true, insertRectForGroup: true, all: configuration.showAll});
+        const substances = construct(svgdata, {
+            putRootAttribute: true,
+            setRootSvgXYtoOrigin: true,
+            putUUIDAttribute: true,
+            setListeners: true,
+            insertSvgSizeRect: true,
+            insertRectForGroup: true,
+            replaceHrefToObjectUrl: true,
+            all: configuration.showAll
+        });
         if (substances) {
             const outerFontEnv = getComputedStyle(document.body).font || "";
             const width = svgdata.tag === "svg" && svgdata.attrs.width && convertToPixelForOutermostFrame(svgdata.attrs.width, outerFontEnv) || 400;

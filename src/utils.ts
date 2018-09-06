@@ -2,6 +2,7 @@ import memoize from "fast-memoize";
 import { elementOpen, elementClose, elementVoid } from "incremental-dom";
 import { $Values } from "utility-types";
 
+
 /**
  * Mapping in object. `{a: 1, b: 2, c: 3} ->(+1) {a: 2, b: 3, c: 4}`
  */
@@ -255,3 +256,5 @@ export function cursor(event: MouseEvent, target: Element): Vec2 {
     const rect = target.getBoundingClientRect();
     return v(event.clientX - rect.left, event.clientY - rect.top);
 }
+
+
