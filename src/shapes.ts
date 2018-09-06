@@ -2,7 +2,7 @@ import { ParsedElement, Length, Transform, isLength, TransformDescriptor, Paint,
 import { Vec2, v, vfp, OneOrMore, Merger } from "./utils";
 import { svgPathManager } from "./pathHelpers";
 import { convertToPixel, convertFromPixel } from "./measureUnits";
-import { svgVirtualMap, svgRealMap, configuration } from "./main";
+import { svgVirtualMap, svgRealMap, configuration, imageList } from "./main";
 import { identity, transform, scale, translate, rotate, rotateDEG, applyToPoint, inverse } from "transformation-matrix";
 import { appendDescriptor, replaceLastDescriptor, descriptorToMatrix, appendDescriptorsLeft, translateDescriptor, scaleDescriptor, rotateDescriptor, appendDescriptorLeft, appendDescriptors } from "./transformHelpers";
 import { font } from "./fontHelpers";
@@ -657,53 +657,56 @@ export function shaper(uuid: string): ShaperFunctions {
             }).merge(corners).merge(presentationAttrs).merge(transformProps).object;
         case "image":
             const iattrs = pe.attrs;
+            const href = iattrs.href || iattrs["xlink:href"];
+            const defaultWidth = href && imageList[href] && imageList[href].width || 0;
+            const defaultHeight = href && imageList[href] && imageList[href].height || 0;
             return new Merger({
                 get center() {
                     return v(
-                        px(iattrs.x) + px(iattrs.width || imageDefaultSize().width) / 2,
-                        px(iattrs.y) + px(iattrs.height) / 2
+                        px(iattrs.x) + px(iattrs.width, defaultWidth) / 2,
+                        px(iattrs.y) + px(iattrs.height, defaultHeight) / 2
                     );
                 },
                 set center(point: Vec2) {
-                    rattrs.x = fromPx(rattrs.x, "x",
-                        point.x - px(rattrs.width) / 2
+                    iattrs.x = fromPx(iattrs.x, "x",
+                        point.x - px(iattrs.width, defaultWidth) / 2
                     );
-                    rattrs.y = fromPx(rattrs.y, "y",
-                        point.y - px(rattrs.height) / 2
+                    iattrs.y = fromPx(iattrs.y, "y",
+                        point.y - px(iattrs.height, defaultHeight) / 2
                     );
                 },
                 move(diff: Vec2) {
-                    rattrs.x = fromPx(rattrs.x, "x",
-                        px(rattrs.x) + diff.x
+                    iattrs.x = fromPx(iattrs.x, "x",
+                        px(iattrs.x) + diff.x
                     );
-                    rattrs.y = fromPx(rattrs.y, "y",
-                        px(rattrs.y) + diff.y
+                    iattrs.y = fromPx(iattrs.y, "y",
+                        px(iattrs.y) + diff.y
                     );
                 },
                 get size() {
-                    return v(px(rattrs.width), px(rattrs.height));
+                    return v(px(iattrs.width, defaultWidth), px(iattrs.height, defaultHeight));
                 },
                 set size(wh: Vec2) {
                     let center = self().center;
-                    rattrs.width = fromPx(rattrs.width, "width", wh.x);
-                    rattrs.height = fromPx(rattrs.height, "height", wh.y);
+                    iattrs.width = fromPx(iattrs.width, "width", wh.x);
+                    iattrs.height = fromPx(iattrs.height, "height", wh.y);
                     self().center = center;
                 },
                 toPath() {
                     // @ts-ignore
                     pe.tag = "path";
                     // @ts-ignore
-                    rattrs.d = [
-                        ["M", px(rattrs.x), px(rattrs.y)],
-                        ["L", px(rattrs.x) + px(rattrs.width), px(rattrs.y)],
-                        ["L", px(rattrs.x) + px(rattrs.width), px(rattrs.y) + px(rattrs.height)],
-                        ["L", px(rattrs.x), px(rattrs.y) + px(rattrs.height)],
+                    iattrs.d = [
+                        ["M", px(iattrs.x), px(iattrs.y)],
+                        ["L", px(iattrs.x) + px(iattrs.width, defaultWidth), px(iattrs.y)],
+                        ["L", px(iattrs.x) + px(iattrs.width, defaultWidth), px(iattrs.y) + px(iattrs.height, defaultHeight)],
+                        ["L", px(iattrs.x), px(iattrs.y) + px(iattrs.height, defaultHeight)],
                         ["Z"]
                     ];
                 },
                 size2,
                 allTransform,
-                appendTransformDescriptors: appendTransformDescriptors(rattrs),
+                appendTransformDescriptors: appendTransformDescriptors(iattrs),
                 rotate: rotateCenter
             }).merge(corners).merge(presentationAttrs).merge(transformProps).object;
         case "linearGradient":

@@ -30,6 +30,10 @@
   version "0.5.0"
   resolved "https://registry.yarnpkg.com/@types/incremental-dom/-/incremental-dom-0.5.0.tgz#d08d0efe031ab11dede70fe1b47289bedcfd4356"
 
+"@types/is-absolute-url@^2.1.0":
+  version "2.1.0"
+  resolved "https://registry.yarnpkg.com/@types/is-absolute-url/-/is-absolute-url-2.1.0.tgz#b47a60f60448177910443b4e1f4e4f7797bf9690"
+
 "@types/jsdom@^11.0.6":
   version "11.0.6"
   resolved "https://registry.yarnpkg.com/@types/jsdom/-/jsdom-11.0.6.tgz#20d6e8c83f15fef0b40c39b3faebe8bc7587d86e"
@@ -1290,6 +1294,10 @@ insert-module-globals@^7.0.0:
     through2 "^2.0.0"
     undeclared-identifiers "^1.1.2"
     xtend "^4.0.0"
+
+is-absolute-url@^2.1.0:
+  version "2.1.0"
+  resolved "https://registry.yarnpkg.com/is-absolute-url/-/is-absolute-url-2.1.0.tgz#50530dfb84fcc9aa7dbe7852e83a37b93b9f2aa6"
 
 is-accessor-descriptor@^1.0.0:
   version "1.0.0"

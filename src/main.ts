@@ -14,6 +14,7 @@ import { collectPaintServer } from "./paintServer";
 import { NodeMode } from "./nodeMode";
 import { multiShaper, shaper } from "./shapes";
 import { LoadedImage, collectImages } from "./imageHelpters";
+import uuidStatic from "uuid";
 
 declare function acquireVsCodeApi(): any;
 
@@ -24,12 +25,13 @@ export let svgdata: ParsedElement;
 export let svgVirtualMap: { [uu: string]: ParsedElement } = {};
 export let svgRealMap: { [uu: string]: Element } = {};
 export let svgIdUuidMap: { [id: string]: string} = {};          // id -> uuid
-export let editMode: {mode: Mode} = {mode: new SelectMode()};
+export const editMode: {mode: Mode} = {mode: new SelectMode()};
 export let paintServers: { [id: string] : ParsedElement } = {};
-export let openWindows: { [id: string]: WindowComponent } = {};
+export const openWindows: { [id: string]: WindowComponent } = {};
 export let fontList: { [family: string]: string[] /* subFamiles */ } | null = null;
-export let uri: string = document.getElementById("svgeditor-uri")!.innerText;       // target file uri, ex: file:///Users/henoc/document/sample.svg
-export let imageList: { [href: string]: LoadedImage } = {};
+export const uri: string = document.getElementById("svgeditor-uri")!.innerText;       // target file uri, ex: file:///Users/henoc/document/sample.svg
+export const imageList: { [href: string]: LoadedImage } = {};
+export const callbacks: { [uuid: string]: Function } = {};
 export const configuration = {
     showAll: true,
     defaultUnit: <LengthUnit>null,
@@ -116,6 +118,15 @@ window.addEventListener("message", event => {
                 break;
             }
             break;
+        case "callback-response":
+            (function(){
+                const {uuid, args} = message.data;
+                if (callbacks[uuid]) {
+                    callbacks[uuid](...args);
+                } else {
+                    throw new Error(`No callbacks found. uuid: ${uuid}`);
+                }
+            })();
     }
 });
 document.addEventListener("mousemove", onDocumentMouseMove);
@@ -162,7 +173,7 @@ export function inputRequest(placeHolder?: string) {
     });
 }
 
-export function informationRequest(message: string, items: string[], kind: string, args: any[]) {
+export function informationRequest(message: string, items: string[] = [], kind?: string, args?: any[]) {
     vscode.postMessage({
         command: "information-request",
         data: {
@@ -170,6 +181,16 @@ export function informationRequest(message: string, items: string[], kind: strin
             items,
             kind,
             args
+        }
+    });
+}
+
+export function urlNormalizeRequest(urlFragment: string, callbackUuid: string) {
+    vscode.postMessage({
+        command: "url-normalize-request",
+        data: {
+            urlFragment,
+            uuid: callbackUuid
         }
     });
 }

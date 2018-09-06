@@ -34,6 +34,9 @@ You can create shapes using the SVG's coder or directly creating shapes with the
 - svgeditor.collectTransformMatrix
   - Collect two or more transform functions into a matrix.
   - default: true
+- svgeditor.additionalResourcePaths
+  - Additional resource directory paths SVG Editor can access.
+  - default: []
 
 ## Current support tags and attributes
 
@@ -48,15 +51,22 @@ You can create shapes using the SVG's coder or directly creating shapes with the
 - linearGradient: `<presentation attributes>`
 - radialGradient: `<presentation attributes>`
 - stop: offset, stop-color, `<presentation attributes>`
+- image: x, y, width, height, xlink:href, href, `<presentation attributes>`
 
 `<presentation attributes>`: fill, stroke, transform, font-family, font-size, font-style, font-weight
+
+## Notice
+
+### image
+
+Localtion (xlink:)href refers to is restricted with your workspace, extension, `svgeditor.additionalResourcePaths` directories due to `vscode-resource` scheme settings.
 
 ## Future plans
 
 - [ ] Embedded CSS
 - [x] Gradation colors
 - [ ] Filters
-- [ ] Images
+- [x] Images
 
 ## License
 

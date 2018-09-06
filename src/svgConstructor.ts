@@ -6,7 +6,7 @@ import { assertNever } from "./utils";
 import { toString, inverse } from "transformation-matrix";
 import { shaper } from "./shapes";
 import { toTransformStrWithoutCollect } from "./transformHelpers";
-import { svgRealMap } from "./main";
+import { svgRealMap, imageList } from "./main";
 
 interface SvgConstructOptions {
     putRootAttribute?: boolean;
@@ -18,6 +18,7 @@ interface SvgConstructOptions {
     all?: boolean;
     setRootSvgXYtoOrigin?: boolean;
     numOfDecimalPlaces?: number;
+    replaceHrefToObjectUrl?: boolean;
 }
 
 /**
@@ -33,6 +34,7 @@ export function construct(pe: ParsedElement, options?: SvgConstructOptions): Svg
     const all = options && options.all || false;
     const setRootSvgXYtoOrigin = options && options.setRootSvgXYtoOrigin || false;
     const numOfDecimalPlaces = options && options.numOfDecimalPlaces;
+    const replaceHrefToObjectUrl = options && options.replaceHrefToObjectUrl || false;
 
     const tag = new SvgTag(pe.tag).options({numOfDecimalPlaces});
     if (putRootAttribute) {
@@ -164,6 +166,21 @@ export function construct(pe: ParsedElement, options?: SvgConstructOptions): Svg
             return tag
                 .pattr("stop-color", pe.attrs["stop-color"])
                 .rattr("offset", pe.attrs.offset);
+            case "image":
+            setBaseAttrs(pe.attrs, tag);
+            setPresentationAttrs(pe.attrs, tag);
+            if (replaceHrefToObjectUrl) {
+                if (pe.attrs.href && imageList[pe.attrs.href]) tag.attr("href", imageList[pe.attrs.href].objectUrl);
+                const xlinkHref = pe.attrs["xlink:href"];
+                if (xlinkHref && imageList[xlinkHref]) tag.attr("xlink:href", imageList[xlinkHref].objectUrl);
+            } else {
+                tag.attr("href", pe.attrs.href).attr("xlink:href", pe.attrs["xlink:href"]);
+            }
+            return tag
+                .uattr("x", pe.attrs.x)
+                .uattr("y", pe.attrs.y)
+                .uattr("width", pe.attrs.width)
+                .uattr("height", pe.attrs.height);
             default:
             assertNever(pe);
         }

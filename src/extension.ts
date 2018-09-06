@@ -7,6 +7,7 @@ import { parse } from "./domParser";
 import { collectSystemFonts } from "./fontFileProcedures";
 import { iterate } from "./utils";
 import { diffChars } from "diff";
+import isAbsoluteUrl from "is-absolute-url";
 const format = require('xml-formatter');
 
 type PanelSet = { panel: vscode.WebviewPanel, editor: vscode.TextEditor, text: string};
@@ -35,14 +36,24 @@ export function activate(context: vscode.ExtensionContext) {
     let panelSet: PanelSet | null = null;
 
     let createPanel = (editor: vscode.TextEditor) => {
+        const config = vscode.workspace.getConfiguration("svgeditor", editor.document.uri);
         let text = editor.document.getText();
+        const additionalResourceUris = [];
+        for (let path of config.get<string[]>("additionalResourcePaths") || []) {
+            try {
+                additionalResourceUris.push(vscode.Uri.file(path));
+            } catch (_err) {
+            }
+        }
         const panel = vscode.window.createWebviewPanel(
             "svgeditor",
             "SVG Editor",
             vscode.ViewColumn.Beside, {
                 enableScripts: true,
                 localResourceRoots: [
-                    vscode.Uri.file(path.join(context.extensionPath, "resources"))
+                    vscode.Uri.file(context.extensionPath),
+                    ...(vscode.workspace.workspaceFolders ? vscode.workspace.workspaceFolders.map(x => x.uri) : []),
+                    ...additionalResourceUris
                 ]
             }
         );
@@ -99,6 +110,17 @@ export function activate(context: vscode.ExtensionContext) {
                             result: ret,
                             kind: message.data.kind,
                             args: message.data.args
+                        }
+                    });
+                    return;
+                case "url-normalize-request":
+                    const urlFragment = message.data.urlFragment;
+                    const callbackUuid = message.data.uuid;
+                    pset.panel.webview.postMessage({
+                        command: "callback-response",
+                        data: {
+                            uuid: callbackUuid,
+                            args: [normalizeUrl(urlFragment, pset.editor.document.uri.toString())]
                         }
                     });
                     return;
@@ -193,4 +215,14 @@ export function diffProcedure(diffResults: JsDiff.IDiffResult[], editBuilder: vs
             startCharacter = endCharacter;
         }
     }
+}
+
+/**
+ * @param urlFragment `../foo/bar.svg`, `/foo/bar/baz.svg`, `C:\\Users\\henoc\\sample.svg`
+ * @param baseUrl `file:///c%3A/Users/henoc/sample.svg` accept file uri scheme
+ */
+export function normalizeUrl(urlFragment: string, baseUrl: string): string | null {
+    let uri = path.isAbsolute(urlFragment) ? vscode.Uri.file(urlFragment) : isAbsoluteUrl(urlFragment) ? vscode.Uri.parse(urlFragment) : vscode.Uri.parse(path.posix.join(path.posix.dirname(baseUrl), urlFragment.replace(/\\/g, "/")));
+    if (uri.scheme === "file") uri = uri.with({scheme: "vscode-resource"});
+    return uri.scheme === "untitled" ? null : uri.toString();
 }
