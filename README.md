@@ -19,24 +19,16 @@ You can create shapes using the SVG's coder or directly creating shapes with the
 
 ## Configuration
 
-- svgeditor.filenameExtension
-  - Initial filename extension of new untitled file.
-  - default: svg
-- svgeditor.showAll
-  - Send all attributes and tags to WebView regardless of SVG Editor support.
-  - default: true
-- svgeditor.defaultUnit
-  - Specifies the unit when creating some shapes.
-  - default: null
-- svgeditor.decimalPlaces
-  - The number of decimal places.
-  - default: 1
-- svgeditor.collectTransformMatrix
-  - Collect two or more transform functions into a matrix.
-  - default: true
-- svgeditor.additionalResourcePaths
-  - Additional resource directory paths SVG Editor can access.
-  - default: []
+|identifier|description|default|
+|:---|:---|:---|
+|svgeditor.filenameExtension|Initial filename extension of new untitled file.|svg|
+|svgeditor.width|Initial width of new untitled file.|400px|
+|svgeditor.height|Initial height of new untitled file.|400px|
+|svgeditor.showAll|Send all attributes and tags to WebView regardless of SVG Editor support.|true|
+|svgeditor.defaultUnit|Specifies the unit when creating some shapes.|null|
+|svgeditor.decimalPlaces|The number of decimal places.|1|
+|svgeditor.collectTransformMatrix|Collect two or more transform functions into a matrix.|true|
+|svgeditor.additionalResourcePaths|Additional resource directory paths SVG Editor can access.|[]|
 
 ## Current support tags and attributes
 
@@ -64,7 +56,7 @@ Localtion (xlink:)href refers to is restricted with your workspace, extension, `
 ## Future plans
 
 - [ ] Embedded CSS
-- [x] Gradation colors
+- [x] Gradient colors
 - [ ] Filters
 - [x] Images
 

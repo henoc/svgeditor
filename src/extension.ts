@@ -154,7 +154,10 @@ export function activate(context: vscode.ExtensionContext) {
     context.subscriptions.push(vscode.commands.registerCommand("svgeditor.newSvgEditor", async () => {
         if (panelSet) panelSet.panel.reveal();
         else try {
-            const editor = await newUntitled(vscode.ViewColumn.One, templateSvg);
+            const config = vscode.workspace.getConfiguration("svgeditor");
+            const width = config.get<string>("width") || "400px";
+            const height = config.get<string>("height") || "400px";
+            const editor = await newUntitled(vscode.ViewColumn.One, render(templateSvg, {width, height}));
             createPanel(editor);
         } catch (error) {
             showError(error);

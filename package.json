@@ -34,7 +34,7 @@
       {
         "command": "svgeditor.openSvgEditor",
         "title": "Open SVG Editor",
-        "icon": "./images/svgeditor.svg"
+        "icon": "./images/objectToPath.svg"
       },
       {
         "command": "svgeditor.newSvgEditor",
@@ -61,6 +61,16 @@
           "type": "string",
           "default": "svg",
           "description": "Initial filename extension of new untitled file."
+        },
+        "svgeditor.width": {
+          "type": "string",
+          "default": "400px",
+          "description": "Initial width of new untitled file."
+        },
+        "svgeditor.height": {
+          "type": "string",
+          "default": "400px",
+          "description": "Initial height of new untitled file."
         },
         "svgeditor.showAll": {
           "type": "boolean",
