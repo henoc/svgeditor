@@ -29,7 +29,7 @@ export const editMode: {mode: Mode} = {mode: new SelectMode()};
 export let paintServers: { [id: string] : ParsedElement } = {};
 export const openWindows: { [id: string]: WindowComponent } = {};
 export let fontList: { [family: string]: string[] /* subFamiles */ } | null = null;
-export const uri: string = document.getElementById("svgeditor-uri")!.innerText;       // target file uri, ex: file:///Users/henoc/document/sample.svg
+export const uri: string = document.getElementById("svgeditor-uri")!.innerText;       // target file uri, ex: file:///home/henoc/document/sample.svg
 export const imageList: { [href: string]: LoadedImage } = {};
 export const callbacks: { [uuid: string]: Function } = {};
 export const configuration = {
@@ -89,7 +89,7 @@ window.addEventListener("message", event => {
         case "modified":
             svgdata = message.data;
             editMode.mode = new SelectMode();
-            collectImages(svgdata, uri, imageList);
+            collectImages(svgdata, imageList);
             refleshContent();
             break;
         case "configuration":

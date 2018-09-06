@@ -170,9 +170,9 @@ export function construct(pe: ParsedElement, options?: SvgConstructOptions): Svg
             setBaseAttrs(pe.attrs, tag);
             setPresentationAttrs(pe.attrs, tag);
             if (replaceHrefToObjectUrl) {
-                if (pe.attrs.href && imageList[pe.attrs.href]) tag.attr("href", imageList[pe.attrs.href].objectUrl);
+                if (pe.attrs.href && imageList[pe.attrs.href]) tag.attr("href", imageList[pe.attrs.href].url);
                 const xlinkHref = pe.attrs["xlink:href"];
-                if (xlinkHref && imageList[xlinkHref]) tag.attr("xlink:href", imageList[xlinkHref].objectUrl);
+                if (xlinkHref && imageList[xlinkHref]) tag.attr("xlink:href", imageList[xlinkHref].url);
             } else {
                 tag.attr("href", pe.attrs.href).attr("xlink:href", pe.attrs["xlink:href"]);
             }

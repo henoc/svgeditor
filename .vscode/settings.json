@@ -1,4 +1,4 @@
 {
     "typescript.tsdk": "node_modules/typescript/lib",
-    "workbench.colorTheme": "Material Theme"
+    "workbench.colorTheme": "Kimbie Dark"
 }

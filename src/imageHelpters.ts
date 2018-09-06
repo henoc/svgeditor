@@ -1,12 +1,12 @@
 import urlParse from "url-parse";
-import { uri, urlNormalizeRequest, callbacks, sendErrorMessage, informationRequest, refleshContent } from "./main";
+import { uri, urlNormalizeRequest, callbacks, sendErrorMessage, informationRequest, refleshContent, imageList } from "./main";
 import memoize from "fast-memoize";
 import { ParsedElement } from "./domParser";
 import { traverse } from "./svgConstructor";
 import uuidStatic from "uuid";
 
 export interface LoadedImage {
-    objectUrl: string;
+    url: string;
     width: number;
     height: number;
 }
@@ -14,15 +14,15 @@ export interface LoadedImage {
 /**
  * Start loading all images.
  */
-export async function collectImages(pe: ParsedElement, baseUrl: string, acc: {[href: string]: LoadedImage}): Promise<void> {
+export async function collectImages(pe: ParsedElement, acc: {[href: string]: LoadedImage}): Promise<void> {
     traverse(pe, async (pe, parentPe, index) => {
         if (pe.tag === "image") {
             let href: string | null;
             let url: string | null;
-            if ((href = pe.attrs.href) && !(href in acc) && (url = await absoluteUrl(href, baseUrl))) {
+            if ((href = pe.attrs.href) && !(href in acc) && (url = await absoluteUrl(href))) {
                 const tmp = await loadImage(url)
                 if (tmp) acc[href] = tmp;
-            } else if ((href = pe.attrs["xlink:href"]) && !(href in acc) && (url = await absoluteUrl(href, baseUrl))) {
+            } else if ((href = pe.attrs["xlink:href"]) && !(href in acc) && (url = await absoluteUrl(href))) {
                 const tmp = await loadImage(url);
                 if (tmp) acc[href] = tmp;
             }
@@ -33,7 +33,7 @@ export async function collectImages(pe: ParsedElement, baseUrl: string, acc: {[h
 /**
  *  `file:` protocol will be replaced with `vscode-resource:`.
  */
-function absoluteUrl(urlFragment: string, baseUrl: string): Promise<string | null> {
+function absoluteUrl(urlFragment: string): Promise<string | null> {
     return new Promise((resolve, _reject) => {
         const uuid = uuidStatic.v4();
         callbacks[uuid] = function(normalized: string | null) {
@@ -47,19 +47,15 @@ function absoluteUrl(urlFragment: string, baseUrl: string): Promise<string | nul
  * Load image from URL.
  */
 async function loadImage(url: string): Promise<LoadedImage | null> {
-    const response = await fetch(url).catch(_err => {
-        sendErrorMessage(`Failed to load image: \`${url}\` ${url.startsWith("vscode") ? "hint: WebView can only access workscape or extension directories and subdirectories." : ""}`);
-    });
-    if (response) {
-        informationRequest(`Succeed to load image: \`${url}\``);
-        const blob = await response.blob();
-        const objectUrl = URL.createObjectURL(blob);
+    try {
         const image = new Image();
-        await imageOnloadPromise(objectUrl, image);
-        return {width: image.width, height: image.height, objectUrl};
+        await imageOnloadPromise(url, image);
+        return {width: image.width, height: image.height, url: url};
+    } catch (_err) {
+        // not found image or out of workspace directories.
+        sendErrorMessage(`Failed to load image: \`${url}\` ${url.startsWith("vscode") ? "hint: WebView can only access workscape or extension directories and subdirectories." : ""}`);
+        return null;
     }
-    // not found image or out of workspace directories.
-    return null;
 }
 
 function imageOnloadPromise(src: string, image: HTMLImageElement) {
