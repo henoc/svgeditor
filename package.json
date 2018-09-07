@@ -54,6 +54,36 @@
         }
       ]
     },
+    "keybindings": [
+      {
+        "command": "svgeditor.delete",
+        "key": "backspace",
+        "when": "svgeditorWebviewFocus"
+      },
+      {
+        "command": "svgeditor.delete",
+        "key": "delete",
+        "when": "svgeditorWebviewFocus"
+      },
+      {
+        "command": "svgeditor.duplicate",
+        "key": "ctrl+d",
+        "mac": "cmd+d",
+        "when": "svgeditorWebviewFocus"
+      },
+      {
+        "command": "svgeditor.group",
+        "key": "ctrl+g",
+        "mac": "cmd+g",
+        "when": "svgeditorWebviewFocus"
+      },
+      {
+        "command": "svgeditor.ungroup",
+        "key": "ctrl+u",
+        "mac": "cmd+u",
+        "when": "svgeditorWebviewFocus"
+      }
+    ],
     "configuration": {
       "title": "SVG Editor configurations",
       "properties": {
