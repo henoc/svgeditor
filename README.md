@@ -10,16 +10,15 @@ You can create shapes using the SVG's coder or directly creating shapes with the
 
 ## Commands
 
-- New File with SVG Editor
-  - Open untitled file with SVG template.
-- Open SVG Editor
-  - Target active SVG file to edit with SVG Editor.
-- Reopen Related TextEditor
-  - Reopen files from SVG Editor tab.
+|command|title|
+|:---|:---|
+|svgeditor.openSvgEditor|Open SVG Editor|
+|svgeditor.newSvgEditor|New File with SVG Editor|
+|svgeditor.reopenRelatedTextEditor|Reopen Text Editor Related to Current SVG Editor|
 
 ## Configuration
 
-|identifier|description|default|
+|name|description|default|
 |:---|:---|:---|
 |svgeditor.filenameExtension|Initial filename extension of new untitled file.|svg|
 |svgeditor.width|Initial width of new untitled file.|400px|
@@ -28,7 +27,26 @@ You can create shapes using the SVG's coder or directly creating shapes with the
 |svgeditor.defaultUnit|Specifies the unit when creating some shapes.|null|
 |svgeditor.decimalPlaces|The number of decimal places.|1|
 |svgeditor.collectTransformMatrix|Collect two or more transform functions into a matrix.|true|
-|svgeditor.additionalResourcePaths|Additional resource directory paths SVG Editor can access.|[]|
+|svgeditor.additionalResourcePaths|Additional resource directory paths SVG Editor can access||
+
+## Keybindings
+
+|operation|key|
+|:---|:---|
+|delete|backspace / delete|
+|duplicate|ctrl+d|
+|zoom in|oem_plus|
+|zoom out|oem_minus|
+|group|ctrl+g|
+|ungroup|ctrl+u|
+|font|f8|
+|bring forward|pageup|
+|send backward|pagedown|
+|align left|ctrl+alt+numpad4|
+|align right|ctrl+alt+numpad6|
+|align bottom|ctrl+alt+numpad2|
+|align top|ctrl+alt+numpad8|
+|object to path|shift+ctrl+c|
 
 ## Current support tags and attributes
 
