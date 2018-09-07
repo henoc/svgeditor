@@ -1,6 +1,6 @@
 import { construct, makeUuidVirtualMap, makeUuidRealMap, makeIdUuidMap } from "./svgConstructor";
 import { ParsedElement, isLengthUnit, LengthUnit, Paint } from "./domParser";
-import { onDocumentMouseMove, onDocumentMouseUp, onDocumentClick, onDocumentMouseLeave, onDocumentCopy, onDocumentCut, onDocumentPaste, onDocumentKeyup } from "./triggers";
+import { onDocumentMouseMove, onDocumentMouseUp, onDocumentClick, onDocumentMouseLeave, onDocumentCopy, onDocumentCut, onDocumentPaste } from "./triggers";
 import { Mode } from "./modeInterface";
 import { SelectMode } from "./selectMode";
 import { textMode } from "./textMode";
@@ -125,6 +125,18 @@ window.addEventListener("message", event => {
                     throw new Error(`No callbacks found. uuid: ${uuid}`);
                 }
             })();
+        case "delete":
+            editMode.mode.onOperatorClicked("delete");
+            break;
+        case "duplicate":
+            editMode.mode.onOperatorClicked("duplicate");
+            break;
+        case "group":
+            editMode.mode.onOperatorClicked("group");
+            break;
+        case "ungroup":
+            editMode.mode.onOperatorClicked("ungroup");
+            break;
     }
 });
 document.addEventListener("mousemove", onDocumentMouseMove);
@@ -134,7 +146,6 @@ document.addEventListener("click", onDocumentClick);
 document.addEventListener("copy", onDocumentCopy);
 document.addEventListener("cut", onDocumentCut);
 document.addEventListener("paste", onDocumentPaste);
-document.addEventListener("keyup", onDocumentKeyup);
 
 // exported functions
 

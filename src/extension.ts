@@ -8,6 +8,7 @@ import { collectSystemFonts } from "./fontFileProcedures";
 import { iterate } from "./utils";
 import { diffChars } from "diff";
 import isAbsoluteUrl from "is-absolute-url";
+import { OperatorName } from "./menuComponent";
 const format = require('xml-formatter');
 
 type PanelSet = { panel: vscode.WebviewPanel, editor: vscode.TextEditor, text: string};
@@ -146,7 +147,7 @@ export function activate(context: vscode.ExtensionContext) {
         }
     }
 
-    function registerPostOnly(...lastNames: string[]): void {
+    function registerPostOnly(...lastNames: OperatorName[]): void {
         register(...lastNames.map(name => {
             return {
                 cmd: `svgeditor.${name}`,
@@ -203,7 +204,7 @@ export function activate(context: vscode.ExtensionContext) {
 
     registerPostOnly(
         "delete",
-        "dpulicate",
+        "duplicate",
         "group",
         "ungroup"
     );
