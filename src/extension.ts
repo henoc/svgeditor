@@ -28,8 +28,8 @@ export function activate(context: vscode.ExtensionContext) {
 
     let icons = [
         "addLinearGradient.svg", "alignLeft.svg", "bringForward.svg", "duplicate.svg", "objectToPath.svg", "sendBackward.svg",
-        "addRadialGradient.svg", "alignRight.svg", "font.svg", "scale-down.svg",
-        "alignBottom.svg", "alignTop.svg", "delete.svg", "group.svg", "scale-up.svg", "ungroup.svg",
+        "addRadialGradient.svg", "alignRight.svg", "font.svg", "zoomOut.svg",
+        "alignBottom.svg", "alignTop.svg", "delete.svg", "group.svg", "zoomIn.svg", "ungroup.svg",
     ].map(readImage).join("");
 
     let diagnostics = vscode.languages.createDiagnosticCollection("svgeditor");
@@ -205,8 +205,18 @@ export function activate(context: vscode.ExtensionContext) {
     registerPostOnly(
         "delete",
         "duplicate",
+        "zoomIn",
+        "zoomOut",
         "group",
-        "ungroup"
+        "ungroup",
+        "font",
+        "bringForward",
+        "sendBackward",
+        "alignLeft",
+        "alignRight",
+        "alignBottom",
+        "alignTop",
+        "objectToPath"
     );
 }
 

@@ -72,6 +72,16 @@
         "when": "svgeditorWebviewFocus"
       },
       {
+        "command": "svgeditor.zoomIn",
+        "key": "oem_plus",
+        "when": "svgeditorWebviewFocus"
+      },
+      {
+        "command": "svgeditor.zoomOut",
+        "key": "oem_minus",
+        "when": "svgeditorWebviewFocus"
+      },
+      {
         "command": "svgeditor.group",
         "key": "ctrl+g",
         "mac": "cmd+g",
@@ -81,6 +91,47 @@
         "command": "svgeditor.ungroup",
         "key": "ctrl+u",
         "mac": "cmd+u",
+        "when": "svgeditorWebviewFocus"
+      },
+      {
+        "command": "svgeditor.font",
+        "key": "f8",
+        "when": "svgeditorWebviewFocus"
+      },
+      {
+        "command": "svgeditor.bringForward",
+        "key": "pageup",
+        "when": "svgeditorWebviewFocus"
+      },
+      {
+        "command": "svgeditor.sendBackward",
+        "key": "pagedown",
+        "when": "svgeditorWebviewFocus"
+      },
+      {
+        "command": "svgeditor.alignLeft",
+        "key": "ctrl+alt+numpad4",
+        "when": "svgeditorWebviewFocus"
+      },
+      {
+        "command": "svgeditor.alignRight",
+        "key": "ctrl+alt+numpad6",
+        "when": "svgeditorWebviewFocus"
+      },
+      {
+        "command": "svgeditor.alignBottom",
+        "key": "ctrl+alt+numpad2",
+        "when": "svgeditorWebviewFocus"
+      },
+      {
+        "command": "svgeditor.alignTop",
+        "key": "ctrl+alt+numpad8",
+        "when": "svgeditorWebviewFocus"
+      },
+      {
+        "command": "svgeditor.objectToPath",
+        "key": "shift+ctrl+c",
+        "mac": "shift+cmd+c",
         "when": "svgeditorWebviewFocus"
       }
     ],
@@ -160,7 +211,6 @@
     "postinstall": "node ./node_modules/vscode/bin/install"
   },
   "devDependencies": {
-    "@types/camelcase": "^4.1.0",
     "@types/clipboardy": "^1.1.0",
     "@types/diff": "^3.5.1",
     "@types/ejs": "^2.5.0",
@@ -182,7 +232,6 @@
     "vscode": "^1.1.18"
   },
   "dependencies": {
-    "camelcase": "^5.0.0",
     "clipboardy": "^1.2.3",
     "diff": "^3.5.0",
     "ejs": "^2.5.7",
@@ -196,6 +245,7 @@
     "svgpath": "2.2.1",
     "text-width": "^1.2.0",
     "tinycolor2": "^1.4.1",
+    "to-space-case": "^1.0.0",
     "transformation-matrix": "^1.12.0",
     "url-parse": "^1.4.3",
     "uuid": "^3.3.2",

@@ -5,7 +5,7 @@ import { Mode } from "./modeInterface";
 import { SelectMode } from "./selectMode";
 import { textMode } from "./textMode";
 import { patch } from "incremental-dom";
-import { MenuListComponent, ModeName } from "./menuComponent";
+import { MenuListComponent, ModeName, operatorNames } from "./menuComponent";
 import { Component, WindowComponent } from "./component";
 import { SvgContainerComponent } from "./svgContainerComponent";
 import { StyleConfigComponent } from "./styleConfigComponent";
@@ -125,18 +125,11 @@ window.addEventListener("message", event => {
                     throw new Error(`No callbacks found. uuid: ${uuid}`);
                 }
             })();
-        case "delete":
-            editMode.mode.onOperatorClicked("delete");
             break;
-        case "duplicate":
-            editMode.mode.onOperatorClicked("duplicate");
-            break;
-        case "group":
-            editMode.mode.onOperatorClicked("group");
-            break;
-        case "ungroup":
-            editMode.mode.onOperatorClicked("ungroup");
-            break;
+    }
+
+    if (operatorNames.indexOf(message.command) !== -1) {
+        editMode.mode.onOperatorClicked(message.command);
     }
 });
 document.addEventListener("mousemove", onDocumentMouseMove);

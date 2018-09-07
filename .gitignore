@@ -4,3 +4,4 @@ log
 resources/bundle*
 resources/main.js
 tmp
+*.log

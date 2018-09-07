@@ -21,11 +21,11 @@ export abstract class Mode implements Component {
         const uuids = this.selectedShapeUuids;
         const parent = uuids && svgVirtualMap[uuids[0]].parent;     // parent should be the same
         switch (name) {
-            case "scale-up":
+            case "zoomIn":
                 contentChildrenComponent.svgContainerComponent.scalePercent += 20;
                 editMode.mode.updateHandlers();
                 break;
-            case "scale-down":
+            case "zoomOut":
                 if (contentChildrenComponent.svgContainerComponent.scalePercent > 20) {
                     contentChildrenComponent.svgContainerComponent.scalePercent -= 20;
                     editMode.mode.updateHandlers();
@@ -105,7 +105,7 @@ export abstract class Mode implements Component {
                     }
                 }
                 break;
-            case "bring forward":
+            case "bringForward":
                 traverse(svgdata, (pe, parentPe, index) => {
                     let prePe: ParsedElement;
                     if (index !== null && index >= 1 && parentPe && (prePe = parentPe.children[index - 1]) && uuids.indexOf(pe.uuid) === -1) {
@@ -114,7 +114,7 @@ export abstract class Mode implements Component {
                     }
                 });
                 break;
-            case "send backward":
+            case "sendBackward":
                 traverse(svgdata, (pe, parentPe, index) => {
                     let prePe: ParsedElement;
                     if (index !== null && index >= 1 && parentPe && (prePe = parentPe.children[index - 1]) && uuids.indexOf(pe.uuid) !== -1) {
@@ -123,19 +123,19 @@ export abstract class Mode implements Component {
                     }
                 });
                 break;
-            case "align left":
+            case "alignLeft":
                 this.align("left");
                 break;
-            case "align right":
+            case "alignRight":
                 this.align("right");
                 break;
-            case "align top":
+            case "alignTop":
                 this.align("top");
                 break;
-            case "align bottom":
+            case "alignBottom":
                 this.align("bottom");
                 break;
-            case "object to path":
+            case "objectToPath":
                 if (uuids) multiShaper(uuids).toPath();
                 break;
         }
