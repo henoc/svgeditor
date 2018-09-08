@@ -17,7 +17,7 @@ export class PathMode extends Mode {
 
     onShapeMouseDownLeft(event: MouseEvent, uu: string): void {
         if (svgVirtualMap[uu].isRoot) {
-            let {x: cx, y: cy} = this.inTargetCoordinate(this.cursor(event), uu);
+            let {x: cx, y: cy} = this.inTargetCoordinate(this.cursor(event), [uu]);
             const root = svgVirtualMap[uu];
             event.stopPropagation();
             this.isDragging = true;
@@ -78,7 +78,7 @@ export class PathMode extends Mode {
     }
     onDocumentMouseMove(event: MouseEvent): void {
         if (this.makeTargetUuid) {
-            let {x: cx, y: cy} = this.inTargetCoordinate(this.cursor(event), this.makeTargetUuid);
+            let {x: cx, y: cy} = this.inTargetCoordinate(this.cursor(event), [this.makeTargetUuid]);
             const pe = svgVirtualMap[this.makeTargetUuid];
             if (pe.tag === "path" && pe.attrs.d) {
                 const topM = 0;
@@ -103,12 +103,5 @@ export class PathMode extends Mode {
     }
     onDocumentMouseLeave(event: Event): void {
         this.isDragging = false;
-    }
-
-    /**
-     * Transform a (mouse) point into that in coordinate of a target shape by inverse mapping.
-     */
-    private inTargetCoordinate(point: Point, targetUuid: string): Point {
-        return applyToPoint(inverse(shaper(targetUuid).allTransform()), point);
     }
 }

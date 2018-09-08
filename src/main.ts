@@ -1,20 +1,18 @@
 import { construct, makeUuidVirtualMap, makeUuidRealMap, makeIdUuidMap } from "./svgConstructor";
 import { ParsedElement, isLengthUnit, LengthUnit, Paint } from "./domParser";
-import { onDocumentMouseMove, onDocumentMouseUp, onDocumentClick, onDocumentMouseLeave, onDocumentCopy, onDocumentCut, onDocumentPaste, onDocumentKeyup } from "./triggers";
+import { onDocumentMouseMove, onDocumentMouseUp, onDocumentClick, onDocumentMouseLeave, onDocumentCopy, onDocumentCut, onDocumentPaste } from "./triggers";
 import { Mode } from "./modeInterface";
 import { SelectMode } from "./selectMode";
 import { textMode } from "./textMode";
-import { elementVoid, elementOpen, elementClose, patch } from "incremental-dom";
-import { MenuListComponent, ModeName } from "./menuComponent";
+import { patch } from "incremental-dom";
+import { MenuListComponent, ModeName, operatorNames } from "./menuComponent";
 import { Component, WindowComponent } from "./component";
 import { SvgContainerComponent } from "./svgContainerComponent";
 import { StyleConfigComponent } from "./styleConfigComponent";
 import { el } from "./utils";
 import { collectPaintServer } from "./paintServer";
-import { NodeMode } from "./nodeMode";
-import { multiShaper, shaper } from "./shapes";
+import { shaper } from "./shapes";
 import { LoadedImage, collectImages } from "./imageHelpters";
-import uuidStatic from "uuid";
 
 declare function acquireVsCodeApi(): any;
 
@@ -57,13 +55,13 @@ class ContentChildrenComponent implements Component {
 
     render() {
         el`header`;
-        this.menuListComponent.render();
+            this.menuListComponent.render();
         el`/header`;
         el`div :key="body" *class="svgeditor-body"`;
-        this.svgContainerComponent.render();
+            this.svgContainerComponent.render();
         el`/div`;
         el`footer`;
-        this.styleConfigComponent.render();
+            this.styleConfigComponent.render();
         el`/footer`;
     }
 }
@@ -127,6 +125,11 @@ window.addEventListener("message", event => {
                     throw new Error(`No callbacks found. uuid: ${uuid}`);
                 }
             })();
+            break;
+    }
+
+    if (operatorNames.indexOf(message.command) !== -1) {
+        editMode.mode.onOperatorClicked(message.command);
     }
 });
 document.addEventListener("mousemove", onDocumentMouseMove);
@@ -136,7 +139,6 @@ document.addEventListener("click", onDocumentClick);
 document.addEventListener("copy", onDocumentCopy);
 document.addEventListener("cut", onDocumentCut);
 document.addEventListener("paste", onDocumentPaste);
-document.addEventListener("keyup", onDocumentKeyup);
 
 // exported functions
 

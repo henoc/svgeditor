@@ -44,7 +44,7 @@ export class NodeMode extends Mode {
     }
     onDocumentMouseMove(event: MouseEvent): void {
         if (this._selectedShapeUuid && this.isDraggingHandler && this.selectedHandlerIndex !== null) {
-            let cursor = vfp(this.inTargetCoordinate(this.cursor(event), this._selectedShapeUuid));
+            let cursor = vfp(this.inTargetCoordinate(this.cursor(event), [this._selectedShapeUuid]));
             const selected = svgVirtualMap[this._selectedShapeUuid];
             if ((selected.tag === "polyline" || selected.tag === "polygon") && selected.attrs.points) {
                 selected.attrs.points[this.selectedHandlerIndex] = cursor;
@@ -143,7 +143,7 @@ export class NodeMode extends Mode {
         const elems: SvgTag[] = [];
         const viewerScale = contentChildrenComponent.svgContainerComponent.scalePercent / 100;
         const registEndPoint = (p: Vec2, index: number) => {
-            const escaped = this.escapeToNormalCoordinate(p, uu);
+            const escaped = this.escapeToNormalCoordinate(p, [uu]);
             const e = new SvgTag("rect")
                 .attr("width", 10)
                 .attr("height", 10)
@@ -155,7 +155,7 @@ export class NodeMode extends Mode {
             elems.push(e);
         }
         const registCtrlPoint = (p: Vec2, index: number | null /* fake ctrl point if index is null */, ...froms: Vec2[]) => {
-            const escaped = this.escapeToNormalCoordinate(p, uu);
+            const escaped = this.escapeToNormalCoordinate(p, [uu]);
             const e = new SvgTag("circle")
                 .attr("r", 5)
                 .attr("cx", escaped.x)
@@ -165,7 +165,7 @@ export class NodeMode extends Mode {
             if (index !== null) e.listener("mousedown", event => this.onShapeHandlerMouseDown(<MouseEvent>event, index));
             else e.listener("mousedown", event => event.stopPropagation());
             for (let from of froms) {
-                const escapedf = this.escapeToNormalCoordinate(from, uu);
+                const escapedf = this.escapeToNormalCoordinate(from, [uu]);
                 const l = new SvgTag("line")
                     .attr("x1", escapedf.x)
                     .attr("y1", escapedf.y)
@@ -234,16 +234,5 @@ export class NodeMode extends Mode {
         event.stopPropagation();
         this.selectedHandlerIndex = index;
         this.isDraggingHandler = true;
-    }
-
-    /**
-     * Transform a (mouse) point into that in coordinate of a target shape by inverse mapping.
-     */
-    private inTargetCoordinate(point: Point, targetUuid: string): Point {
-        return applyToPoint(inverse(shaper(targetUuid).allTransform()), point);
-    }
-
-    private escapeToNormalCoordinate(point: Point, targetUuid: string): Point {
-        return applyToPoint(shaper(targetUuid).allTransform(), point);
     }
 }

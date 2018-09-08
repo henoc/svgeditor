@@ -18,7 +18,7 @@ export class PolylineMode extends Mode {
         if (svgVirtualMap[uu].isRoot) {
             const root = svgVirtualMap[uu];
             event.stopPropagation();
-            const cursor = vfp(this.inTargetCoordinate(this.cursor(event), uu));
+            const cursor = vfp(this.inTargetCoordinate(this.cursor(event), [uu]));
             if (root.tag === "svg") {
                 if (this.makeTargetUuid) {
                     const pe = svgVirtualMap[this.makeTargetUuid];
@@ -57,7 +57,7 @@ export class PolylineMode extends Mode {
     }
     onDocumentMouseMove(event: MouseEvent): void {
         if (this.makeTargetUuid) {
-            const cursor = vfp(this.inTargetCoordinate(this.cursor(event), this.makeTargetUuid));
+            const cursor = vfp(this.inTargetCoordinate(this.cursor(event), [this.makeTargetUuid]));
             const pe = svgVirtualMap[this.makeTargetUuid];
             if (pe.tag === "polyline" && pe.attrs.points) {
                 const len = pe.attrs.points.length;
@@ -71,12 +71,5 @@ export class PolylineMode extends Mode {
     }
     onDocumentMouseLeave(event: Event): void {
         
-    }
-
-    /**
-     * Transform a (mouse) point into that in coordinate of a target shape by inverse mapping.
-     */
-    private inTargetCoordinate(point: Point, targetUuid: string): Point {
-        return applyToPoint(inverse(shaper(targetUuid).allTransform()), point);
     }
 }

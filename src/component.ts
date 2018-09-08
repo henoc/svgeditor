@@ -1,5 +1,6 @@
 import { el } from "./utils";
 import { text } from "incremental-dom";
+const space = require("to-space-case");
 
 export interface Component {
     render(): void;
@@ -20,7 +21,7 @@ export class ButtonComponent implements Component {
 }
 
 export function iconComponent(title: string, href: string, onclick: (event: Event) => void) {
-    el`div *title=${title} style="display: inline-block"`;
+    el`div *title=${space(title)} style="display: inline-block"`;
         el`svg *class="svgeditor-icon" *width="20px" *height="20px" onclick=${onclick}`;
             el`use xlink:href=${href} /`;
         el`/svg`;

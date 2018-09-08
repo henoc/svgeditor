@@ -8,11 +8,13 @@ import { EllipseMode } from "./ellipseMode";
 import { PolylineMode } from "./polylineMode";
 import { PathMode } from "./pathMode";
 import { assertNever, el, iterate } from "./utils";
-import camelCase from "camelcase";
 
 export type ModeName = "select" | "node" | "rect" | "ellipse" | "polyline" | "path" | "text";
-export type OperatorName = "duplicate" | "delete" | "scale-up" | "scale-down" | "group" | "ungroup" | "font" | "bring forward" | "send backward" |
-    "align left" | "align right" | "align bottom" | "align top" | "object to path";
+export type OperatorName = "duplicate" | "delete" | "zoomIn" | "zoomOut" | "group" | "ungroup" | "font" | "bringForward" | "sendBackward" |
+    "alignLeft" | "alignRight" | "alignBottom" | "alignTop" | "objectToPath";
+
+export const operatorNames: OperatorName[] = ["duplicate" , "delete" , "zoomIn" , "zoomOut" , "group" , "ungroup" , "font" , "bringForward" , "sendBackward" ,
+    "alignLeft" , "alignRight" , "alignBottom" , "alignTop" , "objectToPath"];
 
 class MenuComponent implements Component {
 
@@ -69,9 +71,6 @@ export class MenuListComponent implements Component {
         path: new MenuComponent("path", (name) => this.changeSelectedMode(name)),
         text: new MenuComponent("text", name => this.changeSelectedMode(name))
     }
-
-    operatorNames: OperatorName[] = ["duplicate" , "delete" , "scale-up" , "scale-down" , "group" , "ungroup" , "font" , "bring forward" , "send backward" ,
-    "align left" , "align right" , "align bottom" , "align top" , "object to path"];
     
 
     render() {
@@ -81,8 +80,8 @@ export class MenuListComponent implements Component {
         });
         el`/ul`;
         el`ul`;
-        for (let name of this.operatorNames) {
-            iconComponent(name, `#svgeditor-icon-${camelCase(name)}`, (event: Event) => {
+        for (let name of operatorNames) {
+            iconComponent(name, `#svgeditor-icon-${name}`, (event: Event) => {
                 event.stopPropagation();
                 editMode.mode.onOperatorClicked(name);
             });

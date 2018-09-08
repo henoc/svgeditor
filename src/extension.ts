@@ -8,6 +8,7 @@ import { collectSystemFonts } from "./fontFileProcedures";
 import { iterate } from "./utils";
 import { diffChars } from "diff";
 import isAbsoluteUrl from "is-absolute-url";
+import { OperatorName } from "./menuComponent";
 const format = require('xml-formatter');
 
 type PanelSet = { panel: vscode.WebviewPanel, editor: vscode.TextEditor, text: string};
@@ -27,8 +28,8 @@ export function activate(context: vscode.ExtensionContext) {
 
     let icons = [
         "addLinearGradient.svg", "alignLeft.svg", "bringForward.svg", "duplicate.svg", "objectToPath.svg", "sendBackward.svg",
-        "addRadialGradient.svg", "alignRight.svg", "font.svg", "scale-down.svg",
-        "alignBottom.svg", "alignTop.svg", "delete.svg", "group.svg", "scale-up.svg", "ungroup.svg",
+        "addRadialGradient.svg", "alignRight.svg", "font.svg", "zoomOut.svg",
+        "alignBottom.svg", "alignTop.svg", "delete.svg", "group.svg", "zoomIn.svg", "ungroup.svg",
     ].map(readImage).join("");
 
     let diagnostics = vscode.languages.createDiagnosticCollection("svgeditor");
@@ -60,6 +61,7 @@ export function activate(context: vscode.ExtensionContext) {
         panel.webview.html = render(viewer, {bundleJs, css, icons, uri: editor.document.uri.toString()});
         panelSet = {panel, editor, text};
         setListener(panelSet);
+        setWebviewActiveContext(true);
     }
 
     let setListener = (pset : PanelSet) => {
@@ -133,6 +135,27 @@ export function activate(context: vscode.ExtensionContext) {
         pset.panel.onDidDispose(() => {
             panelSet = null;
         }, undefined, context.subscriptions);
+
+        pset.panel.onDidChangeViewState(({ webviewPanel }) => {
+            setWebviewActiveContext(webviewPanel.active);
+        });
+    }
+
+    function register(...args: {cmd: string; fn: (...args: any[]) => any}[]): void {
+        for (let {cmd, fn} of args) {
+            context.subscriptions.push(vscode.commands.registerCommand(cmd, fn));
+        }
+    }
+
+    function registerPostOnly(...lastNames: OperatorName[]): void {
+        register(...lastNames.map(name => {
+            return {
+                cmd: `svgeditor.${name}`,
+                fn: () => {
+                    panelSet && panelSet.panel.webview.postMessage({command: name});
+                }
+            };
+        }));
     }
 
     context.subscriptions.push(vscode.workspace.onDidChangeTextDocument((e: vscode.TextDocumentChangeEvent) => {
@@ -151,26 +174,50 @@ export function activate(context: vscode.ExtensionContext) {
         }
     }));
 
-    context.subscriptions.push(vscode.commands.registerCommand("svgeditor.newSvgEditor", async () => {
-        if (panelSet) panelSet.panel.reveal();
-        else try {
-            const config = vscode.workspace.getConfiguration("svgeditor");
-            const width = config.get<string>("width") || "400px";
-            const height = config.get<string>("height") || "400px";
-            const editor = await newUntitled(vscode.ViewColumn.One, render(templateSvg, {width, height}));
-            createPanel(editor);
-        } catch (error) {
-            showError(error);
-        }
-    }));
-
-    context.subscriptions.push(vscode.commands.registerCommand("svgeditor.reopenRelatedTextEditor", async () => {
-            if (panelSet) {
-                let editor = await newUntitled(vscode.ViewColumn.Beside, panelSet.text);
-                panelSet.editor = editor;
-                setListener(panelSet);
+    register(
+        {
+            cmd: "svgeditor.newSvgEditor",
+            fn: async () => {
+                if (panelSet) panelSet.panel.reveal();
+                else try {
+                    const config = vscode.workspace.getConfiguration("svgeditor");
+                    const width = config.get<string>("width") || "400px";
+                    const height = config.get<string>("height") || "400px";
+                    const editor = await newUntitled(vscode.ViewColumn.One, render(templateSvg, {width, height}));
+                    createPanel(editor);
+                } catch (error) {
+                    showError(error);
+                }
             }
-    }));
+        },
+        {
+            cmd: "svgeditor.reopenRelatedTextEditor",
+            fn: async () => {
+                if (panelSet) {
+                    let editor = await newUntitled(vscode.ViewColumn.Beside, panelSet.text);
+                    panelSet.editor = editor;
+                    setListener(panelSet);
+                }
+            }
+        }
+    );
+
+    registerPostOnly(
+        "delete",
+        "duplicate",
+        "zoomIn",
+        "zoomOut",
+        "group",
+        "ungroup",
+        "font",
+        "bringForward",
+        "sendBackward",
+        "alignLeft",
+        "alignRight",
+        "alignBottom",
+        "alignTop",
+        "objectToPath"
+    );
 }
 
 function showError(reason: any) {
@@ -191,6 +238,10 @@ function parseSvg(svgText: string, editor: vscode.TextEditor, diagnostics: vscod
         };
     }));
     return parsed.result
+}
+
+function setWebviewActiveContext(value: boolean) {
+    vscode.commands.executeCommand('setContext', "svgeditorWebviewFocus", value);
 }
 
 export async function newUntitled(viewColumn: vscode.ViewColumn, content: string) {
