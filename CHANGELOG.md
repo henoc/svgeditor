@@ -3,6 +3,7 @@
 - 2.4.0
   - Support image
   - Set keybindings for commands
+  - Change extension icon
 - 2.3.0
   - Enable to use clipboard: `ctrl+c`, `ctrl+x`, `ctrl+v`
   - Keyboard shortcut: `delete` or `backspace` to delete shapes

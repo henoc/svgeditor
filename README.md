@@ -2,7 +2,7 @@
 
 ![sample](images/capture.png)
 
-**ver 2.3**: `ctrl+c`, `ctrl+x`, `ctrl+v`, `delete/backspace` is now available 😅
+**ver 2.4**: Set keybindings, support `<iamge/>` 🎼
 
 Now your VSCode can mutate to an interactive visual & literal SVG editor 😎
 

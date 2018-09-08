@@ -2,11 +2,11 @@
   "name": "svgeditor",
   "displayName": "SVG Editor",
   "description": "Visual and literal SVG editor for VSCode.",
-  "version": "2.3.0",
+  "version": "2.4.0",
   "publisher": "henoc",
   "icon": "images/svgeditor.png",
   "galleryBanner": {
-    "color": "#FFCB77",
+    "color": "#0179cb",
     "theme": "light"
   },
   "license": "MIT",
@@ -34,7 +34,10 @@
       {
         "command": "svgeditor.openSvgEditor",
         "title": "Open SVG Editor",
-        "icon": "./images/objectToPath.svg"
+        "icon": {
+          "light": "./images/svgeditor_menuicon_dark.svg",
+          "dark": "./images/svgeditor_menuicon_light.svg"
+        }
       },
       {
         "command": "svgeditor.newSvgEditor",
