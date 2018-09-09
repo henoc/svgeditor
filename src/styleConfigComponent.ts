@@ -574,12 +574,18 @@ export class StyleConfigComponent implements Component {
     }
 
     private containerSelector() {
-        el`select :key="container-selector"`;
-        iterate(containerElements, (xpath, pe) => {
+        el`select :key="container-selector" *onchange=${(event: Event) => this.onChangeDisplayedContainer(event)}`;
+        iterate(containerElements, (cssSelector, pe) => {
             el`option value=${pe.uuid}`;
-            text(xpath);
+            text(cssSelector);
             el`/option`;
         });
         el`/select`;
+    }
+
+    private onChangeDisplayedContainer(event: Event) {
+        const uuid = (<HTMLSelectElement>event.target).value;
+        contentChildrenComponent.svgContainerComponent.displayedRootUuid = uuid;
+        refleshContent();
     }
 }

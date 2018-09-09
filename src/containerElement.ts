@@ -7,11 +7,11 @@ import { ParsedElement } from "./domParser";
 import { traverse } from "./svgConstructor";
 import { svgVirtualMap } from "./main";
 
-export function collectContainer(pe: ParsedElement): {[xpath: string]: ParsedElement} {
-    const acc: {[xpath: string]: ParsedElement} = {};
+export function collectContainer(pe: ParsedElement): {[cssSelector: string]: ParsedElement} {
+    const acc: {[cssSelector: string]: ParsedElement} = {};
     traverse(pe, (pe, parentPe, index) => {
         if ("children" in pe && pe.tag !== "linearGradient" && pe.tag !== "radialGradient" && pe.tag !== "unknown")
-            acc[xpath(pe, index)] = pe;
+            acc[cssSelector(pe, index)] = pe;
     });
     return acc;
 }
@@ -19,11 +19,10 @@ export function collectContainer(pe: ParsedElement): {[xpath: string]: ParsedEle
 /**
  * Needs svgVirtualMap
  */
-function xpath(pe: ParsedElement, index: number | null): string {
+export function cssSelector(pe: ParsedElement, index: number | null): string {
     function tagChain(pe: ParsedElement): string[] {
         const partagChain = pe.parent ? tagChain(svgVirtualMap[pe.parent]) : [];
         return [...partagChain, pe.tag];
     }
-    if (index === null) return `/${tagChain(pe).join("/")}`;
-    else return `/${tagChain(pe).join("/")}[${index}]`;
+    return `${tagChain(pe).join(">")}${index === null ? "" : `:nth-child(${index + 1})`}`;
 }

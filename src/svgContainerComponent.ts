@@ -1,6 +1,6 @@
 import { Component } from "./component";
 import { construct } from "./svgConstructor";
-import { svgdata, configuration, editMode } from "./main";
+import { svgdata, configuration, editMode, svgVirtualMap } from "./main";
 import { el } from "./utils";
 import { convertToPixelForOutermostFrame } from "./measureUnits";
 
@@ -15,9 +15,11 @@ import { convertToPixelForOutermostFrame } from "./measureUnits";
 export class SvgContainerComponent implements Component {
 
     scalePercent: number = 100;
+    displayedRootUuid: string | null = null;
 
     render() {
-        const substances = construct(svgdata, {
+        const displayedRoot = this.displayedRootUuid && svgVirtualMap[this.displayedRootUuid] || svgdata;
+        const substances = construct(displayedRoot, {
             putRootAttribute: true,
             setRootSvgXYtoOrigin: true,
             putUUIDAttribute: true,
@@ -29,8 +31,8 @@ export class SvgContainerComponent implements Component {
         });
         if (substances) {
             const outerFontEnv = getComputedStyle(document.body).font || "";
-            const width = svgdata.tag === "svg" && svgdata.attrs.width && convertToPixelForOutermostFrame(svgdata.attrs.width, outerFontEnv) || 400;
-            const height = svgdata.tag === "svg" && svgdata.attrs.height && convertToPixelForOutermostFrame(svgdata.attrs.height, outerFontEnv) || 400;
+            const width = displayedRoot.tag === "svg" && displayedRoot.attrs.width && convertToPixelForOutermostFrame(displayedRoot.attrs.width, outerFontEnv) || 400;
+            const height = displayedRoot.tag === "svg" && displayedRoot.attrs.height && convertToPixelForOutermostFrame(displayedRoot.attrs.height, outerFontEnv) || 400;
             const viewBox = `0 0 ${width} ${height}`;
             const scaledWidth = width * this.scalePercent / 100;
             const scaledHeight = height * this.scalePercent / 100;

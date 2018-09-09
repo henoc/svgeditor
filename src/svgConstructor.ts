@@ -24,7 +24,7 @@ interface SvgConstructOptions {
 /**
   Make elements only use recognized attributes and tags.
 */
-export function construct(pe: ParsedElement, options?: SvgConstructOptions): SvgTag | null {
+export function construct(pe: ParsedElement, options?: SvgConstructOptions, displayedDepth: number = 0): SvgTag | null {
     const putRootAttribute = options && options.putRootAttribute || false;
     const putIndexAttribute = options && options.putUUIDAttribute || false;
     const setListenersDepth = options && options.setListenersDepth || null;
@@ -32,7 +32,7 @@ export function construct(pe: ParsedElement, options?: SvgConstructOptions): Svg
     const insertRectForSvg = options && options.insertSvgSizeRect || false;
     const insertRectForGroup = options && options.insertRectForGroup || false;
     const all = options && options.all || false;
-    const setRootSvgXYtoOrigin = options && options.setRootSvgXYtoOrigin || false;
+    const setDisplayedRootSvgXYtoOrigin = options && options.setRootSvgXYtoOrigin || false;
     const numOfDecimalPlaces = options && options.numOfDecimalPlaces;
     const replaceHrefToObjectUrl = options && options.replaceHrefToObjectUrl || false;
 
@@ -45,7 +45,7 @@ export function construct(pe: ParsedElement, options?: SvgConstructOptions): Svg
     if (putIndexAttribute) {
         tag.attr("data-uuid", pe.uuid);
     }
-    if (setListenersDepth && depth(pe) <= setListenersDepth) {
+    if (setListenersDepth && displayedDepth <= setListenersDepth) {
         tag.listener("mousedown", event => onShapeMouseDown(<MouseEvent>event, pe.uuid));
     }
     if (transparent) {
@@ -59,7 +59,7 @@ export function construct(pe: ParsedElement, options?: SvgConstructOptions): Svg
             return tag.tag(pe.tag$real)
                 .attrs(pe.attrs)
                 .text(pe.text)
-                .children(...pe.children.map(e => construct(e, options)!));
+                .children(...pe.children.map(e => construct(e, options, displayedDepth + 1)!));
         } else {
             return null;
         }
@@ -74,7 +74,7 @@ export function construct(pe: ParsedElement, options?: SvgConstructOptions): Svg
                     .attr("opacity", 0);
                 tag.children(dummyRect);
             }
-            makeChildren(pe.children, tag, options);
+            makeChildren(pe.children, tag, displayedDepth, options);
             const viewBoxAttrStr = pe.attrs.viewBox && pe.attrs.viewBox.map(p => `${p.x} ${p.y}`).join(" ");
             tag.attr("xmlns", pe.attrs.xmlns)
                 .attr("version", pe.attrs.version)
@@ -84,7 +84,7 @@ export function construct(pe: ParsedElement, options?: SvgConstructOptions): Svg
                 .uattr("y", pe.attrs.y)
                 .uattr("width", pe.attrs.width)
                 .uattr("height", pe.attrs.height);
-            if (setRootSvgXYtoOrigin && pe.isRoot) {
+            if (setDisplayedRootSvgXYtoOrigin && displayedDepth === 0) {
                 if (pe.attrs.x) tag.attr("x", 0);
                 if (pe.attrs.y) tag.attr("y", 0);
             }
@@ -134,7 +134,7 @@ export function construct(pe: ParsedElement, options?: SvgConstructOptions): Svg
             case "g":
             setBaseAttrs(pe.attrs, tag);
             setPresentationAttrs(pe.attrs, tag);
-            makeChildren(pe.children, tag, options);
+            makeChildren(pe.children, tag, displayedDepth, options);
             // Click detection for groups.
             if (insertRectForGroup && svgRealMap[pe.uuid]) {
                 const leftTop = shaper(pe.uuid).leftTop;
@@ -152,12 +152,12 @@ export function construct(pe: ParsedElement, options?: SvgConstructOptions): Svg
             case "linearGradient":
             setBaseAttrs(pe.attrs, tag);
             setPresentationAttrs(pe.attrs, tag);
-            makeChildren(pe.children, tag, options);
+            makeChildren(pe.children, tag, displayedDepth, options);
             return tag;
             case "radialGradient":
             setBaseAttrs(pe.attrs, tag);
             setPresentationAttrs(pe.attrs, tag);
-            makeChildren(pe.children, tag, options);
+            makeChildren(pe.children, tag, displayedDepth, options);
             return tag;
             case "stop":
             setBaseAttrs(pe.attrs, tag);
@@ -210,10 +210,10 @@ function setPresentationAttrs(presetationAttr: ParsedPresentationAttr, tag: SvgT
     tag.attr("font-weight", presetationAttr["font-weight"]);
 }
 
-function makeChildren(pc: ParsedElement[], tag: SvgTag, options?: SvgConstructOptions) {
+function makeChildren(pc: ParsedElement[], tag: SvgTag, displayedDepth: number, options?: SvgConstructOptions) {
     const c = [];
     for (let i = 0; i < pc.length; i++) {
-        const elem = construct(pc[i], options);
+        const elem = construct(pc[i], options, displayedDepth + 1);
         if (elem) c.push(elem);
     }
     tag.children(...c);
