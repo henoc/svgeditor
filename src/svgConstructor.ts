@@ -6,12 +6,12 @@ import { assertNever } from "./utils";
 import { toString, inverse } from "transformation-matrix";
 import { shaper } from "./shapes";
 import { toTransformStrWithoutCollect } from "./transformHelpers";
-import { svgRealMap, imageList } from "./main";
+import { svgRealMap, imageList, svgVirtualMap } from "./main";
 
 interface SvgConstructOptions {
     putRootAttribute?: boolean;
     putUUIDAttribute?: boolean;
-    setListeners?: boolean;
+    setListenersDepth?: number;
     transparent?: boolean;
     insertSvgSizeRect?: boolean;
     insertRectForGroup?: boolean;
@@ -27,7 +27,7 @@ interface SvgConstructOptions {
 export function construct(pe: ParsedElement, options?: SvgConstructOptions): SvgTag | null {
     const putRootAttribute = options && options.putRootAttribute || false;
     const putIndexAttribute = options && options.putUUIDAttribute || false;
-    const setListeners = options && options.setListeners || false;
+    const setListenersDepth = options && options.setListenersDepth || null;
     const transparent = options && options.transparent || false;
     const insertRectForSvg = options && options.insertSvgSizeRect || false;
     const insertRectForGroup = options && options.insertRectForGroup || false;
@@ -45,7 +45,7 @@ export function construct(pe: ParsedElement, options?: SvgConstructOptions): Svg
     if (putIndexAttribute) {
         tag.attr("data-uuid", pe.uuid);
     }
-    if (setListeners) {
+    if (setListenersDepth && depth(pe) <= setListenersDepth) {
         tag.listener("mousedown", event => onShapeMouseDown(<MouseEvent>event, pe.uuid));
     }
     if (transparent) {
@@ -70,7 +70,7 @@ export function construct(pe: ParsedElement, options?: SvgConstructOptions): Svg
             setBaseAttrs(pe.attrs, tag);
             // Mostly to deal with mouse event of nested svg tag. Nested svg shape size of collision detection strangely is the same size of inner shapes of that.
             if (insertRectForSvg) {
-                const dummyRect = new SvgTag("rect").uattr("x", pe.attrs.x).uattr("y", pe.attrs.y).uattr("width", pe.attrs.width).uattr("height", pe.attrs.height)
+                const dummyRect = new SvgTag("rect").uattr("width", pe.attrs.width).uattr("height", pe.attrs.height)
                     .attr("opacity", 0);
                 tag.children(dummyRect);
             }
@@ -84,10 +84,9 @@ export function construct(pe: ParsedElement, options?: SvgConstructOptions): Svg
                 .uattr("y", pe.attrs.y)
                 .uattr("width", pe.attrs.width)
                 .uattr("height", pe.attrs.height);
-            if (setRootSvgXYtoOrigin) {
+            if (setRootSvgXYtoOrigin && pe.isRoot) {
                 if (pe.attrs.x) tag.attr("x", 0);
                 if (pe.attrs.y) tag.attr("y", 0);
-                options && (options.setRootSvgXYtoOrigin = false);
             }
             return tag;
             case "circle":
@@ -146,7 +145,7 @@ export function construct(pe: ParsedElement, options?: SvgConstructOptions): Svg
                     .uattr("width", {unit: null, value: gsize.x, attrName: "width"})
                     .uattr("height", {unit: null, value: gsize.y, attrName: "height"})
                     .attr("opacity", 0);
-                if (setListeners) tag.listener("mousedown", event => onShapeMouseDown(<MouseEvent>event, pe.uuid));
+                if (setListenersDepth) tag.listener("mousedown", event => onShapeMouseDown(<MouseEvent>event, pe.uuid));
                 tag.children(dummyRect);
             }
             return tag;
@@ -185,6 +184,14 @@ export function construct(pe: ParsedElement, options?: SvgConstructOptions): Svg
             assertNever(pe);
         }
         return null;    // unreachable
+    }
+}
+
+function depth(pe: ParsedElement): number {
+    if (pe.parent) {
+        return depth(svgVirtualMap[pe.parent]) + 1;
+    } else {
+        return 0;
     }
 }
 

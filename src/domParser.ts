@@ -38,10 +38,15 @@ export type ParsedElement = (
     parent: string | null;
 }
 
-interface ParsedSvgElement {
-    tag: "svg",
-    attrs: ParsedSvgAttr,
+interface ContainerElementClass {
     children: ParsedElement[]
+}
+
+type GradientElementClass = ContainerElementClass
+
+interface ParsedSvgElement extends ContainerElementClass {
+    tag: "svg",
+    attrs: ParsedSvgAttr
 }
 
 interface ParsedCircleElement {
@@ -80,22 +85,19 @@ interface ParsedTextElement {
     text: string | null
 }
 
-interface ParsedGroupElement {
+interface ParsedGroupElement extends ContainerElementClass {
     tag: "g",
-    attrs: ParsedGroupAttr,
-    children: ParsedElement[]
+    attrs: ParsedGroupAttr
 }
 
-interface ParsedLinearGradientElement {
+interface ParsedLinearGradientElement extends GradientElementClass {
     tag: "linearGradient",
-    attrs: ParsedLinearGradientAttr,
-    children: ParsedElement[]
+    attrs: ParsedLinearGradientAttr
 }
 
-interface ParsedRadialGradientElement {
+interface ParsedRadialGradientElement extends GradientElementClass {
     tag: "radialGradient",
-    attrs: ParsedRadialGradientAttr,
-    children: ParsedElement[]
+    attrs: ParsedRadialGradientAttr
 }
 
 interface ParsedStopElement {

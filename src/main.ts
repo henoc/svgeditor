@@ -13,6 +13,7 @@ import { el } from "./utils";
 import { collectPaintServer } from "./paintServer";
 import { shaper } from "./shapes";
 import { LoadedImage, collectImages } from "./imageHelpters";
+import { collectContainer } from "./containerElement";
 
 declare function acquireVsCodeApi(): any;
 
@@ -20,11 +21,12 @@ const vscode = acquireVsCodeApi();
 
 // global variables
 export let svgdata: ParsedElement;
-export let svgVirtualMap: { [uu: string]: ParsedElement } = {};
-export let svgRealMap: { [uu: string]: Element } = {};
+export let svgVirtualMap: { [uuid: string]: ParsedElement } = {};
+export let svgRealMap: { [uuid: string]: Element } = {};
 export let svgIdUuidMap: { [id: string]: string} = {};          // id -> uuid
 export const editMode: {mode: Mode} = {mode: new SelectMode()};
 export let paintServers: { [id: string] : ParsedElement } = {};
+export let containerElements: { [xpath: string]: ParsedElement } = {};
 export const openWindows: { [id: string]: WindowComponent } = {};
 export let fontList: { [family: string]: string[] /* subFamiles */ } | null = null;
 export const uri: string = document.getElementById("svgeditor-uri")!.innerText;       // target file uri, ex: file:///home/henoc/document/sample.svg
@@ -146,6 +148,7 @@ export function refleshContent() {
     svgIdUuidMap = makeIdUuidMap(svgdata);
     svgVirtualMap = makeUuidVirtualMap(svgdata);
     paintServers = collectPaintServer(svgdata);
+    containerElements = collectContainer(svgdata);
     patch(content, () => contentChildrenComponent.render());
 
     let transparentSvgRoot = document.querySelector("svg[data-root]");

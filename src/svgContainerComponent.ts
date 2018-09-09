@@ -21,7 +21,7 @@ export class SvgContainerComponent implements Component {
             putRootAttribute: true,
             setRootSvgXYtoOrigin: true,
             putUUIDAttribute: true,
-            setListeners: true,
+            setListenersDepth: 1,
             insertSvgSizeRect: true,
             insertRectForGroup: true,
             replaceHrefToObjectUrl: true,

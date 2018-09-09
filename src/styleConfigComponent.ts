@@ -1,5 +1,5 @@
 import { elementOpen, elementClose, text, elementVoid } from "incremental-dom";
-import { drawState, refleshContent, openWindows, contentChildrenComponent, editMode, fontList, svgIdUuidMap, paintServers, svgVirtualMap, svgdata } from "./main";
+import { drawState, refleshContent, openWindows, contentChildrenComponent, editMode, fontList, svgIdUuidMap, paintServers, svgVirtualMap, svgdata, containerElements } from "./main";
 import { Paint, ColorFormat, isColor, isFuncIRI, ParsedElement } from "./domParser";
 import tinycolor from "tinycolor2";
 import { Component, WindowComponent, ButtonComponent, iconComponent } from "./component";
@@ -456,6 +456,7 @@ export class StyleConfigComponent implements Component {
 
     render() {
         this.scaleSelector();
+        this.containerSelector();
         el`span *class="svgeditor-bold"`;
         text(" fill: ");
         this.colorBoxRender(this.colorBoxFillBackground, "fill");
@@ -570,5 +571,15 @@ export class StyleConfigComponent implements Component {
         contentChildrenComponent.svgContainerComponent.scalePercent = percent;
         editMode.mode.updateHandlers();
         refleshContent();
+    }
+
+    private containerSelector() {
+        el`select :key="container-selector"`;
+        iterate(containerElements, (xpath, pe) => {
+            el`option value=${pe.uuid}`;
+            text(xpath);
+            el`/option`;
+        });
+        el`/select`;
     }
 }

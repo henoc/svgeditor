@@ -1,3 +1,8 @@
+/**
+ * Paint server
+ * https://www.w3.org/TR/SVG11/pservers.html
+ */
+
 import { svgVirtualMap } from "./main";
 import { ParsedElement, Ratio, Paint, isColor, isFuncIRI, StopColor } from "./domParser";
 import tinycolor from "tinycolor2";

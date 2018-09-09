@@ -257,4 +257,3 @@ export function cursor(event: MouseEvent, target: Element): Vec2 {
     return v(event.clientX - rect.left, event.clientY - rect.top);
 }
 
-
