@@ -1,14 +1,14 @@
 import * as xmldoc from "xmldoc";
 import { parse } from "../src/domParser";
-import { xpath } from "../src/xpath";
 import * as assert from 'assert';
+import { search } from "../src/xpath";
+
+function parseSvg(svgText: string) {
+    const dom = new xmldoc.XmlDocument(svgText);
+    return parse(dom, null).result;
+}
 
 describe("xpath", () => {
-
-    function parseSvg(svgText: string) {
-        const dom = new xmldoc.XmlDocument(svgText);
-        return parse(dom, null).result;
-    }
 
     const svgdata = parseSvg(`
 <svg xmlns="http://www.w3.org/2000/svg" version="1.1" xmlns:xlink="http://www.w3.org/1999/xlink" width="400" height="400">
@@ -26,10 +26,10 @@ describe("xpath", () => {
     const svg_svg_image_2 = svg_svg && "children" in svg_svg && svg_svg.children[1] || null;
 
     it("xpath", () => {
-        assert.strictEqual(xpath(svgdata), "/svg");
-        assert.strictEqual(svg_image && xpath(svg_image), "/svg/image");
-        assert.strictEqual(svg_svg && xpath(svg_svg), "/svg/svg");
-        assert.strictEqual(svg_svg_image_1 && xpath(svg_svg_image_1), "/svg/svg/image[1]");
-        assert.strictEqual(svg_svg_image_2 && xpath(svg_svg_image_2), "/svg/svg/image[2]");
+        assert.deepStrictEqual(search([svgdata], "/svg"), svgdata);
+        assert.deepStrictEqual(search([svgdata], "/svg/image"), svg_image);
+        assert.deepStrictEqual(search([svgdata], "/svg/svg"), svg_svg);
+        assert.deepStrictEqual(search([svgdata], "/svg/svg/image[1]"), svg_svg_image_1);
+        assert.deepStrictEqual(search([svgdata], "/svg/svg/image[2]"), svg_svg_image_2);
     });
 });

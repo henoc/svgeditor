@@ -575,17 +575,18 @@ export class StyleConfigComponent implements Component {
 
     private containerSelector() {
         el`select :key="container-selector" *onchange=${(event: Event) => this.onChangeDisplayedContainer(event)}`;
-        iterate(containerElements, (cssSelector, pe) => {
-            el`option value=${pe.uuid}`;
-            text(cssSelector);
+        for (let xpath of containerElements) {
+            el`option value=${xpath}`;
+            text(xpath);
             el`/option`;
-        });
+        }
         el`/select`;
     }
 
     private onChangeDisplayedContainer(event: Event) {
-        const uuid = (<HTMLSelectElement>event.target).value;
-        contentChildrenComponent.svgContainerComponent.displayedRootUuid = uuid;
+        const xpath = (<HTMLSelectElement>event.target).value;
+        contentChildrenComponent.svgContainerComponent.displayedRootXpath = xpath;
+        editMode.mode.selectedShapeUuids = null;
         refleshContent();
     }
 }

@@ -3,6 +3,7 @@ import { construct } from "./svgConstructor";
 import { svgdata, configuration, editMode, svgVirtualMap } from "./main";
 import { el } from "./utils";
 import { convertToPixelForOutermostFrame } from "./measureUnits";
+import { search } from "./xpath";
 
 /**
 ```xml
@@ -15,10 +16,10 @@ import { convertToPixelForOutermostFrame } from "./measureUnits";
 export class SvgContainerComponent implements Component {
 
     scalePercent: number = 100;
-    displayedRootUuid: string | null = null;
+    displayedRootXpath: string = "/svg";
 
     render() {
-        const displayedRoot = this.displayedRootUuid && svgVirtualMap[this.displayedRootUuid] || svgdata;
+        const displayedRoot = search([svgdata], this.displayedRootXpath) || svgdata;
         const substances = construct(displayedRoot, {
             putRootAttribute: true,
             setRootSvgXYtoOrigin: true,

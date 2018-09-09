@@ -219,11 +219,14 @@ function makeChildren(pc: ParsedElement[], tag: SvgTag, displayedDepth: number, 
     tag.children(...c);
 }
 
-export function traverse(pe: ParsedElement, fn: (pe: ParsedElement, parentPe: ParsedElement & {children: ParsedElement[]} | null, index: number | null) => void, index: number | null = null, parentPe: ParsedElement & {children: ParsedElement[]} | null = null) {
-    fn(pe, parentPe, index);
+export function traverse(pe: ParsedElement, fn: (pe: ParsedElement, parentPe: ParsedElement & {children: ParsedElement[]} | null, index: number | null, xpath: string) => void, index: number | null = null, parentPe: ParsedElement & {children: ParsedElement[]} | null = null, parentXPath: string = "") {
+    const sameTagCount = parentPe && parentPe.children.filter(x => x.tag === pe.tag).length || 1;
+    const nthInSameTags = parentPe && parentPe.children.filter(x => x.tag === pe.tag).findIndex(x => x === pe) || -1;
+    const xpath = `${parentXPath}/${pe.tag}` + (sameTagCount > 1 ? `[${nthInSameTags}]` : "");
+    fn(pe, parentPe, index, xpath);
     if ("children" in pe) {
         for(let i = 0; i < pe.children.length; i++) {
-            traverse(pe.children[i], fn, i, pe);
+            traverse(pe.children[i], fn, i, pe, xpath);
         }
     }
 }
