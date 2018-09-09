@@ -151,8 +151,8 @@ export function refleshContent() {
     containerElements = collectContainer(svgdata);
     patch(content, () => contentChildrenComponent.render());
 
-    let transparentSvgRoot = document.querySelector("svg[data-root]");
-    svgRealMap = transparentSvgRoot ? makeUuidRealMap(transparentSvgRoot) : {};
+    let substanceSvgRoot = document.querySelector("svg[data-root]");
+    svgRealMap = substanceSvgRoot ? makeUuidRealMap(substanceSvgRoot) : {};
     patch(content, () => contentChildrenComponent.render());        // 2nd render with updated svgRealMap (dummy rect for g tag)
 }
 

@@ -10,7 +10,7 @@ type AttrKind = "vertical" | "horizontal" | "font-size";
  * SVG unit converter
  */
 export function convertToPixel(length: Length, uuid: string): number {
-    const re = svgRealMap[uuid];
+    const re: Element | undefined = svgRealMap[uuid];
     const attrKind = getAttrKind(length.attrName);
     const font = re && getComputedStyle(re).font || "";
     
@@ -55,7 +55,7 @@ function outermostPx(attrKind: AttrKind, re: Element): number {
  * @param length px
  */
 export function convertFromPixel(length: Length, targetUnit: LengthUnit, uuid: string): Length {
-    const re = svgRealMap[uuid];    
+    const re: Element | null = svgRealMap[uuid];    
     const font = re && getComputedStyle(re).font || "";
     const attrKind = getAttrKind(length.attrName);
     switch (targetUnit) {
@@ -92,7 +92,7 @@ function getAttrKind(name: string): AttrKind {
 function getSvgBasePx(uuid: string, attrKind: AttrKind): number | null {
     const pe = svgVirtualMap[uuid];
     let ownerSvgPe: ParsedElement;
-    if (pe.parent && (ownerSvgPe = svgVirtualMap[pe.parent])) {
+    if (pe.parent && svgRealMap[pe.parent] /* current displayed elements only */ && (ownerSvgPe = svgVirtualMap[pe.parent])) {
         if (attrKind === "font-size") {
             return parseFloat(getComputedStyle(svgRealMap[pe.parent]).fontSize!);
         } else if (ownerSvgPe.tag === "svg") {

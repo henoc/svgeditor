@@ -28,12 +28,10 @@ interface ShaperFunctions {
 }
 
 /**
- * Transform some shapes. Need to set the shape into `svgVirtualMap` and `svgRealMap` before use.
+ * Transform some shapes. Need to set the shape into `svgVirtualMap` and `svgRealMap` (optional, Actually needed shape is `text`) before use.
  */
 export function shaper(uuid: string): ShaperFunctions {
     const pe = svgVirtualMap[uuid];
-    const re = svgRealMap[uuid];
-    const styleDeclaration = getComputedStyle(re);
 
     const px = (unitValue: Length | null, defaultNumber: number = 0) => {
         return unitValue ? convertToPixel(unitValue, uuid) : defaultNumber;
@@ -509,6 +507,8 @@ export function shaper(uuid: string): ShaperFunctions {
                 rotate: rotateCenter
             }).merge(corners).merge(presentationAttrs).merge(transformProps).object;
         case "text":
+            const re = svgRealMap[uuid];
+            const styleDeclaration = getComputedStyle(re);
             const fontInfo = font(pe.text || "", styleDeclaration.fontFamily || "", parseFloat(styleDeclaration.fontSize || "16"), styleDeclaration.fontWeight || "", styleDeclaration.fontStyle || "");
             const tattrs = pe.attrs;
             return new Merger({

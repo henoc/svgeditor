@@ -1,6 +1,6 @@
 /**
- * Container element
- * https://www.w3.org/TR/SVG11/intro.html#TermContainerElement
+ * @file Container element
+ * @see https://www.w3.org/TR/SVG11/intro.html#TermContainerElement
  */
 
 import { ParsedElement } from "./domParser";
