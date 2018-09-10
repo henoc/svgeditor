@@ -36,7 +36,7 @@ export class NodeMode extends Mode {
             this.selectedShapes = [pe];
             refleshContent();
         } else if (/^(rect|circle|ellipse)$/.test(pe.tag)) {
-            informationRequest("Selected shape is object. Change to path?", ["yes", "no"], "object to path", [pe]);
+            informationRequest("Selected shape is object. Change to path?", ["yes", "no"], "objectToPath", [pe.uuid]);
         }
     }
     onShapeMouseDownRight(event: MouseEvent, pe: ParsedElement): void {

@@ -109,10 +109,11 @@ window.addEventListener("message", event => {
         case "information-response":
             const {result, kind, args} = message.data;
             switch (kind) {
-                case "object to path":
+                case "objectToPath":
                 if (result === "yes") {
-                    shaper(args[0]).toPath();
-                    editMode.mode.selectedShapes = [args[0]];
+                    const pe = svgVirtualMap[args[0]];
+                    shaper(pe).toPath();
+                    editMode.mode.selectedShapes = [pe];
                     refleshContent();
                 }
                 break;
