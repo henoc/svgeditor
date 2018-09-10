@@ -31,6 +31,9 @@ export function makeXpathRealMap(e: Element): {[uu: string]: Element} {
     return acc;
 }
 
+/**
+ * This xpath is unique and mapping only one element.
+ */
 export function updateXPaths(pe: ParsedElement, parentPe: ParsedElement & {children: ParsedElement[]} | null = null): void {
     const sameTagCount = parentPe && parentPe.children.filter(x => x.tag === pe.tag).length || 1;
     const nthInSameTags = parentPe && (parentPe.children.filter(x => x.tag === pe.tag).findIndex(x => x === pe) + 1) || -1;

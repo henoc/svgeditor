@@ -36,7 +36,7 @@ export function construct(pe: ParsedElement, options?: SvgConstructOptions, disp
     const numOfDecimalPlaces = options && options.numOfDecimalPlaces;
     const replaceHrefToObjectUrl = options && options.replaceHrefToObjectUrl || false;
 
-    const tag = new SvgTag(pe.tag).options({numOfDecimalPlaces});
+    const tag = new SvgTag(pe.tag).options({ numOfDecimalPlaces });
     if (putRootAttribute) {
         // only top level
         tag.attr("data-root", "true");
@@ -67,121 +67,126 @@ export function construct(pe: ParsedElement, options?: SvgConstructOptions, disp
         if (all) tag.attrs(pe.attrs.unknown);
         switch (pe.tag) {
             case "svg":
-            setBaseAttrs(pe.attrs, tag);
-            // Mostly to deal with mouse event of nested svg tag. Nested svg shape size of collision detection strangely is the same size of inner shapes of that.
-            if (insertRectForSvg) {
-                const dummyRect = new SvgTag("rect").uattr("width", pe.attrs.width).uattr("height", pe.attrs.height)
-                    .attr("opacity", 0);
-                tag.children(dummyRect);
-            }
-            makeChildren(pe.children, tag, displayedDepth, options);
-            const viewBoxAttrStr = pe.attrs.viewBox && pe.attrs.viewBox.map(p => `${p.x} ${p.y}`).join(" ");
-            tag.attr("xmlns", pe.attrs.xmlns)
-                .attr("version", pe.attrs.version)
-                .attr("xmlns:xlink", pe.attrs["xmlns:xlink"])
-                .attr("viewBox", viewBoxAttrStr)
-                .uattr("x", pe.attrs.x)
-                .uattr("y", pe.attrs.y)
-                .uattr("width", pe.attrs.width)
-                .uattr("height", pe.attrs.height);
-            if (setDisplayedRootSvgXYtoOrigin && displayedDepth === 0) {
-                if (pe.attrs.x) tag.attr("x", 0);
-                if (pe.attrs.y) tag.attr("y", 0);
-            }
-            return tag;
+                setBaseAttrs(pe.attrs, tag);
+                // Mostly to deal with mouse event of nested svg tag. Nested svg shape size of collision detection strangely is the same size of inner shapes of that.
+                if (insertRectForSvg) {
+                    const dummyRect = new SvgTag("rect").uattr("width", pe.attrs.width).uattr("height", pe.attrs.height)
+                        .attr("opacity", 0);
+                    tag.children(dummyRect);
+                }
+                makeChildren(pe.children, tag, displayedDepth, options);
+                const viewBoxAttrStr = pe.attrs.viewBox && pe.attrs.viewBox.map(p => `${p.x} ${p.y}`).join(" ");
+                tag.attr("xmlns", pe.attrs.xmlns)
+                    .attr("version", pe.attrs.version)
+                    .attr("xmlns:xlink", pe.attrs["xmlns:xlink"])
+                    .attr("viewBox", viewBoxAttrStr)
+                    .uattr("x", pe.attrs.x)
+                    .uattr("y", pe.attrs.y)
+                    .uattr("width", pe.attrs.width)
+                    .uattr("height", pe.attrs.height);
+                if (setDisplayedRootSvgXYtoOrigin && displayedDepth === 0) {
+                    if (pe.attrs.x) tag.attr("x", 0);
+                    if (pe.attrs.y) tag.attr("y", 0);
+                }
+                return tag;
             case "circle":
-            setBaseAttrs(pe.attrs, tag);
-            setPresentationAttrs(pe.attrs, tag);
-            return tag.uattr("r", pe.attrs.r)
-                .uattr("cx", pe.attrs.cx)
-                .uattr("cy", pe.attrs.cy);
+                setBaseAttrs(pe.attrs, tag);
+                setPresentationAttrs(pe.attrs, tag);
+                return tag.uattr("r", pe.attrs.r)
+                    .uattr("cx", pe.attrs.cx)
+                    .uattr("cy", pe.attrs.cy);
             case "rect":
-            setBaseAttrs(pe.attrs, tag);
-            setPresentationAttrs(pe.attrs, tag);
-            return tag.uattr("x", pe.attrs.x)
-                .uattr("y", pe.attrs.y)
-                .uattr("width", pe.attrs.width)
-                .uattr("height", pe.attrs.height)
-                .uattr("rx", pe.attrs.rx)
-                .uattr("ry", pe.attrs.ry);
+                setBaseAttrs(pe.attrs, tag);
+                setPresentationAttrs(pe.attrs, tag);
+                return tag.uattr("x", pe.attrs.x)
+                    .uattr("y", pe.attrs.y)
+                    .uattr("width", pe.attrs.width)
+                    .uattr("height", pe.attrs.height)
+                    .uattr("rx", pe.attrs.rx)
+                    .uattr("ry", pe.attrs.ry);
             case "ellipse":
-            setBaseAttrs(pe.attrs, tag);
-            setPresentationAttrs(pe.attrs, tag);
-            return tag.uattr("cx", pe.attrs.cx)
-                .uattr("cy", pe.attrs.cy)
-                .uattr("rx", pe.attrs.rx)
-                .uattr("ry", pe.attrs.ry);
+                setBaseAttrs(pe.attrs, tag);
+                setPresentationAttrs(pe.attrs, tag);
+                return tag.uattr("cx", pe.attrs.cx)
+                    .uattr("cy", pe.attrs.cy)
+                    .uattr("rx", pe.attrs.rx)
+                    .uattr("ry", pe.attrs.ry);
             case "polyline":
             case "polygon":
-            setBaseAttrs(pe.attrs, tag);
-            setPresentationAttrs(pe.attrs, tag);
-            const pointsStr = pe.attrs.points && pe.attrs.points.map(point => `${point.x},${point.y}`).join(" ");
-            return tag.attr("points", pointsStr);
+                setBaseAttrs(pe.attrs, tag);
+                setPresentationAttrs(pe.attrs, tag);
+                const pointsStr = pe.attrs.points && pe.attrs.points.map(point => `${point.x},${point.y}`).join(" ");
+                return tag.attr("points", pointsStr);
             case "path":
-            setBaseAttrs(pe.attrs, tag);
-            setPresentationAttrs(pe.attrs, tag);
-            return tag.dattr("d", pe.attrs.d);
+                setBaseAttrs(pe.attrs, tag);
+                setPresentationAttrs(pe.attrs, tag);
+                return tag.dattr("d", pe.attrs.d);
             case "text":
-            setBaseAttrs(pe.attrs, tag);
-            setPresentationAttrs(pe.attrs, tag);
-            return tag.uattr("x", pe.attrs.x)
-                .uattr("y", pe.attrs.y)
-                .uattr("dx", pe.attrs.dx)
-                .uattr("dy", pe.attrs.dy)
-                .uattr("textLength", pe.attrs.textLength)
-                .attr("lengthAdjust", pe.attrs.lengthAdjust)
-                .text(pe.text);
+                setBaseAttrs(pe.attrs, tag);
+                setPresentationAttrs(pe.attrs, tag);
+                return tag.uattr("x", pe.attrs.x)
+                    .uattr("y", pe.attrs.y)
+                    .uattr("dx", pe.attrs.dx)
+                    .uattr("dy", pe.attrs.dy)
+                    .uattr("textLength", pe.attrs.textLength)
+                    .attr("lengthAdjust", pe.attrs.lengthAdjust)
+                    .text(pe.text);
             case "g":
-            setBaseAttrs(pe.attrs, tag);
-            setPresentationAttrs(pe.attrs, tag);
-            makeChildren(pe.children, tag, displayedDepth, options);
-            // Click detection for groups.
-            if (insertRectForGroup && svgRealMap[pe.xpath]) {
-                const leftTop = shaper(pe).leftTop;
-                const gsize = shaper(pe).size;
-                const dummyRect = new SvgTag("rect")
-                    .uattr("x", {unit: null, value: leftTop.x, attrName: "x"})
-                    .uattr("y", {unit: null, value: leftTop.y, attrName: "y"})
-                    .uattr("width", {unit: null, value: gsize.x, attrName: "width"})
-                    .uattr("height", {unit: null, value: gsize.y, attrName: "height"})
-                    .attr("opacity", 0);
-                if (setListenersDepth) tag.listener("mousedown", event => onShapeMouseDown(<MouseEvent>event, pe));
-                tag.children(dummyRect);
-            }
-            return tag;
+                setBaseAttrs(pe.attrs, tag);
+                setPresentationAttrs(pe.attrs, tag);
+                makeChildren(pe.children, tag, displayedDepth, options);
+                // Click detection for groups.
+                if (insertRectForGroup && svgRealMap[pe.xpath]) {
+                    const leftTop = shaper(pe).leftTop;
+                    const gsize = shaper(pe).size;
+                    const dummyRect = new SvgTag("rect")
+                        .uattr("x", { unit: null, value: leftTop.x, attrName: "x" })
+                        .uattr("y", { unit: null, value: leftTop.y, attrName: "y" })
+                        .uattr("width", { unit: null, value: gsize.x, attrName: "width" })
+                        .uattr("height", { unit: null, value: gsize.y, attrName: "height" })
+                        .attr("opacity", 0);
+                    if (setListenersDepth) tag.listener("mousedown", event => onShapeMouseDown(<MouseEvent>event, pe));
+                    tag.children(dummyRect);
+                }
+                return tag;
             case "linearGradient":
-            setBaseAttrs(pe.attrs, tag);
-            setPresentationAttrs(pe.attrs, tag);
-            makeChildren(pe.children, tag, displayedDepth, options);
-            return tag;
+                setBaseAttrs(pe.attrs, tag);
+                setPresentationAttrs(pe.attrs, tag);
+                makeChildren(pe.children, tag, displayedDepth, options);
+                return tag;
             case "radialGradient":
-            setBaseAttrs(pe.attrs, tag);
-            setPresentationAttrs(pe.attrs, tag);
-            makeChildren(pe.children, tag, displayedDepth, options);
-            return tag;
+                setBaseAttrs(pe.attrs, tag);
+                setPresentationAttrs(pe.attrs, tag);
+                makeChildren(pe.children, tag, displayedDepth, options);
+                return tag;
             case "stop":
-            setBaseAttrs(pe.attrs, tag);
-            setPresentationAttrs(pe.attrs, tag);
-            return tag
-                .pattr("stop-color", pe.attrs["stop-color"])
-                .rattr("offset", pe.attrs.offset);
+                setBaseAttrs(pe.attrs, tag);
+                setPresentationAttrs(pe.attrs, tag);
+                return tag
+                    .pattr("stop-color", pe.attrs["stop-color"])
+                    .rattr("offset", pe.attrs.offset);
             case "image":
-            setBaseAttrs(pe.attrs, tag);
-            setPresentationAttrs(pe.attrs, tag);
-            if (replaceHrefToObjectUrl) {
-                if (pe.attrs.href && imageList[pe.attrs.href]) tag.attr("href", imageList[pe.attrs.href].url);
-                const xlinkHref = pe.attrs["xlink:href"];
-                if (xlinkHref && imageList[xlinkHref]) tag.attr("xlink:href", imageList[xlinkHref].url);
-            } else {
-                tag.attr("href", pe.attrs.href).attr("xlink:href", pe.attrs["xlink:href"]);
-            }
-            return tag
-                .uattr("x", pe.attrs.x)
-                .uattr("y", pe.attrs.y)
-                .uattr("width", pe.attrs.width)
-                .uattr("height", pe.attrs.height);
+                setBaseAttrs(pe.attrs, tag);
+                setPresentationAttrs(pe.attrs, tag);
+                if (replaceHrefToObjectUrl) {
+                    if (pe.attrs.href && imageList[pe.attrs.href]) tag.attr("href", imageList[pe.attrs.href].url);
+                    const xlinkHref = pe.attrs["xlink:href"];
+                    if (xlinkHref && imageList[xlinkHref]) tag.attr("xlink:href", imageList[xlinkHref].url);
+                } else {
+                    tag.attr("href", pe.attrs.href).attr("xlink:href", pe.attrs["xlink:href"]);
+                }
+                return tag
+                    .uattr("x", pe.attrs.x)
+                    .uattr("y", pe.attrs.y)
+                    .uattr("width", pe.attrs.width)
+                    .uattr("height", pe.attrs.height);
+            case "defs":
+                setBaseAttrs(pe.attrs, tag);
+                setPresentationAttrs(pe.attrs, tag);
+                makeChildren(pe.children, tag, displayedDepth, options);
+                return tag;
             default:
-            assertNever(pe);
+                assertNever(pe);
         }
         return null;    // unreachable
     }

@@ -556,6 +556,7 @@ export function shaper(pe: ParsedElement): ShaperFunctions {
                 rotate: rotateCenter
             }).merge(corners).merge(presentationAttrs).merge(transformProps).object;
         case "g":
+        case "defs":        // Need to use transform.
             const gattrs = pe.attrs;
             const gchildren = pe.children;
             return new Merger({

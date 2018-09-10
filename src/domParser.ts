@@ -30,6 +30,7 @@ export type ParsedElement = (
     ParsedRadialGradientElement |
     ParsedStopElement |
     ParsedImageElement |
+    ParsedDefsElement |
     ParsedUnknownElement
 ) & {
     xpath: string;
@@ -106,6 +107,11 @@ interface ParsedStopElement {
 interface ParsedImageElement {
     tag: "image";
     attrs: ParsedImageAttr;
+}
+
+interface ParsedDefsElement extends ContainerElementClass {
+    tag: "defs",
+    attrs: ParsedDefsAttr
 }
 
 interface ParsedUnknownElement {
@@ -204,6 +210,9 @@ interface ParsedImageAttr extends ParsedBaseAttr, ParsedPresentationAttr {
     y: Length | null;
     width: Length | null;
     height: Length | null;
+}
+
+interface ParsedDefsAttr extends ParsedBaseAttr, ParsedPresentationAttr {
 }
 
 export type LengthUnit = "em" | "ex" | "px" | "in" | "cm" | "mm" | "pt" | "pc" | "%" | null;
@@ -373,6 +382,9 @@ export function parse(element: xmldoc.XmlElement): ParsedResult {
     } else if (element.name === "image") {
         const attrs = parseAttrs(element, pushWarns).image();
         return {result: {tag: "image", attrs, xpath, parent}, warns};
+    } else if (element.name === "defs") {
+        const attrs = parseAttrs(element, pushWarns).defs();
+        return {result: {tag: "defs", attrs, children, xpath, parent}, warns};
     } else {
         const attrs: Assoc = element.attr;
         return {result: {tag: "unknown", tag$real: element.name, attrs, children, text, xpath, parent}, warns: [{range: toRange(element), message: `${element.name} is unsupported element.`}]};
@@ -571,6 +583,15 @@ function parseAttrs(element: xmldoc.XmlElement, onWarns: (ws: Warning[]) => void
             };
             onWarns(warns);
             return validImageAttrs;
+        },
+        defs: () => {
+            const validDefsAttrs: ParsedDefsAttr = {
+                ...globalValidAttrs,
+                ...getPresentationAttrs(),
+                unknown: unknownAttrs(attrs, element, pushWarns)
+            };
+            onWarns(warns);
+            return validDefsAttrs;
         }
     }
 }
