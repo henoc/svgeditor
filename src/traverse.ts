@@ -9,18 +9,7 @@ export function traverse(pe: ParsedElement, fn: (pe: ParsedElement, parentPe: Pa
     }
 }
 
-export function makeUuidVirtualMap(pe: ParsedElement): {[uu: string]: ParsedElement} {
-    const acc: {[uu: string]: ParsedElement} = {};
-    traverse(
-        pe,
-        (pe, parentPe, index) => {
-            acc[pe.xpath] = pe;
-        }
-    );
-    return acc;
-}
-
-export function makeIdUuidMap(pe: ParsedElement): {[id: string]: string} {
+export function makeIdXpathMap(pe: ParsedElement): {[id: string]: string} {
     const acc: {[id: string]: string} = {};
     traverse(
         pe,
@@ -31,13 +20,13 @@ export function makeIdUuidMap(pe: ParsedElement): {[id: string]: string} {
     return acc;
 }
 
-export function makeUuidRealMap(e: Element): {[uu: string]: Element} {
+export function makeXpathRealMap(e: Element): {[uu: string]: Element} {
     const acc: {[uu: string]: Element} = {};
     let tmp: string | null;
-    if (tmp = e.getAttribute("data-uuid")) acc[tmp] = e;
+    if (tmp = e.getAttribute("data-xpath")) acc[tmp] = e;
     for (let i = 0; i < e.children.length; i++) {
         const child = e.children.item(i);
-        Object.assign(acc, makeUuidRealMap(child));
+        Object.assign(acc, makeXpathRealMap(child));
     }
     return acc;
 }

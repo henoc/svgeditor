@@ -1,4 +1,4 @@
-import { svgVirtualMap, refleshContent, svgRealMap, sendBackToEditor, configuration, svgdata, contentChildrenComponent } from "./main";
+import { refleshContent, svgRealMap, sendBackToEditor, configuration, svgdata, contentChildrenComponent } from "./main";
 import { Vec2, v, vfp, assertNever, deepCopy, OneOrMore, iterate, el } from "./utils";
 import { shaper, multiShaper } from "./shapes";
 import { SvgTag } from "./svg";
@@ -38,15 +38,15 @@ export class SelectMode extends Mode {
         } else if (event.shiftKey && this._selectedShapes && pe.parent === this.commonParent && this._selectedShapes.indexOf(pe) === -1) {
             // multiple selection
             this.pushSelectedShapes(pe);
-            const uuids = this._selectedShapes;
-            this.startCursorPos = vfp(this.inTargetCoordinate(this.cursor(event), uuids));
-            this.startShapeCenter = multiShaper(uuids).center;
+            const pes = this._selectedShapes;
+            this.startCursorPos = vfp(this.inTargetCoordinate(this.cursor(event), pes));
+            this.startShapeCenter = multiShaper(pes).center;
             this.isDraggingShape = true;
         } else if (this._selectedShapes && this._selectedShapes.length > 1) {
             // select already multiple selected shaeps
-            const uuids = this._selectedShapes;
-            this.startCursorPos = vfp(this.inTargetCoordinate(this.cursor(event), uuids));
-            this.startShapeCenter = multiShaper(uuids).center;
+            const pes = this._selectedShapes;
+            this.startCursorPos = vfp(this.inTargetCoordinate(this.cursor(event), pes));
+            this.startShapeCenter = multiShaper(pes).center;
             this.isDraggingShape = true;
         } else {
             // single selection
@@ -89,8 +89,8 @@ export class SelectMode extends Mode {
     }
     onDocumentMouseUp() {
         if (this._selectedShapes && configuration.collectTransform) {
-            for (let uuid of this._selectedShapes) {
-                shaper(uuid).transform = shaper(uuid).transform;
+            for (let pes of this._selectedShapes) {
+                shaper(pes).transform = shaper(pes).transform;
             }
         }
         this.isDraggingShape = false;

@@ -1,8 +1,9 @@
 import { Length, LengthUnit, ParsedElement } from "./domParser";
-import { svgVirtualMap, svgRealMap } from "./main";
+import { svgRealMap, svgdata } from "./main";
 import { assertNever, iterate, v, Vec2 } from "./utils";
 import { SetDifference } from "utility-types";
 import memoize from "fast-memoize";
+import { xfindExn } from "./xpath";
 
 type AttrKind = "vertical" | "horizontal" | "font-size";
 
@@ -91,24 +92,24 @@ function getAttrKind(name: string): AttrKind {
 
 function getSvgBasePx(pe: ParsedElement, attrKind: AttrKind): number | null {
     let ownerSvgPe: ParsedElement;
-    if (pe.parent && svgRealMap[pe.parent] /* current displayed elements only */ && (ownerSvgPe = svgVirtualMap[pe.parent])) {
+    if (pe.parent && svgRealMap[pe.parent] /* current displayed elements only */ && (ownerSvgPe = xfindExn([svgdata], pe.parent))) {
         if (attrKind === "font-size") {
             return parseFloat(getComputedStyle(svgRealMap[pe.parent]).fontSize!);
         } else if (ownerSvgPe.tag === "svg") {
             let basePx: number = 1;
             switch (attrKind) {
                 case "horizontal":
-                basePx = convertToPixel(ownerSvgPe.attrs.width || {unit: "%", value: 100, attrName: "width"}, svgVirtualMap[pe.parent]);
+                basePx = convertToPixel(ownerSvgPe.attrs.width || {unit: "%", value: 100, attrName: "width"}, xfindExn([svgdata], pe.parent));
                 break;
                 case "vertical":
-                basePx = convertToPixel(ownerSvgPe.attrs.height || {unit: "%", value: 100, attrName: "height"}, svgVirtualMap[pe.parent]);
+                basePx = convertToPixel(ownerSvgPe.attrs.height || {unit: "%", value: 100, attrName: "height"}, xfindExn([svgdata], pe.parent));
                 break;
                 default: 
                 assertNever(attrKind);
             }
             return basePx;
         } else {
-            return getSvgBasePx(svgVirtualMap[pe.parent], attrKind);
+            return getSvgBasePx(xfindExn([svgdata], pe.parent), attrKind);
         }
     }
     return null;

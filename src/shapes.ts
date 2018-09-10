@@ -2,11 +2,12 @@ import { ParsedElement, Length, Transform, isLength, TransformDescriptor, Paint,
 import { Vec2, v, vfp, OneOrMore, Merger } from "./utils";
 import { svgPathManager } from "./pathHelpers";
 import { convertToPixel, convertFromPixel } from "./measureUnits";
-import { svgVirtualMap, svgRealMap, configuration, imageList } from "./main";
+import { svgRealMap, configuration, imageList, svgdata } from "./main";
 import { identity, transform, scale, translate, rotate, rotateDEG, applyToPoint, inverse } from "transformation-matrix";
 import { appendDescriptor, replaceLastDescriptor, descriptorToMatrix, appendDescriptorsLeft, translateDescriptor, scaleDescriptor, rotateDescriptor, appendDescriptorLeft, appendDescriptors } from "./transformHelpers";
 import { font } from "./fontHelpers";
 import equal from "fast-deep-equal";
+import { xfindExn } from "./xpath";
 
 interface ShaperFunctions {
     center: Vec2;
@@ -28,7 +29,7 @@ interface ShaperFunctions {
 }
 
 /**
- * Transform some shapes. Need to set the shape into `svgVirtualMap` and `svgRealMap` (optional, Actually needed shape is `text`) before use.
+ * Transform some shapes. Need `svgRealMap` (optional, Actually needed shape is `text`) before use.
  */
 export function shaper(pe: ParsedElement): ShaperFunctions {
 
@@ -127,7 +128,7 @@ export function shaper(pe: ParsedElement): ShaperFunctions {
     }
     const allTransform = () => {
         if (pe.parent) {
-            const past = shaper(svgVirtualMap[pe.parent]).allTransform();
+            const past = shaper(xfindExn([svgdata], pe.parent)).allTransform();
             return transform(past, self().transform);
         } else {
             return self().transform;
@@ -718,14 +719,14 @@ export function shaper(pe: ParsedElement): ShaperFunctions {
 }
 
 /**
- * @param uuids All shapes must have the same parent.
+ * @param pes All shapes must have the same parent.
  */
 export function multiShaper(pes: OneOrMore<ParsedElement>, useMultiEvenIfSingle: boolean = false): ShaperFunctions {
     if (pes.length === 1 && !useMultiEvenIfSingle) {
         return shaper(pes[0]);
     } else {
         const parent = pes[0].parent;
-        const commonParent = parent && svgVirtualMap[parent] || null;
+        const commonParent = parent && xfindExn([svgdata], parent) || null;
         const self = () => multiShaper(pes);
         const leftTop = {
             get leftTop() {

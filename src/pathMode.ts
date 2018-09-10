@@ -1,4 +1,4 @@
-import { svgVirtualMap, drawState, refleshContent } from "./main";
+import { drawState, refleshContent } from "./main";
 import { ParsedElement } from "./domParser";
 import { v } from "./utils";
 import { Mode } from "./modeInterface";

@@ -1,13 +1,10 @@
 /**
- * @file **Inaccurate** XPath prosedures.
+ * @file Little subset of XPath prosedures.
  */
 
 import {ParsedElement} from "./domParser"
 
 
-/**
- * Form of xpath is limited, like a `/svg/image[2]`.
- */
 export function xfind(pes: ParsedElement[], xpath: string): ParsedElement | null {
     let ret: RegExpMatchArray | null;
     if (ret = xpath.match(/^\/([^/\[]+)(?:\[(\d+)\])?/)) {
@@ -21,6 +18,15 @@ export function xfind(pes: ParsedElement[], xpath: string): ParsedElement | null
         }
     }
     return null;
+}
+
+/**
+ * Throw error if not found.
+ */
+export function xfindExn(pes: ParsedElement[], xpath: string): ParsedElement {
+    const ret = xfind(pes, xpath);
+    if (!ret) throw new Error(`Not found parsed element of ${xpath}`);
+    else return ret;
 }
 
 /**

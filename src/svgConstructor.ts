@@ -1,16 +1,16 @@
 import { ParsedElement, ParsedBaseAttr, ParsedPresentationAttr } from "./domParser";
 import { SvgTag } from "./svg";
-import uuid from "uuid";
 import { onShapeMouseDown } from "./triggers";
 import { assertNever } from "./utils";
 import { toString, inverse } from "transformation-matrix";
 import { shaper } from "./shapes";
 import { toTransformStrWithoutCollect } from "./transformHelpers";
-import { svgRealMap, imageList, svgVirtualMap } from "./main";
+import { svgRealMap, imageList, svgdata } from "./main";
+import { xfindExn } from "./xpath";
 
 interface SvgConstructOptions {
     putRootAttribute?: boolean;
-    putUUIDAttribute?: boolean;
+    putXPathAttribute?: boolean;
     setListenersDepth?: number;
     transparent?: boolean;
     insertSvgSizeRect?: boolean;
@@ -26,7 +26,7 @@ interface SvgConstructOptions {
 */
 export function construct(pe: ParsedElement, options?: SvgConstructOptions, displayedDepth: number = 0): SvgTag | null {
     const putRootAttribute = options && options.putRootAttribute || false;
-    const putIndexAttribute = options && options.putUUIDAttribute || false;
+    const putIndexAttribute = options && options.putXPathAttribute || false;
     const setListenersDepth = options && options.setListenersDepth || null;
     const transparent = options && options.transparent || false;
     const insertRectForSvg = options && options.insertSvgSizeRect || false;
@@ -43,7 +43,7 @@ export function construct(pe: ParsedElement, options?: SvgConstructOptions, disp
         options && (options.putRootAttribute = false);
     }
     if (putIndexAttribute) {
-        tag.attr("data-uuid", pe.xpath);
+        tag.attr("data-xpath", pe.xpath);
     }
     if (setListenersDepth && displayedDepth <= setListenersDepth) {
         tag.listener("mousedown", event => onShapeMouseDown(<MouseEvent>event, pe));
@@ -189,7 +189,7 @@ export function construct(pe: ParsedElement, options?: SvgConstructOptions, disp
 
 function depth(pe: ParsedElement): number {
     if (pe.parent) {
-        return depth(svgVirtualMap[pe.parent]) + 1;
+        return depth(xfindExn([svgdata], pe.parent)) + 1;
     } else {
         return 0;
     }

@@ -1,4 +1,4 @@
-import { svgVirtualMap, refleshContent, configuration, svgRealMap, drawState } from "./main";
+import { refleshContent, configuration, svgRealMap, drawState } from "./main";
 import { Vec2, v, vfp } from "./utils";
 import { ParsedElement } from "./domParser";
 import { shaper } from "./shapes";

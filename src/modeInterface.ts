@@ -1,13 +1,14 @@
 import { Component } from "./component";
 import { SvgTag } from "./svg";
 import { ParsedPresentationAttr, ParsedBaseAttr, ParsedElement } from "./domParser";
-import { drawState, svgRealMap, contentChildrenComponent, refleshContent, editMode, svgVirtualMap, svgdata, sendBackToEditor } from "./main";
+import { drawState, svgRealMap, contentChildrenComponent, refleshContent, editMode, svgdata, sendBackToEditor } from "./main";
 import { OperatorName } from "./menuComponent";
 import { Vec2, v, OneOrMore, deepCopy, vfp } from "./utils";
 import { convertToPixel } from "./measureUnits";
 import { shaper, multiShaper } from "./shapes";
 import { applyToPoint, inverse } from "transformation-matrix";
 import { traverse } from "./traverse";
+import { xfindExn } from "./xpath";
 
 export abstract class Mode implements Component {
     abstract onShapeMouseDownLeft(event: MouseEvent, pe: ParsedElement): void;
@@ -19,7 +20,7 @@ export abstract class Mode implements Component {
     onOperatorClicked(name: OperatorName): void {
         const pes = this.selectedShapes;
         const parent = pes && pes[0].parent;     // parent should be the same
-        const parentPe = parent && svgVirtualMap[parent] || null;
+        const parentPe = parent && xfindExn([svgdata], parent) || null;
         switch (name) {
             case "zoomIn":
                 contentChildrenComponent.svgContainerComponent.scalePercent += 20;
@@ -80,7 +81,7 @@ export abstract class Mode implements Component {
                     });
                     parentPe.children = parentPe.children.filter(c => pes.indexOf(c) === -1);
                     refleshContent();       // make real elements
-                    this.selectedShapes = [svgVirtualMap[group.xpath]];
+                    this.selectedShapes = [xfindExn([svgdata], group.xpath)];
                 }
                 break;
             case "ungroup":
@@ -88,7 +89,7 @@ export abstract class Mode implements Component {
                     const pe = pes[0];
                     if (pe.tag === "g" && pe.parent) {
                         const gParent = pe.parent;
-                        const parentPe = svgVirtualMap[gParent];
+                        const parentPe = xfindExn([svgdata], gParent);
                         for (let c of pe.children) {
                             c.parent = gParent;
                             if ("children" in parentPe) parentPe.children.push(c);
@@ -154,7 +155,7 @@ export abstract class Mode implements Component {
         return null;
     }
 
-    set selectedShapes(uuids: OneOrMore<ParsedElement> | null) {
+    set selectedShapes(pes: OneOrMore<ParsedElement> | null) {
     }
 
     static baseAttrsDefaultImpl: () => ParsedBaseAttr = () => {
@@ -208,7 +209,7 @@ export abstract class Mode implements Component {
             }))();
         if (this.selectedShapes) {
             let edge: number | null = null;
-            const corners: { [uuid: string]: { cornerName: Corner, escapedPoint: Point } } = {};
+            const corners: { [xpath: string]: { cornerName: Corner, escapedPoint: Point } } = {};
             for (let pe of this.selectedShapes) {
                 const [nameFirst, nameSecond] = cornerNames;
                 let escapedCornerFirst = this.escapeToNormalCoordinate(shaper(pe)[nameFirst], [pe]);

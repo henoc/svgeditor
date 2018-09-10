@@ -1,9 +1,10 @@
-import { editMode, openWindows, contentChildrenComponent, svgVirtualMap, refleshContent, svgdata } from "./main";
+import { editMode, openWindows, contentChildrenComponent, refleshContent, svgdata } from "./main";
 import { iterate } from "./utils";
 import { construct } from "./svgConstructor";
 import { ParsedElement, parse } from "./domParser";
 import * as xmldoc from "xmldoc";
 import { updateXPaths } from "./traverse";
+import { xfindExn } from "./xpath";
 const format = require('xml-formatter');
 
 export function onShapeMouseDown(event: MouseEvent, pe: ParsedElement) {
@@ -77,7 +78,7 @@ function copy(clipboardData: DataTransfer, isCut: boolean = false) {
     if (editMode.mode.selectedShapes) {
         const pes = editMode.mode.selectedShapes;
         const parent = pes[0].parent;
-        const parentPe = parent && svgVirtualMap[parent] || null;
+        const parentPe = parent && xfindExn([svgdata], parent) || null;
         if (parentPe && "children" in parentPe) {
             const orderedPes = parentPe.children.filter(c => pes.indexOf(c) !== -1);
             if (isCut) parentPe.children = parentPe.children.filter(c => pes.indexOf(c) === -1);

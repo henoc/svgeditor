@@ -1,6 +1,6 @@
 import { Component } from "./component";
 import { construct } from "./svgConstructor";
-import { svgdata, configuration, editMode, svgVirtualMap } from "./main";
+import { svgdata, configuration, editMode } from "./main";
 import { el } from "./utils";
 import { convertToPixelForOutermostFrame } from "./measureUnits";
 import { xfind } from "./xpath";
@@ -23,7 +23,7 @@ export class SvgContainerComponent implements Component {
         const substances = construct(displayedRoot, {
             putRootAttribute: true,
             setRootSvgXYtoOrigin: true,
-            putUUIDAttribute: true,
+            putXPathAttribute: true,
             setListenersDepth: 1,
             insertSvgSizeRect: true,
             insertRectForGroup: true,

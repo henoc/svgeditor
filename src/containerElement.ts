@@ -4,7 +4,6 @@
  */
 
 import { ParsedElement } from "./domParser";
-import { svgVirtualMap } from "./main";
 import { traverse } from "./traverse";
 
 export function collectContainer(pe: ParsedElement): string[] {
