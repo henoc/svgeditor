@@ -6,7 +6,7 @@
 import { svgVirtualMap } from "./main";
 import { ParsedElement, Ratio, Paint, isColor, isFuncIRI, StopColor } from "./domParser";
 import tinycolor from "tinycolor2";
-import { traverse } from "./svgConstructor";
+import { traverse } from "./traverse";
 
 export type PaintServer = {
     kind: "linearGradient" | "radialGradient",
@@ -53,7 +53,7 @@ export function fetchStopReference(pe: ParsedElement): StopReference | null {
     switch (pe.tag) {
         case "stop":
         return {
-            uuid: pe.uuid,
+            uuid: pe.xpath,
             offset: offsetToNumber(pe.attrs.offset),
             "stop-color": pe.attrs["stop-color"] || {format: "rgb", r: 0, g: 0, b: 0, a: 1}
         };

@@ -4,11 +4,10 @@ import { ParsedPresentationAttr, ParsedBaseAttr, ParsedElement } from "./domPars
 import { drawState, svgRealMap, contentChildrenComponent, refleshContent, editMode, svgVirtualMap, svgdata, sendBackToEditor } from "./main";
 import { OperatorName } from "./menuComponent";
 import { Vec2, v, OneOrMore, deepCopy, vfp } from "./utils";
-import uuidStatic from "uuid";
 import { convertToPixel } from "./measureUnits";
 import { shaper, multiShaper } from "./shapes";
-import { traverse } from "./svgConstructor";
 import { applyToPoint, inverse } from "transformation-matrix";
+import { traverse } from "./traverse";
 
 export abstract class Mode implements Component {
     abstract onShapeMouseDownLeft(event: MouseEvent, pe: ParsedElement): void;
@@ -43,7 +42,6 @@ export abstract class Mode implements Component {
                 const copiedElems: ParsedElement[] = [];
                 for (let pe of pes) {
                     const copied = deepCopy(pe);
-                    copied.uuid = uuidStatic.v4();
                     copiedElems.push(copied);
                     if ("children" in parentPe) {
                         parentPe.children.push(copied);
@@ -67,12 +65,10 @@ export abstract class Mode implements Component {
                 break;
             case "group":
                 if ("children" in parentPe) {
-                    const groupUuid = uuidStatic.v4();
-                    pes.forEach(c => c.parent = groupUuid);
-                    parentPe.children.push({
-                        uuid: groupUuid,
+                    let group: ParsedElement;
+                    parentPe.children.push(group = {
+                        xpath: "???",
                         tag: "g",
-                        isRoot: false,
                         parent: parent,
                         attrs: {
                             ...Mode.baseAttrsDefaultImpl(),
@@ -84,7 +80,7 @@ export abstract class Mode implements Component {
                     });
                     parentPe.children = parentPe.children.filter(c => pes.indexOf(c) === -1);
                     refleshContent();       // make real elements
-                    this.selectedShapes = [svgVirtualMap[groupUuid]];
+                    this.selectedShapes = [svgVirtualMap[group.xpath]];
                 }
                 break;
             case "ungroup":
@@ -98,7 +94,7 @@ export abstract class Mode implements Component {
                             if ("children" in parentPe) parentPe.children.push(c);
                             if (pe.attrs.transform) shaper(c).appendTransformDescriptors(pe.attrs.transform.descriptors, "left");
                         }
-                        if ("children" in parentPe) parentPe.children = parentPe.children.filter(c => c.uuid !== pe.uuid);
+                        if ("children" in parentPe) parentPe.children = parentPe.children.filter(c => c.xpath !== pe.xpath);
                         this.selectedShapes = null;
                     }
                 }
@@ -219,12 +215,12 @@ export abstract class Mode implements Component {
                 let escapedCornerSecond = this.escapeToNormalCoordinate(shaper(pe)[nameSecond], [pe]);
                 let tmp: number;
                 if ((tmp = minOrMax(escapedCornerFirst[xOrY], escapedCornerSecond[xOrY])) === escapedCornerFirst[xOrY]) {
-                    corners[pe.uuid] = {
+                    corners[pe.xpath] = {
                         cornerName: nameFirst,
                         escapedPoint: escapedCornerFirst
                     }
                 } else {
-                    corners[pe.uuid] = {
+                    corners[pe.xpath] = {
                         cornerName: nameSecond,
                         escapedPoint: escapedCornerSecond
                     }
@@ -232,7 +228,7 @@ export abstract class Mode implements Component {
                 edge = edge !== null && minOrMax(tmp, edge) || tmp;
             }
             if (edge !== null) for (let pe of this.selectedShapes) {
-                const cornersData = corners[pe.uuid];
+                const cornersData = corners[pe.xpath];
                 cornersData.escapedPoint[xOrY] = edge;
                 const targetCorner = this.inTargetCoordinate(cornersData.escapedPoint, [pe]);
                 shaper(pe)[cornersData.cornerName] = vfp(targetCorner);

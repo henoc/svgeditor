@@ -3,13 +3,9 @@ import { Vec2, v, vfp, assertNever, deepCopy, OneOrMore, iterate, el } from "./u
 import { shaper, multiShaper } from "./shapes";
 import { SvgTag } from "./svg";
 import { Mode } from "./modeInterface";
-import { identity, transform, applyToPoint, inverse, toString } from "transformation-matrix";
-import { OperatorName } from "./menuComponent";
-import { convertFromPixel, convertToPixel } from "./measureUnits";
-import uuidStatic from "uuid";
+import { toString } from "transformation-matrix";
 import { ParsedElement } from "./domParser";
 import { appendDescriptorsLeft, scale2 } from "./transformHelpers";
-import { traverse } from "./svgConstructor";
 
 export class SelectMode extends Mode {
 
@@ -34,7 +30,7 @@ export class SelectMode extends Mode {
 
     onShapeMouseDownLeft(event: MouseEvent, pe: ParsedElement) {
         event.stopPropagation();
-        if (pe.isRoot) {
+        if (pe.parent === null) {
             // cancel selection
             this.selectedShapes = null;
             this.commonParent = null;

@@ -1,4 +1,4 @@
-import { construct, makeUuidVirtualMap, makeUuidRealMap, makeIdUuidMap } from "./svgConstructor";
+import { construct } from "./svgConstructor";
 import { ParsedElement, isLengthUnit, LengthUnit, Paint } from "./domParser";
 import { onDocumentMouseMove, onDocumentMouseUp, onDocumentClick, onDocumentMouseLeave, onDocumentCopy, onDocumentCut, onDocumentPaste } from "./triggers";
 import { Mode } from "./modeInterface";
@@ -14,6 +14,7 @@ import { collectPaintServer } from "./paintServer";
 import { shaper } from "./shapes";
 import { LoadedImage, collectImages } from "./imageHelpters";
 import { collectContainer } from "./containerElement";
+import { makeIdUuidMap, makeUuidVirtualMap, makeUuidRealMap, updateXPaths } from "./traverse";
 
 declare function acquireVsCodeApi(): any;
 
@@ -26,7 +27,7 @@ export let svgRealMap: { [uuid: string]: Element } = {};
 export let svgIdUuidMap: { [id: string]: string} = {};          // id -> uuid
 export const editMode: {mode: Mode} = {mode: new SelectMode()};
 export let paintServers: { [id: string] : ParsedElement } = {};
-export let containerElements: string[] = [];
+export let containerElements: string[] = [];    // xpath list
 export const openWindows: { [id: string]: WindowComponent } = {};
 export let fontList: { [family: string]: string[] /* subFamiles */ } | null = null;
 export const uri: string = document.getElementById("svgeditor-uri")!.innerText;       // target file uri, ex: file:///home/henoc/document/sample.svg
@@ -146,6 +147,7 @@ document.addEventListener("paste", onDocumentPaste);
 // exported functions
 
 export function refleshContent() {
+    updateXPaths(svgdata);
     svgIdUuidMap = makeIdUuidMap(svgdata);
     svgVirtualMap = makeUuidVirtualMap(svgdata);
     paintServers = collectPaintServer(svgdata);

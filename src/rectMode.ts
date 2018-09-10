@@ -1,6 +1,5 @@
 import { svgVirtualMap, refleshContent, configuration, svgRealMap, drawState } from "./main";
 import { Vec2, v, vfp } from "./utils";
-import uuidStatic from "uuid";
 import { ParsedElement } from "./domParser";
 import { shaper } from "./shapes";
 import { Mode } from "./modeInterface";
@@ -17,16 +16,15 @@ export class RectMode extends Mode {
     constructor(public finished?: (pe: ParsedElement | null) => void) {super()}
 
     onShapeMouseDownLeft(event: MouseEvent, pe: ParsedElement): void {
-        if (pe.isRoot) {
+        if (pe.parent === null) {
             const root = pe;
             event.stopPropagation();
             this.isDragging = true;
             this.startCursorPos = vfp(this.inTargetCoordinate(this.cursor(event), [pe]));
             if (root.tag === "svg") {
                 const pe2: ParsedElement = {
-                    uuid: uuidStatic.v4(),
-                    isRoot: false,
-                    parent: pe.uuid,
+                    xpath: "???",
+                    parent: pe.xpath,
                     tag: "rect",
                     attrs: {
                         x: {unit: configuration.defaultUnit, value: 0, attrName: "x"},

@@ -1,7 +1,6 @@
 import * as xmldoc from "xmldoc";
 import { parse } from "../src/domParser";
 import * as assert from 'assert';
-import { xfind } from "../src/xpath";
 import { updateXPaths } from "../src/traverse";
 
 function parseSvg(svgText: string) {
@@ -28,11 +27,16 @@ describe("xpath", () => {
     const svg_svg_image_1 = svg_svg && "children" in svg_svg && svg_svg.children[0] || null;
     const svg_svg_image_2 = svg_svg && "children" in svg_svg && svg_svg.children[1] || null;
 
-    it("xfind", () => {
-        assert.deepStrictEqual(xfind([svgdata], "/svg"), svgdata);
-        assert.deepStrictEqual(xfind([svgdata], "/svg/image"), svg_image);
-        assert.deepStrictEqual(xfind([svgdata], "/svg/svg"), svg_svg);
-        assert.deepStrictEqual(xfind([svgdata], "/svg/svg/image[1]"), svg_svg_image_1);
-        assert.deepStrictEqual(xfind([svgdata], "/svg/svg/image[2]"), svg_svg_image_2);
+    it("updateXPaths", () => {
+        assert.strictEqual(svgdata.xpath, "/svg");
+        assert.strictEqual(svgdata.parent, null);
+        assert.strictEqual(svg_image && svg_image.xpath , "/svg/image");
+        assert.strictEqual(svg_image && svg_image.parent, "/svg");
+        assert.strictEqual(svg_svg && svg_svg.xpath, "/svg/svg");
+        assert.strictEqual(svg_svg && svg_svg.parent, "/svg");
+        assert.strictEqual(svg_svg_image_1 && svg_svg_image_1.xpath, "/svg/svg/image[1]");
+        assert.strictEqual(svg_svg_image_1 && svg_svg_image_1.parent, "/svg/svg");
+        assert.strictEqual(svg_svg_image_2 && svg_svg_image_2.xpath, "/svg/svg/image[2]");
+        assert.strictEqual(svg_svg_image_2 && svg_svg_image_2.parent, "/svg/svg");
     });
 });

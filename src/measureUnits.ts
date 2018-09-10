@@ -10,7 +10,7 @@ type AttrKind = "vertical" | "horizontal" | "font-size";
  * SVG unit converter
  */
 export function convertToPixel(length: Length, pe: ParsedElement): number {
-    const re: Element | undefined = svgRealMap[pe.uuid];
+    const re: Element | undefined = svgRealMap[pe.xpath];
     const attrKind = getAttrKind(length.attrName);
     const font = re && getComputedStyle(re).font || "";
     
@@ -55,7 +55,7 @@ function outermostPx(attrKind: AttrKind, re: Element): number {
  * @param length px
  */
 export function convertFromPixel(length: Length, targetUnit: LengthUnit, pe: ParsedElement): Length {
-    const re: Element | null = svgRealMap[pe.uuid];    
+    const re: Element | null = svgRealMap[pe.xpath];    
     const font = re && getComputedStyle(re).font || "";
     const attrKind = getAttrKind(length.attrName);
     switch (targetUnit) {

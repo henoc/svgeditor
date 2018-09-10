@@ -4,14 +4,14 @@
  */
 
 import { ParsedElement } from "./domParser";
-import { traverse } from "./svgConstructor";
 import { svgVirtualMap } from "./main";
+import { traverse } from "./traverse";
 
 export function collectContainer(pe: ParsedElement): string[] {
     const acc: string[] = [];
-    traverse(pe, (pe, parentPe, index, xpath) => {
+    traverse(pe, (pe, parentPe, index) => {
         if ("children" in pe && pe.tag !== "linearGradient" && pe.tag !== "radialGradient" && pe.tag !== "unknown")
-            acc.push(xpath);
+            acc.push(pe.xpath);
     });
     return acc;
 }

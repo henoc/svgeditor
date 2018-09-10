@@ -1,7 +1,6 @@
 import { Mode } from "./modeInterface";
 import { svgdata, configuration, refleshContent, drawState } from "./main";
 import { ParsedElement } from "./domParser";
-import uuidStatic from "uuid";
 import { shaper } from "./shapes";
 
 export function textMode(inputText: string | undefined, isfinished: (pe: ParsedElement | null) => void) {
@@ -9,9 +8,8 @@ export function textMode(inputText: string | undefined, isfinished: (pe: ParsedE
         const root = svgdata;
         if (root.tag === "svg") {
             const pe: ParsedElement = {
-                uuid: uuidStatic.v4(),
-                isRoot: false,
-                parent: root.uuid,
+                xpath: "???",
+                parent: root.xpath,
                 tag: "text",
                 attrs: {
                     x: {unit: configuration.defaultUnit, value: 0, attrName: "x"},

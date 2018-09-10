@@ -506,7 +506,7 @@ export function shaper(pe: ParsedElement): ShaperFunctions {
                 rotate: rotateCenter
             }).merge(corners).merge(presentationAttrs).merge(transformProps).object;
         case "text":
-            const re = svgRealMap[pe.uuid];
+            const re = svgRealMap[pe.xpath];
             const styleDeclaration = getComputedStyle(re);
             const fontInfo = font(pe.text || "", styleDeclaration.fontFamily || "", parseFloat(styleDeclaration.fontSize || "16"), styleDeclaration.fontWeight || "", styleDeclaration.fontStyle || "");
             const tattrs = pe.attrs;

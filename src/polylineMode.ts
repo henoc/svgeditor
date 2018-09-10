@@ -1,5 +1,4 @@
 import { svgVirtualMap, refleshContent, configuration, svgRealMap, drawState } from "./main";
-import uuidStatic from "uuid";
 import { ParsedElement } from "./domParser";
 import { v, vfp } from "./utils";
 import { shaper } from "./shapes";
@@ -15,7 +14,7 @@ export class PolylineMode extends Mode {
     constructor(public finished?: (pe: ParsedElement | null) => void) {super()}
 
     onShapeMouseDownLeft(event: MouseEvent, pe: ParsedElement): void {
-        if (pe.isRoot) {
+        if (pe.parent === null) {
             const root = pe;
             event.stopPropagation();
             const cursor = vfp(this.inTargetCoordinate(this.cursor(event), [pe]));
@@ -27,9 +26,8 @@ export class PolylineMode extends Mode {
                     }
                 } else {
                     const pe2: ParsedElement = {
-                        uuid: uuidStatic.v4(),
-                        isRoot: false,
-                        parent: pe.uuid,
+                        xpath: "???",
+                        parent: pe.xpath,
                         tag: "polyline",
                         attrs: {
                             points: [cursor, cursor],

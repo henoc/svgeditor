@@ -28,7 +28,7 @@ export class NodeMode extends Mode {
 
     onShapeMouseDownLeft(event: MouseEvent, pe: ParsedElement): void {
         event.stopPropagation();
-        if (pe.isRoot) {
+        if (pe.parent === null) {
             this.selectedShapes = null;
             this.selectedHandlerIndex = null;
             refleshContent();
@@ -36,7 +36,7 @@ export class NodeMode extends Mode {
             this.selectedShapes = [pe];
             refleshContent();
         } else if (/^(rect|circle|ellipse)$/.test(pe.tag)) {
-            informationRequest("Selected shape is object. Change to path?", ["yes", "no"], "objectToPath", [pe.uuid]);
+            informationRequest("Selected shape is object. Change to path?", ["yes", "no"], "objectToPath", [pe.xpath]);
         }
     }
     onShapeMouseDownRight(event: MouseEvent, pe: ParsedElement): void {

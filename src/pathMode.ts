@@ -1,5 +1,4 @@
 import { svgVirtualMap, drawState, refleshContent } from "./main";
-import uuidStatic from "uuid";
 import { ParsedElement } from "./domParser";
 import { v } from "./utils";
 import { Mode } from "./modeInterface";
@@ -16,7 +15,7 @@ export class PathMode extends Mode {
     constructor(public finished?: (pe: ParsedElement | null) => void) {super()}
 
     onShapeMouseDownLeft(event: MouseEvent, pe: ParsedElement): void {
-        if (pe.isRoot) {
+        if (pe.parent === null) {
             let {x: cx, y: cy} = this.inTargetCoordinate(this.cursor(event), [pe]);
             const root = pe;
             event.stopPropagation();
@@ -24,9 +23,8 @@ export class PathMode extends Mode {
             if (root.tag === "svg") {
                 if (this.makeTarget === null) {
                     const pe2: ParsedElement = {
-                        uuid: uuidStatic.v4(),
-                        isRoot: false,
-                        parent: pe.uuid,
+                        xpath: "???",
+                        parent: pe.xpath,
                         tag: "path",
                         attrs: {
                             d: [
@@ -56,7 +54,7 @@ export class PathMode extends Mode {
     }
     onShapeMouseDownRight(event: MouseEvent, pe: ParsedElement): void {
         const root = pe;
-        if (this.makeTarget && root.isRoot && root.tag === "svg") {
+        if (this.makeTarget && root.parent === null && root.tag === "svg") {
             const target = this.makeTarget;
             if (target.tag === "path" && target.attrs.d) {
                 // delete second S command and modify new second S command to C command if exists

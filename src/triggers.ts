@@ -3,6 +3,7 @@ import { iterate } from "./utils";
 import { construct } from "./svgConstructor";
 import { ParsedElement, parse } from "./domParser";
 import * as xmldoc from "xmldoc";
+import { updateXPaths } from "./traverse";
 const format = require('xml-formatter');
 
 export function onShapeMouseDown(event: MouseEvent, pe: ParsedElement) {
@@ -62,12 +63,10 @@ export function onDocumentPaste(event: Event) {
 
     if (str) {
         const dom = new xmldoc.XmlDocument(str);
-        const parsed = parse(dom, null);
+        const parsed = parse(dom);
         const pe = <ParsedElement>parsed.result;
         if (svgdata && "children" in svgdata) {
             svgdata.children.push(pe);
-            pe.parent = svgdata.uuid;
-            pe.isRoot = false;
             refleshContent();
         }
     }

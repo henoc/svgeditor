@@ -1,9 +1,7 @@
-import urlParse from "url-parse";
 import { uri, urlNormalizeRequest, callbacks, sendErrorMessage, informationRequest, refleshContent, imageList } from "./main";
-import memoize from "fast-memoize";
 import { ParsedElement } from "./domParser";
-import { traverse } from "./svgConstructor";
 import uuidStatic from "uuid";
+import { traverse } from "./traverse";
 
 export interface LoadedImage {
     url: string;

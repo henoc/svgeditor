@@ -8,7 +8,6 @@ import { multiShaper, shaper } from "./shapes";
 import { acceptHashOnly } from "./url";
 import { fetchPaintServer, cssString, StopReference, PaintServer } from "./paintServer";
 import { Mode } from "./modeInterface";
-import uuidStatic from "uuid";
 
 
 const CANVAS_DEFAULT_COLOR = {r: 255, g: 255, b: 255, a: 1};
@@ -107,9 +106,8 @@ class GradientComponent implements ColorComponent {
         const gradient = svgVirtualMap[this.uuid];
         if ("children" in gradient) {
             gradient.children.push({
-                uuid: uuidStatic.v4(),
+                xpath: "???",
                 tag: "stop",
-                isRoot: false,
                 parent: this.uuid,
                 attrs: {
                     offset: {unit: "%", value: 100},
@@ -394,9 +392,8 @@ class ColorPickerComponent implements WindowComponent {
         if ("children" in root) {
             const genedId = Math.random().toString(36).slice(-8);
             root.children.push({
-                uuid: uuidStatic.v4(),
-                isRoot: false,
-                parent: root.uuid,
+                xpath: "???",
+                parent: root.xpath,
                 tag: <"linearGradient">tag,
                 attrs: {
                     ...Mode.baseAttrsDefaultImpl(),
