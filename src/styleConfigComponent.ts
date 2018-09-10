@@ -452,7 +452,7 @@ export class StyleConfigComponent implements Component {
     colorPicker: ColorPickerComponent | null = null;
     fontFamily: string | null = drawState["font-family"];
     fontComponent: FontComponent | null = null;
-    private _affectedShapeUuids: OneOrMore<string> | null = null;
+    private _affectedShapes: OneOrMore<ParsedElement> | null = null;
 
     render() {
         this.scaleSelector();
@@ -472,7 +472,7 @@ export class StyleConfigComponent implements Component {
             this.fontComponent = new FontComponent(this.fontFamily, (family) => {
                 const nullableFamily = family === "no attribute" ? null : family;
                 this.fontFamily = drawState["font-family"] = nullableFamily;
-                if (this.affectedShapeUuids) multiShaper(this.affectedShapeUuids).fontFamily = nullableFamily;
+                if (this.affectedShapes) multiShaper(this.affectedShapes).fontFamily = nullableFamily;
                 refleshContent();
             }, () => {
                 this.fontComponent = null;
@@ -483,22 +483,22 @@ export class StyleConfigComponent implements Component {
         }
     }
 
-    set affectedShapeUuids(uuids: OneOrMore<string> | null) {
-        if (uuids) {
-            this.colorBoxFillBackground = multiShaper(uuids).fill;
-            this.colorBoxStrokeBackground = multiShaper(uuids).stroke;
-            this.fontFamily = multiShaper(uuids).fontFamily;
-            this._affectedShapeUuids = uuids;
+    set affectedShapes(pes: OneOrMore<ParsedElement> | null) {
+        if (pes) {
+            this.colorBoxFillBackground = multiShaper(pes).fill;
+            this.colorBoxStrokeBackground = multiShaper(pes).stroke;
+            this.fontFamily = multiShaper(pes).fontFamily;
+            this._affectedShapes = pes;
         } else {
             this.colorBoxFillBackground = drawState.fill;
             this.colorBoxStrokeBackground = drawState.stroke;
             this.fontFamily = drawState["font-family"];
-            this._affectedShapeUuids = null;
+            this._affectedShapes = null;
         }
     }
 
-    get affectedShapeUuids(): OneOrMore<string> | null {
-        return this._affectedShapeUuids;
+    get affectedShapes(): OneOrMore<ParsedElement> | null {
+        return this._affectedShapes;
     }
 
     private colorBoxRender(paint: Paint | null, relatedProperty: "fill" | "stroke") {
@@ -537,12 +537,12 @@ export class StyleConfigComponent implements Component {
                 case "fill":
                 paint = drawState.fill;
                 this.colorBoxFillBackground = drawState.fill = colorpicker.getPaint(paint && isColor(paint) && paint.format || null);
-                if (this.affectedShapeUuids) multiShaper(this.affectedShapeUuids).fill = drawState.fill;
+                if (this.affectedShapes) multiShaper(this.affectedShapes).fill = drawState.fill;
                 break;
                 case "stroke":
                 paint = drawState.stroke;
                 this.colorBoxStrokeBackground = drawState.stroke = colorpicker.getPaint(paint && isColor(paint) && paint.format || null);
-                if (this.affectedShapeUuids) multiShaper(this.affectedShapeUuids).stroke = drawState.stroke;
+                if (this.affectedShapes) multiShaper(this.affectedShapes).stroke = drawState.stroke;
                 break;
             }
             refleshContent();
@@ -586,7 +586,7 @@ export class StyleConfigComponent implements Component {
     private onChangeDisplayedContainer(event: Event) {
         const xpath = (<HTMLSelectElement>event.target).value;
         contentChildrenComponent.svgContainerComponent.displayedRootXpath = xpath;
-        editMode.mode.selectedShapeUuids = null;
+        editMode.mode.selectedShapes = null;
         refleshContent();
     }
 }

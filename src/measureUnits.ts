@@ -9,8 +9,8 @@ type AttrKind = "vertical" | "horizontal" | "font-size";
 /**
  * SVG unit converter
  */
-export function convertToPixel(length: Length, uuid: string): number {
-    const re: Element | undefined = svgRealMap[uuid];
+export function convertToPixel(length: Length, pe: ParsedElement): number {
+    const re: Element | undefined = svgRealMap[pe.uuid];
     const attrKind = getAttrKind(length.attrName);
     const font = re && getComputedStyle(re).font || "";
     
@@ -19,7 +19,7 @@ export function convertToPixel(length: Length, uuid: string): number {
         return length.value;
 
         case "%":
-        let basePx = getSvgBasePx(uuid, attrKind);
+        let basePx = getSvgBasePx(pe, attrKind);
         return basePx && (basePx * length.value / 100) || outermostPx(attrKind, re);
 
         default:
@@ -54,8 +54,8 @@ function outermostPx(attrKind: AttrKind, re: Element): number {
  * SVG unit converter
  * @param length px
  */
-export function convertFromPixel(length: Length, targetUnit: LengthUnit, uuid: string): Length {
-    const re: Element | null = svgRealMap[uuid];    
+export function convertFromPixel(length: Length, targetUnit: LengthUnit, pe: ParsedElement): Length {
+    const re: Element | null = svgRealMap[pe.uuid];    
     const font = re && getComputedStyle(re).font || "";
     const attrKind = getAttrKind(length.attrName);
     switch (targetUnit) {
@@ -67,7 +67,7 @@ export function convertFromPixel(length: Length, targetUnit: LengthUnit, uuid: s
         };
 
         case "%":
-        let basePx = getSvgBasePx(uuid, attrKind);
+        let basePx = getSvgBasePx(pe, attrKind);
         return {
             unit: "%",
             attrName: length.attrName,
@@ -89,8 +89,7 @@ function getAttrKind(name: string): AttrKind {
         "vertical";
 }
 
-function getSvgBasePx(uuid: string, attrKind: AttrKind): number | null {
-    const pe = svgVirtualMap[uuid];
+function getSvgBasePx(pe: ParsedElement, attrKind: AttrKind): number | null {
     let ownerSvgPe: ParsedElement;
     if (pe.parent && svgRealMap[pe.parent] /* current displayed elements only */ && (ownerSvgPe = svgVirtualMap[pe.parent])) {
         if (attrKind === "font-size") {
@@ -99,17 +98,17 @@ function getSvgBasePx(uuid: string, attrKind: AttrKind): number | null {
             let basePx: number = 1;
             switch (attrKind) {
                 case "horizontal":
-                basePx = convertToPixel(ownerSvgPe.attrs.width || {unit: "%", value: 100, attrName: "width"}, pe.parent);
+                basePx = convertToPixel(ownerSvgPe.attrs.width || {unit: "%", value: 100, attrName: "width"}, svgVirtualMap[pe.parent]);
                 break;
                 case "vertical":
-                basePx = convertToPixel(ownerSvgPe.attrs.height || {unit: "%", value: 100, attrName: "height"}, pe.parent);
+                basePx = convertToPixel(ownerSvgPe.attrs.height || {unit: "%", value: 100, attrName: "height"}, svgVirtualMap[pe.parent]);
                 break;
                 default: 
                 assertNever(attrKind);
             }
             return basePx;
         } else {
-            return getSvgBasePx(pe.parent, attrKind);
+            return getSvgBasePx(svgVirtualMap[pe.parent], attrKind);
         }
     }
     return null;

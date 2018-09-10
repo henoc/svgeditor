@@ -46,7 +46,7 @@ export function construct(pe: ParsedElement, options?: SvgConstructOptions, disp
         tag.attr("data-uuid", pe.uuid);
     }
     if (setListenersDepth && displayedDepth <= setListenersDepth) {
-        tag.listener("mousedown", event => onShapeMouseDown(<MouseEvent>event, pe.uuid));
+        tag.listener("mousedown", event => onShapeMouseDown(<MouseEvent>event, pe));
     }
     if (transparent) {
         // only top level
@@ -137,15 +137,15 @@ export function construct(pe: ParsedElement, options?: SvgConstructOptions, disp
             makeChildren(pe.children, tag, displayedDepth, options);
             // Click detection for groups.
             if (insertRectForGroup && svgRealMap[pe.uuid]) {
-                const leftTop = shaper(pe.uuid).leftTop;
-                const gsize = shaper(pe.uuid).size;
+                const leftTop = shaper(pe).leftTop;
+                const gsize = shaper(pe).size;
                 const dummyRect = new SvgTag("rect")
                     .uattr("x", {unit: null, value: leftTop.x, attrName: "x"})
                     .uattr("y", {unit: null, value: leftTop.y, attrName: "y"})
                     .uattr("width", {unit: null, value: gsize.x, attrName: "width"})
                     .uattr("height", {unit: null, value: gsize.y, attrName: "height"})
                     .attr("opacity", 0);
-                if (setListenersDepth) tag.listener("mousedown", event => onShapeMouseDown(<MouseEvent>event, pe.uuid));
+                if (setListenersDepth) tag.listener("mousedown", event => onShapeMouseDown(<MouseEvent>event, pe));
                 tag.children(dummyRect);
             }
             return tag;

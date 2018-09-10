@@ -11,15 +11,16 @@ import { traverse } from "./svgConstructor";
 import { applyToPoint, inverse } from "transformation-matrix";
 
 export abstract class Mode implements Component {
-    abstract onShapeMouseDownLeft(event: MouseEvent, uu: string): void;
-    abstract onShapeMouseDownRight(event: MouseEvent, uu: string): void;
+    abstract onShapeMouseDownLeft(event: MouseEvent, pe: ParsedElement): void;
+    abstract onShapeMouseDownRight(event: MouseEvent, pe: ParsedElement): void;
     abstract onDocumentMouseMove(event: MouseEvent): void;
     abstract onDocumentMouseUp(event: MouseEvent): void;
     abstract onDocumentMouseLeave(event: Event): void;
 
     onOperatorClicked(name: OperatorName): void {
-        const uuids = this.selectedShapeUuids;
-        const parent = uuids && svgVirtualMap[uuids[0]].parent;     // parent should be the same
+        const pes = this.selectedShapes;
+        const parent = pes && pes[0].parent;     // parent should be the same
+        const parentPe = parent && svgVirtualMap[parent] || null;
         switch (name) {
             case "zoomIn":
                 contentChildrenComponent.svgContainerComponent.scalePercent += 20;
@@ -37,40 +38,37 @@ export abstract class Mode implements Component {
         }
 
         // when selected
-        let parentPe: ParsedElement;
-        if (uuids && parent && (parentPe = svgVirtualMap[parent])) switch (name) {
+        if (pes && parentPe) switch (name) {
             case "duplicate":
-                const copiedUuids: string[] = [];
-                for (let uuid of uuids) {
-                    const pe = svgVirtualMap[uuid];
+                const copiedElems: ParsedElement[] = [];
+                for (let pe of pes) {
                     const copied = deepCopy(pe);
                     copied.uuid = uuidStatic.v4();
-                    copiedUuids.push(copied.uuid);
+                    copiedElems.push(copied);
                     if ("children" in parentPe) {
                         parentPe.children.push(copied);
                     }
                 }
                 refleshContent();       // make real elements
-                let tmp: null | OneOrMore<string> = null;
-                for (let copiedUuid of copiedUuids) {
-                    const fourPercentX = convertToPixel({ unit: "%", value: 4, attrName: "x" }, copiedUuid);
-                    const fourPercentY = convertToPixel({ unit: "%", value: 4, attrName: "y" }, copiedUuid);
-                    shaper(copiedUuid).move(v(fourPercentX, fourPercentY));
-                    tmp ? tmp.push(copiedUuid) : tmp = [copiedUuid];
+                let tmp: null | OneOrMore<ParsedElement> = null;
+                for (let copied of copiedElems) {
+                    const fourPercentX = convertToPixel({ unit: "%", value: 4, attrName: "x" }, copied);
+                    const fourPercentY = convertToPixel({ unit: "%", value: 4, attrName: "y" }, copied);
+                    shaper(copied).move(v(fourPercentX, fourPercentY));
+                    tmp ? tmp.push(copied) : tmp = [copied];
                 }
-                this.selectedShapeUuids = tmp;
+                this.selectedShapes = tmp;
                 break;
             case "delete":
                 if ("children" in parentPe) {
-                    parentPe.children = parentPe.children.filter(c => uuids.indexOf(c.uuid) === -1);
-                    this.selectedShapeUuids = null;
+                    parentPe.children = parentPe.children.filter(c => pes.indexOf(c) === -1);
+                    this.selectedShapes = null;
                 }
                 break;
             case "group":
                 if ("children" in parentPe) {
-                    const childrenPe = uuids.map(uu => svgVirtualMap[uu]);
                     const groupUuid = uuidStatic.v4();
-                    childrenPe.forEach(c => c.parent = groupUuid);
+                    pes.forEach(c => c.parent = groupUuid);
                     parentPe.children.push({
                         uuid: groupUuid,
                         tag: "g",
@@ -82,33 +80,33 @@ export abstract class Mode implements Component {
                             fill: null,
                             stroke: null
                         },
-                        children: childrenPe
+                        children: pes
                     });
-                    parentPe.children = parentPe.children.filter(c => uuids.indexOf(c.uuid) === -1);
+                    parentPe.children = parentPe.children.filter(c => pes.indexOf(c) === -1);
                     refleshContent();       // make real elements
-                    this.selectedShapeUuids = [groupUuid];
+                    this.selectedShapes = [svgVirtualMap[groupUuid]];
                 }
                 break;
             case "ungroup":
-                if (uuids.length === 1) {
-                    const pe = svgVirtualMap[uuids[0]];
+                if (pes.length === 1) {
+                    const pe = pes[0];
                     if (pe.tag === "g" && pe.parent) {
                         const gParent = pe.parent;
                         const parentPe = svgVirtualMap[gParent];
                         for (let c of pe.children) {
                             c.parent = gParent;
                             if ("children" in parentPe) parentPe.children.push(c);
-                            if (pe.attrs.transform) shaper(c.uuid).appendTransformDescriptors(pe.attrs.transform.descriptors, "left");
+                            if (pe.attrs.transform) shaper(c).appendTransformDescriptors(pe.attrs.transform.descriptors, "left");
                         }
                         if ("children" in parentPe) parentPe.children = parentPe.children.filter(c => c.uuid !== pe.uuid);
-                        this.selectedShapeUuids = null;
+                        this.selectedShapes = null;
                     }
                 }
                 break;
             case "bringForward":
                 traverse(svgdata, (pe, parentPe, index) => {
                     let prePe: ParsedElement;
-                    if (index !== null && index >= 1 && parentPe && (prePe = parentPe.children[index - 1]) && uuids.indexOf(pe.uuid) === -1) {
+                    if (index !== null && index >= 1 && parentPe && (prePe = parentPe.children[index - 1]) && pes.indexOf(pe) === -1) {
                         parentPe.children[index - 1] = pe;
                         parentPe.children[index] = prePe;
                     }
@@ -117,7 +115,7 @@ export abstract class Mode implements Component {
             case "sendBackward":
                 traverse(svgdata, (pe, parentPe, index) => {
                     let prePe: ParsedElement;
-                    if (index !== null && index >= 1 && parentPe && (prePe = parentPe.children[index - 1]) && uuids.indexOf(pe.uuid) !== -1) {
+                    if (index !== null && index >= 1 && parentPe && (prePe = parentPe.children[index - 1]) && pes.indexOf(pe) !== -1) {
                         parentPe.children[index - 1] = pe;
                         parentPe.children[index] = prePe;
                     }
@@ -136,7 +134,7 @@ export abstract class Mode implements Component {
                 this.align("bottom");
                 break;
             case "objectToPath":
-                if (uuids) multiShaper(uuids).toPath();
+                if (pes) multiShaper(pes).toPath();
                 break;
         }
 
@@ -156,11 +154,11 @@ export abstract class Mode implements Component {
 
     updateHandlers(): void { }
 
-    get selectedShapeUuids(): OneOrMore<string> | null {
+    get selectedShapes(): OneOrMore<ParsedElement> | null {
         return null;
     }
 
-    set selectedShapeUuids(uuids: OneOrMore<string> | null) {
+    set selectedShapes(uuids: OneOrMore<ParsedElement> | null) {
     }
 
     static baseAttrsDefaultImpl: () => ParsedBaseAttr = () => {
@@ -212,32 +210,32 @@ export abstract class Mode implements Component {
                         return ["leftBottom", "rightBottom"];
                 }
             }))();
-        if (this.selectedShapeUuids) {
+        if (this.selectedShapes) {
             let edge: number | null = null;
             const corners: { [uuid: string]: { cornerName: Corner, escapedPoint: Point } } = {};
-            for (let uuid of this.selectedShapeUuids) {
+            for (let pe of this.selectedShapes) {
                 const [nameFirst, nameSecond] = cornerNames;
-                let escapedCornerFirst = this.escapeToNormalCoordinate(shaper(uuid)[nameFirst], [uuid]);
-                let escapedCornerSecond = this.escapeToNormalCoordinate(shaper(uuid)[nameSecond], [uuid]);
+                let escapedCornerFirst = this.escapeToNormalCoordinate(shaper(pe)[nameFirst], [pe]);
+                let escapedCornerSecond = this.escapeToNormalCoordinate(shaper(pe)[nameSecond], [pe]);
                 let tmp: number;
                 if ((tmp = minOrMax(escapedCornerFirst[xOrY], escapedCornerSecond[xOrY])) === escapedCornerFirst[xOrY]) {
-                    corners[uuid] = {
+                    corners[pe.uuid] = {
                         cornerName: nameFirst,
                         escapedPoint: escapedCornerFirst
                     }
                 } else {
-                    corners[uuid] = {
+                    corners[pe.uuid] = {
                         cornerName: nameSecond,
                         escapedPoint: escapedCornerSecond
                     }
                 }
                 edge = edge !== null && minOrMax(tmp, edge) || tmp;
             }
-            if (edge !== null) for (let uuid of this.selectedShapeUuids) {
-                const cornersData = corners[uuid];
+            if (edge !== null) for (let pe of this.selectedShapes) {
+                const cornersData = corners[pe.uuid];
                 cornersData.escapedPoint[xOrY] = edge;
-                const targetCorner = this.inTargetCoordinate(cornersData.escapedPoint, [uuid]);
-                shaper(uuid)[cornersData.cornerName] = vfp(targetCorner);
+                const targetCorner = this.inTargetCoordinate(cornersData.escapedPoint, [pe]);
+                shaper(pe)[cornersData.cornerName] = vfp(targetCorner);
             }
         }
     }
@@ -245,11 +243,11 @@ export abstract class Mode implements Component {
     /**
      * Transform a (mouse) point into that in coordinate of a target shape by inverse mapping.
      */
-    inTargetCoordinate(point: Point, targetUuids: OneOrMore<string>): Point {
-        return applyToPoint(inverse(multiShaper(targetUuids).allTransform()), point);
+    inTargetCoordinate(point: Point, targets: OneOrMore<ParsedElement>): Point {
+        return applyToPoint(inverse(multiShaper(targets).allTransform()), point);
     }
 
-    escapeToNormalCoordinate(point: Point, targetUuids: OneOrMore<string>): Point {
-        return applyToPoint(multiShaper(targetUuids).allTransform(), point);
+    escapeToNormalCoordinate(point: Point, targets: OneOrMore<ParsedElement>): Point {
+        return applyToPoint(multiShaper(targets).allTransform(), point);
     }
 }

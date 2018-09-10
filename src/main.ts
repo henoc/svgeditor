@@ -100,7 +100,7 @@ window.addEventListener("message", event => {
             if (message.data.collectTransform !== undefined) configuration.collectTransform = message.data.collectTransform;
             break;
         case "input-response":
-            textMode(message.data, (uu: string | null) => contentChildrenComponent.menuListComponent.menuComponents.text.changeMode("select", uu || undefined));
+            textMode(message.data, (pe: ParsedElement | null) => contentChildrenComponent.menuListComponent.menuComponents.text.changeMode("select", pe || undefined));
             break;
         case "fontList-response":
             fontList = message.data;
@@ -112,7 +112,7 @@ window.addEventListener("message", event => {
                 case "object to path":
                 if (result === "yes") {
                     shaper(args[0]).toPath();
-                    editMode.mode.selectedShapeUuids = [args[0]];
+                    editMode.mode.selectedShapes = [args[0]];
                     refleshContent();
                 }
                 break;

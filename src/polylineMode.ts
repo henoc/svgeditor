@@ -9,28 +9,27 @@ import { applyToPoint, inverse } from "transformation-matrix";
 
 export class PolylineMode extends Mode {
 
-    makeTargetUuid: string | null = null;
+    makeTarget: ParsedElement | null = null;
     readonly shapeHandlers: SvgTag[] = [];
 
-    constructor(public finished?: (uu: string | null) => void) {super()}
+    constructor(public finished?: (pe: ParsedElement | null) => void) {super()}
 
-    onShapeMouseDownLeft(event: MouseEvent, uu: string): void {
-        if (svgVirtualMap[uu].isRoot) {
-            const root = svgVirtualMap[uu];
+    onShapeMouseDownLeft(event: MouseEvent, pe: ParsedElement): void {
+        if (pe.isRoot) {
+            const root = pe;
             event.stopPropagation();
-            const cursor = vfp(this.inTargetCoordinate(this.cursor(event), [uu]));
+            const cursor = vfp(this.inTargetCoordinate(this.cursor(event), [pe]));
             if (root.tag === "svg") {
-                if (this.makeTargetUuid) {
-                    const pe = svgVirtualMap[this.makeTargetUuid];
+                if (this.makeTarget) {
+                    const pe = this.makeTarget;
                     if (pe.tag === "polyline" && pe.attrs.points) {
                         pe.attrs.points.push(cursor);
                     }
                 } else {
-                    this.makeTargetUuid = uuidStatic.v4();
-                    const pe: ParsedElement = {
-                        uuid: this.makeTargetUuid,
+                    const pe2: ParsedElement = {
+                        uuid: uuidStatic.v4(),
                         isRoot: false,
-                        parent: uu,
+                        parent: pe.uuid,
                         tag: "polyline",
                         attrs: {
                             points: [cursor, cursor],
@@ -38,27 +37,28 @@ export class PolylineMode extends Mode {
                             ...Mode.presentationAttrsDefaultImpl()
                         }
                     }
-                    root.children.push(pe);
+                    this.makeTarget = pe2;
+                    root.children.push(pe2);
                     refleshContent();
-                    shaper(this.makeTargetUuid).center = cursor;
+                    shaper(this.makeTarget).center = cursor;
                 }
                 refleshContent();
             }
         }
     }
-    onShapeMouseDownRight(event: MouseEvent, uu: string): void {
-        if (this.makeTargetUuid) {
-            const pe = svgVirtualMap[this.makeTargetUuid];
+    onShapeMouseDownRight(event: MouseEvent, pe: ParsedElement): void {
+        if (this.makeTarget) {
+            const pe = this.makeTarget;
             if (pe.tag === "polyline" && pe.attrs.points) {
                 pe.attrs.points.pop();
-                this.finished && this.finished(this.makeTargetUuid);
+                this.finished && this.finished(this.makeTarget);
             }
         }
     }
     onDocumentMouseMove(event: MouseEvent): void {
-        if (this.makeTargetUuid) {
-            const cursor = vfp(this.inTargetCoordinate(this.cursor(event), [this.makeTargetUuid]));
-            const pe = svgVirtualMap[this.makeTargetUuid];
+        if (this.makeTarget) {
+            const cursor = vfp(this.inTargetCoordinate(this.cursor(event), [this.makeTarget]));
+            const pe = this.makeTarget;
             if (pe.tag === "polyline" && pe.attrs.points) {
                 const len = pe.attrs.points.length;
                 pe.attrs.points[len - 1] = cursor;
