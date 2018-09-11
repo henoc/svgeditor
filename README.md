@@ -2,7 +2,7 @@
 
 ![sample](images/capture.png)
 
-**ver 2.4**: Set keybindings, support `<iamge/>` 🎼
+**ver 2.4**: Set keybindings, support `<image/>` 🎼
 
 Now your VSCode can mutate to an interactive visual & literal SVG editor 😎
 
@@ -47,6 +47,10 @@ You can create shapes using the SVG's coder or directly creating shapes with the
 |align bottom|ctrl+alt+numpad2|
 |align top|ctrl+alt+numpad8|
 |object to path|shift+ctrl+c|
+|rotate clockwise|ctrl+]|
+|rotate counterclockwise|ctrl+[|
+|rotate clockwise by the angle step|]|
+|rotate counterclockwise by the angle step|[|
 
 ## Current support tags and attributes
 
@@ -58,6 +62,7 @@ You can create shapes using the SVG's coder or directly creating shapes with the
 - path: d, `<presentation attributes>`
 - text: x, y, dx, dy, textLength, lengthAdjust, `<presentation attributes>`
 - g: `<presentation attributes>`
+- defs: `<presentation attributes>`
 - linearGradient: `<presentation attributes>`
 - radialGradient: `<presentation attributes>`
 - stop: offset, stop-color, `<presentation attributes>`

@@ -3,6 +3,7 @@
 - 2.5.0
   - Fix bugs of nested svg
   - Support defs
+  - Add operations and keybindings: rotate ±90, rotate ±15
 - 2.4.0
   - Support image
   - Set keybindings for commands
