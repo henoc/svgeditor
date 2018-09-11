@@ -192,14 +192,6 @@ export function construct(pe: ParsedElement, options?: SvgConstructOptions, disp
     }
 }
 
-function depth(pe: ParsedElement): number {
-    if (pe.parent) {
-        return depth(xfindExn([svgdata], pe.parent)) + 1;
-    } else {
-        return 0;
-    }
-}
-
 function setBaseAttrs(baseAttr: ParsedBaseAttr, tag: SvgTag) {
     tag.attr("id", baseAttr.id);
     if (baseAttr.class) tag.class(...baseAttr.class);

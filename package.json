@@ -2,7 +2,7 @@
   "name": "svgeditor",
   "displayName": "SVG Editor",
   "description": "Visual and literal SVG editor for VSCode.",
-  "version": "2.4.0",
+  "version": "2.5.0",
   "publisher": "henoc",
   "icon": "images/svgeditor.png",
   "galleryBanner": {
