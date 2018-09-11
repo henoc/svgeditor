@@ -12,10 +12,10 @@ import { ParsedElement } from "./domParser";
 
 export type ModeName = "select" | "node" | "rect" | "ellipse" | "polyline" | "path" | "text";
 export type OperatorName = "duplicate" | "delete" | "zoomIn" | "zoomOut" | "group" | "ungroup" | "font" | "bringForward" | "sendBackward" |
-    "alignLeft" | "alignRight" | "alignBottom" | "alignTop" | "objectToPath";
+    "alignLeft" | "alignRight" | "alignBottom" | "alignTop" | "objectToPath" | "rotateClockwise" | "rotateCounterclockwise" | "rotateClockwiseByTheAngleStep" | "rotateCounterclockwiseByTheAngleStep";
 
 export const operatorNames: OperatorName[] = ["duplicate" , "delete" , "zoomIn" , "zoomOut" , "group" , "ungroup" , "font" , "bringForward" , "sendBackward" ,
-    "alignLeft" , "alignRight" , "alignBottom" , "alignTop" , "objectToPath"];
+    "alignLeft" , "alignRight" , "alignBottom" , "alignTop" , "objectToPath", "rotateClockwise", "rotateCounterclockwise", "rotateClockwiseByTheAngleStep", "rotateCounterclockwiseByTheAngleStep"];
 
 class MenuComponent implements Component {
 
@@ -82,6 +82,7 @@ export class MenuListComponent implements Component {
         el`/ul`;
         el`ul`;
         for (let name of operatorNames) {
+            if (name === "rotateClockwiseByTheAngleStep" || name === "rotateCounterclockwiseByTheAngleStep") continue;      // no icon operations
             iconComponent(name, `#svgeditor-icon-${name}`, (event: Event) => {
                 event.stopPropagation();
                 editMode.mode.onOperatorClicked(name);

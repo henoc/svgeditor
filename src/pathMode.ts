@@ -1,7 +1,7 @@
 import { drawState, refleshContent } from "./main";
 import { ParsedElement } from "./domParser";
 import { v } from "./utils";
-import { Mode } from "./modeInterface";
+import { Mode } from "./abstractMode";
 import { SvgTag } from "./svg";
 import { applyToPoint, inverse } from "transformation-matrix";
 import { shaper } from "./shapes";

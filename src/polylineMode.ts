@@ -2,7 +2,7 @@ import { refleshContent, configuration, svgRealMap, drawState } from "./main";
 import { ParsedElement } from "./domParser";
 import { v, vfp } from "./utils";
 import { shaper } from "./shapes";
-import { Mode } from "./modeInterface";
+import { Mode } from "./abstractMode";
 import { SvgTag } from "./svg";
 import { applyToPoint, inverse } from "transformation-matrix";
 

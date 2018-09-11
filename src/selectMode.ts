@@ -2,7 +2,7 @@ import { refleshContent, svgRealMap, sendBackToEditor, configuration, svgdata, c
 import { Vec2, v, vfp, assertNever, deepCopy, OneOrMore, iterate, el } from "./utils";
 import { shaper, multiShaper } from "./shapes";
 import { SvgTag } from "./svg";
-import { Mode } from "./modeInterface";
+import { Mode } from "./abstractMode";
 import { toString } from "transformation-matrix";
 import { ParsedElement } from "./domParser";
 import { appendDescriptorsLeft, scale2 } from "./transformHelpers";
@@ -89,8 +89,8 @@ export class SelectMode extends Mode {
     }
     onDocumentMouseUp() {
         if (this._selectedShapes && configuration.collectTransform) {
-            for (let pes of this._selectedShapes) {
-                shaper(pes).transform = shaper(pes).transform;
+            for (let pe of this._selectedShapes) if ("transform" in pe.attrs) {
+                shaper(pe).transform = shaper(pe).transform;
             }
         }
         this.isDraggingShape = false;

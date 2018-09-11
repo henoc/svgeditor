@@ -136,6 +136,28 @@
         "key": "shift+ctrl+c",
         "mac": "shift+cmd+c",
         "when": "svgeditorWebviewFocus"
+      },
+      {
+        "command": "svgeditor.rotateClockwise",
+        "key": "ctrl+]",
+        "mac": "cmd+]",
+        "when": "svgeditorWebviewFocus"
+      },
+      {
+        "command": "svgeditor.rotateCounterclockwise",
+        "key": "ctrl+[",
+        "mac": "cmd+[",
+        "when": "svgeditorWebviewFocus"
+      },
+      {
+        "command": "svgeditor.rotateClockwiseByTheAngleStep",
+        "key": "]",
+        "when": "svgeditorWebviewFocus"
+      },
+      {
+        "command": "svgeditor.rotateCounterclockwiseByTheAngleStep",
+        "key": "[",
+        "when": "svgeditorWebviewFocus"
       }
     ],
     "configuration": {

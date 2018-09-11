@@ -3,7 +3,7 @@ import { SvgTag } from "./svg";
 import { svgPathManager } from "./pathHelpers";
 import { Vec2, v, vfp, OneOrMore } from "./utils";
 import { PathCommand, ParsedElement } from "./domParser";
-import { Mode } from "./modeInterface";
+import { Mode } from "./abstractMode";
 import { applyToPoint, inverse, toString } from "transformation-matrix";
 import { shaper } from "./shapes";
 import { scale2 } from "./transformHelpers";

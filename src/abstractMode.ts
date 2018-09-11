@@ -131,7 +131,19 @@ export abstract class Mode implements Component {
                 this.align("bottom");
                 break;
             case "objectToPath":
-                if (pes) multiShaper(pes).toPath();
+                multiShaper(pes).toPath();
+                break;
+            case "rotateClockwise":
+                multiShaper(pes).rotate(90);
+                break;
+            case "rotateCounterclockwise":
+                multiShaper(pes).rotate(-90);
+                break;
+            case "rotateClockwiseByTheAngleStep":
+                multiShaper(pes).rotate(15);
+                break;
+            case "rotateCounterclockwiseByTheAngleStep":
+                multiShaper(pes).rotate(-15);
                 break;
         }
 

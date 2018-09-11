@@ -7,7 +7,7 @@ import { el, OneOrMore, iterate, assertNever, cursor } from "./utils";
 import { multiShaper, shaper } from "./shapes";
 import { acceptHashOnly } from "./url";
 import { fetchPaintServer, cssString, StopReference, PaintServer } from "./paintServer";
-import { Mode } from "./modeInterface";
+import { Mode } from "./abstractMode";
 import { xfindExn } from "./xpath";
 
 

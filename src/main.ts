@@ -1,7 +1,7 @@
 import { construct } from "./svgConstructor";
 import { ParsedElement, isLengthUnit, LengthUnit, Paint } from "./domParser";
 import { onDocumentMouseMove, onDocumentMouseUp, onDocumentClick, onDocumentMouseLeave, onDocumentCopy, onDocumentCut, onDocumentPaste } from "./triggers";
-import { Mode } from "./modeInterface";
+import { Mode } from "./abstractMode";
 import { SelectMode } from "./selectMode";
 import { textMode } from "./textMode";
 import { patch } from "incremental-dom";

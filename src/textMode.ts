@@ -1,4 +1,4 @@
-import { Mode } from "./modeInterface";
+import { Mode } from "./abstractMode";
 import { svgdata, configuration, refleshContent, drawState } from "./main";
 import { ParsedElement } from "./domParser";
 import { shaper } from "./shapes";
