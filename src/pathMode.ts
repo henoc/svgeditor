@@ -1,5 +1,4 @@
-import { svgVirtualMap, drawState, refleshContent } from "./main";
-import uuidStatic from "uuid";
+import { drawState, refleshContent } from "./main";
 import { ParsedElement } from "./domParser";
 import { v } from "./utils";
 import { Mode } from "./modeInterface";
@@ -10,24 +9,22 @@ import { shaper } from "./shapes";
 export class PathMode extends Mode {
 
     isDragging: boolean = false;
-    makeTargetUuid: string | null = null;
+    makeTarget: ParsedElement | null = null;
     readonly shapeHandlers: SvgTag[] = [];
 
-    constructor(public finished?: (uu: string | null) => void) {super()}
+    constructor(public finished?: (pe: ParsedElement | null) => void) {super()}
 
-    onShapeMouseDownLeft(event: MouseEvent, uu: string): void {
-        if (svgVirtualMap[uu].isRoot) {
-            let {x: cx, y: cy} = this.inTargetCoordinate(this.cursor(event), [uu]);
-            const root = svgVirtualMap[uu];
+    onShapeMouseDownLeft(event: MouseEvent, pe: ParsedElement): void {
+        if (pe.parent === null) {
+            let {x: cx, y: cy} = this.inTargetCoordinate(this.cursor(event), [pe]);
+            const root = pe;
             event.stopPropagation();
             this.isDragging = true;
             if (root.tag === "svg") {
-                if (this.makeTargetUuid === null) {
-                    this.makeTargetUuid = uuidStatic.v4();
-                    const pe: ParsedElement = {
-                        uuid: this.makeTargetUuid,
-                        isRoot: false,
-                        parent: uu,
+                if (this.makeTarget === null) {
+                    const pe2: ParsedElement = {
+                        xpath: "???",
+                        parent: pe.xpath,
                         tag: "path",
                         attrs: {
                             d: [
@@ -41,10 +38,11 @@ export class PathMode extends Mode {
                             ...Mode.presentationAttrsDefaultImpl()
                         }
                     };
-                    root.children.push(pe);
+                    this.makeTarget = pe2;
+                    root.children.push(pe2);
                     refleshContent();
                 } else {
-                    const pe = svgVirtualMap[this.makeTargetUuid];
+                    const pe = this.makeTarget;
                     if (pe.tag === "path" && pe.attrs.d) {
                         // insert new S command in second of the d
                         pe.attrs.d.splice(1, 0, ["S", cx, cy, cx, cy]);
@@ -54,32 +52,32 @@ export class PathMode extends Mode {
             }
         }
     }
-    onShapeMouseDownRight(event: MouseEvent, uu: string): void {
-        const root = svgVirtualMap[uu];
-        if (this.makeTargetUuid && root.isRoot && root.tag === "svg") {
-            const pe = svgVirtualMap[this.makeTargetUuid];
-            if (pe.tag === "path" && pe.attrs.d) {
+    onShapeMouseDownRight(event: MouseEvent, pe: ParsedElement): void {
+        const root = pe;
+        if (this.makeTarget && root.parent === null && root.tag === "svg") {
+            const target = this.makeTarget;
+            if (target.tag === "path" && target.attrs.d) {
                 // delete second S command and modify new second S command to C command if exists
                 const secondS = 1;
-                const secondSEndCtrl = v(pe.attrs.d[secondS][1], pe.attrs.d[secondS][2]);
-                const secondSEnd = v(pe.attrs.d[secondS][3], pe.attrs.d[secondS][4]);
+                const secondSEndCtrl = v(target.attrs.d[secondS][1], target.attrs.d[secondS][2]);
+                const secondSEnd = v(target.attrs.d[secondS][3], target.attrs.d[secondS][4]);
                 const newCStartCtrl = secondSEndCtrl.symmetry(secondSEnd);
-                pe.attrs.d.splice(1, 1);
-                if (pe.attrs.d.length <= 1) {
+                target.attrs.d.splice(1, 1);
+                if (target.attrs.d.length <= 1) {
                     root.children.pop();
                 } else {
-                    const [preCmdName, ...preArgs] = pe.attrs.d[1];
-                    pe.attrs.d[1] = ["C", newCStartCtrl.x, newCStartCtrl.y, ...preArgs];
-                    pe.attrs.d[0] = ["M", secondSEnd.x, secondSEnd.y];
+                    const [preCmdName, ...preArgs] = target.attrs.d[1];
+                    target.attrs.d[1] = ["C", newCStartCtrl.x, newCStartCtrl.y, ...preArgs];
+                    target.attrs.d[0] = ["M", secondSEnd.x, secondSEnd.y];
                 }
-                this.finished && this.finished(this.makeTargetUuid);
+                this.finished && this.finished(this.makeTarget);
             }
         }
     }
     onDocumentMouseMove(event: MouseEvent): void {
-        if (this.makeTargetUuid) {
-            let {x: cx, y: cy} = this.inTargetCoordinate(this.cursor(event), [this.makeTargetUuid]);
-            const pe = svgVirtualMap[this.makeTargetUuid];
+        if (this.makeTarget) {
+            let {x: cx, y: cy} = this.inTargetCoordinate(this.cursor(event), [this.makeTarget]);
+            const pe = this.makeTarget;
             if (pe.tag === "path" && pe.attrs.d) {
                 const topM = 0;
                 const secondS = 1;

@@ -8,6 +8,7 @@ import { EllipseMode } from "./ellipseMode";
 import { PolylineMode } from "./polylineMode";
 import { PathMode } from "./pathMode";
 import { assertNever, el, iterate } from "./utils";
+import { ParsedElement } from "./domParser";
 
 export type ModeName = "select" | "node" | "rect" | "ellipse" | "polyline" | "path" | "text";
 export type OperatorName = "duplicate" | "delete" | "zoomIn" | "zoomOut" | "group" | "ungroup" | "font" | "bringForward" | "sendBackward" |
@@ -28,25 +29,25 @@ class MenuComponent implements Component {
         el`/li`;
     }
 
-    changeMode(name: ModeName, initialUuid?: string) {
+    changeMode(name: ModeName, initial?: ParsedElement) {
         switch (name) {
             case "select":
-            editMode.mode = new SelectMode(initialUuid);
+            editMode.mode = new SelectMode(initial);
             break;
             case "node":
-            editMode.mode = new NodeMode(initialUuid);
+            editMode.mode = new NodeMode(initial);
             break;
             case "rect":
-            editMode.mode = new RectMode((uu: string | null) => this.changeMode("select", uu || undefined));
+            editMode.mode = new RectMode((pe: ParsedElement | null) => this.changeMode("select", pe || undefined));
             break;
             case "ellipse":
-            editMode.mode = new EllipseMode((uu: string | null) => this.changeMode("select", uu || undefined));
+            editMode.mode = new EllipseMode((pe: ParsedElement | null) => this.changeMode("select", pe || undefined));
             break;
             case "polyline":
-            editMode.mode = new PolylineMode((uu: string | null) => this.changeMode("node", uu || undefined));
+            editMode.mode = new PolylineMode((pe: ParsedElement | null) => this.changeMode("node", pe || undefined));
             break;
             case "path":
-            editMode.mode = new PathMode((uu: string | null) => this.changeMode("node", uu || undefined));
+            editMode.mode = new PathMode((pe: ParsedElement | null) => this.changeMode("node", pe || undefined));
             break;
             case "text":
             inputRequest("text");

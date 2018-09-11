@@ -1,18 +1,15 @@
 import { Mode } from "./modeInterface";
 import { svgdata, configuration, refleshContent, drawState } from "./main";
 import { ParsedElement } from "./domParser";
-import uuidStatic from "uuid";
 import { shaper } from "./shapes";
 
-export function textMode(inputText: string | undefined, isfinished: (uu: string | null) => void) {
+export function textMode(inputText: string | undefined, isfinished: (pe: ParsedElement | null) => void) {
     if (inputText) {
         const root = svgdata;
         if (root.tag === "svg") {
-            const uuid = uuidStatic.v4();
             const pe: ParsedElement = {
-                uuid,
-                isRoot: false,
-                parent: root.uuid,
+                xpath: "???",
+                parent: root.xpath,
                 tag: "text",
                 attrs: {
                     x: {unit: configuration.defaultUnit, value: 0, attrName: "x"},
@@ -29,9 +26,9 @@ export function textMode(inputText: string | undefined, isfinished: (uu: string 
             };
             root.children.push(pe);
             refleshContent();   // make real Element
-            shaper(uuid).center = shaper(root.uuid).center;
+            shaper(pe).center = shaper(root).center;
             refleshContent();
-            isfinished(uuid);
+            isfinished(pe);
         }
     }
     else isfinished(null);

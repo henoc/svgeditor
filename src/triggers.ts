@@ -1,13 +1,15 @@
-import { editMode, openWindows, contentChildrenComponent, svgVirtualMap, refleshContent, svgdata } from "./main";
+import { editMode, openWindows, contentChildrenComponent, refleshContent, svgdata } from "./main";
 import { iterate } from "./utils";
 import { construct } from "./svgConstructor";
 import { ParsedElement, parse } from "./domParser";
 import * as xmldoc from "xmldoc";
+import { updateXPaths } from "./traverse";
+import { xfindExn } from "./xpath";
 const format = require('xml-formatter');
 
-export function onShapeMouseDown(event: MouseEvent, uu: string) {
-    if (event.button === 0) editMode.mode.onShapeMouseDownLeft(event, uu);
-    else if (event.button === 2) editMode.mode.onShapeMouseDownRight(event, uu);
+export function onShapeMouseDown(event: MouseEvent, pe: ParsedElement) {
+    if (event.button === 0) editMode.mode.onShapeMouseDownLeft(event, pe);
+    else if (event.button === 2) editMode.mode.onShapeMouseDownRight(event, pe);
 }
 
 export function onDocumentMouseMove(event: MouseEvent) {
@@ -62,12 +64,10 @@ export function onDocumentPaste(event: Event) {
 
     if (str) {
         const dom = new xmldoc.XmlDocument(str);
-        const parsed = parse(dom, null);
+        const parsed = parse(dom);
         const pe = <ParsedElement>parsed.result;
         if (svgdata && "children" in svgdata) {
             svgdata.children.push(pe);
-            pe.parent = svgdata.uuid;
-            pe.isRoot = false;
             refleshContent();
         }
     }
@@ -75,13 +75,13 @@ export function onDocumentPaste(event: Event) {
 }
 
 function copy(clipboardData: DataTransfer, isCut: boolean = false) {
-    if (editMode.mode.selectedShapeUuids) {
-        const uuids = editMode.mode.selectedShapeUuids;
-        const parent = svgVirtualMap[uuids[0]].parent;
-        const parentPe = parent && svgVirtualMap[parent] || null;
+    if (editMode.mode.selectedShapes) {
+        const pes = editMode.mode.selectedShapes;
+        const parent = pes[0].parent;
+        const parentPe = parent && xfindExn([svgdata], parent) || null;
         if (parentPe && "children" in parentPe) {
-            const orderedPes = parentPe.children.filter(c => uuids.indexOf(c.uuid) !== -1);
-            if (isCut) parentPe.children = parentPe.children.filter(c => uuids.indexOf(c.uuid) === -1);
+            const orderedPes = parentPe.children.filter(c => pes.indexOf(c) !== -1);
+            if (isCut) parentPe.children = parentPe.children.filter(c => pes.indexOf(c) === -1);
             const str = orderedPes.map(pe => {
                 const svgTag = construct(pe);
                 return svgTag ? svgTag.toString() : "";
@@ -90,7 +90,7 @@ function copy(clipboardData: DataTransfer, isCut: boolean = false) {
             clipboardData.setData("image/svg+xml", formattedStr);
             clipboardData.setData("application/xml", formattedStr);
             clipboardData.setData("text/plain", formattedStr);
-            editMode.mode.selectedShapeUuids = null;
+            editMode.mode.selectedShapes = null;
             refleshContent();
         }
     }

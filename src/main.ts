@@ -1,4 +1,4 @@
-import { construct, makeUuidVirtualMap, makeUuidRealMap, makeIdUuidMap } from "./svgConstructor";
+import { construct } from "./svgConstructor";
 import { ParsedElement, isLengthUnit, LengthUnit, Paint } from "./domParser";
 import { onDocumentMouseMove, onDocumentMouseUp, onDocumentClick, onDocumentMouseLeave, onDocumentCopy, onDocumentCut, onDocumentPaste } from "./triggers";
 import { Mode } from "./modeInterface";
@@ -13,6 +13,9 @@ import { el } from "./utils";
 import { collectPaintServer } from "./paintServer";
 import { shaper } from "./shapes";
 import { LoadedImage, collectImages } from "./imageHelpters";
+import { collectContainer } from "./containerElement";
+import { makeIdXpathMap, makeXpathRealMap, updateXPaths } from "./traverse";
+import { xfind } from "./xpath";
 
 declare function acquireVsCodeApi(): any;
 
@@ -20,11 +23,11 @@ const vscode = acquireVsCodeApi();
 
 // global variables
 export let svgdata: ParsedElement;
-export let svgVirtualMap: { [uu: string]: ParsedElement } = {};
-export let svgRealMap: { [uu: string]: Element } = {};
-export let svgIdUuidMap: { [id: string]: string} = {};          // id -> uuid
+export let svgRealMap: { [xpath: string]: Element } = {};
+export let svgIdXpathMap: { [id: string]: string} = {};          // id -> xpath
 export const editMode: {mode: Mode} = {mode: new SelectMode()};
 export let paintServers: { [id: string] : ParsedElement } = {};
+export let containerElements: string[] = [];    // xpath list
 export const openWindows: { [id: string]: WindowComponent } = {};
 export let fontList: { [family: string]: string[] /* subFamiles */ } | null = null;
 export const uri: string = document.getElementById("svgeditor-uri")!.innerText;       // target file uri, ex: file:///home/henoc/document/sample.svg
@@ -98,7 +101,7 @@ window.addEventListener("message", event => {
             if (message.data.collectTransform !== undefined) configuration.collectTransform = message.data.collectTransform;
             break;
         case "input-response":
-            textMode(message.data, (uu: string | null) => contentChildrenComponent.menuListComponent.menuComponents.text.changeMode("select", uu || undefined));
+            textMode(message.data, (pe: ParsedElement | null) => contentChildrenComponent.menuListComponent.menuComponents.text.changeMode("select", pe || undefined));
             break;
         case "fontList-response":
             fontList = message.data;
@@ -107,10 +110,11 @@ window.addEventListener("message", event => {
         case "information-response":
             const {result, kind, args} = message.data;
             switch (kind) {
-                case "object to path":
+                case "objectToPath":
                 if (result === "yes") {
-                    shaper(args[0]).toPath();
-                    editMode.mode.selectedShapeUuids = [args[0]];
+                    const pe = xfind([svgdata], args[0])!;
+                    shaper(pe).toPath();
+                    editMode.mode.selectedShapes = [pe];
                     refleshContent();
                 }
                 break;
@@ -143,13 +147,14 @@ document.addEventListener("paste", onDocumentPaste);
 // exported functions
 
 export function refleshContent() {
-    svgIdUuidMap = makeIdUuidMap(svgdata);
-    svgVirtualMap = makeUuidVirtualMap(svgdata);
+    updateXPaths(svgdata);
+    svgIdXpathMap = makeIdXpathMap(svgdata);
     paintServers = collectPaintServer(svgdata);
+    containerElements = collectContainer(svgdata);
     patch(content, () => contentChildrenComponent.render());
 
-    let transparentSvgRoot = document.querySelector("svg[data-root]");
-    svgRealMap = transparentSvgRoot ? makeUuidRealMap(transparentSvgRoot) : {};
+    let substanceSvgRoot = document.querySelector("svg[data-root]");
+    svgRealMap = substanceSvgRoot ? makeXpathRealMap(substanceSvgRoot) : {};
     patch(content, () => contentChildrenComponent.render());        // 2nd render with updated svgRealMap (dummy rect for g tag)
 }
 

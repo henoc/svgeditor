@@ -1,6 +1,5 @@
-import { svgVirtualMap, refleshContent, configuration, svgRealMap, drawState } from "./main";
+import { refleshContent, configuration, svgRealMap, drawState } from "./main";
 import { Vec2, v, vfp } from "./utils";
-import uuidStatic from "uuid";
 import { ParsedElement } from "./domParser";
 import { shaper } from "./shapes";
 import { Mode } from "./modeInterface";
@@ -11,23 +10,21 @@ export class RectMode extends Mode {
 
     isDragging: boolean = false;
     startCursorPos: Vec2 | null = null;
-    dragTargetUuid: string | null = null;
+    dragTarget: ParsedElement | null = null;
     readonly shapeHandlers: SvgTag[] = [];
 
-    constructor(public finished?: (uu: string | null) => void) {super()}
+    constructor(public finished?: (pe: ParsedElement | null) => void) {super()}
 
-    onShapeMouseDownLeft(event: MouseEvent, uu: string): void {
-        if (svgVirtualMap[uu].isRoot) {
-            const root = svgVirtualMap[uu];
+    onShapeMouseDownLeft(event: MouseEvent, pe: ParsedElement): void {
+        if (pe.parent === null) {
+            const root = pe;
             event.stopPropagation();
             this.isDragging = true;
-            this.startCursorPos = vfp(this.inTargetCoordinate(this.cursor(event), [uu]));
-            this.dragTargetUuid = uuidStatic.v4();
+            this.startCursorPos = vfp(this.inTargetCoordinate(this.cursor(event), [pe]));
             if (root.tag === "svg") {
-                const pe: ParsedElement = {
-                    uuid: this.dragTargetUuid,
-                    isRoot: false,
-                    parent: uu,
+                const pe2: ParsedElement = {
+                    xpath: "???",
+                    parent: pe.xpath,
                     tag: "rect",
                     attrs: {
                         x: {unit: configuration.defaultUnit, value: 0, attrName: "x"},
@@ -40,28 +37,29 @@ export class RectMode extends Mode {
                         ...Mode.presentationAttrsDefaultImpl()
                     },
                 };
-                root.children.push(pe);
+                this.dragTarget = pe2;
+                root.children.push(pe2);
                 refleshContent();   // make real Element
-                shaper(this.dragTargetUuid).leftTop = this.startCursorPos;
+                shaper(this.dragTarget).leftTop = this.startCursorPos;
                 refleshContent();
             }
         }
     }
-    onShapeMouseDownRight(event: MouseEvent, uu: string): void {
+    onShapeMouseDownRight(event: MouseEvent, pe: ParsedElement): void {
         
     }
     onDocumentMouseMove(event: MouseEvent): void {
-        if (this.isDragging && this.startCursorPos && this.dragTargetUuid) {
-            const {x: cx, y: cy} = this.inTargetCoordinate(this.cursor(event), [this.dragTargetUuid])
+        if (this.isDragging && this.startCursorPos && this.dragTarget) {
+            const {x: cx, y: cy} = this.inTargetCoordinate(this.cursor(event), [this.dragTarget])
             const leftTop = v(Math.min(cx, this.startCursorPos.x), Math.min(cy, this.startCursorPos.y));
             const size = v(Math.abs(cx - this.startCursorPos.x), Math.abs(cy - this.startCursorPos.y));
-            shaper(this.dragTargetUuid).size = size;
-            shaper(this.dragTargetUuid).leftTop = leftTop;
+            shaper(this.dragTarget).size = size;
+            shaper(this.dragTarget).leftTop = leftTop;
             refleshContent();
         }
     }
     onDocumentMouseUp(): void {
-        this.finished && this.finished(this.dragTargetUuid);
+        this.finished && this.finished(this.dragTarget);
     }
     onDocumentMouseLeave(event: Event): void {
         this.onDocumentMouseUp();

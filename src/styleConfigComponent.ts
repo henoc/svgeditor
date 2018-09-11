@@ -1,5 +1,5 @@
 import { elementOpen, elementClose, text, elementVoid } from "incremental-dom";
-import { drawState, refleshContent, openWindows, contentChildrenComponent, editMode, fontList, svgIdUuidMap, paintServers, svgVirtualMap, svgdata } from "./main";
+import { drawState, refleshContent, openWindows, contentChildrenComponent, editMode, fontList, svgIdXpathMap, paintServers, svgdata, containerElements } from "./main";
 import { Paint, ColorFormat, isColor, isFuncIRI, ParsedElement } from "./domParser";
 import tinycolor from "tinycolor2";
 import { Component, WindowComponent, ButtonComponent, iconComponent } from "./component";
@@ -8,7 +8,7 @@ import { multiShaper, shaper } from "./shapes";
 import { acceptHashOnly } from "./url";
 import { fetchPaintServer, cssString, StopReference, PaintServer } from "./paintServer";
 import { Mode } from "./modeInterface";
-import uuidStatic from "uuid";
+import { xfindExn } from "./xpath";
 
 
 const CANVAS_DEFAULT_COLOR = {r: 255, g: 255, b: 255, a: 1};
@@ -22,20 +22,20 @@ interface ColorComponent extends Component {
 
 class GradientComponent implements ColorComponent {
 
-    activeRangeRefUuid: string | null;
+    activeRangeRefXpath: string | null;
     canvasComponent: ColorPickerCanvasComponent | null = null;
     addStopButton: ButtonComponent;
 
-    constructor(private uuid: string) {
-        const paintServer = fetchPaintServer(uuid)!;
-        this.activeRangeRefUuid = paintServer.stops.length > 0 ? paintServer.stops[0].uuid : null;
+    constructor(private xpath: string) {
+        const paintServer = fetchPaintServer(xpath)!;
+        this.activeRangeRefXpath = paintServer.stops.length > 0 ? paintServer.stops[0].xpath : null;
         this.setCanvas();
         this.addStopButton = new ButtonComponent("new stop", "svgeditor-new-stop", () => this.onNewStopClicked());
     }
 
     setCanvas() {
         let pe: ParsedElement;
-        if (this.activeRangeRefUuid && (pe = svgVirtualMap[this.activeRangeRefUuid]) && "stop-color" in pe.attrs) {
+        if (this.activeRangeRefXpath && (pe = xfindExn([svgdata], this.activeRangeRefXpath)) && "stop-color" in pe.attrs) {
             const initialStopColor = pe.attrs["stop-color"];
             const initialColor = initialStopColor && isColor(initialStopColor) && initialStopColor || CANVAS_DEFAULT_COLOR;
             this.canvasComponent = new ColorPickerCanvasComponent(200, 100, tinycolor(initialColor), () => this.onCanvasChange());
@@ -43,7 +43,7 @@ class GradientComponent implements ColorComponent {
     }
 
     render(): void {
-        const paintServer = fetchPaintServer(this.uuid)!;
+        const paintServer = fetchPaintServer(this.xpath)!;
         el`div style="display: inline-block; vertical-align: top; margin: 6px;"`;
         for (let i = 0; i < paintServer.stops.length; i++) {
             const stop = paintServer.stops[i];
@@ -56,7 +56,7 @@ class GradientComponent implements ColorComponent {
                 }
                 `);
             el`/style`;
-            el`input :key=${stop.uuid} *type="range" value=${stop.offset.value} *class=${`svgeditor-stop${i}`} *min="0" *max="100" *onclick=${(event: Event) => this.onRangeChange(event, stop.uuid)} *onchange=${(event: Event) => this.onRangeChange(event, stop.uuid)} /`;
+            el`input :key=${stop.xpath} *type="range" value=${stop.offset.value} *class=${`svgeditor-stop${i}`} *min="0" *max="100" *onclick=${(event: Event) => this.onRangeChange(event, stop.xpath)} *onchange=${(event: Event) => this.onRangeChange(event, stop.xpath)} /`;
         }
         this.addStopButton.render();
         el`/div`;
@@ -79,12 +79,12 @@ class GradientComponent implements ColorComponent {
         if (this.canvasComponent) this.canvasComponent.dragCancel();
     }
 
-    onRangeChange(event: Event, uuid: string) {
+    onRangeChange(event: Event, xpath: string) {
         const value = Number((<HTMLInputElement>event.target).value);
         let pe: ParsedElement;
-        if ((pe = svgVirtualMap[uuid]) && "offset" in pe.attrs) {
+        if ((pe = xfindExn([svgdata], xpath)) && "offset" in pe.attrs) {
             pe.attrs.offset = typeof pe.attrs.offset === "number" ? value / 100 : {unit: "%", value};
-            this.activeRangeRefUuid = uuid;
+            this.activeRangeRefXpath = xpath;
             this.setCanvas();
         }
         refleshContent();
@@ -94,7 +94,7 @@ class GradientComponent implements ColorComponent {
         if (this.canvasComponent) {
             const tcolor = this.canvasComponent.getColor();
             let pe: ParsedElement;
-            if (this.activeRangeRefUuid && (pe = svgVirtualMap[this.activeRangeRefUuid]) && "stop-color" in pe.attrs) {
+            if (this.activeRangeRefXpath && (pe = xfindExn([svgdata], this.activeRangeRefXpath)) && "stop-color" in pe.attrs) {
                 const currentColor = pe.attrs["stop-color"];
                 if (currentColor && isColor(currentColor)) pe.attrs["stop-color"] = {format: currentColor.format, ...tcolor.toRgb()};
                 else pe.attrs["stop-color"] = {format: "rgb", ...tcolor.toRgb()};
@@ -104,13 +104,12 @@ class GradientComponent implements ColorComponent {
     }
 
     onNewStopClicked() {
-        const gradient = svgVirtualMap[this.uuid];
+        const gradient = xfindExn([svgdata], this.xpath);
         if ("children" in gradient) {
             gradient.children.push({
-                uuid: uuidStatic.v4(),
+                xpath: "???",
                 tag: "stop",
-                isRoot: false,
-                parent: this.uuid,
+                parent: this.xpath,
                 attrs: {
                     offset: {unit: "%", value: 100},
                     "stop-color": {format: "rgb", ...CANVAS_DEFAULT_COLOR},
@@ -374,13 +373,13 @@ class ColorPickerComponent implements WindowComponent {
         if (this.selectorValue === "color") {
             this.colorComponent = new ColorPickerCanvasComponent(200, 100, tinycolor(paint && isColor(paint) && paint || CANVAS_DEFAULT_COLOR), () => this.onChange(this));
         } else if (tmp = this.selectorValue.match(/^url\(#([^\(]+)\)$/)) {
-            const uuid = svgIdUuidMap[tmp[1]];
-            const paintServer = fetchPaintServer(uuid);
+            const xpath = svgIdXpathMap[tmp[1]];
+            const paintServer = fetchPaintServer(xpath);
             if (paintServer) {
                 switch (paintServer.kind) {
                     case "linearGradient":
                     case "radialGradient":
-                    this.colorComponent = new GradientComponent(uuid);
+                    this.colorComponent = new GradientComponent(xpath);
                     break;
                 }
             }
@@ -394,9 +393,8 @@ class ColorPickerComponent implements WindowComponent {
         if ("children" in root) {
             const genedId = Math.random().toString(36).slice(-8);
             root.children.push({
-                uuid: uuidStatic.v4(),
-                isRoot: false,
-                parent: root.uuid,
+                xpath: "???",
+                parent: root.xpath,
                 tag: <"linearGradient">tag,
                 attrs: {
                     ...Mode.baseAttrsDefaultImpl(),
@@ -452,10 +450,11 @@ export class StyleConfigComponent implements Component {
     colorPicker: ColorPickerComponent | null = null;
     fontFamily: string | null = drawState["font-family"];
     fontComponent: FontComponent | null = null;
-    private _affectedShapeUuids: OneOrMore<string> | null = null;
+    private _affectedShapes: OneOrMore<ParsedElement> | null = null;
 
     render() {
         this.scaleSelector();
+        this.containerSelector();
         el`span *class="svgeditor-bold"`;
         text(" fill: ");
         this.colorBoxRender(this.colorBoxFillBackground, "fill");
@@ -471,7 +470,7 @@ export class StyleConfigComponent implements Component {
             this.fontComponent = new FontComponent(this.fontFamily, (family) => {
                 const nullableFamily = family === "no attribute" ? null : family;
                 this.fontFamily = drawState["font-family"] = nullableFamily;
-                if (this.affectedShapeUuids) multiShaper(this.affectedShapeUuids).fontFamily = nullableFamily;
+                if (this.affectedShapes) multiShaper(this.affectedShapes).fontFamily = nullableFamily;
                 refleshContent();
             }, () => {
                 this.fontComponent = null;
@@ -482,22 +481,22 @@ export class StyleConfigComponent implements Component {
         }
     }
 
-    set affectedShapeUuids(uuids: OneOrMore<string> | null) {
-        if (uuids) {
-            this.colorBoxFillBackground = multiShaper(uuids).fill;
-            this.colorBoxStrokeBackground = multiShaper(uuids).stroke;
-            this.fontFamily = multiShaper(uuids).fontFamily;
-            this._affectedShapeUuids = uuids;
+    set affectedShapes(pes: OneOrMore<ParsedElement> | null) {
+        if (pes) {
+            this.colorBoxFillBackground = multiShaper(pes).fill;
+            this.colorBoxStrokeBackground = multiShaper(pes).stroke;
+            this.fontFamily = multiShaper(pes).fontFamily;
+            this._affectedShapes = pes;
         } else {
             this.colorBoxFillBackground = drawState.fill;
             this.colorBoxStrokeBackground = drawState.stroke;
             this.fontFamily = drawState["font-family"];
-            this._affectedShapeUuids = null;
+            this._affectedShapes = null;
         }
     }
 
-    get affectedShapeUuids(): OneOrMore<string> | null {
-        return this._affectedShapeUuids;
+    get affectedShapes(): OneOrMore<ParsedElement> | null {
+        return this._affectedShapes;
     }
 
     private colorBoxRender(paint: Paint | null, relatedProperty: "fill" | "stroke") {
@@ -510,8 +509,8 @@ export class StyleConfigComponent implements Component {
                 style.background = tinycolor(paint).toString("rgb");
             } else {
                 const idValue = acceptHashOnly(paint.url);
-                if (idValue && svgIdUuidMap[idValue]) {
-                    const pserver = fetchPaintServer(svgIdUuidMap[idValue]);
+                if (idValue && svgIdXpathMap[idValue]) {
+                    const pserver = fetchPaintServer(svgIdXpathMap[idValue]);
                     if (pserver) style.background = cssString(pserver);
                 }
             }
@@ -536,12 +535,12 @@ export class StyleConfigComponent implements Component {
                 case "fill":
                 paint = drawState.fill;
                 this.colorBoxFillBackground = drawState.fill = colorpicker.getPaint(paint && isColor(paint) && paint.format || null);
-                if (this.affectedShapeUuids) multiShaper(this.affectedShapeUuids).fill = drawState.fill;
+                if (this.affectedShapes) multiShaper(this.affectedShapes).fill = drawState.fill;
                 break;
                 case "stroke":
                 paint = drawState.stroke;
                 this.colorBoxStrokeBackground = drawState.stroke = colorpicker.getPaint(paint && isColor(paint) && paint.format || null);
-                if (this.affectedShapeUuids) multiShaper(this.affectedShapeUuids).stroke = drawState.stroke;
+                if (this.affectedShapes) multiShaper(this.affectedShapes).stroke = drawState.stroke;
                 break;
             }
             refleshContent();
@@ -569,6 +568,23 @@ export class StyleConfigComponent implements Component {
         const percent = Number((<HTMLSelectElement>event.target).value);
         contentChildrenComponent.svgContainerComponent.scalePercent = percent;
         editMode.mode.updateHandlers();
+        refleshContent();
+    }
+
+    private containerSelector() {
+        el`select :key="container-selector" *onchange=${(event: Event) => this.onChangeDisplayedContainer(event)}`;
+        for (let xpath of containerElements) {
+            el`option value=${xpath}`;
+            text(xpath);
+            el`/option`;
+        }
+        el`/select`;
+    }
+
+    private onChangeDisplayedContainer(event: Event) {
+        const xpath = (<HTMLSelectElement>event.target).value;
+        contentChildrenComponent.svgContainerComponent.displayedRootXpath = xpath;
+        editMode.mode.selectedShapes = null;
         refleshContent();
     }
 }

@@ -2,11 +2,12 @@ import { ParsedElement, Length, Transform, isLength, TransformDescriptor, Paint,
 import { Vec2, v, vfp, OneOrMore, Merger } from "./utils";
 import { svgPathManager } from "./pathHelpers";
 import { convertToPixel, convertFromPixel } from "./measureUnits";
-import { svgVirtualMap, svgRealMap, configuration, imageList } from "./main";
+import { svgRealMap, configuration, imageList, svgdata } from "./main";
 import { identity, transform, scale, translate, rotate, rotateDEG, applyToPoint, inverse } from "transformation-matrix";
 import { appendDescriptor, replaceLastDescriptor, descriptorToMatrix, appendDescriptorsLeft, translateDescriptor, scaleDescriptor, rotateDescriptor, appendDescriptorLeft, appendDescriptors } from "./transformHelpers";
 import { font } from "./fontHelpers";
 import equal from "fast-deep-equal";
+import { xfindExn } from "./xpath";
 
 interface ShaperFunctions {
     center: Vec2;
@@ -28,19 +29,16 @@ interface ShaperFunctions {
 }
 
 /**
- * Transform some shapes. Need to set the shape into `svgVirtualMap` and `svgRealMap` before use.
+ * Transform some shapes. Need `svgRealMap` (optional, Actually needed shape is `text`) before use.
  */
-export function shaper(uuid: string): ShaperFunctions {
-    const pe = svgVirtualMap[uuid];
-    const re = svgRealMap[uuid];
-    const styleDeclaration = getComputedStyle(re);
+export function shaper(pe: ParsedElement): ShaperFunctions {
 
     const px = (unitValue: Length | null, defaultNumber: number = 0) => {
-        return unitValue ? convertToPixel(unitValue, uuid) : defaultNumber;
+        return unitValue ? convertToPixel(unitValue, pe) : defaultNumber;
     }
     const fromPx = (unitValue: Length | null, attrName: string, pxValue: number): Length => {
         return unitValue ?
-            convertFromPixel({ unit: "px", attrName, value: pxValue }, unitValue.unit, uuid) :
+            convertFromPixel({ unit: "px", attrName, value: pxValue }, unitValue.unit, pe) :
             { value: pxValue, unit: null, attrName };
     }
     const leftTop = {
@@ -112,7 +110,7 @@ export function shaper(uuid: string): ShaperFunctions {
         }
     }
     const presentationAttrs = new Merger(fill).merge(stroke).merge(fontFamily).object;
-    const self = () => shaper(uuid);
+    const self = () => shaper(pe);
     const size2 = (newSize: Vec2, fixedPoint: Vec2) => {
         let oldSize = self().size;
         let center = self().center;
@@ -130,7 +128,7 @@ export function shaper(uuid: string): ShaperFunctions {
     }
     const allTransform = () => {
         if (pe.parent) {
-            const past = shaper(pe.parent).allTransform();
+            const past = shaper(xfindExn([svgdata], pe.parent)).allTransform();
             return transform(past, self().transform);
         } else {
             return self().transform;
@@ -189,8 +187,8 @@ export function shaper(uuid: string): ShaperFunctions {
                 },
                 size2,
                 get transform() {
-                    const w = attrs.width && convertToPixel(attrs.width, uuid);
-                    const h = attrs.height && convertToPixel(attrs.height, uuid);
+                    const w = attrs.width && convertToPixel(attrs.width, pe);
+                    const h = attrs.height && convertToPixel(attrs.height, pe);
                     const viewBox = attrs.viewBox;
                     if (viewBox && w && h && w !== 0 && h !== 0) {
                         const vw = viewBox[1].x - viewBox[0].x;
@@ -212,13 +210,13 @@ export function shaper(uuid: string): ShaperFunctions {
                 allTransform,
                 appendTransformDescriptors: (descriptors: TransformDescriptor[], from: "left" | "right") => {
                     for (let c of pe.children) {
-                        shaper(c.uuid).appendTransformDescriptors(descriptors, from);
+                        shaper(c).appendTransformDescriptors(descriptors, from);
                     }
                 },
                 rotate: () => undefined,
                 toPath() {
                     for (let c of pe.children) {
-                        shaper(c.uuid).toPath();
+                        shaper(c).toPath();
                     }
                 }
             }).merge(corners).merge(presentationAttrs).object;
@@ -509,6 +507,8 @@ export function shaper(uuid: string): ShaperFunctions {
                 rotate: rotateCenter
             }).merge(corners).merge(presentationAttrs).merge(transformProps).object;
         case "text":
+            const re = svgRealMap[pe.xpath];
+            const styleDeclaration = getComputedStyle(re);
             const fontInfo = font(pe.text || "", styleDeclaration.fontFamily || "", parseFloat(styleDeclaration.fontSize || "16"), styleDeclaration.fontWeight || "", styleDeclaration.fontStyle || "");
             const tattrs = pe.attrs;
             return new Merger({
@@ -556,6 +556,7 @@ export function shaper(uuid: string): ShaperFunctions {
                 rotate: rotateCenter
             }).merge(corners).merge(presentationAttrs).merge(transformProps).object;
         case "g":
+        case "defs":        // Need to use transform.
             const gattrs = pe.attrs;
             const gchildren = pe.children;
             return new Merger({
@@ -563,18 +564,18 @@ export function shaper(uuid: string): ShaperFunctions {
                     const oldCenter = self().center;
                     const newCenter = oldCenter.add(diff);
                     for (let c of pe.children) if (hasEntity(c)) {
-                        const oldInC = intoTargetCoordinate(oldCenter, c.uuid);
-                        const newInC = intoTargetCoordinate(newCenter, c.uuid);
-                        shaper(c.uuid).move(newInC.sub(oldInC));
+                        const oldInC = intoTargetCoordinate(oldCenter, c);
+                        const newInC = intoTargetCoordinate(newCenter, c);
+                        shaper(c).move(newInC.sub(oldInC));
                     }
                 },
                 get center() {
                     let [minX, minY, maxX, maxY] = <(null | number)[]>[null, null, null, null];
                     for (let c of gchildren) if (hasEntity(c)) {
-                        const leftTop = shaper(c.uuid).leftTop;
-                        const size = shaper(c.uuid).size;
+                        const leftTop = shaper(c).leftTop;
+                        const size = shaper(c).size;
                         for (let corner of [leftTop, leftTop.add(v(size.x, 0)), leftTop.add(v(0, size.y)), leftTop.add(size)]) {
-                            const cornerInGroup = escapeFromTargetCoordinate(corner, c.uuid);
+                            const cornerInGroup = escapeFromTargetCoordinate(corner, c);
                             if (minX === null || minX > cornerInGroup.x) minX = cornerInGroup.x;
                             if (minY === null || minY > cornerInGroup.y) minY = cornerInGroup.y;
                             if (maxX === null || maxX < cornerInGroup.x) maxX = cornerInGroup.x;
@@ -591,10 +592,10 @@ export function shaper(uuid: string): ShaperFunctions {
                     type Four<T> = [T, T, T, T];
                     let [minX, minY, maxX, maxY] = <Four<null | number>>[null, null, null, null];
                     for (let c of gchildren) if (hasEntity(c)) {
-                        const leftTop = shaper(c.uuid).leftTop;
-                        const size = shaper(c.uuid).size;
+                        const leftTop = shaper(c).leftTop;
+                        const size = shaper(c).size;
                         for (let corner of [leftTop, leftTop.add(v(size.x, 0)), leftTop.add(v(0, size.y)), leftTop.add(size)]) {
-                            const cornerInGroup = escapeFromTargetCoordinate(corner, c.uuid);
+                            const cornerInGroup = escapeFromTargetCoordinate(corner, c);
                             if (minX === null || minX > cornerInGroup.x) minX = cornerInGroup.x;
                             if (minY === null || minY > cornerInGroup.y) minY = cornerInGroup.y;
                             if (maxX === null || maxX < cornerInGroup.x) maxX = cornerInGroup.x;
@@ -609,20 +610,20 @@ export function shaper(uuid: string): ShaperFunctions {
                         return Math.sqrt(Math.pow(end.x - start.x, 2) + Math.pow(end.y - start.y, 2));
                     }
                     for (let c of gchildren) if(hasEntity(c)) {
-                        const preLeftTop = multiShaper([c.uuid], true).leftTop;
-                        const preRectSize = multiShaper([c.uuid], true).size;
+                        const preLeftTop = multiShaper([c], true).leftTop;
+                        const preRectSize = multiShaper([c], true).size;
                         const preXLine = [preLeftTop, preLeftTop.add(v(preRectSize.x, 0))];
                         const preYLine = [preLeftTop, preLeftTop.add(v(0, preRectSize.y))];
-                        const leftTop = multiShaper([c.uuid], true).leftTop;
+                        const leftTop = multiShaper([c], true).leftTop;
                         const rectSize = preRectSize.mul(globalRatio);
                         const xLine = [leftTop, leftTop.add(v(rectSize.x, 0))];
                         const yLine = [leftTop, leftTop.add(v(0, rectSize.y))];
-                        const preXLineInC = preXLine.map(p => intoTargetCoordinate(p, c.uuid));
-                        const preYLineInC = preYLine.map(p => intoTargetCoordinate(p, c.uuid));
-                        const xLineInC = xLine.map(p => intoTargetCoordinate(p, c.uuid));
-                        const yLineInC = yLine.map(p => intoTargetCoordinate(p, c.uuid));
+                        const preXLineInC = preXLine.map(p => intoTargetCoordinate(p, c));
+                        const preYLineInC = preYLine.map(p => intoTargetCoordinate(p, c));
+                        const xLineInC = xLine.map(p => intoTargetCoordinate(p, c));
+                        const yLineInC = yLine.map(p => intoTargetCoordinate(p, c));
                         const ratioInC = v(lineLength(xLineInC) / lineLength(preXLineInC), lineLength(yLineInC) / lineLength(preYLineInC));
-                        const center = shaper(c.uuid).center;
+                        const center = shaper(c).center;
                         if (c.tag !== "unknown" && "transform" in c.attrs) {
                             if (c.attrs.transform === null) c.attrs.transform = { descriptors: [], matrices: [] };
                             appendDescriptorsLeft(c.attrs.transform,
@@ -636,19 +637,19 @@ export function shaper(uuid: string): ShaperFunctions {
                 size2: (newSize: Vec2, fixedPoint: Vec2) => {
                     let oldSize = self().size;
                     let oldCenter = self().center;
-                    const oldCenterOfCs = gchildren.map(pe => escapeFromTargetCoordinate(shaper(pe.uuid).center, pe.uuid));
+                    const oldCenterOfCs = gchildren.map(pe => escapeFromTargetCoordinate(shaper(pe).center, pe));
                     const oldCenterOfCsFromOldCenter = oldCenterOfCs.map(c => c.sub(oldCenter));
                     self().size = newSize;
                     let diff = oldSize.sub(newSize).div(v(2, 2)).mul(v(fixedPoint.x - oldCenter.x > 0 ? 1 : -1, fixedPoint.y - oldCenter.y > 0 ? 1 : -1));
                     const newCenter = diff.add(oldCenter);
                     for (let i = 0; i < gchildren.length; i++) if (hasEntity(gchildren[i])) {
                         const diffCenterOfC = oldCenterOfCsFromOldCenter[i].mul(newSize.div(oldSize));
-                        shaper(gchildren[i].uuid).center = intoTargetCoordinate(newCenter.add(diffCenterOfC), gchildren[i].uuid);
+                        shaper(gchildren[i]).center = intoTargetCoordinate(newCenter.add(diffCenterOfC), gchildren[i]);
                     }
                 },
                 toPath() {
                     for (let c of gchildren) if (hasEntity(c)) {
-                        shaper(c.uuid).toPath();
+                        shaper(c).toPath();
                     }
                 },
                 allTransform,
@@ -719,15 +720,15 @@ export function shaper(uuid: string): ShaperFunctions {
 }
 
 /**
- * @param uuids All shapes must have the same parent.
+ * @param pes All shapes must have the same parent.
  */
-export function multiShaper(uuids: OneOrMore<string>, useMultiEvenIfSingle: boolean = false): ShaperFunctions {
-    if (uuids.length === 1 && !useMultiEvenIfSingle) {
-        return shaper(uuids[0]);
+export function multiShaper(pes: OneOrMore<ParsedElement>, useMultiEvenIfSingle: boolean = false): ShaperFunctions {
+    if (pes.length === 1 && !useMultiEvenIfSingle) {
+        return shaper(pes[0]);
     } else {
-        const pes = uuids.map(uuid => svgVirtualMap[uuid]);
-        const commonParent = pes[0].parent;
-        const self = () => multiShaper(uuids);
+        const parent = pes[0].parent;
+        const commonParent = parent && xfindExn([svgdata], parent) || null;
+        const self = () => multiShaper(pes);
         const leftTop = {
             get leftTop() {
                 const cent = self().center;
@@ -817,18 +818,18 @@ export function multiShaper(uuids: OneOrMore<string>, useMultiEvenIfSingle: bool
                 const oldCenter = self().center;
                 const newCenter = oldCenter.add(diff);
                 for (let c of pes) if (hasEntity(c)) {
-                    const oldInC = intoTargetCoordinate(oldCenter, c.uuid);
-                    const newInC = intoTargetCoordinate(newCenter, c.uuid);
-                    shaper(c.uuid).move(newInC.sub(oldInC));
+                    const oldInC = intoTargetCoordinate(oldCenter, c);
+                    const newInC = intoTargetCoordinate(newCenter, c);
+                    shaper(c).move(newInC.sub(oldInC));
                 }
             },
             get center() {
                 let [minX, minY, maxX, maxY] = <(null | number)[]>[null, null, null, null];
                 for (let c of pes) if (hasEntity(c)) {
-                    const leftTop = shaper(c.uuid).leftTop;
-                    const size = shaper(c.uuid).size;
+                    const leftTop = shaper(c).leftTop;
+                    const size = shaper(c).size;
                     for (let corner of [leftTop, leftTop.add(v(size.x, 0)), leftTop.add(v(0, size.y)), leftTop.add(size)]) {
-                        const cornerInGroup = escapeFromTargetCoordinate(corner, c.uuid);
+                        const cornerInGroup = escapeFromTargetCoordinate(corner, c);
                         if (minX === null || minX > cornerInGroup.x) minX = cornerInGroup.x;
                         if (minY === null || minY > cornerInGroup.y) minY = cornerInGroup.y;
                         if (maxX === null || maxX < cornerInGroup.x) maxX = cornerInGroup.x;
@@ -845,10 +846,10 @@ export function multiShaper(uuids: OneOrMore<string>, useMultiEvenIfSingle: bool
                 type Four<T> = [T, T, T, T];
                 let [minX, minY, maxX, maxY] = <Four<null | number>>[null, null, null, null];
                 for (let c of pes) if (hasEntity(c)) {
-                    const leftTop = shaper(c.uuid).leftTop;
-                    const size = shaper(c.uuid).size;
+                    const leftTop = shaper(c).leftTop;
+                    const size = shaper(c).size;
                     for (let corner of [leftTop, leftTop.add(v(size.x, 0)), leftTop.add(v(0, size.y)), leftTop.add(size)]) {
-                        const cornerInGroup = escapeFromTargetCoordinate(corner, c.uuid);
+                        const cornerInGroup = escapeFromTargetCoordinate(corner, c);
                         if (minX === null || minX > cornerInGroup.x) minX = cornerInGroup.x;
                         if (minY === null || minY > cornerInGroup.y) minY = cornerInGroup.y;
                         if (maxX === null || maxX < cornerInGroup.x) maxX = cornerInGroup.x;
@@ -863,20 +864,20 @@ export function multiShaper(uuids: OneOrMore<string>, useMultiEvenIfSingle: bool
                     return Math.sqrt(Math.pow(end.x - start.x, 2) + Math.pow(end.y - start.y, 2));
                 }
                 for (let c of pes) if(hasEntity(c)) {
-                    const preLeftTop = multiShaper([c.uuid], true).leftTop;
-                    const preRectSize = multiShaper([c.uuid], true).size;
+                    const preLeftTop = multiShaper([c], true).leftTop;
+                    const preRectSize = multiShaper([c], true).size;
                     const preXLine = [preLeftTop, preLeftTop.add(v(preRectSize.x, 0))];
                     const preYLine = [preLeftTop, preLeftTop.add(v(0, preRectSize.y))];
-                    const leftTop = multiShaper([c.uuid], true).leftTop;
+                    const leftTop = multiShaper([c], true).leftTop;
                     const rectSize = preRectSize.mul(globalRatio);
                     const xLine = [leftTop, leftTop.add(v(rectSize.x, 0))];
                     const yLine = [leftTop, leftTop.add(v(0, rectSize.y))];
-                    const preXLineInC = preXLine.map(p => intoTargetCoordinate(p, c.uuid));
-                    const preYLineInC = preYLine.map(p => intoTargetCoordinate(p, c.uuid));
-                    const xLineInC = xLine.map(p => intoTargetCoordinate(p, c.uuid));
-                    const yLineInC = yLine.map(p => intoTargetCoordinate(p, c.uuid));
+                    const preXLineInC = preXLine.map(p => intoTargetCoordinate(p, c));
+                    const preYLineInC = preYLine.map(p => intoTargetCoordinate(p, c));
+                    const xLineInC = xLine.map(p => intoTargetCoordinate(p, c));
+                    const yLineInC = yLine.map(p => intoTargetCoordinate(p, c));
                     const ratioInC = v(lineLength(xLineInC) / lineLength(preXLineInC), lineLength(yLineInC) / lineLength(preYLineInC));
-                    const center = shaper(c.uuid).center;
+                    const center = shaper(c).center;
                     if (c.tag !== "unknown" && "transform" in c.attrs) {
                         if (c.attrs.transform === null) c.attrs.transform = { descriptors: [], matrices: [] };
                         appendDescriptorsLeft(c.attrs.transform,
@@ -909,35 +910,35 @@ export function multiShaper(uuids: OneOrMore<string>, useMultiEvenIfSingle: bool
             size2: (newSize: Vec2, fixedPoint: Vec2) => {
                 let oldSize = self().size;
                 let oldCenter = self().center;
-                const oldCenterOfCs = pes.map(pe => escapeFromTargetCoordinate(shaper(pe.uuid).center, pe.uuid));
+                const oldCenterOfCs = pes.map(pe => escapeFromTargetCoordinate(shaper(pe).center, pe));
                 const oldCenterOfCsFromOldCenter = oldCenterOfCs.map(c => c.sub(oldCenter));
                 self().size = newSize;
                 let diff = oldSize.sub(newSize).div(v(2, 2)).mul(v(fixedPoint.x - oldCenter.x > 0 ? 1 : -1, fixedPoint.y - oldCenter.y > 0 ? 1 : -1));
                 const newCenter = diff.add(oldCenter);
-                for (let i = 0; i < uuids.length; i++) if(hasEntity(pes[i])) {
+                for (let i = 0; i < pes.length; i++) if(hasEntity(pes[i])) {
                     const diffCenterOfC = oldCenterOfCsFromOldCenter[i].mul(newSize.div(oldSize));
-                    shaper(uuids[i]).center = intoTargetCoordinate(newCenter.add(diffCenterOfC), uuids[i]);
+                    shaper(pes[i]).center = intoTargetCoordinate(newCenter.add(diffCenterOfC), pes[i]);
                 }
             },
             appendTransformDescriptors: (descriptors: TransformDescriptor[], from: "left" | "right") => {
                 for (let c of pes) if(hasEntity(c)) {
-                    shaper(c.uuid).appendTransformDescriptors(descriptors, from);
+                    shaper(c).appendTransformDescriptors(descriptors, from);
                 }
             },
             toPath() {
                 for (let c of pes) if(hasEntity(c)) {
-                    shaper(c.uuid).toPath();
+                    shaper(c).toPath();
                 }
             }
         }).merge(corners).merge(presentationAttrs).object;
     }
 }
 
-function intoTargetCoordinate(point: Vec2, targetUuid: string) {
-    return vfp(applyToPoint(inverse(shaper(targetUuid).transform), point));
+function intoTargetCoordinate(point: Vec2, target: ParsedElement) {
+    return vfp(applyToPoint(inverse(shaper(target).transform), point));
 }
-function escapeFromTargetCoordinate(point: Vec2, targetUuid: string) {
-    return vfp(applyToPoint(shaper(targetUuid).transform, point));
+function escapeFromTargetCoordinate(point: Vec2, target: ParsedElement) {
+    return vfp(applyToPoint(shaper(target).transform, point));
 }
 
 function hasEntity(pe: ParsedElement) {

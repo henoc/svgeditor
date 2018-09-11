@@ -1,7 +1,6 @@
 import * as xmldoc from "xmldoc";
 import { iterate, Vec2, v, objectValues, Some, Option, None } from "./utils";
 import { Assoc } from "./svg";
-import uuidStatic from "uuid";
 import tinycolor from "tinycolor2";
 import { svgPathManager } from "./pathHelpers";
 import { SetDifference, Omit } from "utility-types";
@@ -31,17 +30,22 @@ export type ParsedElement = (
     ParsedRadialGradientElement |
     ParsedStopElement |
     ParsedImageElement |
+    ParsedDefsElement |
     ParsedUnknownElement
 ) & {
-    uuid: string;
-    isRoot: boolean;
+    xpath: string;
     parent: string | null;
 }
 
-interface ParsedSvgElement {
-    tag: "svg",
-    attrs: ParsedSvgAttr,
+interface ContainerElementClass {
     children: ParsedElement[]
+}
+
+type GradientElementClass = ContainerElementClass
+
+interface ParsedSvgElement extends ContainerElementClass {
+    tag: "svg",
+    attrs: ParsedSvgAttr
 }
 
 interface ParsedCircleElement {
@@ -80,22 +84,19 @@ interface ParsedTextElement {
     text: string | null
 }
 
-interface ParsedGroupElement {
+interface ParsedGroupElement extends ContainerElementClass {
     tag: "g",
-    attrs: ParsedGroupAttr,
-    children: ParsedElement[]
+    attrs: ParsedGroupAttr
 }
 
-interface ParsedLinearGradientElement {
+interface ParsedLinearGradientElement extends GradientElementClass {
     tag: "linearGradient",
-    attrs: ParsedLinearGradientAttr,
-    children: ParsedElement[]
+    attrs: ParsedLinearGradientAttr
 }
 
-interface ParsedRadialGradientElement {
+interface ParsedRadialGradientElement extends GradientElementClass {
     tag: "radialGradient",
-    attrs: ParsedRadialGradientAttr,
-    children: ParsedElement[]
+    attrs: ParsedRadialGradientAttr
 }
 
 interface ParsedStopElement {
@@ -106,6 +107,11 @@ interface ParsedStopElement {
 interface ParsedImageElement {
     tag: "image";
     attrs: ParsedImageAttr;
+}
+
+interface ParsedDefsElement extends ContainerElementClass {
+    tag: "defs",
+    attrs: ParsedDefsAttr
 }
 
 interface ParsedUnknownElement {
@@ -204,6 +210,9 @@ interface ParsedImageAttr extends ParsedBaseAttr, ParsedPresentationAttr {
     y: Length | null;
     width: Length | null;
     height: Length | null;
+}
+
+interface ParsedDefsAttr extends ParsedBaseAttr, ParsedPresentationAttr {
 }
 
 export type LengthUnit = "em" | "ex" | "px" | "in" | "cm" | "mm" | "pt" | "pc" | "%" | null;
@@ -324,58 +333,61 @@ export function isRatio(obj: Object): obj is Ratio {
     return typeof obj === "number" || (obj instanceof Object && "unit" in obj && "value" in obj);
 }
 
-export function parse(element: xmldoc.XmlElement, parent: string | null): ParsedResult {
-    const uuid = uuidStatic.v4();
-    const isRoot = parent === null;
+export function parse(element: xmldoc.XmlElement): ParsedResult {
+    const xpath = "???";
+    const parent = "???";
     const warns: Warning[] = [];
     const pushWarns = (warn: Warning | Warning[]) => {
         if (Array.isArray(warn)) warns.push(...warn);
         else warns.push(warn);
     }
-    const children = parseChildren(element, pushWarns, uuid);
+    const children = parseChildren(element, pushWarns, xpath);
     const text = element.val;
     if (element.name === "svg") {
         const attrs = parseAttrs(element, pushWarns).svg();
-        return {result: {tag: "svg", attrs, children, uuid, parent, isRoot}, warns};
+        return {result: {tag: "svg", attrs, children, xpath, parent}, warns};
     } else if (element.name === "circle") {
         const attrs = parseAttrs(element, pushWarns).circle();
-        return {result: {tag: "circle", attrs, uuid, parent, isRoot}, warns};
+        return {result: {tag: "circle", attrs, xpath, parent}, warns};
     } else if (element.name === "rect") {
         const attrs = parseAttrs(element, pushWarns).rect();
-        return {result: {tag: "rect", attrs, uuid, parent, isRoot}, warns};
+        return {result: {tag: "rect", attrs, xpath, parent}, warns};
     } else if (element.name === "ellipse") {
         const attrs = parseAttrs(element, pushWarns).ellipse();
-        return {result: {tag: "ellipse", attrs, uuid, parent, isRoot}, warns};
+        return {result: {tag: "ellipse", attrs, xpath, parent}, warns};
     } else if (element.name === "polyline") {
         const attrs = parseAttrs(element, pushWarns).polyline();
-        return {result: {tag: "polyline", attrs, uuid, parent, isRoot}, warns};
+        return {result: {tag: "polyline", attrs, xpath, parent}, warns};
     } else if (element.name === "polygon") {
         const attrs = parseAttrs(element, pushWarns).polyline();
-        return {result: {tag: "polygon", attrs, uuid, parent, isRoot}, warns};
+        return {result: {tag: "polygon", attrs, xpath, parent}, warns};
     } else if (element.name === "path") {
         const attrs = parseAttrs(element, pushWarns).path();
-        return {result: {tag: "path", attrs, uuid, parent, isRoot}, warns};
+        return {result: {tag: "path", attrs, xpath, parent}, warns};
     } else if (element.name === "text") {
         const attrs = parseAttrs(element, pushWarns).text();
-        return {result: {tag: "text", attrs, uuid, parent, isRoot, text}, warns};
+        return {result: {tag: "text", attrs, xpath, parent, text}, warns};
     } else if (element.name === "g") {
         const attrs = parseAttrs(element, pushWarns).g();
-        return {result: {tag: "g", attrs, children, uuid, parent, isRoot}, warns};
+        return {result: {tag: "g", attrs, children, xpath, parent}, warns};
     } else if (element.name === "linearGradient") {
         const attrs = parseAttrs(element, pushWarns).linearGradient();
-        return {result: {tag: "linearGradient", attrs, children, uuid, parent, isRoot}, warns};
+        return {result: {tag: "linearGradient", attrs, children, xpath, parent}, warns};
     } else if (element.name === "radialGradient") {
         const attrs = parseAttrs(element, pushWarns).radialGradient();
-        return {result: {tag: "radialGradient", attrs, children, uuid, parent, isRoot}, warns};
+        return {result: {tag: "radialGradient", attrs, children, xpath, parent}, warns};
     } else if (element.name === "stop") {
         const attrs = parseAttrs(element, pushWarns).stop();
-        return {result: {tag: "stop", attrs, uuid, parent, isRoot}, warns};
+        return {result: {tag: "stop", attrs, xpath, parent}, warns};
     } else if (element.name === "image") {
         const attrs = parseAttrs(element, pushWarns).image();
-        return {result: {tag: "image", attrs, uuid, parent, isRoot}, warns};
+        return {result: {tag: "image", attrs, xpath, parent}, warns};
+    } else if (element.name === "defs") {
+        const attrs = parseAttrs(element, pushWarns).defs();
+        return {result: {tag: "defs", attrs, children, xpath, parent}, warns};
     } else {
         const attrs: Assoc = element.attr;
-        return {result: {tag: "unknown", tag$real: element.name, attrs, children, text, uuid, parent, isRoot}, warns: [{range: toRange(element), message: `${element.name} is unsupported element.`}]};
+        return {result: {tag: "unknown", tag$real: element.name, attrs, children, text, xpath, parent}, warns: [{range: toRange(element), message: `${element.name} is unsupported element.`}]};
     }
 }
 
@@ -388,7 +400,7 @@ function parseChildren(element: xmldoc.XmlElement, onWarns: (warns: Warning[]) =
     const warns = [];
     for (let item of element.children ) {
         if (item.type === "element") {
-            const ret = parse(item, parent);
+            const ret = parse(item);
             if (ret.result) children.push(ret.result);
             warns.push(...ret.warns);
         }
@@ -571,6 +583,15 @@ function parseAttrs(element: xmldoc.XmlElement, onWarns: (ws: Warning[]) => void
             };
             onWarns(warns);
             return validImageAttrs;
+        },
+        defs: () => {
+            const validDefsAttrs: ParsedDefsAttr = {
+                ...globalValidAttrs,
+                ...getPresentationAttrs(),
+                unknown: unknownAttrs(attrs, element, pushWarns)
+            };
+            onWarns(warns);
+            return validDefsAttrs;
         }
     }
 }

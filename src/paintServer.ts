@@ -1,15 +1,21 @@
-import { svgVirtualMap } from "./main";
+/**
+ * @file Paint server
+ * @see https://www.w3.org/TR/SVG11/pservers.html
+ */
+
 import { ParsedElement, Ratio, Paint, isColor, isFuncIRI, StopColor } from "./domParser";
 import tinycolor from "tinycolor2";
-import { traverse } from "./svgConstructor";
+import { traverse } from "./traverse";
+import { xfindExn } from "./xpath";
+import { svgdata } from "./main";
 
 export type PaintServer = {
     kind: "linearGradient" | "radialGradient",
     stops: StopReference[]
 }
 
-export function fetchPaintServer(uuid: string): PaintServer | null {
-    const pe = svgVirtualMap[uuid];
+export function fetchPaintServer(xpath: string): PaintServer | null {
+    const pe = xfindExn([svgdata], xpath);
     function gradient(pe: ParsedElement & {children: ParsedElement[]} & {tag: "linearGradient" | "radialGradient"}) {
         const stops: StopReference[] = [];
         for (let c of pe.children) {
@@ -31,7 +37,7 @@ export function fetchPaintServer(uuid: string): PaintServer | null {
 }
 
 export type StopReference = {
-    uuid: string;
+    xpath: string;
     offset: Exclude<Ratio, number>;
     "stop-color": StopColor;        // default: black
 }
@@ -48,7 +54,7 @@ export function fetchStopReference(pe: ParsedElement): StopReference | null {
     switch (pe.tag) {
         case "stop":
         return {
-            uuid: pe.uuid,
+            xpath: pe.xpath,
             offset: offsetToNumber(pe.attrs.offset),
             "stop-color": pe.attrs["stop-color"] || {format: "rgb", r: 0, g: 0, b: 0, a: 1}
         };
