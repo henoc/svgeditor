@@ -1,14 +1,9 @@
-<head>
-    <meta charset="UTF-8">
-    <title>Main</title>
-    <style><%- css %></style>
-</head>
-
-<body>
-    <svg width="0" height="0" style="position: absolute; z-index: -2147483648;"><symbol><%- icons %></symbol></svg>
-    <script id="svgeditor-uri" type="text/plain"><%- uri %></script>
-    <div id="svgeditor-content"></div>
-    <script>
-        <%- bundleJs %>
-    </script>
-</body>
+<!DOCTYPE html>
+<meta charset="UTF-8">
+<style><%- css %></style>
+<svg width="0" height="0" style="position: absolute; z-index: -2147483648;"><symbol><%- icons %></symbol></svg>
+<script id="svgeditor-uri" type="text/plain"><%- uri %></script>
+<div id="svgeditor-content"></div>
+<script>
+    <%- bundleJs %>
+</script>

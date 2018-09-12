@@ -78,10 +78,14 @@ Localtion (xlink:)href refers to is restricted with your workspace, extension, `
 
 ## Future plans
 
-- [ ] Embedded CSS
+- [ ] Embedded CSS  
+  I want to support it without parsing CSS 🤔
 - [x] Gradient colors
 - [ ] Filters
 - [x] Images
+- [ ] Animations
+- [ ] Correct only the changed portions without auto formatting  
+  Maybe it's available if there are some xml(or svg) parsers which return the character positions of attributes and tag names in document with accuracy 🤔
 
 ## License
 
