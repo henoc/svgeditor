@@ -236,9 +236,7 @@
     "postinstall": "node ./node_modules/vscode/bin/install"
   },
   "devDependencies": {
-    "@types/clipboardy": "^1.1.0",
     "@types/diff": "^3.5.1",
-    "@types/ejs": "^2.5.0",
     "@types/hammerjs": "^2.0.35",
     "@types/incremental-dom": "^0.5.0",
     "@types/is-absolute-url": "^2.1.0",
@@ -257,16 +255,13 @@
     "vscode": "^1.1.21"
   },
   "dependencies": {
-    "clipboardy": "^1.2.3",
     "diff": "^3.5.0",
-    "ejs": "^2.5.7",
     "fast-deep-equal": "^2.0.1",
     "fast-memoize": "^2.5.1",
     "font-measure": "^1.2.2",
     "hammerjs": "^2.0.8",
     "incremental-dom": "^0.5.1",
     "is-absolute-url": "^2.1.0",
-    "object-copy": "^1.0.0",
     "svgpath": "2.2.1",
     "text-width": "^1.2.0",
     "tinycolor2": "^1.4.1",

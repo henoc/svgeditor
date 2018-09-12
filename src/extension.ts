@@ -2,7 +2,6 @@ import * as vscode from "vscode";
 import * as fs from "fs";
 import * as path from "path";
 import * as xmldoc from "xmldoc";
-import { render } from "ejs";
 import { parse } from "./domParser";
 import { collectSystemFonts } from "./fontFileProcedures";
 import { iterate } from "./utils";
@@ -60,7 +59,7 @@ export function activate(context: vscode.ExtensionContext) {
             )
             return panel;
         })();
-        panel.webview.html = render(viewer, {bundleJs, css, icons, uri: editor.document.uri.toString()});
+        panel.webview.html = replaceMagic(viewer, {bundleJs, css, icons, uri: editor.document.uri.toString()});
         panelSet = {panel, editor, text};
         setListener(panelSet);
         setWebviewActiveContext(oldPanel ? false : true);
@@ -197,7 +196,7 @@ export function activate(context: vscode.ExtensionContext) {
                     const config = vscode.workspace.getConfiguration("svgeditor");
                     const width = config.get<string>("width") || "400px";
                     const height = config.get<string>("height") || "400px";
-                    const editor = await newUntitled(vscode.ViewColumn.One, render(templateSvg, {width, height}));
+                    const editor = await newUntitled(vscode.ViewColumn.One, replaceMagic(templateSvg, {width, height}));
                     setup(editor);
                 } catch (error) {
                     showError(error);
@@ -297,4 +296,10 @@ export function normalizeUrl(urlFragment: string, baseUrl: string): string | nul
     let uri = path.isAbsolute(urlFragment) ? vscode.Uri.file(urlFragment) : isAbsoluteUrl(urlFragment) ? vscode.Uri.parse(urlFragment) : vscode.Uri.parse(path.posix.join(path.posix.dirname(baseUrl), urlFragment.replace(/\\/g, "/")));
     if (uri.scheme === "file") uri = uri.with({scheme: "vscode-resource"});
     return uri.scheme === "untitled" ? null : uri.toString();
+}
+
+export function replaceMagic(str: string, vars: {[key: string]: string}): string {
+    return str.replace(/(?:\/\*|<!--)\?\s*([a-zA-Z_$]\w*)\s*(?:\*\/|-->)/g, (_match, p1) => {
+        return vars[p1];
+    });
 }
