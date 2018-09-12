@@ -2,7 +2,9 @@
 
 - 2.5.0
   - Fix bugs of nested svg
+  - Fix panel behavior better
   - Support defs
+  - Add container viewer selector
   - Add operations and keybindings: rotate ±90, rotate ±15
 - 2.4.0
   - Support image

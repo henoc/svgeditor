@@ -38,32 +38,32 @@ export function activate(context: vscode.ExtensionContext) {
 
     let panelSet: PanelSet | null = null;
 
-    let createPanel = (editor: vscode.TextEditor) => {
+    let setup = (editor: vscode.TextEditor, oldPanel?: vscode.WebviewPanel) => {
         const config = vscode.workspace.getConfiguration("svgeditor", editor.document.uri);
         let text = editor.document.getText();
-        const additionalResourceUris = [];
-        for (let path of config.get<string[]>("additionalResourcePaths") || []) {
-            try {
-                additionalResourceUris.push(vscode.Uri.file(path));
-            } catch (_err) {
+        const panel = oldPanel || (() => {
+            const additionalResourceUris = [];
+            for (let path of config.get<string[]>("additionalResourcePaths") || []) {
+                try { additionalResourceUris.push(vscode.Uri.file(path)); } catch (_err) {}
             }
-        }
-        const panel = vscode.window.createWebviewPanel(
-            "svgeditor",
-            "SVG Editor",
-            vscode.ViewColumn.Beside, {
-                enableScripts: true,
-                localResourceRoots: [
-                    vscode.Uri.file(context.extensionPath),
-                    ...(vscode.workspace.workspaceFolders ? vscode.workspace.workspaceFolders.map(x => x.uri) : []),
-                    ...additionalResourceUris
-                ]
-            }
-        );
+            const panel = vscode.window.createWebviewPanel(
+                "svgeditor",
+                "SVG Editor",
+                vscode.ViewColumn.Beside, {
+                    enableScripts: true,
+                    localResourceRoots: [
+                        vscode.Uri.file(context.extensionPath),
+                        ...(vscode.workspace.workspaceFolders ? vscode.workspace.workspaceFolders.map(x => x.uri) : []),
+                        ...additionalResourceUris
+                    ]
+                }
+            )
+            return panel;
+        })();
         panel.webview.html = render(viewer, {bundleJs, css, icons, uri: editor.document.uri.toString()});
         panelSet = {panel, editor, text};
         setListener(panelSet);
-        setWebviewActiveContext(true);
+        setWebviewActiveContext(oldPanel ? false : true);
     }
 
     let setListener = (pset : PanelSet) => {
@@ -160,19 +160,31 @@ export function activate(context: vscode.ExtensionContext) {
         }));
     }
 
-    context.subscriptions.push(vscode.workspace.onDidChangeTextDocument((e: vscode.TextDocumentChangeEvent) => {
+    vscode.workspace.onDidChangeTextDocument((e: vscode.TextDocumentChangeEvent) => {
         if (panelSet && panelSet.editor.document === e.document && panelSet.text !== e.document.getText()) {
             panelSet.panel.webview.postMessage({
                 command: "modified",
                 data: parseSvg(panelSet.text = e.document.getText(), panelSet.editor, diagnostics)
             });
         }
-    }));
+    }, null, context.subscriptions);
+
+    vscode.window.onDidChangeActiveTextEditor(editor => {
+        const config = vscode.workspace.getConfiguration("svgeditor")
+        if (
+            editor
+            && editor.document.languageId === config.get<string>("filenameExtension")
+            && panelSet
+            && panelSet.editor.document !== editor.document
+        ) {
+            setup(editor, panelSet.panel || undefined);
+        }
+    }, null, context.subscriptions);
 
     context.subscriptions.push(vscode.commands.registerTextEditorCommand("svgeditor.openSvgEditor", (textEditor) => {
         if (panelSet) panelSet.panel.reveal();
         else {
-            createPanel(textEditor);
+            setup(textEditor);
         }
     }));
 
@@ -186,7 +198,7 @@ export function activate(context: vscode.ExtensionContext) {
                     const width = config.get<string>("width") || "400px";
                     const height = config.get<string>("height") || "400px";
                     const editor = await newUntitled(vscode.ViewColumn.One, render(templateSvg, {width, height}));
-                    createPanel(editor);
+                    setup(editor);
                 } catch (error) {
                     showError(error);
                 }

@@ -2,7 +2,7 @@
 
 ![sample](images/capture.png)
 
-**ver 2.4**: Set keybindings, support `<image/>` 🎼
+**ver 2.5**: Fix bugs of nested svgs, introduce container viewer, and more 🍵
 
 Now your VSCode can mutate to an interactive visual & literal SVG editor 😎
 

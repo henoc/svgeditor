@@ -254,7 +254,7 @@
     "tslint": "^5.9.1",
     "typescript": "^3.0.1",
     "utility-types": "^2.0.0",
-    "vscode": "^1.1.18"
+    "vscode": "^1.1.21"
   },
   "dependencies": {
     "clipboardy": "^1.2.3",
