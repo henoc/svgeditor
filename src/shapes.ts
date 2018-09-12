@@ -508,14 +508,16 @@ export function shaper(pe: ParsedElement): ShaperFunctions {
             }).merge(corners).merge(presentationAttrs).merge(transformProps).object;
         case "text":
             const re = svgRealMap[pe.xpath];
-            const styleDeclaration = getComputedStyle(re);
-            const fontInfo = font(pe.text || "", styleDeclaration.fontFamily || "", parseFloat(styleDeclaration.fontSize || "16"), styleDeclaration.fontWeight || "", styleDeclaration.fontStyle || "");
+            const fontInfo = () => {
+                const styleDeclaration = getComputedStyle(re);
+                return font(pe.text || "", styleDeclaration.fontFamily || "", parseFloat(styleDeclaration.fontSize || "16"), styleDeclaration.fontWeight || "", styleDeclaration.fontStyle || "");
+            }
             const tattrs = pe.attrs;
             return new Merger({
                 get center() {
                     const size = self().size;
                     const topX = px(tattrs.x);
-                    const topY = px(tattrs.y) - fontInfo.height.baseline;
+                    const topY = px(tattrs.y) - fontInfo().height.baseline;
                     return v(topX + size.x / 2, topY + size.y / 2);
                 },
                 set center(point: Vec2) {
@@ -531,15 +533,16 @@ export function shaper(pe: ParsedElement): ShaperFunctions {
                     );
                 },
                 get size() {
-                    const width = tattrs.textLength ? px(tattrs.textLength) : fontInfo.width;
-                    const height = fontInfo.height.lineHeight;
+                    const finfo = fontInfo();
+                    const width = tattrs.textLength ? px(tattrs.textLength) : finfo.width;
+                    const height = finfo.height.lineHeight;
                     return v(width, height);
                 },
                 set size(wh: Vec2) {
                     let center = self().center;
                     let fontSize = tattrs["font-size"];
                     tattrs["font-size"] = fromPx(fontSize !== null && isLength(fontSize) && fontSize || null, "font-size",
-                        fontInfo.heightToSize("lineHeight", wh.y) || 1
+                        fontInfo().heightToSize("lineHeight", wh.y) || 1
                     );
                     tattrs.textLength = fromPx(tattrs.textLength, "textLength", wh.x);
                     self().center = center;

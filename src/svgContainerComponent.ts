@@ -31,9 +31,8 @@ export class SvgContainerComponent implements Component {
             all: configuration.showAll
         });
         if (substances) {
-            const outerFontEnv = getComputedStyle(document.body).font || "";
-            const width = displayedRoot.tag === "svg" && displayedRoot.attrs.width && convertToPixelForOutermostFrame(displayedRoot.attrs.width, outerFontEnv) || 400;
-            const height = displayedRoot.tag === "svg" && displayedRoot.attrs.height && convertToPixelForOutermostFrame(displayedRoot.attrs.height, outerFontEnv) || 400;
+            const width = displayedRoot.tag === "svg" && displayedRoot.attrs.width && convertToPixelForOutermostFrame(displayedRoot.attrs.width) || 400;
+            const height = displayedRoot.tag === "svg" && displayedRoot.attrs.height && convertToPixelForOutermostFrame(displayedRoot.attrs.height) || 400;
             const viewBox = `0 0 ${width} ${height}`;
             const scaledWidth = width * this.scalePercent / 100;
             const scaledHeight = height * this.scalePercent / 100;

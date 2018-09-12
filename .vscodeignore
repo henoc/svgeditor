@@ -4,3 +4,4 @@
 **/*.ttf
 out/test/**
 tmp
+*.log
