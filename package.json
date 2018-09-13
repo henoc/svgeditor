@@ -158,6 +158,18 @@
         "command": "svgeditor.rotateCounterclockwiseByTheAngleStep",
         "key": "[",
         "when": "svgeditorWebviewFocus"
+      },
+      {
+        "command": "svgeditor.centerVertical",
+        "key": "ctrl+alt+h",
+        "mac": "cmd+alt+h",
+        "when": "svgeditorWebviewFocus"
+      },
+      {
+        "command": "svgeditor.centerHorizontal",
+        "key": "ctrl+alt+t",
+        "mac": "cmd+alt+t",
+        "when": "svgeditorWebviewFocus"
       }
     ],
     "configuration": {

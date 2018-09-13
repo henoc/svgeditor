@@ -12,10 +12,12 @@ import { ParsedElement } from "./domParser";
 
 export type ModeName = "select" | "node" | "rect" | "ellipse" | "polyline" | "path" | "text";
 export type OperatorName = "duplicate" | "delete" | "zoomIn" | "zoomOut" | "group" | "ungroup" | "font" | "bringForward" | "sendBackward" |
-    "alignLeft" | "alignRight" | "alignBottom" | "alignTop" | "objectToPath" | "rotateClockwise" | "rotateCounterclockwise" | "rotateClockwiseByTheAngleStep" | "rotateCounterclockwiseByTheAngleStep";
+    "alignLeft" | "alignRight" | "alignBottom" | "alignTop" | "objectToPath" | "rotateClockwise" | "rotateCounterclockwise" | "rotateClockwiseByTheAngleStep" | "rotateCounterclockwiseByTheAngleStep" |
+    "centerHorizontal" | "centerVertical";
 
 export const operatorNames: OperatorName[] = ["duplicate" , "delete" , "zoomIn" , "zoomOut" , "group" , "ungroup" , "font" , "bringForward" , "sendBackward" ,
-    "alignLeft" , "alignRight" , "alignBottom" , "alignTop" , "objectToPath", "rotateClockwise", "rotateCounterclockwise", "rotateClockwiseByTheAngleStep", "rotateCounterclockwiseByTheAngleStep"];
+    "alignLeft" , "alignRight" , "alignBottom" , "alignTop" , "objectToPath", "rotateClockwise", "rotateCounterclockwise", "rotateClockwiseByTheAngleStep", "rotateCounterclockwiseByTheAngleStep",
+    "centerVertical", "centerHorizontal"];
 
 class MenuComponent implements Component {
 

@@ -145,6 +145,18 @@ export abstract class Mode implements Component {
             case "rotateCounterclockwiseByTheAngleStep":
                 multiShaper(pes).rotate(-15);
                 break;
+            case "centerVertical":
+                const centv = multiShaper(pes).center;
+                for (let pe of pes) {
+                    multiShaper([pe], true).center = v(centv.x, multiShaper([pe], true).center.y);
+                }
+                break;
+            case "centerHorizontal":
+                const centh = multiShaper(pes).center;
+                for (let pe of pes) {
+                    multiShaper([pe], true).center = v(multiShaper([pe], true).center.x, centh.y);
+                }
+                break;
         }
 
         refleshContent();

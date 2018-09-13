@@ -30,7 +30,7 @@ export function activate(context: vscode.ExtensionContext) {
         "addLinearGradient.svg", "alignLeft.svg", "bringForward.svg", "duplicate.svg", "objectToPath.svg", "sendBackward.svg",
         "addRadialGradient.svg", "alignRight.svg", "font.svg", "zoomOut.svg",
         "alignBottom.svg", "alignTop.svg", "delete.svg", "group.svg", "zoomIn.svg", "ungroup.svg",
-        "rotateClockwise.svg", "rotateCounterclockwise.svg"
+        "rotateClockwise.svg", "rotateCounterclockwise.svg", "centerVertical.svg", "centerHorizontal.svg"
     ].map(readImage).join("");
 
     let diagnostics = vscode.languages.createDiagnosticCollection("svgeditor");
@@ -233,7 +233,9 @@ export function activate(context: vscode.ExtensionContext) {
         "rotateClockwise",
         "rotateCounterclockwise",
         "rotateClockwiseByTheAngleStep",
-        "rotateCounterclockwiseByTheAngleStep"
+        "rotateCounterclockwiseByTheAngleStep",
+        "centerHorizontal",
+        "centerVertical"
     );
 }
 
