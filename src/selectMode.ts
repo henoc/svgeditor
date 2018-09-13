@@ -108,12 +108,17 @@ export class SelectMode extends Mode {
     render() {
         // Decorate groups.
         let pe: ParsedElement;
-        if (this._selectedShapes && this._selectedShapes.length === 1 && (pe = this._selectedShapes[0]) && pe.tag === "g") {
+        if (this._selectedShapes && this._selectedShapes.length === 1 && (pe = this._selectedShapes[0])) {
             const corners: Vec2[] = [];
             for (let i of [0, 2, 8, 6]) {
                 corners.push(v(+this.shapeHandlers[i].data.attrs.cx, +this.shapeHandlers[i].data.attrs.cy));
             }
-            el`polygon :key="g-decorator" *class="svgeditor-group" points=${corners.map(c => `${c.x} ${c.y}`).join(" ")} /`;
+            const viewerScale = contentChildrenComponent.svgContainerComponent.scalePercent / 100;
+            if (pe.tag === "g") {
+                el`polygon :key="g-decorator" *class="svgeditor-group" style=${`stroke-dasharray: ${4 / viewerScale }`} points=${corners.map(c => `${c.x} ${c.y}`).join(" ")} /`;
+            } else if (pe.tag === "svg") {
+                el`polygon :key="svg-decorator" *class="svgeditor-svg" style=${`stroke-dasharray: ${4 / viewerScale }`} points=${corners.map(c => `${c.x} ${c.y}`).join(" ")} /`;
+            }
         }
         this.shapeHandlers.forEach(h => h.render());
     }

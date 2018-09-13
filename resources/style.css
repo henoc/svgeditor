@@ -108,7 +108,12 @@ select option {
 .svgeditor-group {
     fill: none;
     stroke: var(--vscode-inputValidation-warningBorder);
-    stroke-dasharray: 4px;
+    /* stroke-dasharray: 4px; */
+}
+.svgeditor-svg {
+    fill: none;
+    stroke: var(--vscode-inputValidation-infoBorder);
+    /* stroke-dasharray: 4px; */
 }
 input[type="range"] {
     -webkit-appearance: none;
