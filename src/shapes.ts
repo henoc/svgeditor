@@ -22,6 +22,7 @@ interface ShaperFunctions {
     size: Vec2;
     size2(newSize: Vec2, fixedPoint: Vec2): void;
     transform: Matrix;
+    viewBox(): Matrix;
     appendTransformDescriptors(descriptors: TransformDescriptor[], from: "left" | "right"): void;
     allTransform(): Matrix;
     rotate(deg: number): void;
@@ -126,13 +127,32 @@ export function shaper(pe: ParsedElement): ShaperFunctions {
             if (pe.tag !== "unknown" && "transform" in pe.attrs && !equal(matrix, identity())) pe.attrs.transform = { descriptors: [{ type: "matrix", ...matrix }], matrices: [matrix] };
         }
     }
+
+    /**
+     * Collect all matrices affect the shape into one.
+     * 
+     * ```xml
+<a transform="p" viewBox="x">
+    <b transform="q" viewBox="y" width="10">
+        <c transform="r" viewBox="z" width="20" />
+    </b>
+</a>
+       ```
+
+       b.width is affected by transform(p,x,q)  
+       c.width is affected by transform(p,x,q,y,r)
+     */
     const allTransform = () => {
         if (pe.parent) {
-            const past = shaper(xfindExn([svgdata], pe.parent)).allTransform();
-            return transform(past, self().transform);
+            const parentPe = xfindExn([svgdata], pe.parent);
+            const past = shaper(parentPe).allTransform();
+            return transform(past, shaper(parentPe).viewBox(), self().transform);
         } else {
             return self().transform;
         }
+    }
+    const viewBox = () => {
+        return identity();
     }
     const appendTransformDescriptors = <T extends { transform: Transform | null }>(attrs: T) => (descriptors: TransformDescriptor[], from: "left" | "right") => {
         if (attrs.transform === null) attrs.transform = {descriptors: [], matrices: []};
@@ -187,6 +207,9 @@ export function shaper(pe: ParsedElement): ShaperFunctions {
                 },
                 size2,
                 get transform() {
+                    return identity();
+                },
+                viewBox() {
                     const w = attrs.width && convertToPixel(attrs.width, pe);
                     const h = attrs.height && convertToPixel(attrs.height, pe);
                     const viewBox = attrs.viewBox;
@@ -266,6 +289,7 @@ export function shaper(pe: ParsedElement): ShaperFunctions {
                 },
                 size2,
                 allTransform,
+                viewBox,
                 appendTransformDescriptors: appendTransformDescriptors(cattrs),
                 rotate: rotateCenter
             }).merge(corners).merge(presentationAttrs).merge(transformProps).object;
@@ -316,7 +340,7 @@ export function shaper(pe: ParsedElement): ShaperFunctions {
                     ];
                 },
                 size2,
-                allTransform,
+                allTransform, viewBox,
                 appendTransformDescriptors: appendTransformDescriptors(rattrs),
                 rotate: rotateCenter
             }).merge(corners).merge(presentationAttrs).merge(transformProps).object;
@@ -372,7 +396,7 @@ export function shaper(pe: ParsedElement): ShaperFunctions {
                     ]
                 },
                 size2,
-                allTransform,
+                allTransform, viewBox,
                 appendTransformDescriptors: appendTransformDescriptors(eattrs),
                 rotate: rotateCenter
             }).merge(corners).merge(presentationAttrs).merge(transformProps).object;
@@ -431,7 +455,7 @@ export function shaper(pe: ParsedElement): ShaperFunctions {
                     pattrs.d = d;
                 },
                 size2,
-                allTransform,
+                allTransform, viewBox,
                 appendTransformDescriptors: appendTransformDescriptors(pattrs),
                 rotate: rotateCenter
             }).merge(corners).merge(presentationAttrs).merge(transformProps).object;
@@ -502,7 +526,7 @@ export function shaper(pe: ParsedElement): ShaperFunctions {
                 toPath() {
                 },
                 size2,
-                allTransform,
+                allTransform, viewBox,
                 appendTransformDescriptors: appendTransformDescriptors(pathAttrs),
                 rotate: rotateCenter
             }).merge(corners).merge(presentationAttrs).merge(transformProps).object;
@@ -554,7 +578,7 @@ export function shaper(pe: ParsedElement): ShaperFunctions {
                     return null;
                 },
                 size2,
-                allTransform,
+                allTransform, viewBox,
                 appendTransformDescriptors: appendTransformDescriptors(tattrs),
                 rotate: rotateCenter
             }).merge(corners).merge(presentationAttrs).merge(transformProps).object;
@@ -655,7 +679,7 @@ export function shaper(pe: ParsedElement): ShaperFunctions {
                         shaper(c).toPath();
                     }
                 },
-                allTransform,
+                allTransform, viewBox,
                 appendTransformDescriptors: appendTransformDescriptors(gattrs),
                 rotate: rotateCenter
             }).merge(corners).merge(presentationAttrs).merge(transformProps).object;
@@ -709,7 +733,7 @@ export function shaper(pe: ParsedElement): ShaperFunctions {
                     ];
                 },
                 size2,
-                allTransform,
+                allTransform, viewBox,
                 appendTransformDescriptors: appendTransformDescriptors(iattrs),
                 rotate: rotateCenter
             }).merge(corners).merge(presentationAttrs).merge(transformProps).object;
@@ -900,6 +924,9 @@ export function multiShaper(pes: OneOrMore<ParsedElement>, useMultiEvenIfSingle:
             },
             allTransform: () => {
                 return commonParent && shaper(commonParent).allTransform() || identity();
+            },
+            viewBox: () => {
+                return identity();
             },
             rotate: (deg: number) => {
                 const center = self().center;
