@@ -193,7 +193,13 @@ export abstract class Mode implements Component {
     static presentationAttrsDefaultImpl: () => ParsedPresentationAttr = () => {
         return {
             fill: drawState.fill,
+            "fill-rule": null,
             stroke: drawState.stroke,
+            "stroke-width": null,
+            "stroke-linecap": null,
+            "stroke-linejoin": null,
+            "stroke-dasharray": null,
+            "stroke-dashoffset": null,
             transform: null,
             "font-family": null,
             "font-size": null,
@@ -205,7 +211,13 @@ export abstract class Mode implements Component {
     static presentationAttrsAllNull: () => ParsedPresentationAttr = () => {
         return {
             fill: null,
+            "fill-rule": null,
             stroke: null,
+            "stroke-width": null,
+            "stroke-linecap": null,
+            "stroke-linejoin": null,
+            "stroke-dasharray": null,
+            "stroke-dashoffset": null,
             transform: null,
             "font-family": null,
             "font-size": null,

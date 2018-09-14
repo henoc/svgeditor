@@ -173,7 +173,7 @@
       }
     ],
     "configuration": {
-      "title": "SVG Editor configurations",
+      "title": "SVG Editor",
       "properties": {
         "svgeditor.filenameExtension": {
           "type": "string",

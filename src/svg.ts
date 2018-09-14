@@ -1,5 +1,5 @@
 import { iterate, assertNever, deepCopy, escapeHtml } from "./utils";
-import { Length, Paint, PathCommand, Transform, isLength, isPaint, isTransform, FontSize, isColor, Ratio, isFuncIRI } from "./domParser";
+import { Length, Paint, PathCommand, Transform, isLength, isPaint, isTransform, FontSize, isColor, Ratio, isFuncIRI, StrokeDasharray } from "./domParser";
 import tinycolor from "tinycolor2";
 import { svgPathManager } from "./pathHelpers";
 import { elementOpenStart, elementOpenEnd, attr, text, elementClose } from "incremental-dom";
@@ -73,6 +73,10 @@ export class SvgTag implements Component {
         }
         return this;
     }
+    usattr(key: string, value: Length | string | null): SvgTag {
+        if (typeof value === "string") return this.attr(key, value);
+        else return this.uattr(key, value);
+    }
     rattr(key: string, value: Ratio | null): SvgTag {
         if (value !== null && this.data.important.indexOf(key) === -1) {
             this.data.attrs[key] = typeof value === "number" ? value : `${value.value}%`;
@@ -112,6 +116,21 @@ export class SvgTag implements Component {
         if (value !== null && this.data.important.indexOf(key) === -1) {
             if (typeof value !== "string") {
                 this.uattr(key, value);
+            } else {
+                this.data.attrs[key] = value;
+            }
+        }
+        return this;
+    }
+    daattr(key: "stroke-dasharray", value: StrokeDasharray | null): SvgTag {
+        if (value !== null && this.data.important.indexOf(key) === -1) {
+            if (Array.isArray(value)) {
+                const itemStrs: string[] = [];
+                for (let item of value) {
+                    item = this.fixDecimalPlaces(item);
+                    itemStrs.push(`${item.value}${item.unit || ""}`);
+                }
+                this.data.attrs[key] = itemStrs.join(" ");
             } else {
                 this.data.attrs[key] = value;
             }

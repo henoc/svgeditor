@@ -131,7 +131,13 @@ export interface ParsedBaseAttr {
 
 export interface ParsedPresentationAttr {
     fill: Paint | null;
+    "fill-rule": FillRule | null;
     stroke: Paint | null;
+    "stroke-width": Length | "inherit" | null;
+    "stroke-linecap": StrokeLinecap | null;
+    "stroke-linejoin": StrokeLinejoin | null;
+    "stroke-dasharray": StrokeDasharray | null;
+    "stroke-dashoffset": Length | "inherit" | null;
     transform: Transform | null;
     "font-family": string | null;
     "font-size": FontSize | null;
@@ -333,6 +339,30 @@ export function isRatio(obj: Object): obj is Ratio {
     return typeof obj === "number" || (obj instanceof Object && "unit" in obj && "value" in obj);
 }
 
+export type FillRule = "nonzero" | "evenodd" | "inherit";
+
+export function isFillRule(obj: Object): obj is FillRule {
+    return obj === "nonzero" || obj === "evenodd" || obj === "inherit";
+}
+
+export type StrokeLinecap = "butt" | "round" | "square" | "inherit";
+
+export function isStrokeLinecap(obj: Object): obj is StrokeLinecap {
+    return obj === "butt" || obj === "round" || obj === "square" || obj === "inherit";
+}
+
+export type StrokeLinejoin = "miter" | "round" | "bevel" | "inherit";
+
+export function isStrokeLinejoin(obj: Object): obj is StrokeLinejoin {
+    return obj === "miter" || obj === "round" || obj === "bevel" || obj === "inherit";
+}
+
+export type StrokeDasharray = "none" | Length[] | "inherit";
+
+export function isStrokeDasharray(obj: Object): obj is StrokeDasharray {
+    return Array.isArray(obj) && (obj.length === 0 || isLength(obj[0])) || obj === "none" || obj === "inherit";
+}
+
 export function parse(element: xmldoc.XmlElement): ParsedResult {
     const xpath = "???";
     const parent = "???";
@@ -425,7 +455,13 @@ function parseAttrs(element: xmldoc.XmlElement, onWarns: (ws: Warning[]) => void
     const getPresentationAttrs: () => ParsedPresentationAttr = () => {
         return {
             fill: tryParse("fill").map(a => a.paint()).get,
+            "fill-rule": tryParse("fill-rule").map(a => a.validate(isFillRule)).get,
             stroke: tryParse("stroke").map(a => a.paint()).get,
+            "stroke-width": tryParse("storke-width").map(a => a.lengthOrInherit()).get,
+            "stroke-linecap": tryParse("stroke-linecap").map(a => a.validate(isStrokeLinecap)).get,
+            "stroke-linejoin": tryParse("stroke-linejoin").map(a => a.validate(isStrokeLinejoin)).get,
+            "stroke-dasharray": tryParse("stroke-dasharray").map(a => a.strokeDasharray()).get,
+            "stroke-dashoffset": tryParse("stroke-dashoffset").map(a => a.lengthOrInherit()).get,
             transform: tryParse("transform").map(a => a.transform()).get,
             "font-family": pop(attrs, "font-family"),
             "font-size": tryParse("font-size").map(a => a.fontSize()).get,
@@ -615,6 +651,7 @@ function unknownAttrs(attrs: Assoc, element: xmldoc.XmlElement, onWarns: (ws: Wa
 
 type AttrOfMethods = {
     length: () => Length | null,
+    lengthOrInherit: () => Length | "inherit" | null,
     ratio: () => Ratio | null,
     number: () => number | null,
     viewBox: () => [Point, Point] | null,
@@ -624,7 +661,8 @@ type AttrOfMethods = {
     pathDefinition: () => PathCommand[] | null,
     transform: () => Transform | null,
     validate: <T>(validator: (obj: Object) => obj is T) => T & string | null,
-    fontSize: () => FontSize | null
+    fontSize: () => FontSize | null,
+    strokeDasharray: () => StrokeDasharray | null
 }
 
 function attrOf(element: xmldoc.XmlElement, warns: Warning[], attrs: Assoc, name: string): Option<AttrOfMethods> {
@@ -649,24 +687,35 @@ function attrOf(element: xmldoc.XmlElement, warns: Warning[], attrs: Assoc, name
         return points;
     }
 
-    function self() {
-        return attrOf(element, warns, attrs, name);
+    function acceptLength(v: string): Length | Warning {
+        let tmp;
+        if (tmp = /^[+-]?[0-9]+(\.[0-9]*)?([eE][+-]?[0-9]+)?(em|ex|px|in|cm|mm|pt|pc|%)?$/.exec(v)) {
+            return <Length>{
+                unit: <any>tmp[3] || null,
+                value: parseFloat(v),
+                attrName: name
+            };
+        } else {
+            return {range: toRange(element), message: `${name}: ${v} is a invalid number with unit.`};
+        }
     }
 
     const methods = {
         length: () => {
-            let tmp;
-            if (tmp = /^[+-]?[0-9]+(\.[0-9]*)?([eE][+-]?[0-9]+)?(em|ex|px|in|cm|mm|pt|pc|%)?$/.exec(value)) {
+            const maybeLength = acceptLength(value);
+            if (isLength(maybeLength)) {
                 delete attrs[name];
-                return <Length>{
-                    unit: <any>tmp[3] || null,
-                    value: parseFloat(value),
-                    attrName: name
-                };
+                return maybeLength;
             } else {
-                warns.push({range: toRange(element), message: `${name}: ${value} is a invalid number with unit.`});
+                warns.push(maybeLength);
                 return null;
             }
+        },
+        lengthOrInherit: () => {
+            if (value === "inherit") {
+                delete attrs[name];
+                return "inherit";
+            } else return methods.length();
         },
         ratio: () => {
             let tmp;
@@ -770,7 +819,27 @@ function attrOf(element: xmldoc.XmlElement, warns: Warning[], attrs: Assoc, name
                 delete attrs[name];
                 return value;
             } else {
-                return self().map(x => x.length()).get;
+                return methods.length();
+            }
+        },
+        strokeDasharray: () => {
+            if (value === "none" || value === "inherit") {
+                delete attrs[name];
+                return value;
+            } else {
+                const strs = value.split(/,|\s/);
+                const lengths: Length[] = [];
+                for (let str of strs) {
+                    const maybeLength = acceptLength(str);
+                    if (isLength(maybeLength)) {
+                        lengths.push(maybeLength);
+                    } else {
+                        warns.push({range: toRange(element), message: `${name}: ${value} is unsupported stroke-dasharray value.`});
+                        return null;
+                    }
+                }
+                delete attrs[name];
+                return lengths;
             }
         }
     };

@@ -55,20 +55,20 @@ You can create shapes using the SVG's coder or directly creating shapes with the
 ## Current support tags and attributes
 
 - svg: xmlns, xmlns:xlink, version, viewBox, x, y, width, height
-- circle: cx, cy, r, `<presentation attributes>`
-- rect: x, y, width, height, rx, ry, `<presentation attributes>`
-- ellipse: cx, cy, rx, ry, `<presentation attributes>`
-- polyline/polygon: points, `<presentation attributes>`
-- path: d, `<presentation attributes>`
-- text: x, y, dx, dy, textLength, lengthAdjust, `<presentation attributes>`
-- g: `<presentation attributes>`
-- defs: `<presentation attributes>`
-- linearGradient: `<presentation attributes>`
-- radialGradient: `<presentation attributes>`
-- stop: offset, stop-color, `<presentation attributes>`
-- image: x, y, width, height, xlink:href, href, `<presentation attributes>`
+- circle: cx, cy, r, 🎨
+- rect: x, y, width, height, rx, ry, 🎨
+- ellipse: cx, cy, rx, ry, 🎨
+- polyline/polygon: points, 🎨
+- path: d, 🎨
+- text: x, y, dx, dy, textLength, lengthAdjust, 🎨
+- g: 🎨
+- defs: 🎨
+- linearGradient: 🎨
+- radialGradient: 🎨
+- stop: offset, stop-color, 🎨
+- image: x, y, width, height, xlink:href, href, 🎨
 
-`<presentation attributes>`: fill, stroke, transform, font-family, font-size, font-style, font-weight
+🎨(presentation attributes): fill, fill-rule, stroke, stroke-width, stroke-linecap, stroke-linejoin, stroke-dasharray, stroke-dashoffset, transform, font-family, font-size, font-style, font-weight
 
 ## Notice
 

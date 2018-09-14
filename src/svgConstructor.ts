@@ -199,7 +199,13 @@ function setBaseAttrs(baseAttr: ParsedBaseAttr, tag: SvgTag) {
 
 function setPresentationAttrs(presetationAttr: ParsedPresentationAttr, tag: SvgTag) {
     tag.pattr("fill", presetationAttr.fill);
+    tag.attr("fill-rule", presetationAttr["fill-rule"]);
     tag.pattr("stroke", presetationAttr.stroke);
+    tag.usattr("stroke-width", presetationAttr["stroke-width"]);
+    tag.attr("stroke-linecap", presetationAttr["stroke-linecap"]);
+    tag.attr("stroke-linejoin", presetationAttr["stroke-linejoin"]);
+    tag.daattr("stroke-dasharray", presetationAttr["stroke-dasharray"]);
+    tag.usattr("stroke-dashoffset", presetationAttr["stroke-dashoffset"]);
     tag.tattr("transform", presetationAttr.transform);
     tag.attr("font-family", presetationAttr["font-family"]);
     tag.fsattr("font-size", presetationAttr["font-size"]);
