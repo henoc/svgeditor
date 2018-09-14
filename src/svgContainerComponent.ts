@@ -1,6 +1,6 @@
 import { Component } from "./component";
 import { construct } from "./svgConstructor";
-import { svgdata, configuration, editMode } from "./main";
+import { svgdata, configuration, editMode, OUTERMOST_DEFAULT_WIDTH, OUTERMOST_DEFAULT_HEIGHT } from "./main";
 import { el } from "./utils";
 import { convertToPixelForOutermostFrame } from "./measureUnits";
 import { xfind } from "./xpath";
@@ -31,8 +31,8 @@ export class SvgContainerComponent implements Component {
             all: configuration.showAll
         });
         if (substances) {
-            const width = displayedRoot.tag === "svg" && displayedRoot.attrs.width && convertToPixelForOutermostFrame(displayedRoot.attrs.width) || 400;
-            const height = displayedRoot.tag === "svg" && displayedRoot.attrs.height && convertToPixelForOutermostFrame(displayedRoot.attrs.height) || 400;
+            const width = displayedRoot.tag === "svg" && displayedRoot.attrs.width && convertToPixelForOutermostFrame(displayedRoot.attrs.width) || OUTERMOST_DEFAULT_WIDTH;
+            const height = displayedRoot.tag === "svg" && displayedRoot.attrs.height && convertToPixelForOutermostFrame(displayedRoot.attrs.height) || OUTERMOST_DEFAULT_HEIGHT;
             const viewBox = `0 0 ${width} ${height}`;
             const scaledWidth = width * this.scalePercent / 100;
             const scaledHeight = height * this.scalePercent / 100;

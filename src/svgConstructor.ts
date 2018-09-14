@@ -5,7 +5,7 @@ import { assertNever } from "./utils";
 import { toString, inverse } from "transformation-matrix";
 import { shaper } from "./shapes";
 import { toTransformStrWithoutCollect } from "./transformHelpers";
-import { svgRealMap, imageList, svgdata } from "./main";
+import { svgRealMap, imageList, svgdata, OUTERMOST_DEFAULT_WIDTH, OUTERMOST_DEFAULT_HEIGHT } from "./main";
 import { xfindExn } from "./xpath";
 
 interface SvgConstructOptions {
@@ -70,7 +70,9 @@ export function construct(pe: ParsedElement, options?: SvgConstructOptions, disp
                 setBaseAttrs(pe.attrs, tag);
                 // Mostly to deal with mouse event of nested svg tag. Nested svg shape size of collision detection strangely is the same size of inner shapes of that.
                 if (insertRectForSvg) {
-                    const dummyRect = new SvgTag("rect").uattr("width", pe.attrs.width).uattr("height", pe.attrs.height)
+                    const dummyRect = new SvgTag("rect")
+                        .uattr("width", pe.attrs.width || {unit: "%", value: 100, attrName: "width"})
+                        .uattr("height", pe.attrs.height || {unit: "%", value: 100, attrName: "height"})
                         .attr("opacity", 0);
                     tag.children(dummyRect);
                 }

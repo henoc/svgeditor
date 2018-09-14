@@ -44,6 +44,8 @@ export const drawState = {
     stroke: <Paint | null>null,
     "font-family": <string | null>null
 }
+export const OUTERMOST_DEFAULT_WIDTH = 400;
+export const OUTERMOST_DEFAULT_HEIGHT = 400;
 
 /**
  * patch root for incremental-dom

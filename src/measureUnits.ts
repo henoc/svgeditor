@@ -1,5 +1,5 @@
 import { Length, LengthUnit, ParsedElement } from "./domParser";
-import { svgRealMap, svgdata } from "./main";
+import { svgRealMap, svgdata, OUTERMOST_DEFAULT_WIDTH, OUTERMOST_DEFAULT_HEIGHT } from "./main";
 import { assertNever, iterate, v, Vec2 } from "./utils";
 import { SetDifference } from "utility-types";
 import memoize from "fast-memoize";
@@ -38,7 +38,8 @@ export function convertToPixelForOutermostFrame(length: Length): number {
         return length.value;
 
         case "%":
-        return 400;
+        const attrKind = getAttrKind(length.attrName);
+        return attrKind === "horizontal" ? OUTERMOST_DEFAULT_WIDTH : OUTERMOST_DEFAULT_HEIGHT;
 
         case "ex":
         case "em":
@@ -53,8 +54,9 @@ export function convertToPixelForOutermostFrame(length: Length): number {
 function outermostPx(attrKind: AttrKind, re: Element): number {
     switch (attrKind) {
         case "vertical":
+        return OUTERMOST_DEFAULT_HEIGHT;
         case "horizontal":
-        return 400; // regard "%" length of outermost svg as fixed value, 400px
+        return OUTERMOST_DEFAULT_WIDTH;
         case "font-size":
         return parseFloat(getComputedStyle(re.parentElement || document.body).fontSize!);
     }
