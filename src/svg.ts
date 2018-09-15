@@ -24,7 +24,8 @@ export class SvgTag implements Component {
         children: SvgTag[]
         text?: string
         listeners: {[key: string]: (event: Event) => void}
-        important: string[],
+        important: string[]
+        isOuterMost: boolean
         options: SvgTagOptions
     } = {
         attrs: {},
@@ -32,6 +33,7 @@ export class SvgTag implements Component {
         children: [],
         listeners: {},
         important: [],
+        isOuterMost: false,
         options: {}
     };
 
@@ -48,8 +50,12 @@ export class SvgTag implements Component {
         });
         return this;
     }
-    rmAttr(key: string): SvgTag {
+    removeAttr(key: string): SvgTag {
         delete this.data.attrs[key];
+        return this;
+    }
+    isOuterMost(flag: boolean): SvgTag {
+        this.data.isOuterMost = flag;
         return this;
     }
     /**
@@ -186,7 +192,7 @@ export class SvgTag implements Component {
 
     toString(): string {
         if (this.data.tag) {
-            if (this.data.tag === "svg") {
+            if (this.data.tag === "svg" && this.data.isOuterMost) {
                 this.data.attrs.xmlns = svgns;
                 this.data.attrs["xmlns:xlink"] = xlinkns;
             }

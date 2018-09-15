@@ -36,7 +36,7 @@ export function construct(pe: ParsedElement, options?: SvgConstructOptions, disp
     const numOfDecimalPlaces = options && options.numOfDecimalPlaces;
     const replaceHrefToObjectUrl = options && options.replaceHrefToObjectUrl || false;
 
-    const tag = new SvgTag(pe.tag).options({ numOfDecimalPlaces });
+    const tag = new SvgTag(pe.tag).options({ numOfDecimalPlaces }).isOuterMost(pe.parent === null);
     if (putRootAttribute) {
         // only top level
         tag.attr("data-root", "true");
