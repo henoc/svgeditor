@@ -9,12 +9,16 @@ import { iterate } from "./utils";
 export interface XmlElement {
     name: string;
     attrs: {[name: string]: string};
-    texts: string[];
-    children: XmlElement[];
+    children: (XmlElement|XmlText)[];
     positions: ElementPositionsOnText;
 }
 
-interface Range {start: number, end: number}
+export interface XmlText {
+    text: string;
+    interval: Interval;
+}
+
+export interface Interval {start: number, end: number}
 
 /**
  * ex. <svg_start xmlns="something">first<def>inner</def>second</svg_end>  
@@ -26,12 +30,11 @@ interface Range {start: number, end: number}
  * texts: first, second
  */
 interface ElementPositionsOnText {
-    openElement: Range;            
-    closeElement: Range | null;    
-    startTag: Range;                
-    endTag: Range | null;                 
-    attrs: {[name: string]: Range};  
-    texts: Range[];                 
+    openElement: Interval;            
+    closeElement: Interval | null;    
+    startTag: Interval;                
+    endTag: Interval | null;                 
+    attrs: {[name: string]: Interval};             
 }
 
 interface Context {
@@ -40,17 +43,13 @@ interface Context {
     startTagStart: number;
     startTagEnd: number;
     tagName: string;
-    attrs: {[name: string]: {value: string; range: Range}};
-    texts: {
-        text: string,
-        range: Range
-    }[];
+    attrs: {[name: string]: {value: string; range: Interval}};
     isSelfClosing: boolean;
     closeElementStart: number;
     closeElementEnd: number;
     endTagStart: number;
     endTagEnd: number;
-    children: XmlElement[];
+    children: (XmlElement|XmlText)[];
 }
 
 export function textToXml(xmltext: string): XmlElement | null {
@@ -78,15 +77,13 @@ export function textToXml(xmltext: string): XmlElement | null {
             attrs: iterate(current.attrs, (_key, value) => {
                 return value.value
             }),
-            texts: current.texts.map(v => v.text),
             children: current.children,
             positions: {
                 openElement: {start: current.openElementStart, end: current.openElementEnd},
                 closeElement: current.isSelfClosing ? null : {start: current.closeElementStart, end: current.closeElementEnd},
                 startTag: {start: current.startTagStart, end: current.startTagEnd},
                 endTag: current.isSelfClosing ? null : {start: current.endTagStart, end: current.endTagEnd},
-                attrs: iterate(current.attrs, (_key, value) => value.range),
-                texts: current.texts.map(v => v.range)
+                attrs: iterate(current.attrs, (_key, value) => value.range)
             }
         };
         if (contexts.length === 1) {
@@ -134,33 +131,40 @@ export function textToXml(xmltext: string): XmlElement | null {
     parser.ontext = (_text) => {
         if (currentContext()) {
             const rawText = xmltext.slice(lastGT).match(/^[^<]*/)![0];       // before unescaping
-            const fragment = {
+            currentContext().children.push({
                 text: rawText,
-                range: {
+                interval: {
                     start: lastGT,
                     end: lastGT + rawText.length
                 }
-            };
-            currentContext().texts.push(fragment);
+            });
         }
     };
 
     parser.oncdata = (cdata) => {
         if (currentContext()) {
-            const fragment =  {
-                text: cdata,
-                range: {
+            currentContext().children.push({
+                text: `<![CDATA[${cdata}]]>`,
+                interval: {
                     start: pos() - "]]>".length - cdata.length,
                     end: pos() - "]]>".length
                 }
-            };
-            currentContext().texts.push(fragment);
+            });
             lastGT = pos();
         }
     }
 
-    parser.oncomment = (_comment) => {
-        lastGT = pos() + 1;         // in sax, call oncomment when "--" is found.
+    parser.oncomment = (comment) => {
+        if (currentContext()) {
+            currentContext().children.push({
+                text: `<!--${comment}-->`,
+                interval: {
+                    start: pos() - 2 - comment.length - 4,
+                    end: pos() + 1
+                }
+            });
+            lastGT = pos() + 1;         // in sax, call oncomment when "--" is found.
+        }
     }
 
     parser.onclosetag = (tagName) => {
