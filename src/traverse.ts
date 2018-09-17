@@ -1,4 +1,4 @@
-import { ParsedElement } from "./domParser";
+import { ParsedElement } from "./svgParser";
 
 export function traverse(pe: ParsedElement, fn: (pe: ParsedElement, parentPe: ParsedElement & {children: ParsedElement[]} | null, index: number | null) => void, index: number | null = null, parentPe: ParsedElement & {children: ParsedElement[]} | null = null) {
     fn(pe, parentPe, index);

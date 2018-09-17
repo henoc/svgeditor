@@ -1,5 +1,5 @@
 import { uri, urlNormalizeRequest, callbacks, sendErrorMessage, informationRequest, refleshContent, imageList } from "./main";
-import { ParsedElement } from "./domParser";
+import { ParsedElement } from "./svgParser";
 import uuidStatic from "uuid";
 import { traverse } from "./traverse";
 

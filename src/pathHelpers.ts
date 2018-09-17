@@ -1,5 +1,5 @@
 import SvgPath from "svgpath";
-import {PathCommand} from "./domParser";
+import {PathCommand} from "./svgParser";
 import { Vec2, v, deepCopy } from "./utils";
 
 /**

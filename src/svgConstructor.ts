@@ -1,4 +1,4 @@
-import { ParsedElement, ParsedBaseAttr, ParsedPresentationAttr } from "./domParser";
+import { ParsedElement, ParsedBaseAttr, ParsedPresentationAttr } from "./svgParser";
 import { SvgTag, textContent, LinearComponent } from "./svg";
 import { onShapeMouseDown } from "./triggers";
 import { assertNever } from "./utils";

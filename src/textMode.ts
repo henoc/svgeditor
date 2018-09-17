@@ -1,6 +1,6 @@
 import { Mode } from "./abstractMode";
 import { svgdata, configuration, refleshContent, drawState } from "./main";
-import { ParsedElement } from "./domParser";
+import { ParsedElement } from "./svgParser";
 import { shaper } from "./shapes";
 
 export function textMode(inputText: string | undefined, isfinished: (pe: ParsedElement | null) => void) {

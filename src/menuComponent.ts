@@ -8,7 +8,7 @@ import { EllipseMode } from "./ellipseMode";
 import { PolylineMode } from "./polylineMode";
 import { PathMode } from "./pathMode";
 import { assertNever, el, iterate } from "./utils";
-import { ParsedElement } from "./domParser";
+import { ParsedElement } from "./svgParser";
 
 export type ModeName = "select" | "node" | "rect" | "ellipse" | "polyline" | "path" | "text";
 export type OperatorName = "duplicate" | "delete" | "zoomIn" | "zoomOut" | "group" | "ungroup" | "font" | "bringForward" | "sendBackward" |

@@ -2,7 +2,7 @@ import * as vscode from "vscode";
 import * as fs from "fs";
 import * as path from "path";
 import * as xmldoc from "xmldoc";
-import { parse, ParsedElement } from "./domParser";
+import { parse, ParsedElement } from "./svgParser";
 import { collectSystemFonts } from "./fontFileProcedures";
 import { iterate } from "./utils";
 import { diffChars } from "diff";

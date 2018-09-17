@@ -1,6 +1,6 @@
 import { elementOpen, elementClose, text, elementVoid } from "incremental-dom";
 import { drawState, refleshContent, openWindows, contentChildrenComponent, editMode, fontList, svgIdXpathMap, paintServers, svgdata, containerElements } from "./main";
-import { Paint, ColorFormat, isColor, isFuncIRI, ParsedElement } from "./domParser";
+import { Paint, ColorFormat, isColor, isFuncIRI, ParsedElement } from "./svgParser";
 import tinycolor from "tinycolor2";
 import { Component, WindowComponent, ButtonComponent, iconComponent } from "./component";
 import { el, OneOrMore, iterate, assertNever, cursor } from "./utils";

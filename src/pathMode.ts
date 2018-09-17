@@ -1,5 +1,5 @@
 import { drawState, refleshContent } from "./main";
-import { ParsedElement } from "./domParser";
+import { ParsedElement } from "./svgParser";
 import { v } from "./utils";
 import { Mode } from "./abstractMode";
 import { SvgTag } from "./svg";

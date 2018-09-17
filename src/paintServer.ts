@@ -3,7 +3,7 @@
  * @see https://www.w3.org/TR/SVG11/pservers.html
  */
 
-import { ParsedElement, Ratio, Paint, isColor, isFuncIRI, StopColor } from "./domParser";
+import { ParsedElement, Ratio, Paint, isColor, isFuncIRI, StopColor } from "./svgParser";
 import tinycolor from "tinycolor2";
 import { traverse } from "./traverse";
 import { xfindExn } from "./xpath";

@@ -1,6 +1,6 @@
 import { refleshContent, configuration, svgRealMap, drawState } from "./main";
 import { Vec2, v, vfp } from "./utils";
-import { ParsedElement } from "./domParser";
+import { ParsedElement } from "./svgParser";
 import { shaper } from "./shapes";
 import { Mode } from "./abstractMode";
 import { SvgTag } from "./svg";

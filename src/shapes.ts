@@ -1,4 +1,4 @@
-import { ParsedElement, Length, Transform, isLength, TransformDescriptor, Paint, PathCommand } from "./domParser";
+import { ParsedElement, Length, Transform, isLength, TransformDescriptor, Paint, PathCommand } from "./svgParser";
 import { Vec2, v, vfp, OneOrMore, Merger } from "./utils";
 import { svgPathManager } from "./pathHelpers";
 import { convertToPixel, convertFromPixel } from "./measureUnits";

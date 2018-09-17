@@ -1,5 +1,5 @@
 import * as xmldoc from "xmldoc";
-import { parse } from "../src/domParser";
+import { parse } from "../src/svgParser";
 import * as assert from 'assert';
 import { xfind } from "../src/xpath";
 import { updateXPaths } from "../src/traverse";

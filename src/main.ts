@@ -1,5 +1,5 @@
 import { construct } from "./svgConstructor";
-import { ParsedElement, isLengthUnit, LengthUnit, Paint } from "./domParser";
+import { ParsedElement, isLengthUnit, LengthUnit, Paint } from "./svgParser";
 import { onDocumentMouseMove, onDocumentMouseUp, onDocumentClick, onDocumentMouseLeave, onDocumentCopy, onDocumentCut, onDocumentPaste } from "./triggers";
 import { Mode } from "./abstractMode";
 import { SelectMode } from "./selectMode";

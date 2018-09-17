@@ -1,7 +1,7 @@
 import { editMode, openWindows, contentChildrenComponent, refleshContent, svgdata } from "./main";
 import { iterate } from "./utils";
 import { construct } from "./svgConstructor";
-import { ParsedElement, parse } from "./domParser";
+import { ParsedElement, parse } from "./svgParser";
 import * as xmldoc from "xmldoc";
 import { updateXPaths } from "./traverse";
 import { xfindExn } from "./xpath";
