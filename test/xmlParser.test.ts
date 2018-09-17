@@ -12,6 +12,7 @@ describe("xmlParser", () => {
             },
             children: [],
             positions: {
+                interval: {start: 7, end: 31},
                 openElement: {start: 7, end: 31},
                 closeElement: null,
                 startTag: {start: 8, end: 12},
@@ -29,6 +30,7 @@ describe("xmlParser", () => {
             },
             children: [],
             positions: {
+                interval: {start: 7 + 24, end: 54},
                 openElement: {start: 7 + 24, end: 54},
                 closeElement: null,
                 startTag: {start: 8 + 24, end: 12 + 24},
@@ -44,6 +46,7 @@ describe("xmlParser", () => {
             attrs: {},
             children: [book1, book2],
             positions: {
+                interval: {start: 0, end: 62},
                 openElement: {start: 0, end: 7},
                 closeElement: {start: 54, end: 62},
                 startTag: {start: 1, end: 6},
@@ -66,6 +69,7 @@ describe("xmlParser", () => {
                 interval: {start: 16, end: 23}
             }],
             positions: {
+                interval: {start: 0, end: 34},
                 openElement: {start: 0, end: 7},
                 closeElement: {start: 26, end: 34},
                 startTag: {start: 1, end: 6},
@@ -100,6 +104,7 @@ describe("xmlParser", () => {
                 interval: {start: 36, end: 37}
             }],
             positions: {
+                interval: {start: 0, end: 45},
                 openElement: {start: 0, end: 7},
                 closeElement: {start: 37, end: 45},
                 startTag: {start: 1, end: 6},
@@ -122,6 +127,7 @@ describe("xmlParser", () => {
                 interval: {start: 9, end: 10}
             }],
             positions: {
+                interval: {start: 2, end: 18},
                 openElement: {start: 2, end: 9},
                 closeElement: {start: 10, end: 18},
                 startTag: {start: 3, end: 8},
@@ -144,6 +150,7 @@ describe("xmlParser", () => {
                 interval: {start: 19, end: 20}
             }],
             positions: {
+                interval: {start: 12, end: 28},
                 openElement: {start: 12, end: 19},
                 closeElement: {start: 20, end: 28},
                 startTag: {start: 13, end: 18},
@@ -166,6 +173,7 @@ describe("xmlParser", () => {
                 interval: {start: 49, end: 50}
             }],
             positions: {
+                interval: {start: 42, end: 58},
                 openElement: {start: 42, end: 49},
                 closeElement: {start: 50, end: 58},
                 startTag: {start: 43, end: 48},
@@ -184,6 +192,7 @@ describe("xmlParser", () => {
             attrs: {},
             children: [],
             positions: {
+                interval: {start: 12, end: 19},
                 openElement: {start: 12, end: 19},
                 closeElement: null,
                 startTag: {start: 14, end: 16},
@@ -205,6 +214,7 @@ describe("xmlParser", () => {
                 interval: {start: 19, end: 24}
             }],
             positions: {
+                interval: {start: 0, end: 32},
                 openElement: {start: 0, end: 7},
                 closeElement: {start: 24, end: 32},
                 startTag: {start: 1, end: 6},
@@ -227,6 +237,7 @@ describe("xmlParser", () => {
                 interval: {start: 7, end: 16}
             }],
             positions: {
+                interval: {start: 0, end: 24},
                 openElement: {start: 0, end: 7},
                 closeElement: {start: 16, end: 24},
                 startTag: {start: 1, end: 6},
@@ -247,6 +258,7 @@ describe("xmlParser", () => {
             },
             children: [],
             positions: {
+                interval: {start: 0, end: 27},
                 openElement: {start: 0, end: 27},
                 closeElement: null,
                 startTag: {start: 1, end: 6},

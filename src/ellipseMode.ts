@@ -33,7 +33,7 @@ export class EllipseMode extends Mode {
                         ry: {unit: configuration.defaultUnit, value: 0, attrName: "ry"},
                         ...Mode.baseAttrsDefaultImpl(),
                         ...Mode.presentationAttrsDefaultImpl()
-                    },
+                    }
                 };
                 this.dragTarget = pe2;
                 root.children.push(pe2);

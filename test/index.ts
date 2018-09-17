@@ -16,8 +16,7 @@ import * as testRunner from 'vscode/lib/testrunner';
 // See https://github.com/mochajs/mocha/wiki/Using-mocha-programmatically#set-options for more info
 testRunner.configure({
     ui: "bdd", 		// the TDD UI is being used in extension.test.ts (suite, test, etc.)
-    useColors: true, // colored output from test results
-    timeout: 4000
+    useColors: true // colored output from test results
 });
 
 module.exports = testRunner;

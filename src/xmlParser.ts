@@ -37,14 +37,15 @@ export interface Interval {start: number, end: number}
 
 /**
  * ex. <svg_start xmlns="something">first<def>inner</def>second</svg_end>  
+ * interval: <svg_start...svg_end>  
  * openElement: <svg_start...>  
  * closeElement: </svg_end>  
  * startTag: svg_start  
  * endTag: svg_end  
  * attrs: something  
- * texts: first, second
  */
-interface ElementPositionsOnText {
+export interface ElementPositionsOnText {
+    interval: Interval;
     openElement: Interval;            
     closeElement: Interval | null;    
     startTag: Interval;                
@@ -95,6 +96,7 @@ export function textToXml(xmltext: string): XmlElement | null {
             }),
             children: current.children,
             positions: {
+                interval: {start: current.openElementStart, end: current.isSelfClosing ? current.openElementEnd : current.closeElementEnd},
                 openElement: {start: current.openElementStart, end: current.openElementEnd},
                 closeElement: current.isSelfClosing ? null : {start: current.closeElementStart, end: current.closeElementEnd},
                 startTag: {start: current.startTagStart, end: current.startTagEnd},

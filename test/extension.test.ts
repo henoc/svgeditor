@@ -92,6 +92,10 @@ describe("extension", () => {
             assert.strictEqual(textEditor.document.getText(), after);
         }
 
+        before(async () => {
+            await newUntitled(ViewColumn.One, "");
+        });
+
         it("basic", (done) => {
             doDiffProcesure().then(done).catch(done);
         });
@@ -152,6 +156,6 @@ describe("extension", () => {
 `<svg width="100" height="100" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink">
     <circle stroke-width="3" fill="red" stroke="black" r="40" cx="50" cy="50"/>
 </svg>`;
-        assert.deepStrictEqual(intervalToRange(text, {start: 17, end: 148}), new Range(1, 18, 2, 40));
+        assert.deepStrictEqual(intervalToRange(text, {start: 17, end: 148}), new Range(0, 17, 1, 39));
     });
 });

@@ -3,7 +3,7 @@ import { Assoc } from "./svg";
 import tinycolor from "tinycolor2";
 import { svgPathManager } from "./pathHelpers";
 import { SetDifference, Omit } from "utility-types";
-import { XmlNode, XmlElement, Interval } from "./xmlParser";
+import { XmlNode, XmlElement, Interval, ElementPositionsOnText } from "./xmlParser";
 const { fromTransformAttribute } = require("transformation-matrix/build-commonjs/fromTransformAttribute");
 
 interface Warning {
@@ -36,6 +36,7 @@ export type ParsedElement = (
 ) & {
     xpath: string;
     parent: string | null;
+    positions?: ElementPositionsOnText | {interval: Interval};
 }
 
 interface ContainerElementClass {
@@ -385,55 +386,56 @@ export function parse(node: XmlNode, states: ParserStates = <any>{}): ParsedResu
     }
     if (node.type === "element") {
         const children = parseChildren(node, pushWarns, xpath, states);
+        const positions = node.positions;
         if (node.name === "svg") {
             const attrs = parseAttrs(node, pushWarns).svg();
-            return {result: {tag: "svg", attrs, children, xpath, parent}, warns};
+            return {result: {tag: "svg", attrs, children, xpath, parent, positions}, warns};
         } else if (node.name === "circle") {
             const attrs = parseAttrs(node, pushWarns).circle();
-            return {result: {tag: "circle", attrs, xpath, parent}, warns};
+            return {result: {tag: "circle", attrs, xpath, parent, positions}, warns};
         } else if (node.name === "rect") {
             const attrs = parseAttrs(node, pushWarns).rect();
-            return {result: {tag: "rect", attrs, xpath, parent}, warns};
+            return {result: {tag: "rect", attrs, xpath, parent, positions}, warns};
         } else if (node.name === "ellipse") {
             const attrs = parseAttrs(node, pushWarns).ellipse();
-            return {result: {tag: "ellipse", attrs, xpath, parent}, warns};
+            return {result: {tag: "ellipse", attrs, xpath, parent, positions}, warns};
         } else if (node.name === "polyline") {
             const attrs = parseAttrs(node, pushWarns).polyline();
-            return {result: {tag: "polyline", attrs, xpath, parent}, warns};
+            return {result: {tag: "polyline", attrs, xpath, parent, positions}, warns};
         } else if (node.name === "polygon") {
             const attrs = parseAttrs(node, pushWarns).polyline();
-            return {result: {tag: "polygon", attrs, xpath, parent}, warns};
+            return {result: {tag: "polygon", attrs, xpath, parent, positions}, warns};
         } else if (node.name === "path") {
             const attrs = parseAttrs(node, pushWarns).path();
-            return {result: {tag: "path", attrs, xpath, parent}, warns};
+            return {result: {tag: "path", attrs, xpath, parent, positions}, warns};
         } else if (node.name === "text") {
             const attrs = parseAttrs(node, pushWarns).text();
-            return {result: {tag: "text", attrs, xpath, parent, children}, warns};
+            return {result: {tag: "text", attrs, xpath, parent, children, positions}, warns};
         } else if (node.name === "g") {
             const attrs = parseAttrs(node, pushWarns).g();
-            return {result: {tag: "g", attrs, children, xpath, parent}, warns};
+            return {result: {tag: "g", attrs, children, xpath, parent, positions}, warns};
         } else if (node.name === "linearGradient") {
             const attrs = parseAttrs(node, pushWarns).linearGradient();
-            return {result: {tag: "linearGradient", attrs, children, xpath, parent}, warns};
+            return {result: {tag: "linearGradient", attrs, children, xpath, parent, positions}, warns};
         } else if (node.name === "radialGradient") {
             const attrs = parseAttrs(node, pushWarns).radialGradient();
-            return {result: {tag: "radialGradient", attrs, children, xpath, parent}, warns};
+            return {result: {tag: "radialGradient", attrs, children, xpath, parent, positions}, warns};
         } else if (node.name === "stop") {
             const attrs = parseAttrs(node, pushWarns).stop();
-            return {result: {tag: "stop", attrs, xpath, parent}, warns};
+            return {result: {tag: "stop", attrs, xpath, parent, positions}, warns};
         } else if (node.name === "image") {
             const attrs = parseAttrs(node, pushWarns).image();
-            return {result: {tag: "image", attrs, xpath, parent}, warns};
+            return {result: {tag: "image", attrs, xpath, parent, positions}, warns};
         } else if (node.name === "defs") {
             const attrs = parseAttrs(node, pushWarns).defs();
-            return {result: {tag: "defs", attrs, children, xpath, parent}, warns};
+            return {result: {tag: "defs", attrs, children, xpath, parent, positions}, warns};
         } else {
             const attrs: Assoc = node.attrs;
-            return {result: {tag: "unknown", tag$real: node.name, attrs, children, xpath, parent}, warns: [{range: node.positions.startTag, message: `${node.name} is unsupported element.`}]};
+            return {result: {tag: "unknown", tag$real: node.name, attrs, children, xpath, parent, positions}, warns: [{range: node.positions.startTag, message: `${node.name} is unsupported element.`}]};
         }
     } else if (underTextElement && node.type === "text") {
         const text = node.text;
-        return {result: {tag: "text()", attrs: {}, text, xpath, parent}, warns};
+        return {result: {tag: "text()", attrs: {}, text, xpath, parent, positions: {interval: node.interval} }, warns};
     } else {
         return null;
     }
