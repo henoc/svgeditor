@@ -65,10 +65,12 @@ export function onDocumentPaste(event: Event) {
     if (str) {
         const dom = new xmldoc.XmlDocument(str);
         const parsed = parse(dom);
-        const pe = <ParsedElement>parsed.result;
-        if (svgdata && "children" in svgdata) {
-            svgdata.children.push(pe);
-            refleshContent();
+        if (parsed) {
+            const pe = parsed.result;
+            if (svgdata && "children" in svgdata) {
+                svgdata.children.push(pe);
+                refleshContent();
+            }
         }
     }
     event.preventDefault();
@@ -84,7 +86,7 @@ function copy(clipboardData: DataTransfer, isCut: boolean = false) {
             if (isCut) parentPe.children = parentPe.children.filter(c => pes.indexOf(c) === -1);
             const str = orderedPes.map(pe => {
                 const svgTag = construct(pe);
-                return svgTag ? svgTag.toString() : "";
+                return svgTag ? svgTag.toLinear() : "";
             }).join("");
             const formattedStr = format(str);
             clipboardData.setData("image/svg+xml", formattedStr);

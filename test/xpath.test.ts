@@ -6,7 +6,7 @@ import { updateXPaths } from "../src/traverse";
 
 function parseSvg(svgText: string) {
     const dom = new xmldoc.XmlDocument(svgText);
-    const ret = parse(dom).result;
+    const ret = parse(dom)!.result;
     updateXPaths(ret);
     return ret;
 }

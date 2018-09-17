@@ -164,7 +164,7 @@ export function sendBackToEditor() {
     const svgtag = construct(svgdata, { all: configuration.showAll, numOfDecimalPlaces: configuration.numOfDecimalPlaces });
     if (svgtag) vscode.postMessage({
         command: "modified",
-        data: svgtag.toString()
+        data: svgtag.toLinear()
     })
 }
 

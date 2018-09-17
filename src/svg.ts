@@ -13,16 +13,19 @@ interface SvgTagOptions {
     numOfDecimalPlaces?: number;
 }
 
+export interface LinearComponent extends Component {
+    toLinear(): string;
+}
+
 /**
  * Build SVG element or render for incremental-dom.
  */
-export class SvgTag implements Component {
+export class SvgTag implements LinearComponent {
     public data: {
         tag?: string;
         attrs: {[key: string]: string | number}
         class: string[]
-        children: SvgTag[]
-        text?: string
+        children: LinearComponent[]
         listeners: {[key: string]: (event: Event) => void}
         important: string[]
         isOuterMost: boolean
@@ -153,44 +156,16 @@ export class SvgTag implements Component {
         this.data.class.push(...classNames);
         return this;
     }
-    children(...children: SvgTag[]) {
+    children(...children: LinearComponent[]) {
         this.data.children.push(...children);
-        return this;
-    }
-    text(text: string | null): SvgTag {
-        if (text !== null) this.data.text = text;
         return this;
     }
     listener(name: string, action: (event: Event) => void): SvgTag {
         this.data.listeners[name] = action;
         return this;
     }
-    build(): Element {
-        if (this.data.tag) {
-            if (this.data.tag === "svg") {
-                this.data.attrs.xmlns = svgns;
-                this.data.attrs["xmlns:xlink"] = xlinkns;
-            }
-            const elem = document.createElementNS(svgns, this.data.tag);
-            iterate(this.data.attrs, (key, value) => {
-                if (key.startsWith("xlink:")) elem.setAttributeNS(xlinkns, key, String(value));
-                else elem.setAttribute(key, String(value));
-            });
-            if (this.data.class.length > 0) elem.classList.add(...this.data.class);
-            this.data.children.forEach(c => {
-                elem.insertAdjacentElement("beforeend", c.build());
-            });
-            if (this.data.text) elem.textContent = this.data.text;
-            iterate(this.data.listeners, (key, value) => {
-                elem.addEventListener(key, value);
-            });
-            return elem;
-        } else {
-            throw new Error("In class Tag, no tag name found when build.");
-        }
-    }
 
-    toString(): string {
+    toLinear(): string {
         if (this.data.tag) {
             if (this.data.tag === "svg" && this.data.isOuterMost) {
                 this.data.attrs.xmlns = svgns;
@@ -203,8 +178,8 @@ export class SvgTag implements Component {
             const head = [this.data.tag];
             if (attrs.length > 0) head.push(attrs.join(" "));
             if (this.data.class.length > 0) head.push(`class="${this.data.class.join(" ")}"`);
-            return (this.data.text || this.data.children.length !== 0) ?
-                `<${head.join(" ")}>${this.data.children.map(c => c.toString()).join("")}${this.data.text && this.data.text.trim() || ""}</${this.data.tag}>` :
+            return (this.data.children.length !== 0) ?
+                `<${head.join(" ")}>${this.data.children.map(c => c.toLinear()).join("")}</${this.data.tag}>` :
                 `<${head.join(" ")}/>`;
         } else {
             throw new Error("In class Tag, no tag name found when build.");
@@ -230,7 +205,6 @@ export class SvgTag implements Component {
             if (this.data.class.length > 0)  attr("class", this.data.class.join(" "));
             elementOpenEnd();
             this.data.children.forEach(c => c.render());
-            if (this.data.text) text(this.data.text);
             elementClose(this.data.tag);
         }
         else {
@@ -273,3 +247,15 @@ export class SvgTag implements Component {
 }
 
 export type Assoc = {[key: string]: string};
+
+export function textContent(tcontent: string): LinearComponent {
+    return {
+        render() {
+            text(tcontent);
+        },
+        toLinear() {
+            return tcontent;
+        }
+    }
+}
+

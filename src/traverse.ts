@@ -14,7 +14,7 @@ export function makeIdXpathMap(pe: ParsedElement): {[id: string]: string} {
     traverse(
         pe,
         (pe, parentPe, index) => {
-            if (pe.attrs.id) acc[pe.attrs.id] = pe.xpath;
+            if ("id" in pe.attrs && pe.attrs.id) acc[pe.attrs.id] = pe.xpath;
         }
     );
     return acc;

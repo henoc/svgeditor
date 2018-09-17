@@ -89,7 +89,7 @@ export function cssString(paintServer: PaintServer): string {
 export function collectPaintServer(pe: ParsedElement): {[id: string]: ParsedElement} {
     const acc: {[id: string]: ParsedElement} = {};
     traverse(pe, (pe, parentPe, index) => {
-        const ident = pe.attrs.id;
+        const ident = ("id" in pe.attrs) && pe.attrs.id;
         if (ident && (pe.tag === "linearGradient" || pe.tag === "radialGradient")) {
             acc[ident] = pe;
         }

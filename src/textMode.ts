@@ -22,7 +22,13 @@ export function textMode(inputText: string | undefined, isfinished: (pe: ParsedE
                     ...Mode.presentationAttrsDefaultImpl(),
                     "font-family": drawState["font-family"]
                 },
-                text: inputText
+                children: [{
+                    xpath: "???",
+                    parent: "???",
+                    tag: "text()",
+                    attrs: {},
+                    text: inputText
+                }]
             };
             root.children.push(pe);
             refleshContent();   // make real Element

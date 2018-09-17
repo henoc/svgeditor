@@ -534,7 +534,11 @@ export function shaper(pe: ParsedElement): ShaperFunctions {
             const re = svgRealMap[pe.xpath];
             const fontInfo = () => {
                 const styleDeclaration = getComputedStyle(re);
-                return font(pe.text || "", styleDeclaration.fontFamily || "", parseFloat(styleDeclaration.fontSize || "16"), styleDeclaration.fontWeight || "", styleDeclaration.fontStyle || "");
+                let strs = "";
+                for (let c of pe.children) {
+                    if (c.tag === "text()") strs += c.text;
+                }
+                return font(strs, styleDeclaration.fontFamily || "", parseFloat(styleDeclaration.fontSize || "16"), styleDeclaration.fontWeight || "", styleDeclaration.fontStyle || "");
             }
             const tattrs = pe.attrs;
             return new Merger({
@@ -741,6 +745,8 @@ export function shaper(pe: ParsedElement): ShaperFunctions {
         case "radialGradient":
         case "stop":
             throw new Error("Definiton only shape cannot move.");
+        case "text()":
+            throw new Error("String only data cannot move.");
         case "unknown":
             throw new Error("Unknown shape cannot move.");
     }
