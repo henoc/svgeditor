@@ -5,6 +5,7 @@ describe("xmlParser", () => {
     it("attributes, self-closing", () => {
         const xml = textToXml('<books><book title="Twilight"/><book title="Twister"/></books>');
         const book1: XmlElement = {
+            type: "element",
             name: "book",
             attrs: {
                 title: "Twilight"
@@ -21,6 +22,7 @@ describe("xmlParser", () => {
             }
         };
         const book2: XmlElement = {
+            type: "element",
             name: "book",
             attrs: {
                 title: "Twister"
@@ -37,6 +39,7 @@ describe("xmlParser", () => {
             }
         }
         const books: XmlElement = {
+            type: "element",
             name: "books",
             attrs: {},
             children: [book1, book2],
@@ -54,10 +57,12 @@ describe("xmlParser", () => {
     it("cdata", () => {
         const xml = textToXml("<hello><![CDATA[<world>]]></hello>");
         const hello: XmlElement = {
+            type: "element",
             name: "hello",
             attrs: {},
             children: [{
-                text: "<![CDATA[<world>]]>",
+                type: "cdata",
+                text: "<world>",
                 interval: {start: 16, end: 23}
             }],
             positions: {
@@ -74,18 +79,23 @@ describe("xmlParser", () => {
     it("comment, separate texts", () => {
         const xml = textToXml("<hello>(<!-- World --><!-- World -->)</hello>");
         const hello: XmlElement = {
+            type: "element",
             name: "hello",
             attrs: {},
             children: [{
+                type: "text",
                 text: "(",
                 interval: {start: 7, end: 8}
             }, {
-                text: "<!-- World -->",
+                type: "comment",
+                text: " World ",
                 interval: {start: 8, end: 22}
             }, {
-                text: "<!-- World -->",
+                type: "comment",
+                text: " World ",
                 interval: {start: 22, end: 36}
             }, {
+                type: "text",
                 text: ")",
                 interval: {start: 36, end: 37}
             }],
@@ -103,9 +113,11 @@ describe("xmlParser", () => {
     it("text before/after root node", () => {
         const xml = textToXml("\n\n<hello>*</hello>\n\n");
         const hello: XmlElement = {
+            type: "element",
             name: "hello",
             attrs: {},
             children: [{
+                type: "text",
                 text: "*",
                 interval: {start: 9, end: 10}
             }],
@@ -123,9 +135,11 @@ describe("xmlParser", () => {
     it("comment before/after root node", () => {
         const xml = textToXml("<!-- xml --><hello>*</hello><!-- xml -->");
         const hello: XmlElement = {
+            type: "element",
             name: "hello",
             attrs: {},
             children: [{
+                type: "text",
                 text: "*",
                 interval: {start: 19, end: 20}
             }],
@@ -143,9 +157,11 @@ describe("xmlParser", () => {
     it("doctype, xml declaration", () => {
         const xml = textToXml('<?xml version="1.0"?><!DOCTYPE HelloWorld><hello>*</hello>');
         const hello: XmlElement = {
+            type: "element",
             name: "hello",
             attrs: {},
             children: [{
+                type: "text",
                 text: "*",
                 interval: {start: 49, end: 50}
             }],
@@ -163,6 +179,7 @@ describe("xmlParser", () => {
     it("separate texts by child node", () => {
         const xml = textToXml("<hello>hello< br />world</hello>");
         const br: XmlElement = {
+            type: "element",
             name: "br",
             attrs: {},
             children: [],
@@ -175,12 +192,15 @@ describe("xmlParser", () => {
             }
         };
         const hello: XmlElement = {
+            type: "element",
             name: "hello",
             attrs: {},
             children: [{
+                type: "text",
                 text: "hello",
                 interval: {start: 7, end: 12}
             }, br, {
+                type: "text",
                 text: "world",
                 interval: {start: 19, end: 24}
             }],
@@ -198,9 +218,11 @@ describe("xmlParser", () => {
     it("escaped characters", () => {
         const xml = textToXml("<hello>&lt; &gt;</hello>");
         const hello: XmlElement = {
+            type: "element",
             name: "hello",
             attrs: {},
             children: [{
+                type: "text",
                 text: "&lt; &gt;",
                 interval: {start: 7, end: 16}
             }],
@@ -218,6 +240,7 @@ describe("xmlParser", () => {
     it("escaped chars in attributes", () => {
         const xml = textToXml('<hello title="&lt; &gt;" />');
         const hello: XmlElement = {
+            type: "element",
             name: "hello",
             attrs: {
                 title: "&lt; &gt;"

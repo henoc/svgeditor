@@ -5,15 +5,30 @@
 import sax from "sax";
 import { iterate } from "./utils";
 
+export type XmlNode = XmlElement | XmlText | XmlComment | XmlCData;
 
 export interface XmlElement {
+    type: "element";
     name: string;
     attrs: {[name: string]: string};
-    children: (XmlElement|XmlText)[];
+    children: XmlNode[];
     positions: ElementPositionsOnText;
 }
 
 export interface XmlText {
+    type: "text";
+    text: string;
+    interval: Interval;
+}
+
+export interface XmlComment {
+    type: "comment";
+    text: string;
+    interval: Interval;
+}
+
+export interface XmlCData {
+    type: "cdata";
     text: string;
     interval: Interval;
 }
@@ -49,7 +64,7 @@ interface Context {
     closeElementEnd: number;
     endTagStart: number;
     endTagEnd: number;
-    children: (XmlElement|XmlText)[];
+    children: XmlNode[];
 }
 
 export function textToXml(xmltext: string): XmlElement | null {
@@ -73,6 +88,7 @@ export function textToXml(xmltext: string): XmlElement | null {
     function contextLevelDown(): void {
         const current = currentContext();
         const xmlElement: XmlElement = {
+            type: "element",
             name: current.tagName,
             attrs: iterate(current.attrs, (_key, value) => {
                 return value.value
@@ -132,6 +148,7 @@ export function textToXml(xmltext: string): XmlElement | null {
         if (currentContext()) {
             const rawText = xmltext.slice(lastGT).match(/^[^<]*/)![0];       // before unescaping
             currentContext().children.push({
+                type: "text",
                 text: rawText,
                 interval: {
                     start: lastGT,
@@ -144,7 +161,8 @@ export function textToXml(xmltext: string): XmlElement | null {
     parser.oncdata = (cdata) => {
         if (currentContext()) {
             currentContext().children.push({
-                text: `<![CDATA[${cdata}]]>`,
+                type: "cdata",
+                text: cdata,
                 interval: {
                     start: pos() - "]]>".length - cdata.length,
                     end: pos() - "]]>".length
@@ -157,7 +175,8 @@ export function textToXml(xmltext: string): XmlElement | null {
     parser.oncomment = (comment) => {
         if (currentContext()) {
             currentContext().children.push({
-                text: `<!--${comment}-->`,
+                type: "comment",
+                text: comment,
                 interval: {
                     start: pos() - 2 - comment.length - 4,
                     end: pos() + 1

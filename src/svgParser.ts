@@ -1,13 +1,13 @@
-import * as xmldoc from "xmldoc";
 import { iterate, Vec2, v, objectValues, Some, Option, None } from "./utils";
 import { Assoc } from "./svg";
 import tinycolor from "tinycolor2";
 import { svgPathManager } from "./pathHelpers";
 import { SetDifference, Omit } from "utility-types";
+import { XmlNode, XmlElement, Interval } from "./xmlParser";
 const { fromTransformAttribute } = require("transformation-matrix/build-commonjs/fromTransformAttribute");
 
 interface Warning {
-    range: {line: number, column: number, position: number, startTagPosition: number},
+    range: Interval,
     message: string
 }
 
@@ -373,7 +373,7 @@ interface ParserStates {
     underTextElement: boolean;
 }
 
-export function parse(node: xmldoc.XmlNode, states: ParserStates = <any>{}): ParsedResult | null {
+export function parse(node: XmlNode, states: ParserStates = <any>{}): ParsedResult | null {
     const underTextElement = states.underTextElement;
 
     const xpath = "???";
@@ -428,8 +428,8 @@ export function parse(node: xmldoc.XmlNode, states: ParserStates = <any>{}): Par
             const attrs = parseAttrs(node, pushWarns).defs();
             return {result: {tag: "defs", attrs, children, xpath, parent}, warns};
         } else {
-            const attrs: Assoc = node.attr;
-            return {result: {tag: "unknown", tag$real: node.name, attrs, children, xpath, parent}, warns: [{range: toRange(node), message: `${node.name} is unsupported element.`}]};
+            const attrs: Assoc = node.attrs;
+            return {result: {tag: "unknown", tag$real: node.name, attrs, children, xpath, parent}, warns: [{range: node.positions.startTag, message: `${node.name} is unsupported element.`}]};
         }
     } else if (underTextElement && node.type === "text") {
         const text = node.text;
@@ -439,11 +439,7 @@ export function parse(node: xmldoc.XmlNode, states: ParserStates = <any>{}): Par
     }
 }
 
-function toRange(element: xmldoc.XmlElement) {
-    return {line: element.line, column: element.column, position: element.position, startTagPosition: element.startTagPosition};
-}
-
-function parseChildren(element: xmldoc.XmlElement, onWarns: (warns: Warning[]) => void, parent: string | null, states: ParserStates) {
+function parseChildren(element: XmlElement, onWarns: (warns: Warning[]) => void, parent: string | null, states: ParserStates) {
     const children = [];
     const warns = [];
     const newStates = {...states};
@@ -459,9 +455,9 @@ function parseChildren(element: xmldoc.XmlElement, onWarns: (warns: Warning[]) =
     return children;
 }
 
-function parseAttrs(element: xmldoc.XmlElement, onWarns: (ws: Warning[]) => void) {
+function parseAttrs(element: XmlElement, onWarns: (ws: Warning[]) => void) {
     const warns: Warning[] = [];
-    const attrs: Assoc = element.attr;
+    const attrs: Assoc = element.attrs;
 
     const tryParse = (name: string) => attrOf(element, warns, attrs, name);
 
@@ -662,9 +658,9 @@ function pop(attrs: Assoc, name: string) {
     }
 }
 
-function unknownAttrs(attrs: Assoc, element: xmldoc.XmlElement, onWarns: (ws: Warning[]) => void): Assoc {
+function unknownAttrs(attrs: Assoc, element: XmlElement, onWarns: (ws: Warning[]) => void): Assoc {
     onWarns(objectValues(iterate(attrs, (name) => {
-        return {range: toRange(element), message: `${name} is unsupported property.`};
+        return {range: element.positions.attrs[name], message: `${name} is unsupported property.`};
     })));
     return attrs;
 }
@@ -685,7 +681,7 @@ type AttrOfMethods = {
     strokeDasharray: () => StrokeDasharray | null
 }
 
-function attrOf(element: xmldoc.XmlElement, warns: Warning[], attrs: Assoc, name: string): Option<AttrOfMethods> {
+function attrOf(element: XmlElement, warns: Warning[], attrs: Assoc, name: string): Option<AttrOfMethods> {
     let value: string;
     if (name in attrs) {
         value = attrs[name];
@@ -716,7 +712,7 @@ function attrOf(element: xmldoc.XmlElement, warns: Warning[], attrs: Assoc, name
                 attrName: name
             };
         } else {
-            return {range: toRange(element), message: `${name}: ${v} is a invalid number with unit.`};
+            return {range: element.positions.attrs[name], message: `${name}: ${v} is a invalid number with unit.`};
         }
     }
 
@@ -743,7 +739,7 @@ function attrOf(element: xmldoc.XmlElement, warns: Warning[], attrs: Assoc, name
                 delete attrs[name];
                 return tmp[3] ? <Ratio>{unit: "%", value: parseFloat(value)} : Number(value);
             } else {
-                warns.push({range: toRange(element), message: `${name}: ${value} is not a number or percentage.`});
+                warns.push({range: element.positions.attrs[name], message: `${name}: ${value} is not a number or percentage.`});
                 return null;
             }
         },
@@ -752,14 +748,14 @@ function attrOf(element: xmldoc.XmlElement, warns: Warning[], attrs: Assoc, name
                 delete attrs[name];
                 return Number(value);
             } else {
-                warns.push({range: toRange(element), message: `${name}: ${value} is not a number.`});
+                warns.push({range: element.positions.attrs[name], message: `${name}: ${value} is not a number.`});
                 return null;
             }
         },
         viewBox: () => {
             const ret = convertToPoints();
             if (ret.length !== 2) {
-                warns.push({range: toRange(element), message: `${value} is a invalid viewBox value.`});
+                warns.push({range: element.positions.attrs[name], message: `${value} is a invalid viewBox value.`});
                 return null;
             } else {
                 delete attrs[name];
@@ -782,7 +778,7 @@ function attrOf(element: xmldoc.XmlElement, warns: Warning[], attrs: Assoc, name
                 delete attrs[name];
                 return {url: tmp[1]};
             } else {
-                warns.push({range: toRange(element), message: `${name}: ${value} is unsupported paint value.`});
+                warns.push({range: element.positions.attrs[name], message: `${name}: ${value} is unsupported paint value.`});
                 return null;        
             }
         },
@@ -798,7 +794,7 @@ function attrOf(element: xmldoc.XmlElement, warns: Warning[], attrs: Assoc, name
                 delete attrs[name];
                 return <StopColor>value;
             } else {
-                warns.push({range: toRange(element), message: `${name}: ${value} is unsupported stop-color value.`});
+                warns.push({range: element.positions.attrs[name], message: `${name}: ${value} is unsupported stop-color value.`});
                 return null;        
             }
         },
@@ -809,7 +805,7 @@ function attrOf(element: xmldoc.XmlElement, warns: Warning[], attrs: Assoc, name
         pathDefinition: () => {
             const parsedDAttr = svgPathManager(value);
             if (parsedDAttr.err) {
-                warns.push({range: toRange(element), message: parsedDAttr.err});
+                warns.push({range: element.positions.attrs[name], message: parsedDAttr.err});
                 return null;
             } else {
                 delete attrs[name];
@@ -821,7 +817,7 @@ function attrOf(element: xmldoc.XmlElement, warns: Warning[], attrs: Assoc, name
                 delete attrs[name];
                 return fromTransformAttribute(value);
             } catch (error) {
-                warns.push({range: toRange(element), message: `at transform attribute: ${error}`});
+                warns.push({range: element.positions.attrs[name], message: `at transform attribute: ${error}`});
                 return null;
             }
         },
@@ -830,7 +826,7 @@ function attrOf(element: xmldoc.XmlElement, warns: Warning[], attrs: Assoc, name
                 delete attrs[name];
                 return value;
             } else {
-                warns.push({range: toRange(element), message: `${value} is unsupported value.`});
+                warns.push({range: element.positions.attrs[name], message: `${value} is unsupported value.`});
                 return null;
             }
         },
@@ -854,7 +850,7 @@ function attrOf(element: xmldoc.XmlElement, warns: Warning[], attrs: Assoc, name
                     if (isLength(maybeLength)) {
                         lengths.push(maybeLength);
                     } else {
-                        warns.push({range: toRange(element), message: `${name}: ${value} is unsupported stroke-dasharray value.`});
+                        warns.push({range: element.positions.attrs[name], message: `${name}: ${value} is unsupported stroke-dasharray value.`});
                         return null;
                     }
                 }

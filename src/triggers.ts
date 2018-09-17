@@ -2,9 +2,9 @@ import { editMode, openWindows, contentChildrenComponent, refleshContent, svgdat
 import { iterate } from "./utils";
 import { construct } from "./svgConstructor";
 import { ParsedElement, parse } from "./svgParser";
-import * as xmldoc from "xmldoc";
 import { updateXPaths } from "./traverse";
 import { xfindExn } from "./xpath";
+import { textToXml } from "./xmlParser";
 const format = require('xml-formatter');
 
 export function onShapeMouseDown(event: MouseEvent, pe: ParsedElement) {
@@ -63,13 +63,15 @@ export function onDocumentPaste(event: Event) {
     }
 
     if (str) {
-        const dom = new xmldoc.XmlDocument(str);
-        const parsed = parse(dom);
-        if (parsed) {
-            const pe = parsed.result;
-            if (svgdata && "children" in svgdata) {
-                svgdata.children.push(pe);
-                refleshContent();
+        const xml = textToXml(str);
+        if (xml) {
+            const parsed = parse(xml);
+            if (parsed) {
+                const pe = parsed.result;
+                if (svgdata && "children" in svgdata) {
+                    svgdata.children.push(pe);
+                    refleshContent();
+                }
             }
         }
     }

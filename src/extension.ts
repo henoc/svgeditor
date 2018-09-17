@@ -1,7 +1,6 @@
 import * as vscode from "vscode";
 import * as fs from "fs";
 import * as path from "path";
-import * as xmldoc from "xmldoc";
 import { parse, ParsedElement } from "./svgParser";
 import { collectSystemFonts } from "./fontFileProcedures";
 import { iterate } from "./utils";
@@ -9,6 +8,7 @@ import { diffChars } from "diff";
 import isAbsoluteUrl from "is-absolute-url";
 import { OperatorName } from "./menuComponent";
 import { updateXPaths } from "./traverse";
+import { textToXml, Interval } from "./xmlParser";
 const format = require('xml-formatter');
 
 type PanelSet = { panel: vscode.WebviewPanel, editor: vscode.TextEditor, text: string};
@@ -244,21 +244,29 @@ function showError(reason: any) {
 }
 
 function parseSvg(svgText: string, editor: vscode.TextEditor, diagnostics: vscode.DiagnosticCollection): ParsedElement | null {
-    const dom = new xmldoc.XmlDocument(svgText);
-    if (!dom) return null;
-    const parsed = parse(dom);
+    const xml = textToXml(svgText);
+    if (!xml) return null;
+    const parsed = parse(xml);
     if (!parsed) return null;
     diagnostics.set(editor.document.uri, parsed.warns.map(warn => {
-        const startLine = warn.range.line - (svgText.slice(warn.range.startTagPosition, warn.range.position).split("\n").length - 1);
-        const startColumn = warn.range.startTagPosition - svgText.slice(undefined, warn.range.startTagPosition).lastIndexOf("\n") - 2;
         return {
             source: "svgeditor",
             message: warn.message,
-            range: new vscode.Range(startLine, startColumn, warn.range.line, warn.range.column),
+            range: intervalToRange(svgText, warn.range),
             severity: vscode.DiagnosticSeverity.Warning
         };
     }));
     return parsed.result;
+}
+
+export function intervalToRange(text: string, interval: Interval): vscode.Range {
+    const lines1 = text.slice(0, interval.start).split(/\r?\n/);
+    const lines2 = text.slice(0, interval.end).split(/\r?\n/);
+    const startLine = lines1.length - 1;
+    const endLine = lines2.length - 1;
+    const startColumn = lines1[startLine].length;
+    const endColumn = lines2[endLine].length;
+    return new vscode.Range(startLine, startColumn, endLine, endColumn);
 }
 
 function setWebviewActiveContext(value: boolean) {
