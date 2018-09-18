@@ -5,6 +5,7 @@ import { svgPathManager } from "./pathHelpers";
 import { elementOpenStart, elementOpenEnd, attr, text, elementClose } from "incremental-dom";
 import { Component } from "./component";
 import { toTransformStrWithoutCollect } from "./transformHelpers";
+import { XmlNodeNop } from "./xmlParser";
 
 const svgns = "http://www.w3.org/2000/svg";
 const xlinkns = "http://www.w3.org/1999/xlink";
@@ -13,19 +14,20 @@ interface SvgTagOptions {
     numOfDecimalPlaces?: number;
 }
 
-export interface LinearComponent extends Component {
+export interface XmlComponent extends Component {
     toLinear(): string;
+    toXml(): XmlNodeNop;
 }
 
 /**
  * Build SVG element or render for incremental-dom.
  */
-export class SvgTag implements LinearComponent {
+export class SvgTag implements XmlComponent {
     public data: {
         tag?: string;
-        attrs: {[key: string]: string | number}
+        attrs: {[key: string]: string}
         class: string[]
-        children: LinearComponent[]
+        children: XmlComponent[]
         listeners: {[key: string]: (event: Event) => void}
         important: string[]
         isOuterMost: boolean
@@ -66,7 +68,7 @@ export class SvgTag implements LinearComponent {
      */
     attr(key: string, value: string | number | null): SvgTag {
         if (value !== null && this.data.important.indexOf(key) === -1) {
-            this.data.attrs[key] = typeof value === "number" ? this.fixDecimalPlaces(value) : value;
+            this.data.attrs[key] = typeof value === "number" ? String(this.fixDecimalPlaces(value)) : value;
         }
         return this;
     }
@@ -88,7 +90,7 @@ export class SvgTag implements LinearComponent {
     }
     rattr(key: string, value: Ratio | null): SvgTag {
         if (value !== null && this.data.important.indexOf(key) === -1) {
-            this.data.attrs[key] = typeof value === "number" ? value : `${value.value}%`;
+            this.data.attrs[key] = typeof value === "number" ? String(value) : `${value.value}%`;
         }
         return this;
     }
@@ -148,7 +150,7 @@ export class SvgTag implements LinearComponent {
     }
     attrs(assoc: {[key: string]: string | number | null}): SvgTag {
         iterate(assoc, (key, value) => {
-            if (this.data.important.indexOf(key) === -1 && value !== null) this.data.attrs[key] = typeof value === "number" ? this.fixDecimalPlaces(value) : value;       
+            if (this.data.important.indexOf(key) === -1 && value !== null) this.data.attrs[key] = typeof value === "number" ? String(this.fixDecimalPlaces(value)) : value;       
         });
         return this;
     }
@@ -156,7 +158,7 @@ export class SvgTag implements LinearComponent {
         this.data.class.push(...classNames);
         return this;
     }
-    children(...children: LinearComponent[]) {
+    children(...children: XmlComponent[]) {
         this.data.children.push(...children);
         return this;
     }
@@ -182,7 +184,20 @@ export class SvgTag implements LinearComponent {
                 `<${head.join(" ")}>${this.data.children.map(c => c.toLinear()).join("")}</${this.data.tag}>` :
                 `<${head.join(" ")}/>`;
         } else {
-            throw new Error("In class Tag, no tag name found when build.");
+            throw new Error("No tag name found when build.");
+        }
+    }
+
+    toXml(): XmlNodeNop {
+        if (this.data.tag) {
+            return {
+                type: "element",
+                name: this.data.tag,
+                attrs: this.data.attrs,
+                children: this.data.children.map(c => c.toXml())
+            }
+        } else {
+            throw new Error("No tag name found when build.");
         }
     }
 
@@ -208,7 +223,7 @@ export class SvgTag implements LinearComponent {
             elementClose(this.data.tag);
         }
         else {
-            throw new Error("In class Tag, no tag name found when build.");
+            throw new Error("No tag name found when build.");
         }
     }
 
@@ -248,13 +263,16 @@ export class SvgTag implements LinearComponent {
 
 export type Assoc = {[key: string]: string};
 
-export function textContent(tcontent: string): LinearComponent {
+export function textContent(tcontent: string): XmlComponent {
     return {
         render() {
             text(tcontent);
         },
         toLinear() {
             return tcontent;
+        },
+        toXml() {
+            return {type: "text", text: tcontent};
         }
     }
 }

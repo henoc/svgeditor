@@ -7,30 +7,43 @@ import { iterate } from "./utils";
 
 export type XmlNode = XmlElement | XmlText | XmlComment | XmlCData;
 
-export interface XmlElement {
+export interface XmlElement extends XmlElementNop, PositionsProperty {
+    children: XmlNode[];
+}
+export interface XmlText extends XmlTextNop, IntervalProperty {}
+export interface XmlComment extends XmlCommentNop, IntervalProperty {}
+export interface XmlCData extends XmlCDataNop, IntervalProperty {}
+
+export type XmlNodeNop = XmlElementNop | XmlTextNop | XmlCommentNop | XmlCDataNop;
+
+export interface XmlElementNop {
     type: "element";
     name: string;
     attrs: {[name: string]: string};
-    children: XmlNode[];
+    children: XmlNodeNop[];
+}
+
+interface PositionsProperty {
     positions: ElementPositionsOnText;
 }
 
-export interface XmlText {
+interface IntervalProperty {
+    interval: Interval;
+}
+
+export interface XmlTextNop {
     type: "text";
     text: string;
-    interval: Interval;
 }
 
-export interface XmlComment {
+export interface XmlCommentNop {
     type: "comment";
     text: string;
-    interval: Interval;
 }
 
-export interface XmlCData {
+export interface XmlCDataNop {
     type: "cdata";
     text: string;
-    interval: Interval;
 }
 
 export interface Interval {start: number, end: number}

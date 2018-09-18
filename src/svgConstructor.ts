@@ -1,5 +1,5 @@
 import { ParsedElement, ParsedBaseAttr, ParsedPresentationAttr } from "./svgParser";
-import { SvgTag, textContent, LinearComponent } from "./svg";
+import { SvgTag, textContent, XmlComponent } from "./svg";
 import { onShapeMouseDown } from "./triggers";
 import { assertNever } from "./utils";
 import { toString, inverse } from "transformation-matrix";
@@ -25,7 +25,7 @@ interface SvgConstructOptions {
 /**
   Make elements only use recognized attributes and tags.
 */
-export function construct(pe: ParsedElement, options?: SvgConstructOptions, displayedDepth: number = 0): LinearComponent | null {
+export function construct(pe: ParsedElement, options?: SvgConstructOptions, displayedDepth: number = 0): XmlComponent | null {
     const putRootAttribute = options && options.putRootAttribute || false;
     const putIndexAttribute = options && options.putXPathAttribute || false;
     const setListenersDepth = options && options.setListenersDepth || null;
