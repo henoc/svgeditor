@@ -36,7 +36,6 @@ export type ParsedElement = (
 ) & {
     xpath: string;
     parent: string | null;
-    positions?: ElementPositionsOnText | {interval: Interval};
 }
 
 interface ContainerElementClass {
@@ -386,56 +385,55 @@ export function parse(node: XmlNode, states: ParserStates = <any>{}): ParsedResu
     }
     if (node.type === "element") {
         const children = parseChildren(node, pushWarns, xpath, states);
-        const positions = node.positions;
         if (node.name === "svg") {
             const attrs = parseAttrs(node, pushWarns).svg();
-            return {result: {tag: "svg", attrs, children, xpath, parent, positions}, warns};
+            return {result: {tag: "svg", attrs, children, xpath, parent}, warns};
         } else if (node.name === "circle") {
             const attrs = parseAttrs(node, pushWarns).circle();
-            return {result: {tag: "circle", attrs, xpath, parent, positions}, warns};
+            return {result: {tag: "circle", attrs, xpath, parent}, warns};
         } else if (node.name === "rect") {
             const attrs = parseAttrs(node, pushWarns).rect();
-            return {result: {tag: "rect", attrs, xpath, parent, positions}, warns};
+            return {result: {tag: "rect", attrs, xpath, parent}, warns};
         } else if (node.name === "ellipse") {
             const attrs = parseAttrs(node, pushWarns).ellipse();
-            return {result: {tag: "ellipse", attrs, xpath, parent, positions}, warns};
+            return {result: {tag: "ellipse", attrs, xpath, parent}, warns};
         } else if (node.name === "polyline") {
             const attrs = parseAttrs(node, pushWarns).polyline();
-            return {result: {tag: "polyline", attrs, xpath, parent, positions}, warns};
+            return {result: {tag: "polyline", attrs, xpath, parent}, warns};
         } else if (node.name === "polygon") {
             const attrs = parseAttrs(node, pushWarns).polyline();
-            return {result: {tag: "polygon", attrs, xpath, parent, positions}, warns};
+            return {result: {tag: "polygon", attrs, xpath, parent}, warns};
         } else if (node.name === "path") {
             const attrs = parseAttrs(node, pushWarns).path();
-            return {result: {tag: "path", attrs, xpath, parent, positions}, warns};
+            return {result: {tag: "path", attrs, xpath, parent}, warns};
         } else if (node.name === "text") {
             const attrs = parseAttrs(node, pushWarns).text();
-            return {result: {tag: "text", attrs, xpath, parent, children, positions}, warns};
+            return {result: {tag: "text", attrs, xpath, parent, children}, warns};
         } else if (node.name === "g") {
             const attrs = parseAttrs(node, pushWarns).g();
-            return {result: {tag: "g", attrs, children, xpath, parent, positions}, warns};
+            return {result: {tag: "g", attrs, children, xpath, parent}, warns};
         } else if (node.name === "linearGradient") {
             const attrs = parseAttrs(node, pushWarns).linearGradient();
-            return {result: {tag: "linearGradient", attrs, children, xpath, parent, positions}, warns};
+            return {result: {tag: "linearGradient", attrs, children, xpath, parent}, warns};
         } else if (node.name === "radialGradient") {
             const attrs = parseAttrs(node, pushWarns).radialGradient();
-            return {result: {tag: "radialGradient", attrs, children, xpath, parent, positions}, warns};
+            return {result: {tag: "radialGradient", attrs, children, xpath, parent}, warns};
         } else if (node.name === "stop") {
             const attrs = parseAttrs(node, pushWarns).stop();
-            return {result: {tag: "stop", attrs, xpath, parent, positions}, warns};
+            return {result: {tag: "stop", attrs, xpath, parent}, warns};
         } else if (node.name === "image") {
             const attrs = parseAttrs(node, pushWarns).image();
-            return {result: {tag: "image", attrs, xpath, parent, positions}, warns};
+            return {result: {tag: "image", attrs, xpath, parent}, warns};
         } else if (node.name === "defs") {
             const attrs = parseAttrs(node, pushWarns).defs();
-            return {result: {tag: "defs", attrs, children, xpath, parent, positions}, warns};
+            return {result: {tag: "defs", attrs, children, xpath, parent}, warns};
         } else {
             const attrs: Assoc = node.attrs;
-            return {result: {tag: "unknown", tag$real: node.name, attrs, children, xpath, parent, positions}, warns: [{range: node.positions.startTag, message: `${node.name} is unsupported element.`}]};
+            return {result: {tag: "unknown", tag$real: node.name, attrs, children, xpath, parent}, warns: [{range: node.positions.startTag, message: `${node.name} is unsupported element.`}]};
         }
     } else if (underTextElement && node.type === "text") {
         const text = node.text;
-        return {result: {tag: "text()", attrs: {}, text, xpath, parent, positions: {interval: node.interval} }, warns};
+        return {result: {tag: "text()", attrs: {}, text, xpath, parent}, warns};
     } else {
         return null;
     }
@@ -662,7 +660,7 @@ function pop(attrs: Assoc, name: string) {
 
 function unknownAttrs(attrs: Assoc, element: XmlElement, onWarns: (ws: Warning[]) => void): Assoc {
     onWarns(objectValues(iterate(attrs, (name) => {
-        return {range: element.positions.attrs[name], message: `${name} is unsupported property.`};
+        return {range: element.positions.attrs[name].name, message: `${name} is unsupported property.`};
     })));
     return attrs;
 }
@@ -714,7 +712,7 @@ function attrOf(element: XmlElement, warns: Warning[], attrs: Assoc, name: strin
                 attrName: name
             };
         } else {
-            return {range: element.positions.attrs[name], message: `${name}: ${v} is a invalid number with unit.`};
+            return {range: element.positions.attrs[name].value, message: `${name}: ${v} is a invalid number with unit.`};
         }
     }
 
@@ -741,7 +739,7 @@ function attrOf(element: XmlElement, warns: Warning[], attrs: Assoc, name: strin
                 delete attrs[name];
                 return tmp[3] ? <Ratio>{unit: "%", value: parseFloat(value)} : Number(value);
             } else {
-                warns.push({range: element.positions.attrs[name], message: `${name}: ${value} is not a number or percentage.`});
+                warns.push({range: element.positions.attrs[name].value, message: `${name}: ${value} is not a number or percentage.`});
                 return null;
             }
         },
@@ -750,14 +748,14 @@ function attrOf(element: XmlElement, warns: Warning[], attrs: Assoc, name: strin
                 delete attrs[name];
                 return Number(value);
             } else {
-                warns.push({range: element.positions.attrs[name], message: `${name}: ${value} is not a number.`});
+                warns.push({range: element.positions.attrs[name].value, message: `${name}: ${value} is not a number.`});
                 return null;
             }
         },
         viewBox: () => {
             const ret = convertToPoints();
             if (ret.length !== 2) {
-                warns.push({range: element.positions.attrs[name], message: `${value} is a invalid viewBox value.`});
+                warns.push({range: element.positions.attrs[name].value, message: `${value} is a invalid viewBox value.`});
                 return null;
             } else {
                 delete attrs[name];
@@ -780,7 +778,7 @@ function attrOf(element: XmlElement, warns: Warning[], attrs: Assoc, name: strin
                 delete attrs[name];
                 return {url: tmp[1]};
             } else {
-                warns.push({range: element.positions.attrs[name], message: `${name}: ${value} is unsupported paint value.`});
+                warns.push({range: element.positions.attrs[name].value, message: `${name}: ${value} is unsupported paint value.`});
                 return null;        
             }
         },
@@ -796,7 +794,7 @@ function attrOf(element: XmlElement, warns: Warning[], attrs: Assoc, name: strin
                 delete attrs[name];
                 return <StopColor>value;
             } else {
-                warns.push({range: element.positions.attrs[name], message: `${name}: ${value} is unsupported stop-color value.`});
+                warns.push({range: element.positions.attrs[name].value, message: `${name}: ${value} is unsupported stop-color value.`});
                 return null;        
             }
         },
@@ -807,7 +805,7 @@ function attrOf(element: XmlElement, warns: Warning[], attrs: Assoc, name: strin
         pathDefinition: () => {
             const parsedDAttr = svgPathManager(value);
             if (parsedDAttr.err) {
-                warns.push({range: element.positions.attrs[name], message: parsedDAttr.err});
+                warns.push({range: element.positions.attrs[name].value, message: parsedDAttr.err});
                 return null;
             } else {
                 delete attrs[name];
@@ -819,7 +817,7 @@ function attrOf(element: XmlElement, warns: Warning[], attrs: Assoc, name: strin
                 delete attrs[name];
                 return fromTransformAttribute(value);
             } catch (error) {
-                warns.push({range: element.positions.attrs[name], message: `at transform attribute: ${error}`});
+                warns.push({range: element.positions.attrs[name].value, message: `at transform attribute: ${error}`});
                 return null;
             }
         },
@@ -828,7 +826,7 @@ function attrOf(element: XmlElement, warns: Warning[], attrs: Assoc, name: strin
                 delete attrs[name];
                 return value;
             } else {
-                warns.push({range: element.positions.attrs[name], message: `${value} is unsupported value.`});
+                warns.push({range: element.positions.attrs[name].value, message: `${value} is unsupported value.`});
                 return null;
             }
         },
@@ -852,7 +850,7 @@ function attrOf(element: XmlElement, warns: Warning[], attrs: Assoc, name: strin
                     if (isLength(maybeLength)) {
                         lengths.push(maybeLength);
                     } else {
-                        warns.push({range: element.positions.attrs[name], message: `${name}: ${value} is unsupported stroke-dasharray value.`});
+                        warns.push({range: element.positions.attrs[name].value, message: `${name}: ${value} is unsupported stroke-dasharray value.`});
                         return null;
                     }
                 }

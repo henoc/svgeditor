@@ -18,7 +18,7 @@ describe("xmlParser", () => {
                 startTag: {start: 8, end: 12},
                 endTag: null,
                 attrs: {
-                    title: {start: 20, end: 28}
+                    title: {name: {start: 13, end: 18}, value: {start: 20, end: 28}}
                 }
             }
         };
@@ -36,7 +36,7 @@ describe("xmlParser", () => {
                 startTag: {start: 8 + 24, end: 12 + 24},
                 endTag: null,
                 attrs: {
-                    title: {start: 20 + 24, end: 51}
+                    title: {name: {start: 37, end: 42}, value: {start: 20 + 24, end: 51}}
                 }
             }
         }
@@ -264,7 +264,7 @@ describe("xmlParser", () => {
                 startTag: {start: 1, end: 6},
                 endTag: null,
                 attrs: {
-                    title: {start: 14, end: 23}
+                    title: {name: {start: 7, end: 12}, value: {start: 14, end: 23}}
                 }
             }
         };

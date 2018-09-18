@@ -63,7 +63,7 @@ export interface ElementPositionsOnText {
     closeElement: Interval | null;    
     startTag: Interval;                
     endTag: Interval | null;                 
-    attrs: {[name: string]: Interval};             
+    attrs: {[name: string]: {name: Interval; value: Interval}};             
 }
 
 interface Context {
@@ -72,7 +72,7 @@ interface Context {
     startTagStart: number;
     startTagEnd: number;
     tagName: string;
-    attrs: {[name: string]: {value: string; range: Interval}};
+    attrs: {[name: string]: {value: string; interval: {name: Interval, value: Interval}}};
     isSelfClosing: boolean;
     closeElementStart: number;
     closeElementEnd: number;
@@ -114,7 +114,7 @@ export function textToXml(xmltext: string): XmlElement | null {
                 closeElement: current.isSelfClosing ? null : {start: current.closeElementStart, end: current.closeElementEnd},
                 startTag: {start: current.startTagStart, end: current.startTagEnd},
                 endTag: current.isSelfClosing ? null : {start: current.endTagStart, end: current.endTagEnd},
-                attrs: iterate(current.attrs, (_key, value) => value.range)
+                attrs: iterate(current.attrs, (_key, value) => {return {name: value.interval.name, value: value.interval.value}})
             }
         };
         if (contexts.length === 1) {
@@ -144,11 +144,19 @@ export function textToXml(xmltext: string): XmlElement | null {
 
     parser.onattribute = ({name, value}) => {
         const rawValue = xmltext.slice(0, pos()).match(/"([^"]*)"$/)![1];       // before unescaping
+        const rstr = `${name}\\s*=\\s*$`;
+        const nameStart = pos() - 2 - rawValue.length - xmltext.slice(0, pos() - 2 - rawValue.length).match(new RegExp(rstr))![0].length;
         currentContext().attrs[name] = {
             value: rawValue,
-            range: {
-                start: pos() - 1 - rawValue.length,
-                end: pos() - 1
+            interval: {
+                name: {
+                    start: nameStart,
+                    end: nameStart + name.length
+                },
+                value: {
+                    start: pos() - 1 - rawValue.length,
+                    end: pos() - 1
+                }
             }
         };
     };
