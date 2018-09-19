@@ -1,10 +1,11 @@
-import { ParsedElement } from "./domParser";
+import { ParsedElement } from "./svgParser";
+import { XmlNodeNop } from "./xmlParser";
 
-export function traverse(pe: ParsedElement, fn: (pe: ParsedElement, parentPe: ParsedElement & {children: ParsedElement[]} | null, index: number | null) => void, index: number | null = null, parentPe: ParsedElement & {children: ParsedElement[]} | null = null) {
+export function traverse<T>(pe: T, fn: (pe: T, parentPe: T & {children: T[]} | null, index: number | null) => void, index: number | null = null, parentPe: T & {children: T[]} | null = null) {
     fn(pe, parentPe, index);
     if ("children" in pe) {
-        for(let i = 0; i < pe.children.length; i++) {
-            traverse(pe.children[i], fn, i, pe);
+        for(let i = 0; i < (<any>pe).children.length; i++) {
+            traverse((<any>pe).children[i], fn, i, pe);
         }
     }
 }
@@ -14,7 +15,7 @@ export function makeIdXpathMap(pe: ParsedElement): {[id: string]: string} {
     traverse(
         pe,
         (pe, parentPe, index) => {
-            if (pe.attrs.id) acc[pe.attrs.id] = pe.xpath;
+            if ("id" in pe.attrs && pe.attrs.id) acc[pe.attrs.id] = pe.xpath;
         }
     );
     return acc;

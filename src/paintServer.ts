@@ -3,7 +3,7 @@
  * @see https://www.w3.org/TR/SVG11/pservers.html
  */
 
-import { ParsedElement, Ratio, Paint, isColor, isFuncIRI, StopColor } from "./domParser";
+import { ParsedElement, Ratio, Paint, isColor, isFuncIRI, StopColor } from "./svgParser";
 import tinycolor from "tinycolor2";
 import { traverse } from "./traverse";
 import { xfindExn } from "./xpath";
@@ -89,7 +89,7 @@ export function cssString(paintServer: PaintServer): string {
 export function collectPaintServer(pe: ParsedElement): {[id: string]: ParsedElement} {
     const acc: {[id: string]: ParsedElement} = {};
     traverse(pe, (pe, parentPe, index) => {
-        const ident = pe.attrs.id;
+        const ident = ("id" in pe.attrs) && pe.attrs.id;
         if (ident && (pe.tag === "linearGradient" || pe.tag === "radialGradient")) {
             acc[ident] = pe;
         }

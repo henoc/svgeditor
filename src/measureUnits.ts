@@ -1,4 +1,4 @@
-import { Length, LengthUnit, ParsedElement } from "./domParser";
+import { Length, LengthUnit, ParsedElement } from "./svgParser";
 import { svgRealMap, svgdata, OUTERMOST_DEFAULT_WIDTH, OUTERMOST_DEFAULT_HEIGHT } from "./main";
 import { assertNever, iterate, v, Vec2 } from "./utils";
 import { SetDifference } from "utility-types";

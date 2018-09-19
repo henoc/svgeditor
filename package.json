@@ -258,7 +258,6 @@
     "@types/tinycolor2": "^1.4.0",
     "@types/url-parse": "^1.4.1",
     "@types/uuid": "^3.4.3",
-    "@types/xmldoc": "^1.1.3",
     "browserify": "^16.2.2",
     "mocha": "^5.2.0",
     "tslint": "^5.9.1",
@@ -267,13 +266,16 @@
     "vscode": "^1.1.21"
   },
   "dependencies": {
+    "@types/sax": "^1.0.1",
     "diff": "^3.5.0",
     "fast-deep-equal": "^2.0.1",
+    "fast-json-stable-stringify": "^2.0.0",
     "fast-memoize": "^2.5.1",
     "font-measure": "^1.2.2",
     "hammerjs": "^2.0.8",
     "incremental-dom": "^0.5.1",
     "is-absolute-url": "^2.1.0",
+    "sax": "1.2.4",
     "svgpath": "2.2.1",
     "text-width": "^1.2.0",
     "tinycolor2": "^1.4.1",
@@ -281,7 +283,6 @@
     "transformation-matrix": "^1.12.0",
     "url-parse": "^1.4.3",
     "uuid": "^3.3.2",
-    "xml-formatter": "^1.0.1",
-    "xmldoc": "^1.1.2"
+    "xml-formatter": "^1.0.1"
   }
 }

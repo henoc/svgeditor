@@ -1,11 +1,11 @@
-import * as xmldoc from "xmldoc";
-import { parse } from "../src/domParser";
+import { parse } from "../src/svgParser";
 import * as assert from 'assert';
 import { updateXPaths } from "../src/traverse";
+import { textToXml } from "../src/xmlParser";
 
 function parseSvg(svgText: string) {
-    const dom = new xmldoc.XmlDocument(svgText);
-    const ret = parse(dom).result;
+    const xml = textToXml(svgText)!;
+    const ret = parse(xml)!.result;
     updateXPaths(ret);
     return ret;
 }

@@ -1,6 +1,6 @@
 import { refleshContent, configuration, svgRealMap, drawState } from "./main";
 import { Vec2, v, vfp } from "./utils";
-import { ParsedElement } from "./domParser";
+import { ParsedElement } from "./svgParser";
 import { shaper } from "./shapes";
 import { Mode } from "./abstractMode";
 import { SvgTag } from "./svg";
@@ -33,7 +33,7 @@ export class EllipseMode extends Mode {
                         ry: {unit: configuration.defaultUnit, value: 0, attrName: "ry"},
                         ...Mode.baseAttrsDefaultImpl(),
                         ...Mode.presentationAttrsDefaultImpl()
-                    },
+                    }
                 };
                 this.dragTarget = pe2;
                 root.children.push(pe2);

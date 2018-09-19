@@ -1,12 +1,13 @@
-import { ParsedElement, ParsedBaseAttr, ParsedPresentationAttr } from "./domParser";
-import { SvgTag } from "./svg";
+import { ParsedElement, ParsedBaseAttr, ParsedPresentationAttr } from "./svgParser";
+import { SvgTag, textContent, XmlComponent } from "./svg";
 import { onShapeMouseDown } from "./triggers";
 import { assertNever } from "./utils";
 import { toString, inverse } from "transformation-matrix";
 import { shaper } from "./shapes";
 import { toTransformStrWithoutCollect } from "./transformHelpers";
-import { svgRealMap, imageList, svgdata, OUTERMOST_DEFAULT_WIDTH, OUTERMOST_DEFAULT_HEIGHT } from "./main";
+import { svgRealMap, imageList } from "./main";
 import { xfindExn } from "./xpath";
+import { Component } from "./component";
 
 interface SvgConstructOptions {
     putRootAttribute?: boolean;
@@ -24,7 +25,7 @@ interface SvgConstructOptions {
 /**
   Make elements only use recognized attributes and tags.
 */
-export function construct(pe: ParsedElement, options?: SvgConstructOptions, displayedDepth: number = 0): SvgTag | null {
+export function construct(pe: ParsedElement, options?: SvgConstructOptions, displayedDepth: number = 0): XmlComponent | null {
     const putRootAttribute = options && options.putRootAttribute || false;
     const putIndexAttribute = options && options.putXPathAttribute || false;
     const setListenersDepth = options && options.setListenersDepth || null;
@@ -36,7 +37,7 @@ export function construct(pe: ParsedElement, options?: SvgConstructOptions, disp
     const numOfDecimalPlaces = options && options.numOfDecimalPlaces;
     const replaceHrefToObjectUrl = options && options.replaceHrefToObjectUrl || false;
 
-    const tag = new SvgTag(pe.tag).options({ numOfDecimalPlaces });
+    const tag = new SvgTag(pe.tag).options({ numOfDecimalPlaces }).isOuterMost(pe.parent === null);
     if (putRootAttribute) {
         // only top level
         tag.attr("data-root", "true");
@@ -58,13 +59,12 @@ export function construct(pe: ParsedElement, options?: SvgConstructOptions, disp
         if (all) {
             return tag.tag(pe.tag$real)
                 .attrs(pe.attrs)
-                .text(pe.text)
                 .children(...pe.children.map(e => construct(e, options, displayedDepth + 1)!));
         } else {
             return null;
         }
     } else {
-        if (all) tag.attrs(pe.attrs.unknown);
+        if (all && "unknown" in pe.attrs) tag.attrs(pe.attrs.unknown);
         switch (pe.tag) {
             case "svg":
                 setBaseAttrs(pe.attrs, tag);
@@ -126,13 +126,13 @@ export function construct(pe: ParsedElement, options?: SvgConstructOptions, disp
             case "text":
                 setBaseAttrs(pe.attrs, tag);
                 setPresentationAttrs(pe.attrs, tag);
+                makeChildren(pe.children, tag, displayedDepth, options);
                 return tag.uattr("x", pe.attrs.x)
                     .uattr("y", pe.attrs.y)
                     .uattr("dx", pe.attrs.dx)
                     .uattr("dy", pe.attrs.dy)
                     .uattr("textLength", pe.attrs.textLength)
-                    .attr("lengthAdjust", pe.attrs.lengthAdjust)
-                    .text(pe.text);
+                    .attr("lengthAdjust", pe.attrs.lengthAdjust);
             case "g":
                 setBaseAttrs(pe.attrs, tag);
                 setPresentationAttrs(pe.attrs, tag);
@@ -187,6 +187,8 @@ export function construct(pe: ParsedElement, options?: SvgConstructOptions, disp
                 setPresentationAttrs(pe.attrs, tag);
                 makeChildren(pe.children, tag, displayedDepth, options);
                 return tag;
+            case "text()":
+                return textContent(pe.text);
             default:
                 assertNever(pe);
         }

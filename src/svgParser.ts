@@ -1,13 +1,13 @@
-import * as xmldoc from "xmldoc";
 import { iterate, Vec2, v, objectValues, Some, Option, None } from "./utils";
 import { Assoc } from "./svg";
 import tinycolor from "tinycolor2";
 import { svgPathManager } from "./pathHelpers";
 import { SetDifference, Omit } from "utility-types";
+import { XmlNode, XmlElement, Interval, ElementPositionsOnText } from "./xmlParser";
 const { fromTransformAttribute } = require("transformation-matrix/build-commonjs/fromTransformAttribute");
 
 interface Warning {
-    range: {line: number, column: number, position: number, startTagPosition: number},
+    range: Interval,
     message: string
 }
 
@@ -31,6 +31,7 @@ export type ParsedElement = (
     ParsedStopElement |
     ParsedImageElement |
     ParsedDefsElement |
+    ParsedTextContentElement |
     ParsedUnknownElement
 ) & {
     xpath: string;
@@ -81,7 +82,7 @@ interface ParsedPathElement {
 interface ParsedTextElement {
     tag: "text",
     attrs: ParsedTextAttr,
-    text: string | null
+    children: ParsedElement[]
 }
 
 interface ParsedGroupElement extends ContainerElementClass {
@@ -114,12 +115,17 @@ interface ParsedDefsElement extends ContainerElementClass {
     attrs: ParsedDefsAttr
 }
 
+interface ParsedTextContentElement {
+    tag: "text()",
+    text: string,
+    attrs: {}
+}
+
 interface ParsedUnknownElement {
     tag: "unknown",
     tag$real: string,
     attrs: Assoc,
-    children: ParsedElement[],
-    text: string | null
+    children: ParsedElement[]
 }
 
 
@@ -363,7 +369,11 @@ export function isStrokeDasharray(obj: Object): obj is StrokeDasharray {
     return Array.isArray(obj) && (obj.length === 0 || isLength(obj[0])) || obj === "none" || obj === "inherit";
 }
 
-export function parse(element: xmldoc.XmlElement): ParsedResult {
+interface ParserStates {
+    underTextElement: boolean;
+}
+
+export function parse(node: XmlNode): ParsedResult | null {
     const xpath = "???";
     const parent = "???";
     const warns: Warning[] = [];
@@ -371,66 +381,68 @@ export function parse(element: xmldoc.XmlElement): ParsedResult {
         if (Array.isArray(warn)) warns.push(...warn);
         else warns.push(warn);
     }
-    const children = parseChildren(element, pushWarns, xpath);
-    const text = element.val;
-    if (element.name === "svg") {
-        const attrs = parseAttrs(element, pushWarns).svg();
-        return {result: {tag: "svg", attrs, children, xpath, parent}, warns};
-    } else if (element.name === "circle") {
-        const attrs = parseAttrs(element, pushWarns).circle();
-        return {result: {tag: "circle", attrs, xpath, parent}, warns};
-    } else if (element.name === "rect") {
-        const attrs = parseAttrs(element, pushWarns).rect();
-        return {result: {tag: "rect", attrs, xpath, parent}, warns};
-    } else if (element.name === "ellipse") {
-        const attrs = parseAttrs(element, pushWarns).ellipse();
-        return {result: {tag: "ellipse", attrs, xpath, parent}, warns};
-    } else if (element.name === "polyline") {
-        const attrs = parseAttrs(element, pushWarns).polyline();
-        return {result: {tag: "polyline", attrs, xpath, parent}, warns};
-    } else if (element.name === "polygon") {
-        const attrs = parseAttrs(element, pushWarns).polyline();
-        return {result: {tag: "polygon", attrs, xpath, parent}, warns};
-    } else if (element.name === "path") {
-        const attrs = parseAttrs(element, pushWarns).path();
-        return {result: {tag: "path", attrs, xpath, parent}, warns};
-    } else if (element.name === "text") {
-        const attrs = parseAttrs(element, pushWarns).text();
-        return {result: {tag: "text", attrs, xpath, parent, text}, warns};
-    } else if (element.name === "g") {
-        const attrs = parseAttrs(element, pushWarns).g();
-        return {result: {tag: "g", attrs, children, xpath, parent}, warns};
-    } else if (element.name === "linearGradient") {
-        const attrs = parseAttrs(element, pushWarns).linearGradient();
-        return {result: {tag: "linearGradient", attrs, children, xpath, parent}, warns};
-    } else if (element.name === "radialGradient") {
-        const attrs = parseAttrs(element, pushWarns).radialGradient();
-        return {result: {tag: "radialGradient", attrs, children, xpath, parent}, warns};
-    } else if (element.name === "stop") {
-        const attrs = parseAttrs(element, pushWarns).stop();
-        return {result: {tag: "stop", attrs, xpath, parent}, warns};
-    } else if (element.name === "image") {
-        const attrs = parseAttrs(element, pushWarns).image();
-        return {result: {tag: "image", attrs, xpath, parent}, warns};
-    } else if (element.name === "defs") {
-        const attrs = parseAttrs(element, pushWarns).defs();
-        return {result: {tag: "defs", attrs, children, xpath, parent}, warns};
+    if (node.type === "element") {
+        const children = parseChildren(node, pushWarns, xpath);
+        if (node.name === "svg") {
+            const attrs = parseAttrs(node, pushWarns).svg();
+            return {result: {tag: "svg", attrs, children, xpath, parent}, warns};
+        } else if (node.name === "circle") {
+            const attrs = parseAttrs(node, pushWarns).circle();
+            return {result: {tag: "circle", attrs, xpath, parent}, warns};
+        } else if (node.name === "rect") {
+            const attrs = parseAttrs(node, pushWarns).rect();
+            return {result: {tag: "rect", attrs, xpath, parent}, warns};
+        } else if (node.name === "ellipse") {
+            const attrs = parseAttrs(node, pushWarns).ellipse();
+            return {result: {tag: "ellipse", attrs, xpath, parent}, warns};
+        } else if (node.name === "polyline") {
+            const attrs = parseAttrs(node, pushWarns).polyline();
+            return {result: {tag: "polyline", attrs, xpath, parent}, warns};
+        } else if (node.name === "polygon") {
+            const attrs = parseAttrs(node, pushWarns).polyline();
+            return {result: {tag: "polygon", attrs, xpath, parent}, warns};
+        } else if (node.name === "path") {
+            const attrs = parseAttrs(node, pushWarns).path();
+            return {result: {tag: "path", attrs, xpath, parent}, warns};
+        } else if (node.name === "text") {
+            const attrs = parseAttrs(node, pushWarns).text();
+            return {result: {tag: "text", attrs, xpath, parent, children}, warns};
+        } else if (node.name === "g") {
+            const attrs = parseAttrs(node, pushWarns).g();
+            return {result: {tag: "g", attrs, children, xpath, parent}, warns};
+        } else if (node.name === "linearGradient") {
+            const attrs = parseAttrs(node, pushWarns).linearGradient();
+            return {result: {tag: "linearGradient", attrs, children, xpath, parent}, warns};
+        } else if (node.name === "radialGradient") {
+            const attrs = parseAttrs(node, pushWarns).radialGradient();
+            return {result: {tag: "radialGradient", attrs, children, xpath, parent}, warns};
+        } else if (node.name === "stop") {
+            const attrs = parseAttrs(node, pushWarns).stop();
+            return {result: {tag: "stop", attrs, xpath, parent}, warns};
+        } else if (node.name === "image") {
+            const attrs = parseAttrs(node, pushWarns).image();
+            return {result: {tag: "image", attrs, xpath, parent}, warns};
+        } else if (node.name === "defs") {
+            const attrs = parseAttrs(node, pushWarns).defs();
+            return {result: {tag: "defs", attrs, children, xpath, parent}, warns};
+        } else {
+            const attrs: Assoc = node.attrs;
+            return {result: {tag: "unknown", tag$real: node.name, attrs, children, xpath, parent}, warns: [{range: node.positions.startTag, message: `${node.name} is unsupported element.`}]};
+        }
+    } else if (node.type === "text") {
+        const text = node.text;
+        return {result: {tag: "text()", attrs: {}, text, xpath, parent}, warns};
     } else {
-        const attrs: Assoc = element.attr;
-        return {result: {tag: "unknown", tag$real: element.name, attrs, children, text, xpath, parent}, warns: [{range: toRange(element), message: `${element.name} is unsupported element.`}]};
+        return null;
     }
 }
 
-function toRange(element: xmldoc.XmlElement) {
-    return {line: element.line, column: element.column, position: element.position, startTagPosition: element.startTagPosition};
-}
-
-function parseChildren(element: xmldoc.XmlElement, onWarns: (warns: Warning[]) => void, parent: string | null) {
+function parseChildren(element: XmlElement, onWarns: (warns: Warning[]) => void, parent: string | null) {
     const children = [];
     const warns = [];
     for (let item of element.children ) {
-        if (item.type === "element") {
-            const ret = parse(item);
+        const ret = parse(item);
+        if (ret) {
             if (ret.result) children.push(ret.result);
             warns.push(...ret.warns);
         }
@@ -439,9 +451,9 @@ function parseChildren(element: xmldoc.XmlElement, onWarns: (warns: Warning[]) =
     return children;
 }
 
-function parseAttrs(element: xmldoc.XmlElement, onWarns: (ws: Warning[]) => void) {
+function parseAttrs(element: XmlElement, onWarns: (ws: Warning[]) => void) {
     const warns: Warning[] = [];
-    const attrs: Assoc = element.attr;
+    const attrs: Assoc = element.attrs;
 
     const tryParse = (name: string) => attrOf(element, warns, attrs, name);
 
@@ -642,9 +654,9 @@ function pop(attrs: Assoc, name: string) {
     }
 }
 
-function unknownAttrs(attrs: Assoc, element: xmldoc.XmlElement, onWarns: (ws: Warning[]) => void): Assoc {
+function unknownAttrs(attrs: Assoc, element: XmlElement, onWarns: (ws: Warning[]) => void): Assoc {
     onWarns(objectValues(iterate(attrs, (name) => {
-        return {range: toRange(element), message: `${name} is unsupported property.`};
+        return {range: element.positions.attrs[name].name, message: `${name} is unsupported property.`};
     })));
     return attrs;
 }
@@ -665,7 +677,7 @@ type AttrOfMethods = {
     strokeDasharray: () => StrokeDasharray | null
 }
 
-function attrOf(element: xmldoc.XmlElement, warns: Warning[], attrs: Assoc, name: string): Option<AttrOfMethods> {
+function attrOf(element: XmlElement, warns: Warning[], attrs: Assoc, name: string): Option<AttrOfMethods> {
     let value: string;
     if (name in attrs) {
         value = attrs[name];
@@ -696,7 +708,7 @@ function attrOf(element: xmldoc.XmlElement, warns: Warning[], attrs: Assoc, name
                 attrName: name
             };
         } else {
-            return {range: toRange(element), message: `${name}: ${v} is a invalid number with unit.`};
+            return {range: element.positions.attrs[name].value, message: `${name}: ${v} is a invalid number with unit.`};
         }
     }
 
@@ -723,7 +735,7 @@ function attrOf(element: xmldoc.XmlElement, warns: Warning[], attrs: Assoc, name
                 delete attrs[name];
                 return tmp[3] ? <Ratio>{unit: "%", value: parseFloat(value)} : Number(value);
             } else {
-                warns.push({range: toRange(element), message: `${name}: ${value} is not a number or percentage.`});
+                warns.push({range: element.positions.attrs[name].value, message: `${name}: ${value} is not a number or percentage.`});
                 return null;
             }
         },
@@ -732,14 +744,14 @@ function attrOf(element: xmldoc.XmlElement, warns: Warning[], attrs: Assoc, name
                 delete attrs[name];
                 return Number(value);
             } else {
-                warns.push({range: toRange(element), message: `${name}: ${value} is not a number.`});
+                warns.push({range: element.positions.attrs[name].value, message: `${name}: ${value} is not a number.`});
                 return null;
             }
         },
         viewBox: () => {
             const ret = convertToPoints();
             if (ret.length !== 2) {
-                warns.push({range: toRange(element), message: `${value} is a invalid viewBox value.`});
+                warns.push({range: element.positions.attrs[name].value, message: `${value} is a invalid viewBox value.`});
                 return null;
             } else {
                 delete attrs[name];
@@ -762,7 +774,7 @@ function attrOf(element: xmldoc.XmlElement, warns: Warning[], attrs: Assoc, name
                 delete attrs[name];
                 return {url: tmp[1]};
             } else {
-                warns.push({range: toRange(element), message: `${name}: ${value} is unsupported paint value.`});
+                warns.push({range: element.positions.attrs[name].value, message: `${name}: ${value} is unsupported paint value.`});
                 return null;        
             }
         },
@@ -778,7 +790,7 @@ function attrOf(element: xmldoc.XmlElement, warns: Warning[], attrs: Assoc, name
                 delete attrs[name];
                 return <StopColor>value;
             } else {
-                warns.push({range: toRange(element), message: `${name}: ${value} is unsupported stop-color value.`});
+                warns.push({range: element.positions.attrs[name].value, message: `${name}: ${value} is unsupported stop-color value.`});
                 return null;        
             }
         },
@@ -789,7 +801,7 @@ function attrOf(element: xmldoc.XmlElement, warns: Warning[], attrs: Assoc, name
         pathDefinition: () => {
             const parsedDAttr = svgPathManager(value);
             if (parsedDAttr.err) {
-                warns.push({range: toRange(element), message: parsedDAttr.err});
+                warns.push({range: element.positions.attrs[name].value, message: parsedDAttr.err});
                 return null;
             } else {
                 delete attrs[name];
@@ -801,7 +813,7 @@ function attrOf(element: xmldoc.XmlElement, warns: Warning[], attrs: Assoc, name
                 delete attrs[name];
                 return fromTransformAttribute(value);
             } catch (error) {
-                warns.push({range: toRange(element), message: `at transform attribute: ${error}`});
+                warns.push({range: element.positions.attrs[name].value, message: `at transform attribute: ${error}`});
                 return null;
             }
         },
@@ -810,7 +822,7 @@ function attrOf(element: xmldoc.XmlElement, warns: Warning[], attrs: Assoc, name
                 delete attrs[name];
                 return value;
             } else {
-                warns.push({range: toRange(element), message: `${value} is unsupported value.`});
+                warns.push({range: element.positions.attrs[name].value, message: `${value} is unsupported value.`});
                 return null;
             }
         },
@@ -834,7 +846,7 @@ function attrOf(element: xmldoc.XmlElement, warns: Warning[], attrs: Assoc, name
                     if (isLength(maybeLength)) {
                         lengths.push(maybeLength);
                     } else {
-                        warns.push({range: toRange(element), message: `${name}: ${value} is unsupported stroke-dasharray value.`});
+                        warns.push({range: element.positions.attrs[name].value, message: `${name}: ${value} is unsupported stroke-dasharray value.`});
                         return null;
                     }
                 }

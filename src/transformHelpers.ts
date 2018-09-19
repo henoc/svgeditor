@@ -1,4 +1,4 @@
-import { Transform, TransformDescriptor } from "./domParser";
+import { Transform, TransformDescriptor } from "./svgParser";
 import { assertNever, iterate } from "./utils";
 import { transform, rotateDEG, scale, skew, translate, identity } from "transformation-matrix";
 import { configuration } from "./main";

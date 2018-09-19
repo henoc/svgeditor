@@ -1,6 +1,6 @@
 import { Component } from "./component";
 import { SvgTag } from "./svg";
-import { ParsedPresentationAttr, ParsedBaseAttr, ParsedElement } from "./domParser";
+import { ParsedPresentationAttr, ParsedBaseAttr, ParsedElement } from "./svgParser";
 import { drawState, svgRealMap, contentChildrenComponent, refleshContent, editMode, svgdata, sendBackToEditor } from "./main";
 import { OperatorName } from "./menuComponent";
 import { Vec2, v, OneOrMore, deepCopy, vfp } from "./utils";

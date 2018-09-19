@@ -2,7 +2,7 @@
  * @file Little subset of XPath prosedures.
  */
 
-import {ParsedElement} from "./domParser"
+import {ParsedElement} from "./svgParser"
 
 
 export function xfind(pes: ParsedElement[], xpath: string): ParsedElement | null {

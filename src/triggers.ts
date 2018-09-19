@@ -1,10 +1,10 @@
 import { editMode, openWindows, contentChildrenComponent, refleshContent, svgdata } from "./main";
 import { iterate } from "./utils";
 import { construct } from "./svgConstructor";
-import { ParsedElement, parse } from "./domParser";
-import * as xmldoc from "xmldoc";
+import { ParsedElement, parse } from "./svgParser";
 import { updateXPaths } from "./traverse";
 import { xfindExn } from "./xpath";
+import { textToXml } from "./xmlParser";
 const format = require('xml-formatter');
 
 export function onShapeMouseDown(event: MouseEvent, pe: ParsedElement) {
@@ -63,12 +63,16 @@ export function onDocumentPaste(event: Event) {
     }
 
     if (str) {
-        const dom = new xmldoc.XmlDocument(str);
-        const parsed = parse(dom);
-        const pe = <ParsedElement>parsed.result;
-        if (svgdata && "children" in svgdata) {
-            svgdata.children.push(pe);
-            refleshContent();
+        const xml = textToXml(str);
+        if (xml) {
+            const parsed = parse(xml);
+            if (parsed) {
+                const pe = parsed.result;
+                if (svgdata && "children" in svgdata) {
+                    svgdata.children.push(pe);
+                    refleshContent();
+                }
+            }
         }
     }
     event.preventDefault();
@@ -84,7 +88,7 @@ function copy(clipboardData: DataTransfer, isCut: boolean = false) {
             if (isCut) parentPe.children = parentPe.children.filter(c => pes.indexOf(c) === -1);
             const str = orderedPes.map(pe => {
                 const svgTag = construct(pe);
-                return svgTag ? svgTag.toString() : "";
+                return svgTag ? svgTag.toLinear() : "";
             }).join("");
             const formattedStr = format(str);
             clipboardData.setData("image/svg+xml", formattedStr);

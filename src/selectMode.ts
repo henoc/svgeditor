@@ -4,7 +4,7 @@ import { shaper, multiShaper } from "./shapes";
 import { SvgTag } from "./svg";
 import { Mode } from "./abstractMode";
 import { toString } from "transformation-matrix";
-import { ParsedElement } from "./domParser";
+import { ParsedElement } from "./svgParser";
 import { appendDescriptorsLeft, scale2 } from "./transformHelpers";
 
 export class SelectMode extends Mode {
