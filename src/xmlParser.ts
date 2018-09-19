@@ -230,3 +230,16 @@ export function textToXml(xmltext: string): XmlElement | null {
     parser.write(xmltext).close();
     return ret;
 }
+
+export function trimXml(elem: XmlElement): XmlElement {
+    elem.children = elem.children.
+        filter(node => node.type === "element" || (node.type === "text" && node.text.trim().length !== 0)).
+        map(node => {
+            if (node.type === "element") {
+                return trimXml(node)
+            } else {
+                return {...node, text: node.text.trim()};
+            }
+        });
+    return elem;
+}

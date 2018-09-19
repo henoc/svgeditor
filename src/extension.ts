@@ -8,7 +8,7 @@ import { diffChars } from "diff";
 import isAbsoluteUrl from "is-absolute-url";
 import { OperatorName } from "./menuComponent";
 import { updateXPaths } from "./traverse";
-import { textToXml, Interval } from "./xmlParser";
+import { textToXml, Interval, trimXml } from "./xmlParser";
 const format = require('xml-formatter');
 
 type PanelSet = { panel: vscode.WebviewPanel, editor: vscode.TextEditor, text: string};
@@ -246,7 +246,7 @@ function showError(reason: any) {
 function parseSvg(svgText: string, editor: vscode.TextEditor, diagnostics: vscode.DiagnosticCollection): ParsedElement | null {
     const xml = textToXml(svgText);
     if (!xml) return null;
-    const parsed = parse(xml);
+    const parsed = parse(trimXml(xml));
     if (!parsed) return null;
     diagnostics.set(editor.document.uri, parsed.warns.map(warn => {
         return {

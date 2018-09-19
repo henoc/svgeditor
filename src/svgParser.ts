@@ -373,9 +373,7 @@ interface ParserStates {
     underTextElement: boolean;
 }
 
-export function parse(node: XmlNode, states: ParserStates = <any>{}): ParsedResult | null {
-    const underTextElement = states.underTextElement;
-
+export function parse(node: XmlNode): ParsedResult | null {
     const xpath = "???";
     const parent = "???";
     const warns: Warning[] = [];
@@ -384,7 +382,7 @@ export function parse(node: XmlNode, states: ParserStates = <any>{}): ParsedResu
         else warns.push(warn);
     }
     if (node.type === "element") {
-        const children = parseChildren(node, pushWarns, xpath, states);
+        const children = parseChildren(node, pushWarns, xpath);
         if (node.name === "svg") {
             const attrs = parseAttrs(node, pushWarns).svg();
             return {result: {tag: "svg", attrs, children, xpath, parent}, warns};
@@ -431,7 +429,7 @@ export function parse(node: XmlNode, states: ParserStates = <any>{}): ParsedResu
             const attrs: Assoc = node.attrs;
             return {result: {tag: "unknown", tag$real: node.name, attrs, children, xpath, parent}, warns: [{range: node.positions.startTag, message: `${node.name} is unsupported element.`}]};
         }
-    } else if (underTextElement && node.type === "text") {
+    } else if (node.type === "text") {
         const text = node.text;
         return {result: {tag: "text()", attrs: {}, text, xpath, parent}, warns};
     } else {
@@ -439,13 +437,11 @@ export function parse(node: XmlNode, states: ParserStates = <any>{}): ParsedResu
     }
 }
 
-function parseChildren(element: XmlElement, onWarns: (warns: Warning[]) => void, parent: string | null, states: ParserStates) {
+function parseChildren(element: XmlElement, onWarns: (warns: Warning[]) => void, parent: string | null) {
     const children = [];
     const warns = [];
-    const newStates = {...states};
-    if (element.name === "text") newStates.underTextElement = true;
     for (let item of element.children ) {
-        const ret = parse(item, newStates);
+        const ret = parse(item);
         if (ret) {
             if (ret.result) children.push(ret.result);
             warns.push(...ret.warns);
