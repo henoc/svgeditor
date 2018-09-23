@@ -233,7 +233,7 @@ export function textToXml(xmltext: string): XmlElement | null {
 
 export function trimXml(elem: XmlElement): XmlElement {
     elem.children = elem.children.
-        filter(node => node.type === "element" || (node.type === "text" && node.text.trim().length !== 0)).
+        filter(node => node.type !== "text" || (node.type === "text" && node.text.trim().length !== 0)).
         map(node => {
             if (node.type === "element") {
                 return trimXml(node)

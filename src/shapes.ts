@@ -746,6 +746,8 @@ export function shaper(pe: ParsedElement): ShaperFunctions {
         case "stop":
             throw new Error("Definiton only shape cannot move.");
         case "text()":
+        case "comment()":
+        case "cdata()":
             throw new Error("String only data cannot move.");
         case "unknown":
             throw new Error("Unknown shape cannot move.");

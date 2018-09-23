@@ -1,13 +1,9 @@
 import { ParsedElement, ParsedBaseAttr, ParsedPresentationAttr } from "./svgParser";
-import { SvgTag, textContent, XmlComponent } from "./svg";
+import { SvgTag, stringComponent, XmlComponent } from "./svg";
 import { onShapeMouseDown } from "./triggers";
 import { assertNever } from "./utils";
-import { toString, inverse } from "transformation-matrix";
 import { shaper } from "./shapes";
-import { toTransformStrWithoutCollect } from "./transformHelpers";
 import { svgRealMap, imageList } from "./main";
-import { xfindExn } from "./xpath";
-import { Component } from "./component";
 
 interface SvgConstructOptions {
     putRootAttribute?: boolean;
@@ -188,7 +184,11 @@ export function construct(pe: ParsedElement, options?: SvgConstructOptions, disp
                 makeChildren(pe.children, tag, displayedDepth, options);
                 return tag;
             case "text()":
-                return textContent(pe.text);
+                return stringComponent(pe.text);
+            case "comment()":
+                return stringComponent(pe.text, "comment");
+            case "cdata()":
+                return stringComponent(pe.text, "cdata");
             default:
                 assertNever(pe);
         }

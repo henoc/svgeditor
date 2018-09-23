@@ -31,7 +31,9 @@ export type ParsedElement = (
     ParsedStopElement |
     ParsedImageElement |
     ParsedDefsElement |
-    ParsedTextContentElement |
+    ParsedTextContentNode |
+    ParsedCommentNode |
+    ParsedCDataNode |
     ParsedUnknownElement
 ) & {
     xpath: string;
@@ -115,8 +117,20 @@ interface ParsedDefsElement extends ContainerElementClass {
     attrs: ParsedDefsAttr
 }
 
-interface ParsedTextContentElement {
+interface ParsedTextContentNode {
     tag: "text()",
+    text: string,
+    attrs: {}
+}
+
+interface ParsedCommentNode {
+    tag: "comment()",
+    text: string,
+    attrs: {}
+}
+
+interface ParsedCDataNode {
+    tag: "cdata()",
     text: string,
     attrs: {}
 }
@@ -432,6 +446,12 @@ export function parse(node: XmlNode): ParsedResult | null {
     } else if (node.type === "text") {
         const text = node.text;
         return {result: {tag: "text()", attrs: {}, text, xpath, parent}, warns};
+    } else if (node.type === "comment") {
+        const text = node.text;
+        return {result: {tag: "comment()", attrs: {}, text, xpath, parent}, warns};
+    } else if (node.type === "cdata") {
+        const text = node.text;
+        return {result: {tag: "cdata()", attrs: {}, text, xpath, parent}, warns};
     } else {
         return null;
     }

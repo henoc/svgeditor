@@ -5,7 +5,7 @@ import { svgPathManager } from "./pathHelpers";
 import { elementOpenStart, elementOpenEnd, attr, text, elementClose } from "incremental-dom";
 import { Component } from "./component";
 import { toTransformStrWithoutCollect } from "./transformHelpers";
-import { XmlNodeNop } from "./xmlParser";
+import { XmlNodeNop, XmlNode } from "./xmlParser";
 
 const svgns = "http://www.w3.org/2000/svg";
 const xlinkns = "http://www.w3.org/1999/xlink";
@@ -263,16 +263,27 @@ export class SvgTag implements XmlComponent {
 
 export type Assoc = {[key: string]: string};
 
-export function textContent(tcontent: string): XmlComponent {
+export function stringComponent(str: string, type: "text" | "comment" | "cdata" = "text"): XmlComponent {
+    const wrappedStr = (() => {
+        switch (type) {
+            case "text":
+            return str;
+            case "comment":
+            return `<!--${str}-->`;
+            case "cdata":
+            return `<![CDATA[${str}]]>`;
+        }
+    })();
+    
     return {
         render() {
-            text(tcontent);
+            text(wrappedStr);
         },
         toLinear() {
-            return tcontent;
+            return wrappedStr;
         },
         toXml() {
-            return {type: "text", text: tcontent};
+            return <XmlNodeNop>{type, text: str};
         }
     }
 }
