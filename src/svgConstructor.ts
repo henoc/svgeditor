@@ -3,7 +3,9 @@ import { SvgTag, stringComponent, XmlComponent } from "./svg";
 import { onShapeMouseDown } from "./triggers";
 import { assertNever } from "./utils";
 import { shaper } from "./shapes";
-import { svgRealMap, imageList } from "./main";
+import { svgRealMap, imageList, svgdata } from "./main";
+import { findElemById } from "./traverse";
+import { acceptHashOnly } from "./url";
 
 interface SvgConstructOptions {
     putRootAttribute?: boolean;
@@ -183,6 +185,45 @@ export function construct(pe: ParsedElement, options?: SvgConstructOptions, disp
                 setPresentationAttrs(pe.attrs, tag);
                 makeChildren(pe.children, tag, displayedDepth, options);
                 return tag;
+            case "use":
+                /**
+                 * <g>              = tag
+                 *   <use/>
+                 *   <rect/>
+                 * </g>
+                 */
+                if (insertRectForGroup) {
+                    const href = pe.attrs.href || pe.attrs["xlink:href"];
+                    const hash = href && acceptHashOnly(href);
+                    const refPe = hash && findElemById(svgdata, hash) || null;
+                    tag.tag("g");
+                    setBaseAttrs(pe.attrs, tag);
+                    setPresentationAttrs(pe.attrs, tag);
+                    tag.children(
+                        new SvgTag("use")
+                        .attr("href", pe.attrs.href)
+                        .attr("xlink:href", pe.attrs["xlink:href"])
+                        .uattr("width", pe.attrs.width)
+                        .uattr("height", pe.attrs.height),
+                        new SvgTag("rect")
+                        .uattr("x", refPe && shaper(refPe).leftTop.x)
+                    );
+                }
+                /**
+                 * <use/>
+                 */
+                else {
+                    setBaseAttrs(pe.attrs, tag);
+                    setPresentationAttrs(pe.attrs, tag);
+                    return tag
+                        .attr("href", pe.attrs.href)
+                        .attr("xlink:href", pe.attrs["xlink:href"])
+                        .uattr("x", pe.attrs.x)
+                        .uattr("y", pe.attrs.y)
+                        .uattr("width", pe.attrs.width)
+                        .uattr("height", pe.attrs.height);
+                }
+                break;
             case "text()":
                 return stringComponent(pe.text);
             case "comment()":

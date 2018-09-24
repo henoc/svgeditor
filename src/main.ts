@@ -14,7 +14,7 @@ import { collectPaintServer } from "./paintServer";
 import { shaper } from "./shapes";
 import { LoadedImage, collectImages } from "./imageHelpters";
 import { collectContainer } from "./containerElement";
-import { makeIdXpathMap, makeXpathRealMap, updateXPaths } from "./traverse";
+import { makeXpathRealMap, updateXPaths } from "./traverse";
 import { xfind } from "./xpath";
 
 declare function acquireVsCodeApi(): any;
@@ -24,7 +24,6 @@ const vscode = acquireVsCodeApi();
 // global variables
 export let svgdata: ParsedElement;
 export let svgRealMap: { [xpath: string]: Element } = {};
-export let svgIdXpathMap: { [id: string]: string} = {};          // id -> xpath
 export const editMode: {mode: Mode} = {mode: new SelectMode()};
 export let paintServers: { [id: string] : ParsedElement } = {};
 export let containerElements: string[] = [];    // xpath list
@@ -150,7 +149,6 @@ document.addEventListener("paste", onDocumentPaste);
 
 export function refleshContent() {
     updateXPaths(svgdata);
-    svgIdXpathMap = makeIdXpathMap(svgdata);
     paintServers = collectPaintServer(svgdata);
     containerElements = collectContainer(svgdata);
     patch(content, () => contentChildrenComponent.render());

@@ -1,5 +1,5 @@
 import { elementOpen, elementClose, text, elementVoid } from "incremental-dom";
-import { drawState, refleshContent, openWindows, contentChildrenComponent, editMode, fontList, svgIdXpathMap, paintServers, svgdata, containerElements } from "./main";
+import { drawState, refleshContent, openWindows, contentChildrenComponent, editMode, fontList, paintServers, svgdata, containerElements } from "./main";
 import { Paint, ColorFormat, isColor, isFuncIRI, ParsedElement } from "./svgParser";
 import tinycolor from "tinycolor2";
 import { Component, WindowComponent, ButtonComponent, iconComponent } from "./component";
@@ -9,6 +9,7 @@ import { acceptHashOnly } from "./url";
 import { fetchPaintServer, cssString, StopReference, PaintServer } from "./paintServer";
 import { Mode } from "./abstractMode";
 import { xfindExn } from "./xpath";
+import { findElemById } from "./traverse";
 
 
 const CANVAS_DEFAULT_COLOR = {r: 255, g: 255, b: 255, a: 1};
@@ -26,8 +27,8 @@ class GradientComponent implements ColorComponent {
     canvasComponent: ColorPickerCanvasComponent | null = null;
     addStopButton: ButtonComponent;
 
-    constructor(private xpath: string) {
-        const paintServer = fetchPaintServer(xpath)!;
+    constructor(private pe: ParsedElement) {
+        const paintServer = fetchPaintServer(pe)!;
         this.activeRangeRefXpath = paintServer.stops.length > 0 ? paintServer.stops[0].xpath : null;
         this.setCanvas();
         this.addStopButton = new ButtonComponent("new stop", "svgeditor-new-stop", () => this.onNewStopClicked());
@@ -43,7 +44,7 @@ class GradientComponent implements ColorComponent {
     }
 
     render(): void {
-        const paintServer = fetchPaintServer(this.xpath)!;
+        const paintServer = fetchPaintServer(this.pe)!;
         el`div style="display: inline-block; vertical-align: top; margin: 6px;"`;
         for (let i = 0; i < paintServer.stops.length; i++) {
             const stop = paintServer.stops[i];
@@ -104,12 +105,12 @@ class GradientComponent implements ColorComponent {
     }
 
     onNewStopClicked() {
-        const gradient = xfindExn([svgdata], this.xpath);
+        const gradient = this.pe;
         if ("children" in gradient) {
             gradient.children.push({
                 xpath: "???",
                 tag: "stop",
-                parent: this.xpath,
+                parent: "???",
                 attrs: {
                     offset: {unit: "%", value: 100},
                     "stop-color": {format: "rgb", ...CANVAS_DEFAULT_COLOR},
@@ -373,13 +374,13 @@ class ColorPickerComponent implements WindowComponent {
         if (this.selectorValue === "color") {
             this.colorComponent = new ColorPickerCanvasComponent(200, 100, tinycolor(paint && isColor(paint) && paint || CANVAS_DEFAULT_COLOR), () => this.onChange(this));
         } else if (tmp = this.selectorValue.match(/^url\(#([^\(]+)\)$/)) {
-            const xpath = svgIdXpathMap[tmp[1]];
-            const paintServer = fetchPaintServer(xpath);
-            if (paintServer) {
+            const pe = findElemById(svgdata, tmp[1]);
+            const paintServer = pe && fetchPaintServer(pe);
+            if (paintServer && pe) {
                 switch (paintServer.kind) {
                     case "linearGradient":
                     case "radialGradient":
-                    this.colorComponent = new GradientComponent(xpath);
+                    this.colorComponent = new GradientComponent(pe);
                     break;
                 }
             }
@@ -509,10 +510,9 @@ export class StyleConfigComponent implements Component {
                 style.background = tinycolor(paint).toString("rgb");
             } else {
                 const idValue = acceptHashOnly(paint.url);
-                if (idValue && svgIdXpathMap[idValue]) {
-                    const pserver = fetchPaintServer(svgIdXpathMap[idValue]);
-                    if (pserver) style.background = cssString(pserver);
-                }
+                const pe = idValue && findElemById(svgdata, idValue);
+                const pserver = pe && fetchPaintServer(pe);
+                if (pserver) style.background = cssString(pserver);
             }
         } else {
             textContent = "no attribute";

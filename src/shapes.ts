@@ -8,6 +8,8 @@ import { appendDescriptor, replaceLastDescriptor, descriptorToMatrix, appendDesc
 import { font } from "./fontHelpers";
 import equal from "fast-deep-equal";
 import { xfindExn } from "./xpath";
+import { acceptHashOnly } from "./url";
+import { findElemById } from "./traverse";
 
 interface ShaperFunctions {
     center: Vec2;
@@ -741,6 +743,57 @@ export function shaper(pe: ParsedElement): ShaperFunctions {
                 appendTransformDescriptors: appendTransformDescriptors(iattrs),
                 rotate: rotateCenter
             }).merge(corners).merge(presentationAttrs).merge(transformProps).object;
+        case "use":
+            return (() => {
+                const attrs = pe.attrs;
+                const href = attrs.href || attrs["xlink:href"];
+                let hash: string | null;
+                const refPe = href && (hash = acceptHashOnly(href)) && findElemById(svgdata, hash) || null;
+                const leftTop = refPe && shaper(refPe).leftTop || v(0, 0);
+                return new Merger({
+                    get center() {
+                        const size = self().size;
+                        return leftTop.add(size.div(v(2, 2)));
+                    },
+                    set center(point: Vec2) {
+                        const oldCenter = self().center;
+                        self().move(point.sub(oldCenter));
+                    },
+                    move(diff: Vec2) {
+                        attrs.x = fromPx(attrs.x, "x",
+                            px(attrs.x) + diff.x
+                        );
+                        attrs.y = fromPx(attrs.y, "y",
+                            px(attrs.y) + diff.y
+                        );
+                    },
+                    get size() {
+                        const refWidthPx =
+                            attrs.width && px(attrs.width) ||
+                            refPe && (
+                                refPe.tag === "svg" && px(refPe.attrs.width) ||
+                                shaper(refPe).size.x
+                            ) || null;
+                        const refHeightPx =
+                            attrs.height && px(attrs.height) ||
+                            refPe && (
+                                refPe.tag === "svg" && px(refPe.attrs.height) ||
+                                shaper(refPe).size.y
+                            ) || null;
+                        return v(refWidthPx || 0, refHeightPx || 0);
+                    },
+                    set size(wh: Vec2) {
+                        throw new Error("have not implemented yet");
+                    },
+                    toPath() {
+                        // ???
+                    },
+                    size2,
+                    allTransform, viewBox,
+                    appendTransformDescriptors: appendTransformDescriptors(attrs),
+                    rotate: rotateCenter,
+                }).merge(corners).merge(presentationAttrs).merge(transformProps).object;
+            })();
         case "linearGradient":
         case "radialGradient":
         case "stop":

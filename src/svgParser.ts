@@ -31,6 +31,7 @@ export type ParsedElement = (
     ParsedStopElement |
     ParsedImageElement |
     ParsedDefsElement |
+    ParsedUseElement |
     ParsedTextContentNode |
     ParsedCommentNode |
     ParsedCDataNode |
@@ -43,6 +44,8 @@ export type ParsedElement = (
 interface ContainerElementClass {
     children: ParsedElement[]
 }
+
+type StructureElementClass = ContainerElementClass
 
 type GradientElementClass = ContainerElementClass
 
@@ -116,6 +119,14 @@ interface ParsedDefsElement extends ContainerElementClass {
     tag: "defs",
     attrs: ParsedDefsAttr
 }
+
+type ParsedUseElement = {
+    tag: "use",
+    attrs: ParsedUseAttr
+} | {
+    tag: "use:expanded",
+    attrs: ParsedGroupAttr
+} & ContainerElementClass;
 
 interface ParsedTextContentNode {
     tag: "text()",
@@ -239,6 +250,15 @@ interface ParsedImageAttr extends ParsedBaseAttr, ParsedPresentationAttr {
 }
 
 interface ParsedDefsAttr extends ParsedBaseAttr, ParsedPresentationAttr {
+}
+
+interface ParsedUseAttr extends ParsedBaseAttr, ParsedPresentationAttr {
+    "xlink:href": string | null;
+    href: string | null;
+    x: Length | null;
+    y: Length | null;
+    width: Length | null;
+    height: Length | null;
 }
 
 export type LengthUnit = "em" | "ex" | "px" | "in" | "cm" | "mm" | "pt" | "pc" | "%" | null;
@@ -383,10 +403,6 @@ export function isStrokeDasharray(obj: Object): obj is StrokeDasharray {
     return Array.isArray(obj) && (obj.length === 0 || isLength(obj[0])) || obj === "none" || obj === "inherit";
 }
 
-interface ParserStates {
-    underTextElement: boolean;
-}
-
 export function parse(node: XmlNode): ParsedResult | null {
     const xpath = "???";
     const parent = "???";
@@ -439,6 +455,9 @@ export function parse(node: XmlNode): ParsedResult | null {
         } else if (node.name === "defs") {
             const attrs = parseAttrs(node, pushWarns).defs();
             return {result: {tag: "defs", attrs, children, xpath, parent}, warns};
+        } else if (node.name === "use") {
+            const attrs = parseAttrs(node, pushWarns).use();
+            return {result: {tag: "use", attrs, xpath, parent}, warns};
         } else {
             const attrs: Assoc = node.attrs;
             return {result: {tag: "unknown", tag$real: node.name, attrs, children, xpath, parent}, warns: [{range: node.positions.startTag, message: `${node.name} is unsupported element.`}]};
@@ -660,6 +679,21 @@ function parseAttrs(element: XmlElement, onWarns: (ws: Warning[]) => void) {
             };
             onWarns(warns);
             return validDefsAttrs;
+        },
+        use: () => {
+            const validUseAttrs: ParsedUseAttr = {
+                ...globalValidAttrs,
+                ...getPresentationAttrs(),
+                "xlink:href": pop(attrs, "xlink:href"),
+                href: pop(attrs, "href"),
+                x: tryParse("x").map(a => a.length()).get,
+                y: tryParse("y").map(a => a.length()).get,
+                width: tryParse("width").map(a => a.length()).get,
+                height: tryParse("height").map(a => a.length()).get,
+                unknown: unknownAttrs(attrs, element, pushWarns)
+            };
+            onWarns(warns);
+            return validUseAttrs;
         }
     }
 }
