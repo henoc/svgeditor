@@ -2,10 +2,10 @@ import { parse } from "../src/svgParser";
 import * as assert from 'assert';
 import { xfind } from "../src/xpath";
 import { updateXPaths } from "../src/traverse";
-import { textToXml } from "../src/xmlParser";
+import { textToXml, trimXml } from "../src/xmlParser";
 
 function parseSvg(svgText: string) {
-    const xml = textToXml(svgText)!;
+    const xml = trimXml(textToXml(svgText)!);
     const ret = parse(xml)!.result;
     updateXPaths(ret);
     return ret;

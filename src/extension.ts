@@ -11,7 +11,7 @@ import { updateXPaths } from "./traverse";
 import { textToXml, Interval, trimXml } from "./xmlParser";
 const format = require('xml-formatter');
 
-type PanelSet = { panel: vscode.WebviewPanel, editor: vscode.TextEditor, text: string};
+type PanelSet = { panel: vscode.WebviewPanel, editor: vscode.TextEditor, text: string, blockOnChangeText: boolean};
 
 export function activate(context: vscode.ExtensionContext) {
 
@@ -60,7 +60,7 @@ export function activate(context: vscode.ExtensionContext) {
             return panel;
         })();
         panel.webview.html = replaceMagic(viewer, {bundleJs, css, icons, uri: editor.document.uri.toString()});
-        panelSet = {panel, editor, text};
+        panelSet = {panel, editor, text, blockOnChangeText: false};
         setListener(panelSet);
         setWebviewActiveContext(oldPanel ? false : true);
     }
@@ -70,11 +70,13 @@ export function activate(context: vscode.ExtensionContext) {
         pset.panel.webview.onDidReceiveMessage(async message => {
             switch (message.command) {
                 case "modified":
+                    pset.blockOnChangeText = true;      // Block to call onDidChangeTextDocument during updating
                     const oldText = pset.text;
                     pset.text = format(message.data);
-                    pset.editor.edit(editBuilder => {
+                    await pset.editor.edit(editBuilder => {
                         diffProcedure(diffChars(oldText, pset.text), editBuilder)
                     });
+                    pset.blockOnChangeText = false;
                     return;
                 case "svg-request":
                     pset.panel.webview.postMessage({
@@ -160,7 +162,7 @@ export function activate(context: vscode.ExtensionContext) {
     }
 
     vscode.workspace.onDidChangeTextDocument((e: vscode.TextDocumentChangeEvent) => {
-        if (panelSet && panelSet.editor.document === e.document && panelSet.text !== e.document.getText()) {
+        if (panelSet && panelSet.editor.document === e.document && !panelSet.blockOnChangeText && panelSet.text !== e.document.getText()) {
             panelSet.panel.webview.postMessage({
                 command: "modified",
                 data: parseSvg(panelSet.text = e.document.getText(), panelSet.editor, diagnostics)

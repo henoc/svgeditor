@@ -749,11 +749,10 @@ export function shaper(pe: ParsedElement): ShaperFunctions {
                 const href = attrs.href || attrs["xlink:href"];
                 let hash: string | null;
                 const refPe = href && (hash = acceptHashOnly(href)) && findElemById(svgdata, hash) || null;
-                const leftTop = refPe && shaper(refPe).leftTop || v(0, 0);
+                const refCenter = refPe && shaper(refPe).center || v(0, 0);
                 return new Merger({
                     get center() {
-                        const size = self().size;
-                        return leftTop.add(size.div(v(2, 2)));
+                        return refCenter.add(v(px(attrs.x), px(attrs.y)));
                     },
                     set center(point: Vec2) {
                         const oldCenter = self().center;
@@ -768,22 +767,24 @@ export function shaper(pe: ParsedElement): ShaperFunctions {
                         );
                     },
                     get size() {
-                        const refWidthPx =
-                            attrs.width && px(attrs.width) ||
-                            refPe && (
-                                refPe.tag === "svg" && px(refPe.attrs.width) ||
-                                shaper(refPe).size.x
-                            ) || null;
-                        const refHeightPx =
-                            attrs.height && px(attrs.height) ||
-                            refPe && (
-                                refPe.tag === "svg" && px(refPe.attrs.height) ||
-                                shaper(refPe).size.y
-                            ) || null;
-                        return v(refWidthPx || 0, refHeightPx || 0);
+                        let refSize = refPe && shaper(refPe).size || v(0, 0);
+                        if (refPe) {
+                            if (refPe.tag === "svg") {
+                                if (attrs.width) {
+                                    refSize.x = px(attrs.width);
+                                }
+                                if (attrs.height) {
+                                    refSize.y = px(attrs.height);
+                                }
+                            }
+                        }
+                        return refSize;
                     },
                     set size(wh: Vec2) {
-                        throw new Error("have not implemented yet");
+                        let center = self().center;
+                        attrs.width = fromPx(attrs.width, "width", wh.x);
+                        attrs.height = fromPx(attrs.height, "height", wh.y);
+                        self().center = center;
                     },
                     toPath() {
                         // ???

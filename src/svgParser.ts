@@ -120,13 +120,10 @@ interface ParsedDefsElement extends ContainerElementClass {
     attrs: ParsedDefsAttr
 }
 
-type ParsedUseElement = {
+interface ParsedUseElement {
     tag: "use",
     attrs: ParsedUseAttr
-} | {
-    tag: "use:expanded",
-    attrs: ParsedGroupAttr
-} & ContainerElementClass;
+}
 
 interface ParsedTextContentNode {
     tag: "text()",

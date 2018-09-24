@@ -187,26 +187,29 @@ export function construct(pe: ParsedElement, options?: SvgConstructOptions, disp
                 return tag;
             case "use":
                 /**
-                 * <g>              = tag
+                 * <g>
                  *   <use/>
                  *   <rect/>
                  * </g>
                  */
                 if (insertRectForGroup) {
-                    const href = pe.attrs.href || pe.attrs["xlink:href"];
-                    const hash = href && acceptHashOnly(href);
-                    const refPe = hash && findElemById(svgdata, hash) || null;
-                    tag.tag("g");
-                    setBaseAttrs(pe.attrs, tag);
-                    setPresentationAttrs(pe.attrs, tag);
-                    tag.children(
+                    const group = new SvgTag("g");
+                    setBaseAttrs(pe.attrs, group);
+                    setPresentationAttrs(pe.attrs, group);
+                    return group.children(
                         new SvgTag("use")
                         .attr("href", pe.attrs.href)
                         .attr("xlink:href", pe.attrs["xlink:href"])
+                        .uattr("x", pe.attrs.x)
+                        .uattr("y", pe.attrs.y)
                         .uattr("width", pe.attrs.width)
                         .uattr("height", pe.attrs.height),
-                        new SvgTag("rect")
-                        .uattr("x", refPe && shaper(refPe).leftTop.x)
+                        tag.tag("rect")
+                        .uattr("x", {unit: null, value: shaper(pe).leftTop.x, attrName: "x"})
+                        .uattr("y", {unit: null, value: shaper(pe).leftTop.y, attrName: "y"})
+                        .uattr("width", {unit: null, value: shaper(pe).size.x, attrName: "width"})
+                        .uattr("height", {unit: null, value: shaper(pe).size.y, attrName: "height"})
+                        .attr("opacity", 0)
                     );
                 }
                 /**
@@ -223,7 +226,6 @@ export function construct(pe: ParsedElement, options?: SvgConstructOptions, disp
                         .uattr("width", pe.attrs.width)
                         .uattr("height", pe.attrs.height);
                 }
-                break;
             case "text()":
                 return stringComponent(pe.text);
             case "comment()":

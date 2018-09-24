@@ -115,7 +115,6 @@ export class NodeMode extends Mode {
         sendBackToEditor();
     }
     onDocumentMouseLeave(event: Event): void {
-        this.onDocumentMouseUp();
     }
 
     render() {
