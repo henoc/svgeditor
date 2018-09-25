@@ -749,10 +749,10 @@ export function shaper(pe: ParsedElement): ShaperFunctions {
                 const href = attrs.href || attrs["xlink:href"];
                 let hash: string | null;
                 const refPe = href && (hash = acceptHashOnly(href)) && findElemById(svgdata, hash) || null;
-                const refCenter = refPe && shaper(refPe).center || v(0, 0);
                 return new Merger({
                     get center() {
-                        return refCenter.add(v(px(attrs.x), px(attrs.y)));
+                        const refCenter = refPe && multiShaper([refPe], true).center;
+                        return (refCenter || v(0, 0)).add(v(px(attrs.x), px(attrs.y)));
                     },
                     set center(point: Vec2) {
                         const oldCenter = self().center;
@@ -767,7 +767,7 @@ export function shaper(pe: ParsedElement): ShaperFunctions {
                         );
                     },
                     get size() {
-                        let refSize = refPe && shaper(refPe).size || v(0, 0);
+                        let refSize = refPe && multiShaper([refPe], true).size || v(0, 0);
                         if (refPe) {
                             if (refPe.tag === "svg") {
                                 if (attrs.width) {
@@ -781,10 +781,16 @@ export function shaper(pe: ParsedElement): ShaperFunctions {
                         return refSize;
                     },
                     set size(wh: Vec2) {
-                        let center = self().center;
-                        attrs.width = fromPx(attrs.width, "width", wh.x);
-                        attrs.height = fromPx(attrs.height, "height", wh.y);
-                        self().center = center;
+                        if (refPe) {
+                            if (refPe.tag === "svg") {
+                                let center = self().center;
+                                attrs.width = fromPx(attrs.width, "width", wh.x);
+                                attrs.height = fromPx(attrs.height, "height", wh.y);
+                                self().center = center;
+                            } else {
+                                //???
+                            }
+                        }
                     },
                     toPath() {
                         // ???
