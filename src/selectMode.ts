@@ -1,4 +1,4 @@
-import { refleshContent, svgRealMap, sendBackToEditor, configuration, svgdata, contentChildrenComponent } from "./main";
+import { refleshContent, sendBackToEditor, configuration, svgdata, contentChildrenComponent } from "./main";
 import { Vec2, v, vfp, assertNever, deepCopy, OneOrMore, iterate, el } from "./utils";
 import { shaper, multiShaper } from "./shapes";
 import { SvgTag } from "./svg";

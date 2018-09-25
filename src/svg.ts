@@ -17,6 +17,7 @@ interface SvgTagOptions {
 export interface XmlComponent extends Component {
     toLinear(): string;
     toXml(): XmlNodeNop;
+    toDom(): Node;
 }
 
 /**
@@ -227,6 +228,26 @@ export class SvgTag implements XmlComponent {
         }
     }
 
+    toDom(): Node {
+        if (this.data.tag) {
+            const node = document.createElementNS(svgns, this.data.tag);
+            iterate(this.data.attrs, (key, value) => {
+                if (key.startsWith("xlink:")) node.setAttributeNS(xlinkns, key, value);
+                else node.setAttribute(key, value);
+            });
+            iterate(this.data.listeners, (key, value) => {
+                node.addEventListener(key, value);
+            });
+            if (this.data.class.length > 0) node.classList.add(...this.data.class);
+            for (let cnode of this.data.children) {
+                node.appendChild(cnode.toDom());
+            }
+            return node;
+        } else {
+            throw new Error("No tag name found when build.");
+        }
+    }
+
     private fixDecimalPlaces<T = number | Length | Paint | PathCommand[] | Transform>(value: T): T {
         const fix = (v: number) => {
             return Number(v.toFixed(this.data.options.numOfDecimalPlaces));
@@ -284,6 +305,16 @@ export function stringComponent(str: string, type: "text" | "comment" | "cdata" 
         },
         toXml() {
             return <XmlNodeNop>{type, text: str};
+        },
+        toDom() {
+            switch (type) {
+                case "text":
+                return document.createTextNode(str);
+                case "comment":
+                return document.createComment(str);
+                case "cdata":
+                return document.createCDATASection(str);
+            }
         }
     }
 }

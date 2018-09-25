@@ -1,10 +1,16 @@
 import { iterate } from "./utils";
+import { FontSize, FontStyle, FontWeight, ParsedElement, isLength } from "./svgParser";
+import { traverse, reproduce } from "./traverse";
+import { xfindExn } from "./xpath";
 
 const fontMeasure = require("font-measure");
 const textWidth = require("text-width");
 
 export type HeightName = "top" | "median" | "middle" | "bottom" | "alphabetic" | "baseline" | "upper" | "lower" | "capHeight" | "xHeight" | "ascent" | "descent" | "hanging" | "ideographic" | "lineHeight" | "overshoot" | "tittle";
 
+/**
+ * Measure text width, height and more from font info.
+ */
 export function font(text: string, family: string, size: number, weight: string, style: string) {
     const sizeToHeightValue = (heightName: HeightName) => (size: number) => <number>fontMeasure(family, {size, weight, style})[heightName] * size;
     const heightInfo = iterate(<Record<HeightName, number>>fontMeasure(family, {size, weight, style}), (_k, v) =>  v * size);

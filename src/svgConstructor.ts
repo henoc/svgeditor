@@ -3,7 +3,7 @@ import { SvgTag, stringComponent, XmlComponent } from "./svg";
 import { onShapeMouseDown } from "./triggers";
 import { assertNever } from "./utils";
 import { shaper } from "./shapes";
-import { svgRealMap, imageList, svgdata } from "./main";
+import { imageList, svgdata } from "./main";
 import { findElemById } from "./traverse";
 import { acceptHashOnly } from "./url";
 
@@ -136,7 +136,7 @@ export function construct(pe: ParsedElement, options?: SvgConstructOptions, disp
                 setPresentationAttrs(pe.attrs, tag);
                 makeChildren(pe.children, tag, displayedDepth, options);
                 // Click detection for groups.
-                if (insertRectForGroup && svgRealMap[pe.xpath]) {
+                if (insertRectForGroup) {
                     const leftTop = shaper(pe).leftTop;
                     const gsize = shaper(pe).size;
                     const dummyRect = new SvgTag("rect")

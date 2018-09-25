@@ -2,14 +2,15 @@ import { ParsedElement, Length, Transform, isLength, TransformDescriptor, Paint,
 import { Vec2, v, vfp, OneOrMore, Merger } from "./utils";
 import { svgPathManager } from "./pathHelpers";
 import { convertToPixel, convertFromPixel } from "./measureUnits";
-import { svgRealMap, configuration, imageList, svgdata } from "./main";
+import { configuration, imageList, svgdata, displayRoot, displayRootXPath } from "./main";
 import { identity, transform, scale, translate, rotate, rotateDEG, applyToPoint, inverse } from "transformation-matrix";
 import { appendDescriptor, replaceLastDescriptor, descriptorToMatrix, appendDescriptorsLeft, translateDescriptor, scaleDescriptor, rotateDescriptor, appendDescriptorLeft, appendDescriptors } from "./transformHelpers";
-import { font } from "./fontHelpers";
+import { font } from "./measureFonts";
 import equal from "fast-deep-equal";
-import { xfindExn } from "./xpath";
+import { xfindExn, xrelative } from "./xpath";
 import { acceptHashOnly } from "./url";
 import { findElemById } from "./traverse";
+import { measureStyle } from "./measureStyle";
 
 interface ShaperFunctions {
     center: Vec2;
@@ -32,7 +33,7 @@ interface ShaperFunctions {
 }
 
 /**
- * Transform some shapes. Need `svgRealMap` (optional, Actually needed shape is `text`) before use.
+ * Transform some shapes.
  */
 export function shaper(pe: ParsedElement): ShaperFunctions {
 
@@ -533,9 +534,9 @@ export function shaper(pe: ParsedElement): ShaperFunctions {
                 rotate: rotateCenter
             }).merge(corners).merge(presentationAttrs).merge(transformProps).object;
         case "text":
-            const re = svgRealMap[pe.xpath];
             const fontInfo = () => {
-                const styleDeclaration = getComputedStyle(re);
+                const relPath = xrelative(pe.xpath, displayRootXPath());
+                const styleDeclaration = relPath && measureStyle(displayRoot(), relPath) || <CSSStyleDeclaration>{};
                 let strs = "";
                 for (let c of pe.children) {
                     if (c.tag === "text()") strs += c.text;

@@ -14,7 +14,7 @@ import { collectPaintServer } from "./paintServer";
 import { shaper } from "./shapes";
 import { LoadedImage, collectImages } from "./imageHelpters";
 import { collectContainer } from "./containerElement";
-import { makeXpathRealMap, updateXPaths } from "./traverse";
+import { updateXPaths } from "./traverse";
 import { xfind } from "./xpath";
 
 declare function acquireVsCodeApi(): any;
@@ -23,7 +23,6 @@ const vscode = acquireVsCodeApi();
 
 // global variables
 export let svgdata: ParsedElement;
-export let svgRealMap: { [xpath: string]: Element } = {};
 export const editMode: {mode: Mode} = {mode: new SelectMode()};
 export let paintServers: { [id: string] : ParsedElement } = {};
 export let containerElements: string[] = [];    // xpath list
@@ -71,6 +70,21 @@ class ContentChildrenComponent implements Component {
 }
 
 export const contentChildrenComponent = new ContentChildrenComponent();
+
+/**
+ * Shorthand for get display root.
+ */
+export function displayRootXPath() {
+    return contentChildrenComponent.svgContainerComponent.displayedRootXpath;
+}
+
+/**
+ * Shorthand for get display root.
+ */
+export function displayRoot() {
+    const xpath = contentChildrenComponent.svgContainerComponent.displayedRootXpath;
+    return xfind([svgdata], xpath) || svgdata;
+}
 
 
 vscode.postMessage({
@@ -152,10 +166,6 @@ export function refleshContent() {
     paintServers = collectPaintServer(svgdata);
     containerElements = collectContainer(svgdata);
     patch(content, () => contentChildrenComponent.render());
-
-    let substanceSvgRoot = document.querySelector("svg[data-root]");
-    svgRealMap = substanceSvgRoot ? makeXpathRealMap(substanceSvgRoot) : {};
-    patch(content, () => contentChildrenComponent.render());        // 2nd render with updated svgRealMap (dummy rect for g tag)
 }
 
 export function sendBackToEditor() {

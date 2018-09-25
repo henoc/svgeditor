@@ -4,15 +4,26 @@ import { ParsedElement } from "./svgParser";
  * Depth first search.
  * @param fn Stop traversing and return a result if `fn` returns some value exclude `undefined` and `Promise<any>`
  */
-export function traverse<T, U>(pe: T, fn: (pe: T, parentPe: T & {children: T[]} | null, index: number | null) => U, index: number | null = null, parentPe: T & {children: T[]} | null = null): U | void {
+export function traverse<T extends {children?: T[]}, U>(pe: T, fn: (pe: T, parentPe: T & {children: T[]} | null, index: number | null) => U, index: number | null = null, parentPe: T & {children: T[]} | null = null): U | void {
     const ret = fn(pe, parentPe, index);
     if (!(ret instanceof Promise) && ret !== undefined) return ret;
-    if ("children" in pe) {
-        for(let i = 0; i < (<any>pe).children.length; i++) {
-            const ret = traverse((<any>pe).children[i], fn, i, pe);
+    if (pe.children !== undefined) {
+        for(let i = 0; i < pe.children.length; i++) {
+            const ret = traverse(pe.children[i], fn, i, <T & {children: T[]}>pe);
             if (!(ret instanceof Promise) && ret !== undefined) return ret;
         }
     }
+}
+
+export function reproduce<T extends {children?: T[]}, U extends {children?: U[]}>(node: T, maker: (t: T) => U): U {
+    const copied = maker(node);
+    if (node.children) {
+        copied.children = [];
+        for (let c of node.children) {
+            copied.children.push(reproduce(c, maker));
+        }
+    }
+    return copied;
 }
 
 export function findElemById(root: ParsedElement, id: string): ParsedElement | null {
@@ -22,17 +33,6 @@ export function findElemById(root: ParsedElement, id: string): ParsedElement | n
             if ("id" in pe.attrs && pe.attrs.id === id) return pe;
         }
     ) || null;
-}
-
-export function makeXpathRealMap(e: Element): {[uu: string]: Element} {
-    const acc: {[uu: string]: Element} = {};
-    let tmp: string | null;
-    if (tmp = e.getAttribute("data-xpath")) acc[tmp] = e;
-    for (let i = 0; i < e.children.length; i++) {
-        const child = e.children.item(i);
-        Object.assign(acc, makeXpathRealMap(child));
-    }
-    return acc;
 }
 
 /**
