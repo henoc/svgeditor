@@ -1,6 +1,6 @@
 import { parse } from "../src/svgParser";
 import * as assert from 'assert';
-import { xfind } from "../src/xpath";
+import { xfind, xrelative } from "../src/xpath";
 import { updateXPaths } from "../src/traverse";
 import { textToXml, trimXml } from "../src/xmlParser";
 
@@ -34,5 +34,11 @@ describe("xpath", () => {
         assert.deepStrictEqual(xfind([svgdata], "/svg/svg"), svg_svg);
         assert.deepStrictEqual(xfind([svgdata], "/svg/svg/image[1]"), svg_svg_image_1);
         assert.deepStrictEqual(xfind([svgdata], "/svg/svg/image[2]"), svg_svg_image_2);
+    });
+
+    it("xrelative", () => {
+        assert.strictEqual(xrelative("/svg/g/image[2]", "/svg"), "svg/g/image[2]");
+        assert.strictEqual(xrelative("/svg/g/image[2]", "/svg/g"), "g/image[2]");
+        assert.strictEqual(xrelative("/svg/image[2]", "/foo"), null);
     });
 });

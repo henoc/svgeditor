@@ -44,13 +44,13 @@ export function xparent(xpath: string): string | null {
  * embeddingForm(`/svg/image[2]`) === `*[name()='svg']/*[name()='image'][2]`
  */
 export function embeddingForm(xpath: string): string {
-    const p = xpath.replace(/[a-zA-Z_]\w*/g, "*[name()='$0']");
+    const p = xpath.replace(/[a-zA-Z_]\w*/g, "*[name()='$&']");
     return p.startsWith("/") ? p.slice(1) : p;
 }
 
 /**
  * xrelative(`/svg/g/image[2]`, `/svg`) === `svg/g/image[2]`  
- * xrelative(`/svg/g/image[2]`, `/svg/g`) === `g/image[2]`
+ * xrelative(`/svg/g/image[2]`, `/svg/g`) === `g/image[2]`
  * xrelative(`/svg/image[2]`, `/foo`) === null
  */
 export function xrelative(target: string, base: string): string | null {

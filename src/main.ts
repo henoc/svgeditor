@@ -17,7 +17,7 @@ import { collectContainer } from "./containerElement";
 import { updateXPaths } from "./traverse";
 import { xfind } from "./xpath";
 
-declare function acquireVsCodeApi(): any;
+declare function acquireVsCodeApi(): {postMessage(args: any): void};
 
 const vscode = acquireVsCodeApi();
 
@@ -92,9 +92,6 @@ vscode.postMessage({
 });
 vscode.postMessage({
     command: "fontList-request"
-});
-vscode.postMessage({
-    command: "uri-request"
 });
 
 // set listeners

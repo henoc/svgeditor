@@ -7,8 +7,8 @@ import { Component } from "./component";
 import { toTransformStrWithoutCollect } from "./transformHelpers";
 import { XmlNodeNop, XmlNode } from "./xmlParser";
 
-const svgns = "http://www.w3.org/2000/svg";
-const xlinkns = "http://www.w3.org/1999/xlink";
+export const svgns = "http://www.w3.org/2000/svg";
+export const xlinkns = "http://www.w3.org/1999/xlink";
 
 interface SvgTagOptions {
     numOfDecimalPlaces?: number;
