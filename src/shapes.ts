@@ -747,16 +747,7 @@ export function shaper(pe: ParsedElement): ShaperFunctions {
         case "use":
             return (() => {
                 const attrs = pe.attrs;
-                if (!pe.virtual) {
-                    const base = usePositionsInOuterCoordinate(pe);
-                    pe.virtual = {
-                        x: fromPx(attrs.x, "x", base.x),
-                        y: fromPx(attrs.y, "y", base.y),
-                        width: fromPx(attrs.width, "width", base.width),
-                        height: fromPx(attrs.height, "height", base.height),
-                        transform: null
-                    }
-                };
+                if (!pe.virtual) pe.virtual = initialSizeOfUse(pe);
                 const virtual = pe.virtual;
                 return new Merger({
                     get center() {
@@ -793,17 +784,11 @@ export function shaper(pe: ParsedElement): ShaperFunctions {
                     toPath() {
                         // ???
                     },
-                    get transform() {
-                        return virtual.transform && transform(...virtual.transform.matrices) || identity();
-                    },
-                    set transform(matrix: Matrix) {
-                        virtual.transform = { descriptors: [{ type: "matrix", ...matrix }], matrices: [matrix] };
-                    },
-                    appendTransformDescriptors: appendTransformDescriptors(virtual),
+                    appendTransformDescriptors: appendTransformDescriptors(attrs),
                     size2,
                     allTransform, viewBox,
                     rotate: rotateCenter,
-                }).merge(corners).merge(presentationAttrs).object;
+                }).merge(corners).merge(transformProps).merge(presentationAttrs).object;
             })();
         case "linearGradient":
         case "radialGradient":
@@ -1037,44 +1022,46 @@ export function multiShaper(pes: OneOrMore<ParsedElement>, useMultiEvenIfSingle:
     }
 }
 
-export function usePositionsInOuterCoordinate(puse: ParsedUseElement) {
+function getRefElemOfUse(puse: ParsedUseElement): ParsedElement | null {
+    const href = puse.attrs.href || puse.attrs["xlink:href"];
+    let hash: string | null;
+    return href && (hash = acceptHashOnly(href)) && findElemById(svgdata, hash) || null;
+}
+
+export function isAbleToOverrideWightHeight(puse: ParsedUseElement): boolean {
+    const refPe = getRefElemOfUse(puse);
+    return refPe && refPe.tag === "svg" || false;
+}
+
+export function initialSizeOfUse(puse: ParsedUseElement) {
     const px = (unitValue: Length | null, defaultNumber: number = 0) => {
         return unitValue ? convertToPixel(unitValue, puse) : defaultNumber;
     }
+    const fromPx = (unitValue: Length | null, attrName: string, pxValue: number): Length => {
+        return unitValue ?
+            convertFromPixel({ unit: "px", attrName, value: pxValue }, unitValue.unit, puse) :
+            { value: pxValue, unit: null, attrName };
+    }
     const attrs = puse.attrs;
-    const href = attrs.href || attrs["xlink:href"];
-    let hash: string | null;
-    const refPe = href && (hash = acceptHashOnly(href)) && findElemById(svgdata, hash) || null;
+    const refPe = getRefElemOfUse(puse);
     let size = refPe && multiShaper([refPe], true).size || v(0, 0);
-    if (refPe) {
-        if (refPe.tag === "svg") {
-            if (attrs.width) {
-                size.x = px(attrs.width);
-            }
-            if (attrs.height) {
-                size.y = px(attrs.height);
-            }
+    if (isAbleToOverrideWightHeight(puse)) {
+        if (attrs.width) {
+            size.x = px(attrs.width);
+        }
+        if (attrs.height) {
+            size.y = px(attrs.height);
         }
     }
     const refLeftTop = refPe && multiShaper([refPe], true).leftTop || v(0, 0);
     const leftTop = refLeftTop.add(v(px(attrs.x), px(attrs.y)));
 
-    type Four<T> = [T, T, T, T];
-    let [minX, minY, maxX, maxY] = <Four<null | number>>[null, null, null, null];
-    for (let corner of [leftTop, leftTop.add(v(size.x, 0)), leftTop.add(v(0, size.y)), leftTop.add(size)]) {
-        const cornerInGroup = escapeFromTargetCoordinate(corner, puse);
-        if (minX === null || minX > cornerInGroup.x) minX = cornerInGroup.x;
-        if (minY === null || minY > cornerInGroup.y) minY = cornerInGroup.y;
-        if (maxX === null || maxX < cornerInGroup.x) maxX = cornerInGroup.x;
-        if (maxY === null || maxY < cornerInGroup.y) maxY = cornerInGroup.y;
-    }
-
     return {
-        x: minX || 0,
-        y: minY || 0,
-        width: (maxX || 0) - (minX || 0),
-        height: (maxY || 0) - (minY || 0)
-    }
+        x: fromPx(attrs.x, "x", leftTop.x),
+        y: fromPx(attrs.y, "y", leftTop.y),
+        width: fromPx(attrs.width, "width", size.x),
+        height: fromPx(attrs.height, "height", size.y)
+    };
 }
 
 function intoTargetCoordinate(point: Vec2, target: ParsedElement) {

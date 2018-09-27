@@ -128,8 +128,7 @@ export interface ParsedUseElement extends ElementBaseClass {
         x: Length,
         y: Length,
         width: Length,
-        height: Length,
-        transform: Transform | null
+        height: Length
     } | null
 }
 
