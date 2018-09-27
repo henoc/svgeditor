@@ -16,7 +16,7 @@ interface ParsedResult {
     warns: Warning[]
 }
 
-export type ParsedElement = (
+export type ParsedElement =
     ParsedSvgElement |
     ParsedCircleElement |
     ParsedRectElement |
@@ -36,7 +36,8 @@ export type ParsedElement = (
     ParsedCommentNode |
     ParsedCDataNode |
     ParsedUnknownElement
-) & {
+
+interface ElementBaseClass {
     xpath: string;
     parent: string | null;
 }
@@ -49,101 +50,108 @@ type StructureElementClass = ContainerElementClass
 
 type GradientElementClass = ContainerElementClass
 
-interface ParsedSvgElement extends ContainerElementClass {
+export interface ParsedSvgElement extends ContainerElementClass, ElementBaseClass {
     tag: "svg",
     attrs: ParsedSvgAttr
 }
 
-interface ParsedCircleElement {
+export interface ParsedCircleElement extends ElementBaseClass {
     tag: "circle",
     attrs: ParsedCircleAttr
 }
 
-interface ParsedRectElement {
+export interface ParsedRectElement extends ElementBaseClass {
     tag: "rect",
     attrs: ParsedRectAttr
 }
 
-interface ParsedEllipseElement {
+export interface ParsedEllipseElement extends ElementBaseClass {
     tag: "ellipse",
     attrs: ParsedEllipseAttr
 }
 
-interface ParsedPolylineElement {
+export interface ParsedPolylineElement extends ElementBaseClass {
     tag: "polyline",
     attrs: ParsedPolylineAttr
 }
 
-interface ParsedPolygonElement {
+export interface ParsedPolygonElement extends ElementBaseClass {
     tag: "polygon",
     attrs: ParsedPolylineAttr
 }
 
-interface ParsedPathElement {
+export interface ParsedPathElement extends ElementBaseClass {
     tag: "path",
     attrs: ParsedPathAttr
 }
 
-interface ParsedTextElement {
+export interface ParsedTextElement extends ElementBaseClass {
     tag: "text",
     attrs: ParsedTextAttr,
     children: ParsedElement[]
 }
 
-interface ParsedGroupElement extends ContainerElementClass {
+export interface ParsedGroupElement extends ContainerElementClass, ElementBaseClass {
     tag: "g",
     attrs: ParsedGroupAttr
 }
 
-interface ParsedLinearGradientElement extends GradientElementClass {
+export interface ParsedLinearGradientElement extends GradientElementClass, ElementBaseClass {
     tag: "linearGradient",
     attrs: ParsedLinearGradientAttr
 }
 
-interface ParsedRadialGradientElement extends GradientElementClass {
+export interface ParsedRadialGradientElement extends GradientElementClass, ElementBaseClass {
     tag: "radialGradient",
     attrs: ParsedRadialGradientAttr
 }
 
-interface ParsedStopElement {
+export interface ParsedStopElement extends ElementBaseClass {
     tag: "stop",
     attrs: ParsedStopAttr
 }
 
-interface ParsedImageElement {
+export interface ParsedImageElement extends ElementBaseClass {
     tag: "image";
     attrs: ParsedImageAttr;
 }
 
-interface ParsedDefsElement extends ContainerElementClass {
+export interface ParsedDefsElement extends ContainerElementClass, ElementBaseClass {
     tag: "defs",
     attrs: ParsedDefsAttr
 }
 
-interface ParsedUseElement {
+export interface ParsedUseElement extends ElementBaseClass {
     tag: "use",
-    attrs: ParsedUseAttr
+    attrs: ParsedUseAttr,
+    virtual: {
+        x: Length,
+        y: Length,
+        width: Length,
+        height: Length,
+        transform: Transform | null
+    } | null
 }
 
-interface ParsedTextContentNode {
+export interface ParsedTextContentNode extends ElementBaseClass {
     tag: "text()",
     text: string,
     attrs: {}
 }
 
-interface ParsedCommentNode {
+export interface ParsedCommentNode extends ElementBaseClass {
     tag: "comment()",
     text: string,
     attrs: {}
 }
 
-interface ParsedCDataNode {
+export interface ParsedCDataNode extends ElementBaseClass {
     tag: "cdata()",
     text: string,
     attrs: {}
 }
 
-interface ParsedUnknownElement {
+export interface ParsedUnknownElement extends ElementBaseClass {
     tag: "unknown",
     tag$real: string,
     attrs: Assoc,
@@ -454,7 +462,7 @@ export function parse(node: XmlNode): ParsedResult | null {
             return {result: {tag: "defs", attrs, children, xpath, parent}, warns};
         } else if (node.name === "use") {
             const attrs = parseAttrs(node, pushWarns).use();
-            return {result: {tag: "use", attrs, xpath, parent}, warns};
+            return {result: {tag: "use", attrs, xpath, parent, virtual: null}, warns};
         } else {
             const attrs: Assoc = node.attrs;
             return {result: {tag: "unknown", tag$real: node.name, attrs, children, xpath, parent}, warns: [{range: node.positions.startTag, message: `${node.name} is unsupported element.`}]};

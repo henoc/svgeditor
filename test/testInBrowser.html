@@ -4,14 +4,15 @@
 
 <div id="mocha"></div>
 
+<!-- required from main.ts -->
 <script id="svgeditor-uri" type="text/plain">file:///test</script>
 <div style="display: none;" id="svgeditor-content"></div>
+<script src="../out/test/nodeProcessMock.browser-test.js"></script>
 
 <script src="https://unpkg.com/chai/chai.js"></script>
 <script src="https://unpkg.com/mocha@5.2.0/mocha.js"></script>
 
 <script>mocha.setup('bdd')</script>
-<script src="../out/test/nodeProcessMock.browser-test.js"></script>
 <script src="../out/test/bundle.browser-test.js"></script>
 <script>
 mocha.checkLeaks();

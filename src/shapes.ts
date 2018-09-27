@@ -1,5 +1,5 @@
-import { ParsedElement, Length, Transform, isLength, TransformDescriptor, Paint, PathCommand } from "./svgParser";
-import { Vec2, v, vfp, OneOrMore, Merger } from "./utils";
+import { ParsedElement, Length, Transform, isLength, TransformDescriptor, Paint, PathCommand, ParsedUseElement } from "./svgParser";
+import { Vec2, v, vfp, OneOrMore, Merger, deepCopy } from "./utils";
 import { svgPathManager } from "./pathHelpers";
 import { convertToPixel, convertFromPixel } from "./measureUnits";
 import { configuration, imageList, svgdata, displayRoot, displayRootXPath } from "./main";
@@ -747,60 +747,63 @@ export function shaper(pe: ParsedElement): ShaperFunctions {
         case "use":
             return (() => {
                 const attrs = pe.attrs;
-                const href = attrs.href || attrs["xlink:href"];
-                let hash: string | null;
-                const refPe = href && (hash = acceptHashOnly(href)) && findElemById(svgdata, hash) || null;
+                if (!pe.virtual) {
+                    const base = usePositionsInOuterCoordinate(pe);
+                    pe.virtual = {
+                        x: fromPx(attrs.x, "x", base.x),
+                        y: fromPx(attrs.y, "y", base.y),
+                        width: fromPx(attrs.width, "width", base.width),
+                        height: fromPx(attrs.height, "height", base.height),
+                        transform: null
+                    }
+                };
+                const virtual = pe.virtual;
                 return new Merger({
                     get center() {
-                        const refCenter = refPe && multiShaper([refPe], true).center;
-                        return (refCenter || v(0, 0)).add(v(px(attrs.x), px(attrs.y)));
+                        return v(
+                            px(virtual.x) + px(virtual.width) / 2,
+                            px(virtual.y) + px(virtual.height) / 2
+                        );
                     },
                     set center(point: Vec2) {
-                        const oldCenter = self().center;
-                        self().move(point.sub(oldCenter));
+                        virtual.x = fromPx(virtual.x, "x",
+                            point.x - px(virtual.width) / 2
+                        );
+                        virtual.y = fromPx(virtual.y, "y",
+                            point.y - px(virtual.height) / 2
+                        );
                     },
                     move(diff: Vec2) {
-                        attrs.x = fromPx(attrs.x, "x",
-                            px(attrs.x) + diff.x
+                        virtual.x = fromPx(virtual.x, "x",
+                            px(virtual.x) + diff.x
                         );
-                        attrs.y = fromPx(attrs.y, "y",
-                            px(attrs.y) + diff.y
+                        virtual.y = fromPx(virtual.y, "y",
+                            px(virtual.y) + diff.y
                         );
                     },
                     get size() {
-                        let refSize = refPe && multiShaper([refPe], true).size || v(0, 0);
-                        if (refPe) {
-                            if (refPe.tag === "svg") {
-                                if (attrs.width) {
-                                    refSize.x = px(attrs.width);
-                                }
-                                if (attrs.height) {
-                                    refSize.y = px(attrs.height);
-                                }
-                            }
-                        }
-                        return refSize;
+                        return v(px(virtual.width), px(virtual.height));
                     },
                     set size(wh: Vec2) {
-                        if (refPe) {
-                            if (refPe.tag === "svg") {
-                                let center = self().center;
-                                attrs.width = fromPx(attrs.width, "width", wh.x);
-                                attrs.height = fromPx(attrs.height, "height", wh.y);
-                                self().center = center;
-                            } else {
-                                //???
-                            }
-                        }
+                        let center = self().center;
+                        virtual.width = fromPx(virtual.width, "width", wh.x);
+                        virtual.height = fromPx(virtual.height, "height", wh.y);
+                        self().center = center;
                     },
                     toPath() {
                         // ???
                     },
+                    get transform() {
+                        return virtual.transform && transform(...virtual.transform.matrices) || identity();
+                    },
+                    set transform(matrix: Matrix) {
+                        virtual.transform = { descriptors: [{ type: "matrix", ...matrix }], matrices: [matrix] };
+                    },
+                    appendTransformDescriptors: appendTransformDescriptors(virtual),
                     size2,
                     allTransform, viewBox,
-                    appendTransformDescriptors: appendTransformDescriptors(attrs),
                     rotate: rotateCenter,
-                }).merge(corners).merge(presentationAttrs).merge(transformProps).object;
+                }).merge(corners).merge(presentationAttrs).object;
             })();
         case "linearGradient":
         case "radialGradient":
@@ -920,7 +923,8 @@ export function multiShaper(pes: OneOrMore<ParsedElement>, useMultiEvenIfSingle:
                 }
             },
             get center() {
-                let [minX, minY, maxX, maxY] = <(null | number)[]>[null, null, null, null];
+                type Four<T> = [T, T, T, T];
+                let [minX, minY, maxX, maxY] = <Four<null | number>>[null, null, null, null];
                 for (let c of pes) if (hasEntity(c)) {
                     const leftTop = shaper(c).leftTop;
                     const size = shaper(c).size;
@@ -1030,6 +1034,46 @@ export function multiShaper(pes: OneOrMore<ParsedElement>, useMultiEvenIfSingle:
                 }
             }
         }).merge(corners).merge(presentationAttrs).object;
+    }
+}
+
+export function usePositionsInOuterCoordinate(puse: ParsedUseElement) {
+    const px = (unitValue: Length | null, defaultNumber: number = 0) => {
+        return unitValue ? convertToPixel(unitValue, puse) : defaultNumber;
+    }
+    const attrs = puse.attrs;
+    const href = attrs.href || attrs["xlink:href"];
+    let hash: string | null;
+    const refPe = href && (hash = acceptHashOnly(href)) && findElemById(svgdata, hash) || null;
+    let size = refPe && multiShaper([refPe], true).size || v(0, 0);
+    if (refPe) {
+        if (refPe.tag === "svg") {
+            if (attrs.width) {
+                size.x = px(attrs.width);
+            }
+            if (attrs.height) {
+                size.y = px(attrs.height);
+            }
+        }
+    }
+    const refLeftTop = refPe && multiShaper([refPe], true).leftTop || v(0, 0);
+    const leftTop = refLeftTop.add(v(px(attrs.x), px(attrs.y)));
+
+    type Four<T> = [T, T, T, T];
+    let [minX, minY, maxX, maxY] = <Four<null | number>>[null, null, null, null];
+    for (let corner of [leftTop, leftTop.add(v(size.x, 0)), leftTop.add(v(0, size.y)), leftTop.add(size)]) {
+        const cornerInGroup = escapeFromTargetCoordinate(corner, puse);
+        if (minX === null || minX > cornerInGroup.x) minX = cornerInGroup.x;
+        if (minY === null || minY > cornerInGroup.y) minY = cornerInGroup.y;
+        if (maxX === null || maxX < cornerInGroup.x) maxX = cornerInGroup.x;
+        if (maxY === null || maxY < cornerInGroup.y) maxY = cornerInGroup.y;
+    }
+
+    return {
+        x: minX || 0,
+        y: minY || 0,
+        width: (maxX || 0) - (minX || 0),
+        height: (maxY || 0) - (minY || 0)
     }
 }
 
