@@ -1,5 +1,5 @@
 import { trimXml, textToXml } from "../src/xmlParser";
-import { parse, ParsedElement } from "../src/svgParser";
+import { parse, ParsedElement, ParsedSvgElement } from "../src/svgParser";
 import { updateXPaths } from "../src/traverse";
 import { measureStyle } from "../src/measureStyle";
 import tinycolor from "tinycolor2";
@@ -14,7 +14,7 @@ function parseSvg(svgText: string) {
 
 describe("measureStyle", () => {
 
-    const threeGroups = parseSvg(`
+    const threeGroups = <ParsedSvgElement>parseSvg(`
 <svg width="100" height="100">
     <g font-size="12px" fill="red">
         <g font-size="14px" fill="green">
@@ -36,7 +36,7 @@ describe("measureStyle", () => {
     });
 
     it("subset", () => {
-        assert.strictEqual(measureStyle((<{children: ParsedElement[]}>threeGroups).children[0], "g").fontSize, "12px");
-        assert.strictEqual(measureStyle((<{children: ParsedElement[]}>threeGroups).children[0], "g/g").fontSize, "14px");
+        assert.strictEqual(measureStyle(threeGroups.children[0], "g").fontSize, "12px");
+        assert.strictEqual(measureStyle(threeGroups.children[0], "g/g").fontSize, "14px");
     });
 });
