@@ -1,9 +1,10 @@
 import { Length, LengthUnit, ParsedElement } from "./svgParser";
-import { svgRealMap, svgdata, OUTERMOST_DEFAULT_WIDTH, OUTERMOST_DEFAULT_HEIGHT } from "./main";
+import { svgdata, OUTERMOST_DEFAULT_WIDTH, OUTERMOST_DEFAULT_HEIGHT, displayRoot, displayRootXPath } from "./main";
 import { assertNever, iterate, v, Vec2 } from "./utils";
 import { SetDifference } from "utility-types";
 import memoize from "fast-memoize";
-import { xfindExn } from "./xpath";
+import { xfindExn, xrelative } from "./xpath";
+import { measureStyle } from "./measureStyle";
 
 type AttrKind = "vertical" | "horizontal" | "font-size";
 
@@ -11,7 +12,6 @@ type AttrKind = "vertical" | "horizontal" | "font-size";
  * SVG unit converter
  */
 export function convertToPixel(length: Length, pe: ParsedElement): number {
-    const re: Element | undefined = svgRealMap[pe.xpath];
     const attrKind = getAttrKind(length.attrName);
     
     switch (length.unit) {
@@ -20,11 +20,12 @@ export function convertToPixel(length: Length, pe: ParsedElement): number {
         
         case "%":
         let basePx = getSvgBasePx(pe, attrKind);
-        return basePx && (basePx * length.value / 100) || outermostPx(attrKind, re);
+        return basePx && (basePx * length.value / 100) || outermostPx(attrKind);
 
         case "em":
         case "ex":
-        const font = re && getComputedStyle(re).font || "";
+        const relPath = xrelative(pe.xpath, displayRootXPath());
+        const font = relPath && measureStyle(displayRoot(), relPath).font || "";
         return length.value * measure({unit: length.unit, font});
         
         default:
@@ -51,14 +52,14 @@ export function convertToPixelForOutermostFrame(length: Length): number {
     }
 }
 
-function outermostPx(attrKind: AttrKind, re: Element): number {
+function outermostPx(attrKind: AttrKind): number {
     switch (attrKind) {
         case "vertical":
         return OUTERMOST_DEFAULT_HEIGHT;
         case "horizontal":
         return OUTERMOST_DEFAULT_WIDTH;
         case "font-size":
-        return parseFloat(getComputedStyle(re.parentElement || document.body).fontSize!);
+        return parseFloat(getComputedStyle(document.body).fontSize!);
     }
 }
 
@@ -67,7 +68,6 @@ function outermostPx(attrKind: AttrKind, re: Element): number {
  * @param length px
  */
 export function convertFromPixel(length: Length, targetUnit: LengthUnit, pe: ParsedElement): Length {
-    const re: Element | null = svgRealMap[pe.xpath];    
     const attrKind = getAttrKind(length.attrName);
     switch (targetUnit) {
         case null:
@@ -87,7 +87,8 @@ export function convertFromPixel(length: Length, targetUnit: LengthUnit, pe: Par
 
         case "em":
         case "ex":
-        const font = re && getComputedStyle(re).font || "";
+        const relPath = xrelative(pe.xpath, displayRootXPath());
+        const font = relPath && measureStyle(displayRoot(), relPath).font || "";
         return {
             unit: targetUnit,
             attrName: length.attrName,
@@ -111,9 +112,10 @@ function getAttrKind(name: string): AttrKind {
 
 function getSvgBasePx(pe: ParsedElement, attrKind: AttrKind): number | null {
     let ownerSvgPe: ParsedElement;
-    if (pe.parent && svgRealMap[pe.parent] /* current displayed elements only */ && (ownerSvgPe = xfindExn([svgdata], pe.parent))) {
+    if (pe.parent && (ownerSvgPe = xfindExn([svgdata], pe.parent))) {
         if (attrKind === "font-size") {
-            return parseFloat(getComputedStyle(svgRealMap[pe.parent]).fontSize!);
+            const relPath = xrelative(pe.parent, displayRootXPath());
+            return relPath && parseFloat(measureStyle(displayRoot(), relPath).fontSize!) || null;
         } else if (ownerSvgPe.tag === "svg") {
             let basePx: number = 1;
             switch (attrKind) {
@@ -153,4 +155,3 @@ function measureOneUnitLength(unitInfo: {unit: SetDifference<LengthUnit, "%" | n
 }
 
 const measure = memoize(measureOneUnitLength);
-

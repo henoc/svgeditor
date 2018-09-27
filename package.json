@@ -244,10 +244,11 @@
   "scripts": {
     "vscode:prepublish": "yarn run compile",
     "compile": "tsc -p ./ && yarn run browserify",
-    "browserify": "browserify out/src/main.js -o resources/bundle.js",
+    "browserify": "browserify out/src/main.js -o resources/bundle.js && browserify out/test/main.browser-test.js -o out/test/bundle.browser-test.js",
     "postinstall": "node ./node_modules/vscode/bin/install"
   },
   "devDependencies": {
+    "@types/chai": "^4.1.5",
     "@types/diff": "^3.5.1",
     "@types/hammerjs": "^2.0.35",
     "@types/incremental-dom": "^0.5.0",

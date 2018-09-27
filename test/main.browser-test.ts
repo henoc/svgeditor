@@ -1,0 +1,1 @@
+require("./measureStyle.browser-test");

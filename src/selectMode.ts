@@ -1,4 +1,4 @@
-import { refleshContent, svgRealMap, sendBackToEditor, configuration, svgdata, contentChildrenComponent } from "./main";
+import { refleshContent, sendBackToEditor, configuration, svgdata, contentChildrenComponent } from "./main";
 import { Vec2, v, vfp, assertNever, deepCopy, OneOrMore, iterate, el } from "./utils";
 import { shaper, multiShaper } from "./shapes";
 import { SvgTag } from "./svg";
@@ -87,7 +87,7 @@ export class SelectMode extends Mode {
             }
         }
     }
-    onDocumentMouseUp() {
+    onDocumentMouseUp(event: Event) {
         if (this._selectedShapes && configuration.collectTransform) {
             for (let pe of this._selectedShapes) if ("transform" in pe.attrs) {
                 shaper(pe).transform = shaper(pe).transform;
@@ -102,7 +102,6 @@ export class SelectMode extends Mode {
         sendBackToEditor();
     }
     onDocumentMouseLeave(event: Event) {
-        this.onDocumentMouseUp();
     }
 
     render() {

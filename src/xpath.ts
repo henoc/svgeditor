@@ -1,11 +1,10 @@
 /**
  * @file Little subset of XPath prosedures.
+ * @todo Fix orthographic variants of xpath arguments (absolute path, context path)
  */
 
-import {ParsedElement} from "./svgParser"
 
-
-export function xfind(pes: ParsedElement[], xpath: string): ParsedElement | null {
+export function xfind<T extends {children?: T[], tag: string}>(pes: T[], xpath: string): T | null {
     let ret: RegExpMatchArray | null;
     if (ret = xpath.match(/^\/([^/\[]+)(?:\[(\d+)\])?/)) {
         const tag = ret[1];
@@ -13,7 +12,7 @@ export function xfind(pes: ParsedElement[], xpath: string): ParsedElement | null
         const matchedPe = pes.filter(x => x.tag === tag).find((_value, index) => index + 1 === oneBasedIndex);
         if (ret[0].length === xpath.length) {
             return matchedPe || null;
-        } else if (matchedPe && "children" in matchedPe) {
+        } else if (matchedPe && matchedPe.children !== undefined) {
             return xfind(matchedPe.children, xpath.slice(ret[0].length));
         }
     }
@@ -23,9 +22,9 @@ export function xfind(pes: ParsedElement[], xpath: string): ParsedElement | null
 /**
  * Throw error if not found.
  */
-export function xfindExn(pes: ParsedElement[], xpath: string): ParsedElement {
+export function xfindExn<T extends {children?: T[], tag: string}>(pes: T[], xpath: string): T {
     const ret = xfind(pes, xpath);
-    if (!ret) throw new Error(`Not found parsed element of ${xpath}`);
+    if (!ret) throw new Error(`Not found tree node of ${xpath}`);
     else return ret;
 }
 
@@ -39,4 +38,26 @@ export function xparent(xpath: string): string | null {
         return xpath.slice(0, xpath.length - ret[0].length) || null;
     }
     return null;
+}
+
+/**
+ * Enable to search svg in html (ignore namespace and change starting point from root to context).  
+ * embeddingForm(`/svg/image[2]`) === `*[name()='svg']/*[name()='image'][2]`
+ */
+export function embeddingForm(xpath: string): string {
+    const p = xpath.replace(/[a-zA-Z_]\w*(?=\[|\/|$)/g, "*[name()='$&']");
+    return p.startsWith("/") ? p.slice(1) : p;
+}
+
+/**
+ * xrelative(`/svg/g/image[2]`, `/svg`) === `svg/g/image[2]`  
+ * xrelative(`/svg/g/image[2]`, `/svg/g`) === `g/image[2]`
+ * xrelative(`/svg/image[2]`, `/foo`) === null
+ */
+export function xrelative(target: string, base: string): string | null {
+    function xlast(xpath: string): string {
+        const strs = xpath.split("/");
+        return strs[strs.length - 1];
+    }
+    return target.startsWith(base) ? xlast(base) + target.slice(base.length) : null;
 }

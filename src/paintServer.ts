@@ -6,16 +6,13 @@
 import { ParsedElement, Ratio, Paint, isColor, isFuncIRI, StopColor } from "./svgParser";
 import tinycolor from "tinycolor2";
 import { traverse } from "./traverse";
-import { xfindExn } from "./xpath";
-import { svgdata } from "./main";
 
 export type PaintServer = {
     kind: "linearGradient" | "radialGradient",
     stops: StopReference[]
 }
 
-export function fetchPaintServer(xpath: string): PaintServer | null {
-    const pe = xfindExn([svgdata], xpath);
+export function fetchPaintServer(pe: ParsedElement): PaintServer | null {
     function gradient(pe: ParsedElement & {children: ParsedElement[]} & {tag: "linearGradient" | "radialGradient"}) {
         const stops: StopReference[] = [];
         for (let c of pe.children) {

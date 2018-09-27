@@ -1,9 +1,14 @@
-import { ParsedElement, ParsedBaseAttr, ParsedPresentationAttr } from "./svgParser";
+import { ParsedElement, ParsedBaseAttr, ParsedPresentationAttr, Length, Transform } from "./svgParser";
 import { SvgTag, stringComponent, XmlComponent } from "./svg";
 import { onShapeMouseDown } from "./triggers";
-import { assertNever } from "./utils";
-import { shaper } from "./shapes";
-import { svgRealMap, imageList } from "./main";
+import { assertNever, deepCopy, v } from "./utils";
+import { shaper, initialSizeOfUse, isAbleToOverrideWightHeight } from "./shapes";
+import { imageList, svgdata } from "./main";
+import { findElemById } from "./traverse";
+import { acceptHashOnly } from "./url";
+import { convertToPixel, convertFromPixel } from "./measureUnits";
+import { appendDescriptors, translateDescriptor } from "./transformHelpers";
+import { translate, scale } from "transformation-matrix";
 
 interface SvgConstructOptions {
     putRootAttribute?: boolean;
@@ -134,7 +139,7 @@ export function construct(pe: ParsedElement, options?: SvgConstructOptions, disp
                 setPresentationAttrs(pe.attrs, tag);
                 makeChildren(pe.children, tag, displayedDepth, options);
                 // Click detection for groups.
-                if (insertRectForGroup && svgRealMap[pe.xpath]) {
+                if (insertRectForGroup) {
                     const leftTop = shaper(pe).leftTop;
                     const gsize = shaper(pe).size;
                     const dummyRect = new SvgTag("rect")
@@ -183,6 +188,84 @@ export function construct(pe: ParsedElement, options?: SvgConstructOptions, disp
                 setPresentationAttrs(pe.attrs, tag);
                 makeChildren(pe.children, tag, displayedDepth, options);
                 return tag;
+            case "use":
+                const px = (unitValue: Length | null, defaultNumber: number = 0) => {
+                    return unitValue ? convertToPixel(unitValue, pe) : defaultNumber;
+                }
+                const initSize = initialSizeOfUse(pe);
+                if (!pe.virtual) pe.virtual = initSize;
+                const [useWidth, useHeight, useTransform, transformDelta] = <[null|Length,null|Length,null|Transform,null|Transform]>(() => {
+                    if (!isAbleToOverrideWightHeight(pe)) {
+                        const ratioX = shaper(pe).size.x / convertToPixel(initSize.width, pe);
+                        const ratioY = shaper(pe).size.y / convertToPixel(initSize.height, pe);
+                        const initCenterX = px(initSize.x) + px(initSize.width) / 2;
+                        const initCenterY = px(initSize.y) + px(initSize.height) / 2;
+                        const center = shaper(pe).center;
+                        const copiedTransform = deepCopy(pe.attrs.transform || {descriptors: [], matrices: []});
+                        const transformDelta = {descriptors: [], matrices: []};
+                        appendDescriptors(transformDelta,
+                            {type: "matrix", ...translate(center.x, center.y)},
+                            {type: "matrix", ...scale(ratioX, ratioY)},
+                            {type: "matrix", ...translate(- initCenterX, - initCenterY)}
+                        );
+                        appendDescriptors(copiedTransform, ...transformDelta.descriptors);
+                        return [null, null, copiedTransform, transformDelta];
+                    } else {
+                        const initCenterX = px(initSize.x) + px(initSize.width) / 2;
+                        const initCenterY = px(initSize.y) + px(initSize.height) / 2;
+                        const center = shaper(pe).center;
+                        const copiedTransform = deepCopy(pe.attrs.transform || {descriptors: [], matrices: []});
+                        const transformDelta = {descriptors: [], matrices: []};
+                        appendDescriptors(transformDelta,
+                            translateDescriptor(center.x, center.y),
+                            translateDescriptor(-initCenterX, -initCenterY)
+                        );
+                        appendDescriptors(copiedTransform, ...transformDelta.descriptors);
+                        return [pe.virtual.width, pe.virtual.height, copiedTransform, transformDelta];
+                    }
+                })();
+                /**
+                 * <g>
+                 *   <use/>
+                 *   <rect/>
+                 * </g>
+                 */
+                if (insertRectForGroup) {
+                    const group = new SvgTag("g");
+                    setBaseAttrs(pe.attrs, group);
+                    setPresentationAttrs(pe.attrs, group);
+                    return group.children(
+                        new SvgTag("use")
+                        .attr("href", pe.attrs.href)
+                        .attr("xlink:href", pe.attrs["xlink:href"])
+                        .uattr("x", pe.attrs.x)
+                        .uattr("y", pe.attrs.y)
+                        .uattr("width", useWidth)
+                        .uattr("height", useHeight)
+                        .tattr("transform", transformDelta),
+                        tag.tag("rect")
+                        .uattr("x", pe.virtual.x)
+                        .uattr("y", pe.virtual.y)
+                        .uattr("width", pe.virtual.width)
+                        .uattr("height", pe.virtual.height)
+                        .attr("opacity", 0)
+                    );
+                }
+                /**
+                 * <use/>
+                 */
+                else {
+                    setBaseAttrs(pe.attrs, tag);
+                    setPresentationAttrs(pe.attrs, tag);
+                    tag.tattr("transform", useTransform);
+                    return tag
+                        .attr("href", pe.attrs.href)
+                        .attr("xlink:href", pe.attrs["xlink:href"])
+                        .uattr("x", pe.attrs.x)
+                        .uattr("y", pe.attrs.y)
+                        .uattr("width", useWidth)
+                        .uattr("height", useHeight);
+                }
             case "text()":
                 return stringComponent(pe.text);
             case "comment()":

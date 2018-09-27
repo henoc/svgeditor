@@ -1,13 +1,16 @@
-import { ParsedElement, Length, Transform, isLength, TransformDescriptor, Paint, PathCommand } from "./svgParser";
-import { Vec2, v, vfp, OneOrMore, Merger } from "./utils";
+import { ParsedElement, Length, Transform, isLength, TransformDescriptor, Paint, PathCommand, ParsedUseElement } from "./svgParser";
+import { Vec2, v, vfp, OneOrMore, Merger, deepCopy } from "./utils";
 import { svgPathManager } from "./pathHelpers";
 import { convertToPixel, convertFromPixel } from "./measureUnits";
-import { svgRealMap, configuration, imageList, svgdata } from "./main";
+import { configuration, imageList, svgdata, displayRoot, displayRootXPath } from "./main";
 import { identity, transform, scale, translate, rotate, rotateDEG, applyToPoint, inverse } from "transformation-matrix";
 import { appendDescriptor, replaceLastDescriptor, descriptorToMatrix, appendDescriptorsLeft, translateDescriptor, scaleDescriptor, rotateDescriptor, appendDescriptorLeft, appendDescriptors } from "./transformHelpers";
-import { font } from "./fontHelpers";
+import { font } from "./measureFonts";
 import equal from "fast-deep-equal";
-import { xfindExn } from "./xpath";
+import { xfindExn, xrelative } from "./xpath";
+import { acceptHashOnly } from "./url";
+import { findElemById } from "./traverse";
+import { measureStyle } from "./measureStyle";
 
 interface ShaperFunctions {
     center: Vec2;
@@ -30,7 +33,7 @@ interface ShaperFunctions {
 }
 
 /**
- * Transform some shapes. Need `svgRealMap` (optional, Actually needed shape is `text`) before use.
+ * Transform some shapes.
  */
 export function shaper(pe: ParsedElement): ShaperFunctions {
 
@@ -531,9 +534,9 @@ export function shaper(pe: ParsedElement): ShaperFunctions {
                 rotate: rotateCenter
             }).merge(corners).merge(presentationAttrs).merge(transformProps).object;
         case "text":
-            const re = svgRealMap[pe.xpath];
             const fontInfo = () => {
-                const styleDeclaration = getComputedStyle(re);
+                const relPath = xrelative(pe.xpath, displayRootXPath());
+                const styleDeclaration = relPath && measureStyle(displayRoot(), relPath) || <CSSStyleDeclaration>{};
                 let strs = "";
                 for (let c of pe.children) {
                     if (c.tag === "text()") strs += c.text;
@@ -741,6 +744,52 @@ export function shaper(pe: ParsedElement): ShaperFunctions {
                 appendTransformDescriptors: appendTransformDescriptors(iattrs),
                 rotate: rotateCenter
             }).merge(corners).merge(presentationAttrs).merge(transformProps).object;
+        case "use":
+            return (() => {
+                const attrs = pe.attrs;
+                if (!pe.virtual) pe.virtual = initialSizeOfUse(pe);
+                const virtual = pe.virtual;
+                return new Merger({
+                    get center() {
+                        return v(
+                            px(virtual.x) + px(virtual.width) / 2,
+                            px(virtual.y) + px(virtual.height) / 2
+                        );
+                    },
+                    set center(point: Vec2) {
+                        virtual.x = fromPx(virtual.x, "x",
+                            point.x - px(virtual.width) / 2
+                        );
+                        virtual.y = fromPx(virtual.y, "y",
+                            point.y - px(virtual.height) / 2
+                        );
+                    },
+                    move(diff: Vec2) {
+                        virtual.x = fromPx(virtual.x, "x",
+                            px(virtual.x) + diff.x
+                        );
+                        virtual.y = fromPx(virtual.y, "y",
+                            px(virtual.y) + diff.y
+                        );
+                    },
+                    get size() {
+                        return v(px(virtual.width), px(virtual.height));
+                    },
+                    set size(wh: Vec2) {
+                        let center = self().center;
+                        virtual.width = fromPx(virtual.width, "width", wh.x);
+                        virtual.height = fromPx(virtual.height, "height", wh.y);
+                        self().center = center;
+                    },
+                    toPath() {
+                        // ???
+                    },
+                    appendTransformDescriptors: appendTransformDescriptors(attrs),
+                    size2,
+                    allTransform, viewBox,
+                    rotate: rotateCenter,
+                }).merge(corners).merge(transformProps).merge(presentationAttrs).object;
+            })();
         case "linearGradient":
         case "radialGradient":
         case "stop":
@@ -859,7 +908,8 @@ export function multiShaper(pes: OneOrMore<ParsedElement>, useMultiEvenIfSingle:
                 }
             },
             get center() {
-                let [minX, minY, maxX, maxY] = <(null | number)[]>[null, null, null, null];
+                type Four<T> = [T, T, T, T];
+                let [minX, minY, maxX, maxY] = <Four<null | number>>[null, null, null, null];
                 for (let c of pes) if (hasEntity(c)) {
                     const leftTop = shaper(c).leftTop;
                     const size = shaper(c).size;
@@ -970,6 +1020,48 @@ export function multiShaper(pes: OneOrMore<ParsedElement>, useMultiEvenIfSingle:
             }
         }).merge(corners).merge(presentationAttrs).object;
     }
+}
+
+function getRefElemOfUse(puse: ParsedUseElement): ParsedElement | null {
+    const href = puse.attrs.href || puse.attrs["xlink:href"];
+    let hash: string | null;
+    return href && (hash = acceptHashOnly(href)) && findElemById(svgdata, hash) || null;
+}
+
+export function isAbleToOverrideWightHeight(puse: ParsedUseElement): boolean {
+    const refPe = getRefElemOfUse(puse);
+    return refPe && refPe.tag === "svg" || false;
+}
+
+export function initialSizeOfUse(puse: ParsedUseElement) {
+    const px = (unitValue: Length | null, defaultNumber: number = 0) => {
+        return unitValue ? convertToPixel(unitValue, puse) : defaultNumber;
+    }
+    const fromPx = (unitValue: Length | null, attrName: string, pxValue: number): Length => {
+        return unitValue ?
+            convertFromPixel({ unit: "px", attrName, value: pxValue }, unitValue.unit, puse) :
+            { value: pxValue, unit: null, attrName };
+    }
+    const attrs = puse.attrs;
+    const refPe = getRefElemOfUse(puse);
+    let size = refPe && multiShaper([refPe], true).size || v(0, 0);
+    if (isAbleToOverrideWightHeight(puse)) {
+        if (attrs.width) {
+            size.x = px(attrs.width);
+        }
+        if (attrs.height) {
+            size.y = px(attrs.height);
+        }
+    }
+    const refLeftTop = refPe && multiShaper([refPe], true).leftTop || v(0, 0);
+    const leftTop = refLeftTop.add(v(px(attrs.x), px(attrs.y)));
+
+    return {
+        x: fromPx(attrs.x, "x", leftTop.x),
+        y: fromPx(attrs.y, "y", leftTop.y),
+        width: fromPx(attrs.width, "width", size.x),
+        height: fromPx(attrs.height, "height", size.y)
+    };
 }
 
 function intoTargetCoordinate(point: Vec2, target: ParsedElement) {
