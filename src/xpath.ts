@@ -1,5 +1,6 @@
 /**
  * @file Little subset of XPath prosedures.
+ * @todo Fix orthographic variants of xpath arguments (absolute path, context path)
  */
 
 
@@ -40,11 +41,11 @@ export function xparent(xpath: string): string | null {
 }
 
 /**
- * Enable to search svg in html.
+ * Enable to search svg in html (ignore namespace and change starting point from root to context).  
  * embeddingForm(`/svg/image[2]`) === `*[name()='svg']/*[name()='image'][2]`
  */
 export function embeddingForm(xpath: string): string {
-    const p = xpath.replace(/[a-zA-Z_]\w*/g, "*[name()='$&']");
+    const p = xpath.replace(/[a-zA-Z_]\w*(?=\[|\/|$)/g, "*[name()='$&']");
     return p.startsWith("/") ? p.slice(1) : p;
 }
 

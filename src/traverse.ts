@@ -4,20 +4,20 @@ import { ParsedElement } from "./svgParser";
  * Depth first search.
  * @param fn Stop traversing and return a result if `fn` returns some value exclude `undefined` and `Promise<any>`
  */
-export function traverse<T extends {children?: T[]}, U>(pe: T, fn: (pe: T, parentPe: T & {children: T[]} | null, index: number | null) => U, index: number | null = null, parentPe: T & {children: T[]} | null = null): U | void {
+export function traverse<T extends object, U>(pe: T | T & {children: T[]}, fn: (pe: T, parentPe: T & {children: T[]} | null, index: number | null) => U, index: number | null = null, parentPe: T & {children: T[]} | null = null): U | void {
     const ret = fn(pe, parentPe, index);
     if (!(ret instanceof Promise) && ret !== undefined) return ret;
-    if (pe.children !== undefined) {
+    if ("children" in pe) {
         for(let i = 0; i < pe.children.length; i++) {
-            const ret = traverse(pe.children[i], fn, i, <T & {children: T[]}>pe);
+            const ret = traverse(pe.children[i], fn, i, pe);
             if (!(ret instanceof Promise) && ret !== undefined) return ret;
         }
     }
 }
 
-export function reproduce<T extends {children?: T[]}, U extends {children?: U[]}>(node: T, maker: (t: T) => U): U {
+export function reproduce<T extends object, U extends {children?: U[]}>(node: T | T & {children: T[]}, maker: (t: T) => U): U {
     const copied = maker(node);
-    if (node.children) {
+    if ("children" in node) {
         copied.children = [];
         for (let c of node.children) {
             copied.children.push(reproduce(c, maker));
