@@ -2,7 +2,7 @@
 
 ![sample](images/capture.png)
 
-**ver 2.5**: Fix bugs of nested svgs, introduce container viewer, and more 🍵
+**ver 2.6**: Support `use` tag
 
 Now your VSCode can mutate to an interactive visual & literal SVG editor 😎
 
@@ -23,7 +23,6 @@ You can create shapes using the SVG's coder or directly creating shapes with the
 |svgeditor.filenameExtension|Initial filename extension of new untitled file.|svg|
 |svgeditor.width|Initial width of new untitled file.|400px|
 |svgeditor.height|Initial height of new untitled file.|400px|
-|svgeditor.showAll|Send all attributes and tags to WebView regardless of SVG Editor support.|true|
 |svgeditor.defaultUnit|Specifies the unit when creating some shapes.|null|
 |svgeditor.decimalPlaces|The number of decimal places.|1|
 |svgeditor.collectTransformMatrix|Collect two or more transform functions into a matrix.|true|
@@ -51,6 +50,8 @@ You can create shapes using the SVG's coder or directly creating shapes with the
 |rotate counterclockwise|ctrl+[|
 |rotate clockwise by the angle step|]|
 |rotate counterclockwise by the angle step|[|
+|center vertical|ctrl+alt+h|
+|center horizontal|ctrl+alt+t|
 
 ## Current support tags and attributes
 
@@ -67,14 +68,15 @@ You can create shapes using the SVG's coder or directly creating shapes with the
 - radialGradient: 🎨
 - stop: offset, stop-color, 🎨
 - image: x, y, width, height, xlink:href, href, 🎨
+- use: x, y, width, height, xlink:href, href, 🎨
 
 🎨(presentation attributes): fill, fill-rule, stroke, stroke-width, stroke-linecap, stroke-linejoin, stroke-dasharray, stroke-dashoffset, transform, font-family, font-size, font-style, font-weight
 
 ## Notice
 
-### image
+### Image
 
-Localtion (xlink:)href refers to is restricted with your workspace, extension, `svgeditor.additionalResourcePaths` directories due to `vscode-resource` scheme settings.
+Localtion (xlink:)href refers to is restricted with your workspace, extension and `svgeditor.additionalResourcePaths` directories due to `vscode-resource` scheme settings.
 
 ## Future plans
 
@@ -84,8 +86,7 @@ Localtion (xlink:)href refers to is restricted with your workspace, extension, `
 - [ ] Filters
 - [x] Images
 - [ ] Animations
-- [ ] Correct only the changed portions without auto formatting  
-  Maybe it's available if there are some xml(or svg) parsers which return the character positions of attributes and tag names in document with accuracy 🤔
+- [ ] Correct only the changed portions without auto formatting
 
 ## License
 

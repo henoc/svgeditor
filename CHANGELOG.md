@@ -1,5 +1,8 @@
 # CHANGELOG
 
+- 2.6.0
+  - Suuport use
+  - Remove extension option: `showAll`
 - 2.5.0
   - Fix bugs of nested svg
   - Fix panel behavior better
