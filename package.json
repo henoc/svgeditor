@@ -259,6 +259,7 @@
     "@types/tinycolor2": "^1.4.0",
     "@types/url-parse": "^1.4.1",
     "@types/uuid": "^3.4.3",
+    "@types/sax": "^1.0.1",
     "browserify": "^16.2.2",
     "mocha": "^5.2.0",
     "tslint": "^5.9.1",
@@ -267,7 +268,6 @@
     "vscode": "^1.1.21"
   },
   "dependencies": {
-    "@types/sax": "^1.0.1",
     "diff": "^3.5.0",
     "fast-deep-equal": "^2.0.1",
     "fast-json-stable-stringify": "^2.0.0",

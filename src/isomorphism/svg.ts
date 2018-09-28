@@ -313,7 +313,7 @@ export function stringComponent(str: string, type: "text" | "comment" | "cdata" 
                 case "comment":
                 return document.createComment(str);
                 case "cdata":
-                return document.createCDATASection(str);
+                return document.createTextNode(str);
             }
         }
     }
