@@ -28,7 +28,7 @@
     "onCommand:svgeditor.openSvgEditor",
     "onCommand:svgeditor.newSvgEditor"
   ],
-  "main": "./out/src/extension",
+  "main": "./out/src/node/extension",
   "contributes": {
     "commands": [
       {
@@ -244,7 +244,7 @@
   "scripts": {
     "vscode:prepublish": "yarn run compile",
     "compile": "tsc -p ./ && yarn run browserify",
-    "browserify": "browserify out/src/main.js -o resources/bundle.js && browserify out/test/main.browser-test.js -o out/test/bundle.browser-test.js",
+    "browserify": "browserify out/src/renderer/main.js -o resources/bundle.js && browserify out/test/renderer/main.test.js -o out/test/renderer/bundle.test.js",
     "postinstall": "node ./node_modules/vscode/bin/install"
   },
   "devDependencies": {
