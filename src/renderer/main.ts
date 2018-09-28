@@ -32,7 +32,6 @@ export const uri: string = document.getElementById("svgeditor-uri")!.innerText; 
 export const imageList: { [href: string]: LoadedImage } = {};
 export const callbacks: { [uuid: string]: Function } = {};
 export const configuration = {
-    showAll: true,
     defaultUnit: <LengthUnit>null,
     numOfDecimalPlaces: 1,
     collectTransform: true
@@ -106,7 +105,6 @@ window.addEventListener("message", event => {
             refleshContent();
             break;
         case "configuration":
-            if (message.data.showAll !== undefined) configuration.showAll = message.data.showAll;
             if (message.data.defaultUni !== undefined && isLengthUnit(message.data.defaultUnit)) configuration.defaultUnit = message.data.defaultUnit;
             if (!isLengthUnit(message.data.defaultUnit)) sendErrorMessage(`Configuration "svgeditor.defaultUnit: ${message.data.defaultUnit}" is unsupported unit.`);
             if (message.data.decimalPlaces !== undefined) configuration.numOfDecimalPlaces = message.data.decimalPlaces;
@@ -166,11 +164,11 @@ export function refleshContent() {
 }
 
 export function sendBackToEditor() {
-    const svgtag = construct(svgdata, { all: configuration.showAll, numOfDecimalPlaces: configuration.numOfDecimalPlaces });
-    if (svgtag) vscode.postMessage({
+    const svgtag = construct(svgdata, { numOfDecimalPlaces: configuration.numOfDecimalPlaces });
+    vscode.postMessage({
         command: "modified",
         data: svgtag.toLinear()
-    })
+    });
 }
 
 export function sendErrorMessage(msg: string) {

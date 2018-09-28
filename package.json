@@ -190,12 +190,6 @@
           "default": "400px",
           "description": "Initial height of new untitled file."
         },
-        "svgeditor.showAll": {
-          "type": "boolean",
-          "default": true,
-          "description": "Send all attributes and tags to WebView regardless of SVG Editor support.",
-          "scope": "resource"
-        },
         "svgeditor.defaultUnit": {
           "type": [
             "string",

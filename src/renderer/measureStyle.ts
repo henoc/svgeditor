@@ -1,5 +1,4 @@
 import { ParsedElement, ParsedPresentationAttr } from "../isomorphism/svgParser";
-import { configuration } from "./main";
 import { construct } from "./svgConstructor";
 import { embeddingForm } from "../isomorphism/xpath";
 import memoize from "fast-memoize";
@@ -9,7 +8,7 @@ import { svgns } from "../isomorphism/svg";
  * Get valid attributes by inserting invisible elements into body temporarily.
  */
 function measureStyleByInsertingTemporarily(root: ParsedElement, xpath: string) {
-    const xmlComponent = construct(root, { all: configuration.showAll, numOfDecimalPlaces: configuration.numOfDecimalPlaces })!;
+    const xmlComponent = construct(root);
     const svg = document.createElementNS(svgns, "svg");
     svg.style.position = "absolute";
     svg.style.zIndex = "-2147483648";

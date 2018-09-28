@@ -17,7 +17,6 @@ interface SvgConstructOptions {
     transparent?: boolean;
     insertSvgSizeRect?: boolean;
     insertRectForGroup?: boolean;
-    all?: boolean;
     setRootSvgXYtoOrigin?: boolean;
     numOfDecimalPlaces?: number;
     replaceHrefToObjectUrl?: boolean;
@@ -26,14 +25,13 @@ interface SvgConstructOptions {
 /**
   Make elements only use recognized attributes and tags.
 */
-export function construct(pe: ParsedElement, options?: SvgConstructOptions, displayedDepth: number = 0): XmlComponent | null {
+export function construct(pe: ParsedElement, options?: SvgConstructOptions, displayedDepth: number = 0): XmlComponent {
     const putRootAttribute = options && options.putRootAttribute || false;
     const putIndexAttribute = options && options.putXPathAttribute || false;
     const setListenersDepth = options && options.setListenersDepth || null;
     const transparent = options && options.transparent || false;
     const insertRectForSvg = options && options.insertSvgSizeRect || false;
     const insertRectForGroup = options && options.insertRectForGroup || false;
-    const all = options && options.all || false;
     const setDisplayedRootSvgXYtoOrigin = options && options.setRootSvgXYtoOrigin || false;
     const numOfDecimalPlaces = options && options.numOfDecimalPlaces;
     const replaceHrefToObjectUrl = options && options.replaceHrefToObjectUrl || false;
@@ -57,15 +55,11 @@ export function construct(pe: ParsedElement, options?: SvgConstructOptions, disp
     }
 
     if (pe.tag === "unknown") {
-        if (all) {
-            return tag.tag(pe.tag$real)
-                .attrs(pe.attrs)
-                .children(...pe.children.map(e => construct(e, options, displayedDepth + 1)!));
-        } else {
-            return null;
-        }
+        return tag.tag(pe.tag$real)
+            .attrs(pe.attrs)
+            .children(...pe.children.map(e => construct(e, options, displayedDepth + 1)));
     } else {
-        if (all && "unknown" in pe.attrs) tag.attrs(pe.attrs.unknown);
+        if ("unknown" in pe.attrs) tag.attrs(pe.attrs.unknown);
         switch (pe.tag) {
             case "svg":
                 setBaseAttrs(pe.attrs, tag);
@@ -275,7 +269,7 @@ export function construct(pe: ParsedElement, options?: SvgConstructOptions, disp
             default:
                 assertNever(pe);
         }
-        return null;    // unreachable
+        return <any>null;    // unreachable
     }
 }
 
@@ -304,7 +298,7 @@ function makeChildren(pc: ParsedElement[], tag: SvgTag, displayedDepth: number, 
     const c = [];
     for (let i = 0; i < pc.length; i++) {
         const elem = construct(pc[i], options, displayedDepth + 1);
-        if (elem) c.push(elem);
+        c.push(elem);
     }
     tag.children(...c);
 }

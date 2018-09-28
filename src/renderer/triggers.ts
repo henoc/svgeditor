@@ -86,10 +86,7 @@ function copy(clipboardData: DataTransfer, isCut: boolean = false) {
         if (parentPe && "children" in parentPe) {
             const orderedPes = parentPe.children.filter(c => pes.indexOf(c) !== -1);
             if (isCut) parentPe.children = parentPe.children.filter(c => pes.indexOf(c) === -1);
-            const str = orderedPes.map(pe => {
-                const svgTag = construct(pe);
-                return svgTag ? svgTag.toLinear() : "";
-            }).join("");
+            const str = orderedPes.map(pe => construct(pe).toLinear()).join("");
             const formattedStr = format(str);
             clipboardData.setData("image/svg+xml", formattedStr);
             clipboardData.setData("application/xml", formattedStr);
