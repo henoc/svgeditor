@@ -1,6 +1,6 @@
 import { Component } from "../isomorphism/component";
 import { SvgTag } from "../isomorphism/svg";
-import { ParsedPresentationAttr, ParsedBaseAttr, ParsedElement } from "../isomorphism/svgParser";
+import { ParsedPresentationAttr, ParsedCoreAttr, ParsedElement } from "../isomorphism/svgParser";
 import { drawState, contentChildrenComponent, refleshContent, editMode, svgdata, sendBackToEditor } from "./main";
 import { OperatorName } from "./menuComponent";
 import { Vec2, v, OneOrMore, deepCopy, vfp } from "../isomorphism/utils";
@@ -182,7 +182,7 @@ export abstract class Mode implements Component {
     set selectedShapes(pes: OneOrMore<ParsedElement> | null) {
     }
 
-    static baseAttrsDefaultImpl: () => ParsedBaseAttr = () => {
+    static baseAttrsDefaultImpl: () => ParsedCoreAttr = () => {
         return {
             class: null,
             id: null,

@@ -7,8 +7,12 @@ import { XmlNode, XmlElement, Interval, ElementPositionsOnText } from "./xmlPars
 const { fromTransformAttribute } = require("transformation-matrix/build-commonjs/fromTransformAttribute");
 
 interface Warning {
-    range: Interval,
+    interval: Interval,
     message: string
+}
+
+function isWarning(obj: Object): obj is Warning {
+    return obj instanceof Object && "interval" in obj && "message" in obj;
 }
 
 interface ParsedResult {
@@ -158,10 +162,14 @@ export interface ParsedUnknownElement extends ElementBaseClass {
 }
 
 
-export interface ParsedBaseAttr {
-    class: string[] | null;
+export interface ParsedCoreAttr {
     id: string | null;
     unknown: Assoc;
+}
+
+export interface ParsedStyleAttr {
+    class: string[] | null;
+    style: Style | null;
 }
 
 export interface ParsedPresentationAttr {
@@ -180,7 +188,7 @@ export interface ParsedPresentationAttr {
     "font-weight": FontWeight | null;
 }
 
-interface ParsedSvgAttr extends ParsedBaseAttr {
+interface ParsedSvgAttr extends ParsedCoreAttr, ParsedStyleAttr {
     xmlns: string | null;
     "xmlns:xlink": string | null;
     version: number | null;
@@ -191,13 +199,13 @@ interface ParsedSvgAttr extends ParsedBaseAttr {
     viewBox: [Point, Point] | null;
 }
 
-interface ParsedCircleAttr extends ParsedBaseAttr, ParsedPresentationAttr {
+interface ParsedCircleAttr extends ParsedCoreAttr, ParsedStyleAttr, ParsedPresentationAttr {
     cx: Length | null;
     cy: Length | null;
     r: Length | null;
 }
 
-interface ParsedRectAttr extends ParsedBaseAttr, ParsedPresentationAttr {
+interface ParsedRectAttr extends ParsedCoreAttr, ParsedStyleAttr, ParsedPresentationAttr {
     x: Length | null;
     y: Length | null;
     width: Length | null;
@@ -206,22 +214,22 @@ interface ParsedRectAttr extends ParsedBaseAttr, ParsedPresentationAttr {
     ry: Length | null;
 }
 
-interface ParsedEllipseAttr extends ParsedBaseAttr, ParsedPresentationAttr {
+interface ParsedEllipseAttr extends ParsedCoreAttr, ParsedStyleAttr, ParsedPresentationAttr {
     cx: Length | null;
     cy: Length | null;
     rx: Length | null;
     ry: Length | null;
 }
 
-interface ParsedPolylineAttr extends ParsedBaseAttr, ParsedPresentationAttr {
+interface ParsedPolylineAttr extends ParsedCoreAttr, ParsedStyleAttr, ParsedPresentationAttr {
     points: Point[] | null;
 }
 
-interface ParsedPathAttr extends ParsedBaseAttr, ParsedPresentationAttr {
+interface ParsedPathAttr extends ParsedCoreAttr, ParsedStyleAttr, ParsedPresentationAttr {
     d: PathCommand[] | null;
 }
 
-interface ParsedTextAttr extends ParsedBaseAttr, ParsedPresentationAttr {
+interface ParsedTextAttr extends ParsedCoreAttr, ParsedStyleAttr, ParsedPresentationAttr {
     x: Length | null;
     y: Length | null;
     dx: Length | null;
@@ -230,21 +238,21 @@ interface ParsedTextAttr extends ParsedBaseAttr, ParsedPresentationAttr {
     lengthAdjust: LengthAdjust | null;
 }
 
-interface ParsedGroupAttr extends ParsedBaseAttr, ParsedPresentationAttr {
+interface ParsedGroupAttr extends ParsedCoreAttr, ParsedStyleAttr, ParsedPresentationAttr {
 }
 
-interface ParsedLinearGradientAttr extends ParsedBaseAttr, ParsedPresentationAttr {
+interface ParsedLinearGradientAttr extends ParsedCoreAttr, ParsedStyleAttr, ParsedPresentationAttr {
 }
 
-interface ParsedRadialGradientAttr extends ParsedBaseAttr, ParsedPresentationAttr {
+interface ParsedRadialGradientAttr extends ParsedCoreAttr, ParsedStyleAttr, ParsedPresentationAttr {
 }
 
-interface ParsedStopAttr extends ParsedBaseAttr, ParsedPresentationAttr {
+interface ParsedStopAttr extends ParsedCoreAttr, ParsedStyleAttr, ParsedPresentationAttr {
     offset: Ratio | null;
     "stop-color": StopColor | null;
 }
 
-interface ParsedImageAttr extends ParsedBaseAttr, ParsedPresentationAttr {
+interface ParsedImageAttr extends ParsedCoreAttr, ParsedStyleAttr, ParsedPresentationAttr {
     "xlink:href": string | null;
     href: string | null;
     x: Length | null;
@@ -253,16 +261,20 @@ interface ParsedImageAttr extends ParsedBaseAttr, ParsedPresentationAttr {
     height: Length | null;
 }
 
-interface ParsedDefsAttr extends ParsedBaseAttr, ParsedPresentationAttr {
+interface ParsedDefsAttr extends ParsedCoreAttr, ParsedStyleAttr, ParsedPresentationAttr {
 }
 
-interface ParsedUseAttr extends ParsedBaseAttr, ParsedPresentationAttr {
+interface ParsedUseAttr extends ParsedCoreAttr, ParsedStyleAttr, ParsedPresentationAttr {
     "xlink:href": string | null;
     href: string | null;
     x: Length | null;
     y: Length | null;
     width: Length | null;
     height: Length | null;
+}
+
+export interface Style extends ParsedPresentationAttr {
+    unknown: Assoc;
 }
 
 export type LengthUnit = "em" | "ex" | "px" | "in" | "cm" | "mm" | "pt" | "pc" | "%" | null;
@@ -464,7 +476,7 @@ export function parse(node: XmlNode): ParsedResult | null {
             return {result: {tag: "use", attrs, xpath, parent, virtual: null}, warns};
         } else {
             const attrs: Assoc = node.attrs;
-            return {result: {tag: "unknown", tag$real: node.name, attrs, children, xpath, parent}, warns: [{range: node.positions.startTag, message: `${node.name} is unsupported element.`}]};
+            return {result: {tag: "unknown", tag$real: node.name, attrs, children, xpath, parent}, warns: [{interval: node.positions.startTag, message: `${node.name} is unsupported element.`}]};
         }
     } else if (node.type === "text") {
         const text = node.text;
@@ -502,10 +514,13 @@ function parseAttrs(element: XmlElement, onWarns: (ws: Warning[]) => void) {
 
     // for global attributes
     let tmp: string | null;
-    const globalValidAttrs: Omit<ParsedBaseAttr, "unknown"> = {
+    const coreValidAttrs: Omit<ParsedCoreAttr, "unknown"> = {
         id: pop(attrs, "id"),
-        class: (tmp = pop(attrs, "class")) && tmp && tmp.split(" ") || null
     };
+    const styleValidAttrs: ParsedStyleAttr = {
+        class: (tmp = pop(attrs, "class")) && tmp && tmp.split(" ") || null,
+        style: tryParse("style").map(a => a.style()).get
+    }
 
     const getPresentationAttrs: () => ParsedPresentationAttr = () => {
         return {
@@ -533,7 +548,7 @@ function parseAttrs(element: XmlElement, onWarns: (ws: Warning[]) => void) {
     return {
         svg: () => {
             const validSvgAttrs: ParsedSvgAttr = {
-                ...globalValidAttrs,
+                ...coreValidAttrs, ...styleValidAttrs,
                 xmlns: pop(attrs, "xmlns"),
                 x: tryParse("x").map(a => a.length()).get,
                 y: tryParse("y").map(a => a.length()).get,
@@ -549,7 +564,7 @@ function parseAttrs(element: XmlElement, onWarns: (ws: Warning[]) => void) {
         },
         circle: () => {
             const validCircleAttrs: ParsedCircleAttr = {
-                ...globalValidAttrs,
+                ...coreValidAttrs, ...styleValidAttrs,
                 ...getPresentationAttrs(),
                 cx: tryParse("cx").map(a => a.length()).get,
                 cy: tryParse("cy").map(a => a.length()).get,
@@ -561,7 +576,7 @@ function parseAttrs(element: XmlElement, onWarns: (ws: Warning[]) => void) {
         },
         rect: () => {
             const validRectAttrs: ParsedRectAttr = {
-                ...globalValidAttrs,
+                ...coreValidAttrs, ...styleValidAttrs,
                 ...getPresentationAttrs(),
                 x: tryParse("x").map(a => a.length()).get,
                 y: tryParse("y").map(a => a.length()).get,
@@ -576,7 +591,7 @@ function parseAttrs(element: XmlElement, onWarns: (ws: Warning[]) => void) {
         },
         ellipse: () => {
             const validEllipseAttrs: ParsedEllipseAttr = {
-                ...globalValidAttrs,
+                ...coreValidAttrs, ...styleValidAttrs,
                 ...getPresentationAttrs(),
                 cx: tryParse("cx").map(a => a.length()).get,
                 cy: tryParse("cy").map(a => a.length()).get,
@@ -589,7 +604,7 @@ function parseAttrs(element: XmlElement, onWarns: (ws: Warning[]) => void) {
         },
         polyline: () => {
             const validPolylineAttrs: ParsedPolylineAttr = {
-                ...globalValidAttrs,
+                ...coreValidAttrs, ...styleValidAttrs,
                 ...getPresentationAttrs(),
                 points: tryParse("points").map(a => a.points()).get,
                 unknown: unknownAttrs(attrs, element, pushWarns)
@@ -599,7 +614,7 @@ function parseAttrs(element: XmlElement, onWarns: (ws: Warning[]) => void) {
         },
         path: () => {
             const validPathAttrs: ParsedPathAttr = {
-                ...globalValidAttrs,
+                ...coreValidAttrs, ...styleValidAttrs,
                 ...getPresentationAttrs(),
                 d: tryParse("d").map(a => a.pathDefinition()).get,
                 unknown: unknownAttrs(attrs, element, pushWarns)
@@ -609,7 +624,7 @@ function parseAttrs(element: XmlElement, onWarns: (ws: Warning[]) => void) {
         },
         text: () => {
             const validTextAttrs: ParsedTextAttr = {
-                ...globalValidAttrs,
+                ...coreValidAttrs, ...styleValidAttrs,
                 ...getPresentationAttrs(),
                 x: tryParse("x").map(a => a.length()).get,
                 y: tryParse("y").map(a => a.length()).get,
@@ -624,7 +639,7 @@ function parseAttrs(element: XmlElement, onWarns: (ws: Warning[]) => void) {
         },
         g: () => {
             const validGroupAttrs: ParsedGroupAttr = {
-                ...globalValidAttrs,
+                ...coreValidAttrs, ...styleValidAttrs,
                 ...getPresentationAttrs(),
                 unknown: unknownAttrs(attrs, element, pushWarns)
             };
@@ -633,7 +648,7 @@ function parseAttrs(element: XmlElement, onWarns: (ws: Warning[]) => void) {
         },
         linearGradient: () => {
             const validLinearGradientAttrs: ParsedLinearGradientAttr = {
-                ...globalValidAttrs,
+                ...coreValidAttrs, ...styleValidAttrs,
                 ...getPresentationAttrs(),
                 unknown: unknownAttrs(attrs, element, pushWarns)
             };
@@ -642,7 +657,7 @@ function parseAttrs(element: XmlElement, onWarns: (ws: Warning[]) => void) {
         },
         radialGradient: () => {
             const validRadialGradientAttrs: ParsedRadialGradientAttr = {
-                ...globalValidAttrs,
+                ...coreValidAttrs, ...styleValidAttrs,
                 ...getPresentationAttrs(),
                 unknown: unknownAttrs(attrs, element, pushWarns)
             };
@@ -651,7 +666,7 @@ function parseAttrs(element: XmlElement, onWarns: (ws: Warning[]) => void) {
         },
         stop: () => {
             const validStopAttrs: ParsedStopAttr = {
-                ...globalValidAttrs,
+                ...coreValidAttrs, ...styleValidAttrs,
                 ...getPresentationAttrs(),
                 offset: tryParse("offset").map(a => a.ratio()).get,
                 "stop-color": tryParse("stop-color").map(a => a.stopColor()).get,
@@ -662,7 +677,7 @@ function parseAttrs(element: XmlElement, onWarns: (ws: Warning[]) => void) {
         },
         image: () => {
             const validImageAttrs: ParsedImageAttr = {
-                ...globalValidAttrs,
+                ...coreValidAttrs, ...styleValidAttrs,
                 ...getPresentationAttrs(),
                 "xlink:href": pop(attrs, "xlink:href"),
                 href: pop(attrs, "href"),
@@ -677,7 +692,7 @@ function parseAttrs(element: XmlElement, onWarns: (ws: Warning[]) => void) {
         },
         defs: () => {
             const validDefsAttrs: ParsedDefsAttr = {
-                ...globalValidAttrs,
+                ...coreValidAttrs, ...styleValidAttrs,
                 ...getPresentationAttrs(),
                 unknown: unknownAttrs(attrs, element, pushWarns)
             };
@@ -686,7 +701,7 @@ function parseAttrs(element: XmlElement, onWarns: (ws: Warning[]) => void) {
         },
         use: () => {
             const validUseAttrs: ParsedUseAttr = {
-                ...globalValidAttrs,
+                ...coreValidAttrs, ...styleValidAttrs,
                 ...getPresentationAttrs(),
                 "xlink:href": pop(attrs, "xlink:href"),
                 href: pop(attrs, "href"),
@@ -720,6 +735,7 @@ function unknownAttrs(attrs: Assoc, element: XmlElement, onWarns: (ws: Warning[]
 }
 
 type AttrOfMethods = {
+    style: () => Style,
     length: () => Length | null,
     lengthOrInherit: () => Length | "inherit" | null,
     ratio: () => Ratio | null,
@@ -766,21 +782,52 @@ function attrOf(element: XmlElement, warns: Warning[], attrs: Assoc, name: strin
                 attrName: name
             };
         } else {
-            return {range: element.positions.attrs[name].value, message: `${name}: ${v} is a invalid number with unit.`};
+            return {interval: element.positions.attrs[name].value, message: `${name}: ${v} is a invalid number with unit.`};
+        }
+    }
+
+    function acceptPaint(v: string): Paint | Warning {
+        let tcolor: tinycolor.Instance = tinycolor(v);
+        let tmp: RegExpMatchArray | null;
+        if (tcolor.getFormat() && tcolor.getFormat() !== "hsv") {
+            return {
+                format: <any>tcolor.getFormat(),
+                ...tcolor.toRgb()
+            }
+        } else if (/^(none|currentColor|inherit)$/.test(v)) {
+            return <Paint>v;
+        } else if ((tmp = v.match(/^url\(([^\)]+)\)$/)) && tmp) {
+            return {url: tmp[1]};
+        } else {
+            return {interval: element.positions.attrs[name].value, message: `${name}: ${v} is unsupported paint value.`};
+        }
+    }
+
+    function handleResult<T>(res: T | Warning): T | null {
+        if (isWarning(res)) {
+            warns.push(res);
+            return null;
+        } else {
+            delete attrs[name];
+            return res;
         }
     }
 
     const methods = {
-        length: () => {
-            const maybeLength = acceptLength(value);
-            if (isLength(maybeLength)) {
-                delete attrs[name];
-                return maybeLength;
-            } else {
-                warns.push(maybeLength);
-                return null;
+        style: () => {
+            delete attrs[name];
+            const arr = value.split(/;:/);
+            const ret: Style = {};
+            for (let i = 0; i < arr.length; i += 2) {
+                const k = arr[i].trim();
+                const v = arr[i+1].trim();
+                if (k && v) {
+                    ret[k] = v;
+                }
             }
+            return ret;
         },
+        length: () => handleResult(acceptLength(value)),
         lengthOrInherit: () => {
             if (value === "inherit") {
                 delete attrs[name];
@@ -793,7 +840,7 @@ function attrOf(element: XmlElement, warns: Warning[], attrs: Assoc, name: strin
                 delete attrs[name];
                 return tmp[3] ? <Ratio>{unit: "%", value: parseFloat(value)} : Number(value);
             } else {
-                warns.push({range: element.positions.attrs[name].value, message: `${name}: ${value} is not a number or percentage.`});
+                warns.push({interval: element.positions.attrs[name].value, message: `${name}: ${value} is not a number or percentage.`});
                 return null;
             }
         },
@@ -802,40 +849,21 @@ function attrOf(element: XmlElement, warns: Warning[], attrs: Assoc, name: strin
                 delete attrs[name];
                 return Number(value);
             } else {
-                warns.push({range: element.positions.attrs[name].value, message: `${name}: ${value} is not a number.`});
+                warns.push({interval: element.positions.attrs[name].value, message: `${name}: ${value} is not a number.`});
                 return null;
             }
         },
         viewBox: () => {
             const ret = convertToPoints();
             if (ret.length !== 2) {
-                warns.push({range: element.positions.attrs[name].value, message: `${value} is a invalid viewBox value.`});
+                warns.push({interval: element.positions.attrs[name].value, message: `${value} is a invalid viewBox value.`});
                 return null;
             } else {
                 delete attrs[name];
                 return <[Point, Point]>[ret[0], ret[1]];
             }
         },
-        paint: () => {
-            let tcolor: tinycolor.Instance = tinycolor(value);
-            let tmp: RegExpMatchArray | null;
-            if (tcolor.getFormat() && tcolor.getFormat() !== "hsv") {
-                delete attrs[name];
-                return {
-                    format: <any>tcolor.getFormat(),
-                    ...tcolor.toRgb()
-                }
-            } else if (/^(none|currentColor|inherit)$/.test(value)) {
-                delete attrs[name];
-                return <Paint>value;
-            } else if ((tmp = value.match(/^url\(([^\)]+)\)$/)) && tmp) {
-                delete attrs[name];
-                return {url: tmp[1]};
-            } else {
-                warns.push({range: element.positions.attrs[name].value, message: `${name}: ${value} is unsupported paint value.`});
-                return null;        
-            }
-        },
+        paint: () => handleResult(acceptPaint(value)),
         stopColor: () => {
             let tcolor: tinycolor.Instance = tinycolor(value);
             if (tcolor.getFormat() && tcolor.getFormat() !== "hsv") {
@@ -848,7 +876,7 @@ function attrOf(element: XmlElement, warns: Warning[], attrs: Assoc, name: strin
                 delete attrs[name];
                 return <StopColor>value;
             } else {
-                warns.push({range: element.positions.attrs[name].value, message: `${name}: ${value} is unsupported stop-color value.`});
+                warns.push({interval: element.positions.attrs[name].value, message: `${name}: ${value} is unsupported stop-color value.`});
                 return null;        
             }
         },
@@ -859,7 +887,7 @@ function attrOf(element: XmlElement, warns: Warning[], attrs: Assoc, name: strin
         pathDefinition: () => {
             const parsedDAttr = svgPathManager(value);
             if (parsedDAttr.err) {
-                warns.push({range: element.positions.attrs[name].value, message: parsedDAttr.err});
+                warns.push({interval: element.positions.attrs[name].value, message: parsedDAttr.err});
                 return null;
             } else {
                 delete attrs[name];
@@ -871,7 +899,7 @@ function attrOf(element: XmlElement, warns: Warning[], attrs: Assoc, name: strin
                 delete attrs[name];
                 return fromTransformAttribute(value);
             } catch (error) {
-                warns.push({range: element.positions.attrs[name].value, message: `at transform attribute: ${error}`});
+                warns.push({interval: element.positions.attrs[name].value, message: `at transform attribute: ${error}`});
                 return null;
             }
         },
@@ -880,7 +908,7 @@ function attrOf(element: XmlElement, warns: Warning[], attrs: Assoc, name: strin
                 delete attrs[name];
                 return value;
             } else {
-                warns.push({range: element.positions.attrs[name].value, message: `${value} is unsupported value.`});
+                warns.push({interval: element.positions.attrs[name].value, message: `${value} is unsupported value.`});
                 return null;
             }
         },
@@ -904,7 +932,7 @@ function attrOf(element: XmlElement, warns: Warning[], attrs: Assoc, name: strin
                     if (isLength(maybeLength)) {
                         lengths.push(maybeLength);
                     } else {
-                        warns.push({range: element.positions.attrs[name].value, message: `${name}: ${value} is unsupported stroke-dasharray value.`});
+                        warns.push({interval: element.positions.attrs[name].value, message: `${name}: ${value} is unsupported stroke-dasharray value.`});
                         return null;
                     }
                 }

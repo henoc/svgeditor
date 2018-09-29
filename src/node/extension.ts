@@ -253,7 +253,7 @@ function parseSvg(svgText: string, editor: vscode.TextEditor, diagnostics: vscod
         return {
             source: "svgeditor",
             message: warn.message,
-            range: intervalToRange(svgText, warn.range),
+            range: intervalToRange(svgText, warn.interval),
             severity: vscode.DiagnosticSeverity.Warning
         };
     }));
