@@ -269,7 +269,7 @@ export function construct(pe: ParsedElement, options?: SvgConstructOptions, disp
             default:
                 assertNever(pe);
         }
-        return <any>null;    // unreachable
+        return assertNever(pe);
     }
 }
 

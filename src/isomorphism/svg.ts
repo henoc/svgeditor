@@ -1,5 +1,5 @@
 import { iterate, assertNever, deepCopy, escapeHtml } from "./utils";
-import { Length, Paint, PathCommand, Transform, isLength, isPaint, isTransform, FontSize, isColor, Ratio, isFuncIRI, StrokeDasharray, isPathCommand, isPathCommands, Style, styleStr } from "./svgParser";
+import { Length, Paint, PathCommand, Transform, isLength, isPaint, isTransform, FontSize, isColor, Ratio, isFuncIRI, StrokeDasharray, isPathCommand, isPathCommands, Style, attrToStr, AttrValue, isStrokeDasharray } from "./svgParser";
 import tinycolor from "tinycolor2";
 import { svgPathManager } from "./pathHelpers";
 import { elementOpenStart, elementOpenEnd, attr, text, elementClose } from "incremental-dom";
@@ -150,13 +150,16 @@ export class SvgTag implements XmlComponent {
     style(value: Style | null): SvgTag {
         if (value !== null && this.data.important.indexOf("style") === -1) {
             const fixed = <Style>iterate(value, (_k, v) => this.fixDecimalPlaces(v));
-            this.data.attrs["style"] = styleStr(fixed);
+            this.data.attrs["style"] = attrToStr(fixed);
         }
         return this;
     }
-    attrs(assoc: {[key: string]: string | number | null}): SvgTag {
+    attrs(assoc: {[key: string]: Exclude<AttrValue, Style> | null}): SvgTag {
         iterate(assoc, (key, value) => {
-            if (this.data.important.indexOf(key) === -1 && value !== null) this.data.attrs[key] = typeof value === "number" ? String(this.fixDecimalPlaces(value)) : value;       
+            if (this.data.important.indexOf(key) === -1 && value !== null) {
+                const fixed = this.fixDecimalPlaces(value);
+                this.data.attrs[key] = attrToStr(fixed);
+            }      
         });
         return this;
     }
@@ -257,7 +260,7 @@ export class SvgTag implements XmlComponent {
         const fix = (v: number) => {
             return Number(v.toFixed(this.data.options.numOfDecimalPlaces));
         }
-        if (this.data.options.numOfDecimalPlaces === undefined) {
+        if (this.data.options.numOfDecimalPlaces === undefined || typeof value === "string") {
             return value;
         } else if (typeof value === "number") {
             return <any>fix(value);
@@ -265,6 +268,8 @@ export class SvgTag implements XmlComponent {
             let copied = deepCopy(value);
             if (isLength(copied)) {
                 copied.value = fix(copied.value);
+            } else if (isStrokeDasharray(copied)) {
+                fooooooa
             } else if (isPathCommands(copied)) {
                 for (let i = 0; i < copied.length; i++) {
                     for (let j = 0; j < copied[i].length; j++) {

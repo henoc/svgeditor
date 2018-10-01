@@ -9,11 +9,12 @@ import { toTransformStrWithoutCollect } from "./transformHelpers";
 const { fromTransformAttribute } = require("transformation-matrix/build-commonjs/fromTransformAttribute");
 
 interface Warning {
+    type: "warning",
     interval: Interval,
     message: string
 }
 
-function isWarning(obj: Object): obj is Warning {
+function isWarning(obj: unknown): obj is Warning {
     return obj instanceof Object && "interval" in obj && "message" in obj;
 }
 
@@ -198,7 +199,7 @@ interface ParsedSvgAttr extends ParsedCoreAttr, ParsedStyleAttr {
     y: Length | null;
     width: Length | null;
     height: Length | null;
-    viewBox: [Point, Point] | null;
+    viewBox: ViewBox | null;
 }
 
 interface ParsedCircleAttr extends ParsedCoreAttr, ParsedStyleAttr, ParsedPresentationAttr {
@@ -224,11 +225,11 @@ interface ParsedEllipseAttr extends ParsedCoreAttr, ParsedStyleAttr, ParsedPrese
 }
 
 interface ParsedPolylineAttr extends ParsedCoreAttr, ParsedStyleAttr, ParsedPresentationAttr {
-    points: Point[] | null;
+    points: Points | null;
 }
 
 interface ParsedPathAttr extends ParsedCoreAttr, ParsedStyleAttr, ParsedPresentationAttr {
-    d: PathCommand[] | null;
+    d: PathCommandWrappers | null;
 }
 
 interface ParsedTextAttr extends ParsedCoreAttr, ParsedStyleAttr, ParsedPresentationAttr {
@@ -276,10 +277,11 @@ interface ParsedUseAttr extends ParsedCoreAttr, ParsedStyleAttr, ParsedPresentat
 }
 
 export interface Style extends ParsedPresentationAttr {
+    type: "style";
     unknown: Assoc;
 }
 
-export const styleStr = (s: Style) => {
+const styleStr = (s: Style) => {
     const arr: string[][] = [];
     function str(key: keyof Style) {
         const arrpush = <T>(t: T | null, tostr: (t: T) => string) => {
@@ -296,7 +298,7 @@ export const styleStr = (s: Style) => {
             arrpush(s.stroke, paintStr);
             break;
             case "stroke-width":
-            arrpush(s["stroke-width"], arg => isLength(arg) ? lengthStr(arg) : arg);
+            arrpush(s["stroke-width"], arg => typeof arg === "string" ? arg : lengthStr(arg));
             break;
             case "stroke-linecap":
             arrpush(s["stroke-linecap"], String);
@@ -308,7 +310,7 @@ export const styleStr = (s: Style) => {
             arrpush(s["stroke-dasharray"], strokeDasharrayStr);
             break;
             case "stroke-dashoffset":
-            arrpush(s["stroke-dashoffset"], arg => isLength(arg) ? lengthStr(arg) : arg);
+            arrpush(s["stroke-dashoffset"], arg => typeof arg === "string" ? arg : lengthStr(arg));
             case "transform":
             arrpush(s.transform, transformStr);
             break;
@@ -316,7 +318,7 @@ export const styleStr = (s: Style) => {
             arrpush(s["font-family"], String);
             break;
             case "font-size":
-            arrpush(s["font-size"], arg => isLength(arg) ? lengthStr(arg) : arg);
+            arrpush(s["font-size"], arg => typeof arg === "string" ? arg : lengthStr(arg));
             break;
             case "font-style":
             arrpush(s["font-style"], String);
@@ -326,6 +328,8 @@ export const styleStr = (s: Style) => {
             break;
             case "unknown":
             arr.push(...Object.entries(s.unknown));
+            break;
+            case "type":
             break;
             default:
             assertNever(key);
@@ -338,26 +342,29 @@ export const styleStr = (s: Style) => {
 export type LengthUnit = "em" | "ex" | "px" | "in" | "cm" | "mm" | "pt" | "pc" | "%" | null;
 
 export interface Length {
+    type: "length";
     unit: LengthUnit;
     value: number;
     attrName: string;
+}
+
+export interface Lengths {
+    type: "lengths";
+    array: Length[];
 }
 
 export function isLengthUnit(unit: string | null): unit is LengthUnit {
     return unit === null || ["em" , "ex" , "px" , "in" , "cm" , "mm" , "pt" , "pc" , "%"].indexOf(unit) !== -1;
 }
 
-export function isLength(obj: Object): obj is Length {
-    return obj instanceof Object && "unit" in obj && "value" in obj && "attrName" in obj;
-}
-
-export const lengthStr = (len: Length) => `${len.value}${len.unit || ""}`;
+const lengthStr = (len: Length) => `${len.value}${len.unit || ""}`;
 
 export type ColorFormat = "name" | "hex" | "hex6" | "hex3" | "hex4" | "hex8" | "rgb" | "prgb" | "hsl";
 
 export type Paint = "none" | "currentColor" | "inherit" | FuncIRI | Color;
 
 type Color = {
+    type: "color";
     format: ColorFormat;
     r: number;
     g: number;
@@ -366,41 +373,43 @@ type Color = {
 }
 
 type FuncIRI = {
+    type: "funcIri";
     url: string;
 }
 
 export type StopColor = "currentColor" | "inherit" | Color;
 
-export function isColor(obj: Object): obj is Color {
-    return obj instanceof Object && "format" in obj && "r" in obj && "g" in obj && "b" in obj && "a" in obj;
-}
-
-export function isFuncIRI(obj: Object): obj is FuncIRI {
-    return obj instanceof Object && "url" in obj;
-}
-
-export function isPaint(obj: Object): obj is Paint {
-    return (typeof obj === "string" && (obj === "none" || obj === "currentColor" || obj === "inherit")) || isColor(obj) || isFuncIRI(obj);
-}
-
-export const paintStr = (p: Paint) => isColor(p) ? tinycolor(p).toString(p.format) : isFuncIRI(p) ? `url(${p.url})` : p;
+const paintStr = (p: Paint) => typeof p === "string" ? p : p.type === "color" ? tinycolor(p).toString(p.format) : `url(${p.url})`;
 
 export interface Point {
     x: number;
     y: number;
 }
 
-export type PathCommand = [string, ...number[]]
-
-export function isPathCommand(obj: Object): obj is PathCommand {
-    return Array.isArray(obj) && PATH_COMMAND_CHARS.indexOf(obj[0]) !== -1;
+export interface ViewBox {
+    type: "viewBox";
+    0: Point;
+    1: Point;
 }
 
-export function isPathCommands(obj: Object): obj is PathCommand[] {
-    return Array.isArray(obj) && obj.every(isPathCommand);
+export interface Points {
+    type: "points";
+    array: Point[];
 }
 
-export const pathCommandsStr = (pc: PathCommand[]) => svgPathManager(pc).toString();
+export type PathCommand = [string, ...number[]];
+
+export interface PathCommandWrapper {
+    type: "pathCommandWrapper";
+    array: PathCommand;
+}
+
+export interface PathCommandWrappers {
+    type: "pathCommandWrappers";
+    array: PathCommand[];
+}
+
+const pathCommandsStr = (pc: PathCommandWrappers) => svgPathManager(pc.array).toString();
 
 export type TransformDescriptor = {
     type: "matrix",
@@ -425,74 +434,99 @@ export type TransformDescriptor = {
 }
 
 export interface Transform {
+    type: "transform";
     descriptors: TransformDescriptor[];
     matrices: Matrix[];
-}
-
-export function isTransform(obj: Object): obj is Transform {
-    return obj instanceof Object && "descriptors" in obj && "matrices" in obj;
 }
 
 export const transformStr = (t: Transform) => toTransformStrWithoutCollect(t);
 
 export type FontSize = "xx-small" | "x-small" | "small" | "medium" | "large" | "x-large" | "xx-large" | "larger" | "smaller" | Length;
 
-export function isFontSize(obj: Object): obj is FontSize {
-    return isLength(obj) || typeof obj === "string" && ["xx-small" , "x-small" , "small" , "medium" , "large" , "x-large" , "xx-large" , "larger" , "smaller"].indexOf(obj) !== -1;
+export function isFontSizeKeyword(obj: unknown): obj is FontSize {
+    return typeof obj === "string" && ["xx-small" , "x-small" , "small" , "medium" , "large" , "x-large" , "xx-large" , "larger" , "smaller"].indexOf(obj) !== -1;
 }
 
 export type FontStyle = "normal" | "italic" | "oblique";
 
-export function isFontStyle(obj: Object): obj is FontStyle {
+export function isFontStyle(obj: unknown): obj is FontStyle {
     return typeof obj === "string" && ["normal", "italic", "oblique"].indexOf(obj) !== -1;
 }
 
 export type FontWeight = "normal" | "bold" | "lighter" | "bolder" | 100 | 200 | 300 | 400 | 500 | 600 | 700 | 800 | 900;
 
-export function isFontWeight(obj: Object): obj is FontWeight {
+export function isFontWeight(obj: unknown): obj is FontWeight {
     return (typeof obj === "string" || typeof obj === "number") && ["normal", "bold", "lighter", "bolder", 100 , 200 , 300 , 400 , 500 , 600 , 700 , 800 , 900].indexOf(obj) !== -1;
 }
 
 export type LengthAdjust = "spacing" | "spacingAndGlyphs";
 
-export function isLengthAdjust(obj: Object): obj is LengthAdjust {
+export function isLengthAdjust(obj: unknown): obj is LengthAdjust {
     return obj === "spacing" || obj === "spacingAndGlyphs";
 }
 
-export type Ratio = number | {unit: "%", value: number}
+export type Ratio = number | PercentageRatio;
 
-export function isRatio(obj: Object): obj is Ratio {
-    return typeof obj === "number" || (obj instanceof Object && "unit" in obj && "value" in obj);
+interface PercentageRatio {
+    type: "percentageRatio";
+    unit: "%";
+    value: number;
 }
 
-export const ratioStr = (r: Ratio) => typeof r === "number" ? String(r) : `${r.value}%`;
+const ratioStr = (r: Ratio) => typeof r === "number" ? String(r) : `${r.value}%`;
 
 export type FillRule = "nonzero" | "evenodd" | "inherit";
 
-export function isFillRule(obj: Object): obj is FillRule {
+export function isFillRule(obj: unknown): obj is FillRule {
     return obj === "nonzero" || obj === "evenodd" || obj === "inherit";
 }
 
 export type StrokeLinecap = "butt" | "round" | "square" | "inherit";
 
-export function isStrokeLinecap(obj: Object): obj is StrokeLinecap {
+export function isStrokeLinecap(obj: unknown): obj is StrokeLinecap {
     return obj === "butt" || obj === "round" || obj === "square" || obj === "inherit";
 }
 
 export type StrokeLinejoin = "miter" | "round" | "bevel" | "inherit";
 
-export function isStrokeLinejoin(obj: Object): obj is StrokeLinejoin {
+export function isStrokeLinejoin(obj: unknown): obj is StrokeLinejoin {
     return obj === "miter" || obj === "round" || obj === "bevel" || obj === "inherit";
 }
 
-export type StrokeDasharray = "none" | Length[] | "inherit";
+export type StrokeDasharray = "none" | Lengths | "inherit";
 
-export function isStrokeDasharray(obj: Object): obj is StrokeDasharray {
-    return Array.isArray(obj) && (obj.length === 0 || isLength(obj[0])) || obj === "none" || obj === "inherit";
+const strokeDasharrayStr = (da: StrokeDasharray) => typeof da === "string" ? da : da.array.map(d => lengthStr(d)).join(" ");
+
+export type AttrValue = Style | Paint | Length |
+    Lengths | Transform | Points | ViewBox | PathCommandWrappers | PercentageRatio | number | string;
+
+export function attrToStr(value: AttrValue): string {
+    if (typeof value === "string" || typeof value === "number") {
+        return String(value);
+    }
+    switch (value.type) {
+        case "color":
+        case "funcIri":
+        return paintStr(value);
+        case "length":
+        return lengthStr(value);
+        case "lengths":
+        return strokeDasharrayStr(value);
+        case "pathCommandWrappers":
+        return pathCommandsStr(value);
+        case "percentageRatio":
+        return ratioStr(value);
+        case "points":
+        return value.array.map(p => p.x + "," + p.y).join(" ");
+        case "style":
+        return styleStr(value);
+        case "transform":
+        return transformStr(value);
+        case "viewBox":
+        return [value[0], value[1]].map(p => p.x + " " + p.y).join(" ");
+    }
+    return assertNever(value);
 }
-
-export const strokeDasharrayStr = (da: StrokeDasharray) =>
-    Array.isArray(da) ? da.map(d => lengthStr(d)).join(" ") : da;
 
 export function parse(node: XmlNode): ParsedResult | null {
     const xpath = "???";
@@ -502,68 +536,51 @@ export function parse(node: XmlNode): ParsedResult | null {
         if (Array.isArray(warn)) warns.push(...warn);
         else warns.push(warn);
     }
-    if (node.type === "element") {
-        const children = parseChildren(node, pushWarns, xpath);
-        if (node.name === "svg") {
-            const attrs = parseAttrs(node, pushWarns).svg();
-            return {result: {tag: "svg", attrs, children, xpath, parent}, warns};
-        } else if (node.name === "circle") {
-            const attrs = parseAttrs(node, pushWarns).circle();
-            return {result: {tag: "circle", attrs, xpath, parent}, warns};
-        } else if (node.name === "rect") {
-            const attrs = parseAttrs(node, pushWarns).rect();
-            return {result: {tag: "rect", attrs, xpath, parent}, warns};
-        } else if (node.name === "ellipse") {
-            const attrs = parseAttrs(node, pushWarns).ellipse();
-            return {result: {tag: "ellipse", attrs, xpath, parent}, warns};
-        } else if (node.name === "polyline") {
-            const attrs = parseAttrs(node, pushWarns).polyline();
-            return {result: {tag: "polyline", attrs, xpath, parent}, warns};
-        } else if (node.name === "polygon") {
-            const attrs = parseAttrs(node, pushWarns).polyline();
-            return {result: {tag: "polygon", attrs, xpath, parent}, warns};
-        } else if (node.name === "path") {
-            const attrs = parseAttrs(node, pushWarns).path();
-            return {result: {tag: "path", attrs, xpath, parent}, warns};
-        } else if (node.name === "text") {
-            const attrs = parseAttrs(node, pushWarns).text();
-            return {result: {tag: "text", attrs, xpath, parent, children}, warns};
-        } else if (node.name === "g") {
-            const attrs = parseAttrs(node, pushWarns).g();
-            return {result: {tag: "g", attrs, children, xpath, parent}, warns};
-        } else if (node.name === "linearGradient") {
-            const attrs = parseAttrs(node, pushWarns).linearGradient();
-            return {result: {tag: "linearGradient", attrs, children, xpath, parent}, warns};
-        } else if (node.name === "radialGradient") {
-            const attrs = parseAttrs(node, pushWarns).radialGradient();
-            return {result: {tag: "radialGradient", attrs, children, xpath, parent}, warns};
-        } else if (node.name === "stop") {
-            const attrs = parseAttrs(node, pushWarns).stop();
-            return {result: {tag: "stop", attrs, xpath, parent}, warns};
-        } else if (node.name === "image") {
-            const attrs = parseAttrs(node, pushWarns).image();
-            return {result: {tag: "image", attrs, xpath, parent}, warns};
-        } else if (node.name === "defs") {
-            const attrs = parseAttrs(node, pushWarns).defs();
-            return {result: {tag: "defs", attrs, children, xpath, parent}, warns};
-        } else if (node.name === "use") {
-            const attrs = parseAttrs(node, pushWarns).use();
-            return {result: {tag: "use", attrs, xpath, parent, virtual: null}, warns};
-        } else {
-            const attrs: Assoc = node.attrs;
-            return {result: {tag: "unknown", tag$real: node.name, attrs, children, xpath, parent}, warns: [{interval: node.positions.startTag, message: `${node.name} is unsupported element.`}]};
-        }
-    } else if (node.type === "text") {
-        const text = node.text;
-        return {result: {tag: "text()", attrs: {}, text, xpath, parent}, warns};
-    } else if (node.type === "comment") {
-        const text = node.text;
-        return {result: {tag: "comment()", attrs: {}, text, xpath, parent}, warns};
-    } else if (node.type === "cdata") {
-        const text = node.text;
-        return {result: {tag: "cdata()", attrs: {}, text, xpath, parent}, warns};
-    } else {
-        return null;
+    switch (node.type) {
+        case "element":
+            const children = parseChildren(node, pushWarns, xpath);
+            switch (node.name) {
+                case "svg":
+                    return {result: {tag: "svg", attrs: parseAttrs(node, pushWarns).svg(), children, xpath, parent}, warns};
+                case "circle":
+                    return {result: {tag: "circle", attrs: parseAttrs(node, pushWarns).circle(), xpath, parent}, warns};
+                case "rect":
+                    return {result: {tag: "rect", attrs: parseAttrs(node, pushWarns).rect(), xpath, parent}, warns};
+                case "ellipse":
+                    return {result: {tag: "ellipse", attrs: parseAttrs(node, pushWarns).ellipse(), xpath, parent}, warns};
+                case "polyline":
+                    return {result: {tag: "polyline", attrs: parseAttrs(node, pushWarns).polyline(), xpath, parent}, warns};
+                case "polygon":
+                    return {result: {tag: "polygon", attrs: parseAttrs(node, pushWarns).polyline(), xpath, parent}, warns};
+                case "path":
+                    return {result: {tag: "path", attrs: parseAttrs(node, pushWarns).path(), xpath, parent}, warns};
+                case "text":
+                    return {result: {tag: "text", attrs: parseAttrs(node, pushWarns).text(), xpath, parent, children}, warns};
+                case "g":
+                    return {result: {tag: "g", attrs: parseAttrs(node, pushWarns).g(), children, xpath, parent}, warns};
+                case "linearGradient":
+                    return {result: {tag: "linearGradient", attrs: parseAttrs(node, pushWarns).linearGradient(), children, xpath, parent}, warns};
+                case "radialGradient":
+                    return {result: {tag: "radialGradient", attrs: parseAttrs(node, pushWarns).radialGradient(), children, xpath, parent}, warns};
+                case "stop":
+                    return {result: {tag: "stop", attrs: parseAttrs(node, pushWarns).stop(), xpath, parent}, warns};
+                case "image":
+                    return {result: {tag: "image", attrs: parseAttrs(node, pushWarns).image(), xpath, parent}, warns};
+                case "defs":
+                    return {result: {tag: "defs", attrs: parseAttrs(node, pushWarns).defs(), children, xpath, parent}, warns};
+                case "use":
+                    return {result: {tag: "use", attrs: parseAttrs(node, pushWarns).use(), xpath, parent, virtual: null}, warns};
+                default:
+                    return {result: {tag: "unknown", tag$real: node.name, attrs: node.attrs, children, xpath, parent}, warns: [{type: "warning", interval: node.positions.startTag, message: `${node.name} is unsupported element.`}]};
+            }
+        case "text":
+            return {result: {tag: "text()", attrs: {}, text: node.text, xpath, parent}, warns};
+        case "comment":
+            return {result: {tag: "comment()", attrs: {}, text: node.text, xpath, parent}, warns};
+        case "cdata":
+            return {result: {tag: "cdata()", attrs: {}, text: node.text, xpath, parent}, warns};
+        default:
+            return null;
     }
 }
 
@@ -804,7 +821,7 @@ function pop(attrs: Assoc, name: string) {
 
 function unknownAttrs(attrs: Assoc, element: XmlElement, onWarns: (ws: Warning[]) => void): Assoc {
     onWarns(objectValues(iterate(attrs, (name) => {
-        return {interval: element.positions.attrs[name].name, message: `${name} is unsupported property.`};
+        return {type: <"warning">"warning", interval: element.positions.attrs[name].name, message: `${name} is unsupported property.`};
     })));
     return attrs;
 }
@@ -815,13 +832,13 @@ type AttrOfMethods = {
     lengthOrInherit: () => Length | "inherit" | null,
     ratio: () => Ratio | null,
     number: () => number | null,
-    viewBox: () => [Point, Point] | null,
+    viewBox: () => ViewBox | null,
     paint: () => Paint | null,
     stopColor: () => StopColor | null,
-    points: () => Point[],
-    pathDefinition: () => PathCommand[] | null,
+    points: () => Points,
+    pathDefinition: () => PathCommandWrappers | null,
     transform: () => Transform | null,
-    validate: <T>(validator: (obj: Object) => obj is T) => T & string | null,
+    validate: <T>(validator: (obj: unknown) => obj is T) => T & string | null,
     fontSize: () => FontSize | null,
     strokeDasharray: () => StrokeDasharray | null
 }
@@ -857,7 +874,7 @@ function attrOf(element: XmlElement, warns: Warning[], attrs: Assoc, name: strin
                 attrName: name
             };
         } else {
-            return {interval: element.positions.attrs[name].value, message: `${name}: ${v} is a invalid number with unit.`};
+            return {type: "warning", interval: element.positions.attrs[name].value, message: `${name}: ${v} is a invalid number with unit.`};
         }
     }
 
@@ -868,15 +885,16 @@ function attrOf(element: XmlElement, warns: Warning[], attrs: Assoc, name: strin
         let tmp: RegExpMatchArray | null;
         if (tcolor.getFormat() && tcolor.getFormat() !== "hsv") {
             return {
+                type: "color",
                 format: <any>tcolor.getFormat(),
                 ...tcolor.toRgb()
             }
         } else if (/^(none|currentColor|inherit)$/.test(v)) {
             return <Paint>v;
         } else if ((tmp = v.match(/^url\(([^\)]+)\)$/)) && tmp) {
-            return {url: tmp[1]};
+            return {type: "funcIri", url: tmp[1]};
         } else {
-            return {interval: element.positions.attrs[name].value, message: `${name}: ${v} is unsupported paint value.`};
+            return {type: "warning", interval: element.positions.attrs[name].value, message: `${name}: ${v} is unsupported paint value.`};
         }
     }
 
@@ -888,13 +906,13 @@ function attrOf(element: XmlElement, warns: Warning[], attrs: Assoc, name: strin
             const lengths: Length[] = [];
             for (let str of strs) {
                 const maybeLength = acceptLength(str);
-                if (isLength(maybeLength)) {
+                if (maybeLength.type === "length") {
                     lengths.push(maybeLength);
                 } else {
-                    return {interval: element.positions.attrs[name].value, message: `${name}: ${v} is unsupported stroke-dasharray value.`};
+                    return {type: "warning", interval: element.positions.attrs[name].value, message: `${name}: ${v} is unsupported stroke-dasharray value.`};
                 }
             }
-            return lengths;
+            return {type: "lengths", array: lengths};
         }
     }
 
@@ -902,12 +920,12 @@ function attrOf(element: XmlElement, warns: Warning[], attrs: Assoc, name: strin
         try {
             return fromTransformAttribute(v);
         } catch (error) {
-            return {interval: element.positions.attrs[name].value, message: `at transform attribute: ${error}`};
+            return {type: "warning", interval: element.positions.attrs[name].value, message: `at transform attribute: ${error}`};
         }
     }
 
     function acceptFontSize(v: string): FontSize | Warning {
-        if (isFontSize(v) /* Use only for judging font-size string representation */) {
+        if (isFontSizeKeyword(v)) {
             return v;
         } else {
             return acceptLength(v);
@@ -948,13 +966,13 @@ function attrOf(element: XmlElement, warns: Warning[], attrs: Assoc, name: strin
                 }
             }
 
-            function tryValidate<T>(name: keyof Style, validator: (obj: Object) => obj is T): T | null {
+            function tryValidate<T>(name: keyof Style, validator: (obj: unknown) => obj is T): T | null {
                 const value = styleAttrs[name];
                 if (validator(value)) {
                     delete styleAttrs[name];
                     return value;
                 } else {
-                    warns.push({interval: element.positions.attrs[name].value, message: `${value} is unsupported value.`});
+                    warns.push({type: "warning", interval: element.positions.attrs[name].value, message: `${value} is unsupported value.`});
                     return null;
                 }
             }
@@ -984,7 +1002,7 @@ function attrOf(element: XmlElement, warns: Warning[], attrs: Assoc, name: strin
                 delete attrs[name];
                 return tmp[3] ? <Ratio>{unit: "%", value: parseFloat(value)} : Number(value);
             } else {
-                warns.push({interval: element.positions.attrs[name].value, message: `${name}: ${value} is not a number or percentage.`});
+                warns.push({type: "warning", interval: element.positions.attrs[name].value, message: `${name}: ${value} is not a number or percentage.`});
                 return null;
             }
         },
@@ -993,18 +1011,18 @@ function attrOf(element: XmlElement, warns: Warning[], attrs: Assoc, name: strin
                 delete attrs[name];
                 return Number(value);
             } else {
-                warns.push({interval: element.positions.attrs[name].value, message: `${name}: ${value} is not a number.`});
+                warns.push({type: "warning", interval: element.positions.attrs[name].value, message: `${name}: ${value} is not a number.`});
                 return null;
             }
         },
         viewBox: () => {
             const ret = convertToPoints();
             if (ret.length !== 2) {
-                warns.push({interval: element.positions.attrs[name].value, message: `${value} is a invalid viewBox value.`});
+                warns.push({type: "warning", interval: element.positions.attrs[name].value, message: `${value} is a invalid viewBox value.`});
                 return null;
             } else {
                 delete attrs[name];
-                return <[Point, Point]>[ret[0], ret[1]];
+                return <ViewBox>{type: "viewBox", 0: ret[0], 1: ret[1]};
             }
         },
         paint: () => handleResult(acceptPaint(value)),
@@ -1012,7 +1030,8 @@ function attrOf(element: XmlElement, warns: Warning[], attrs: Assoc, name: strin
             let tcolor: tinycolor.Instance = tinycolor(value);
             if (tcolor.getFormat() && tcolor.getFormat() !== "hsv") {
                 delete attrs[name];
-                return {
+                return <Color>{
+                    type: "color",
                     format: <any>tcolor.getFormat(),
                     ...tcolor.toRgb()
                 }
@@ -1020,31 +1039,31 @@ function attrOf(element: XmlElement, warns: Warning[], attrs: Assoc, name: strin
                 delete attrs[name];
                 return <StopColor>value;
             } else {
-                warns.push({interval: element.positions.attrs[name].value, message: `${name}: ${value} is unsupported stop-color value.`});
+                warns.push({type: "warning", interval: element.positions.attrs[name].value, message: `${name}: ${value} is unsupported stop-color value.`});
                 return null;        
             }
         },
         points: () => {
             delete attrs[name];
-            return convertToPoints();
+            return <Points>{type: "points", array: convertToPoints()};
         },
         pathDefinition: () => {
             const parsedDAttr = svgPathManager(value);
             if (parsedDAttr.err) {
-                warns.push({interval: element.positions.attrs[name].value, message: parsedDAttr.err});
+                warns.push({type: "warning", interval: element.positions.attrs[name].value, message: parsedDAttr.err});
                 return null;
             } else {
                 delete attrs[name];
-                return parsedDAttr.segments;
+                return <PathCommandWrappers>{type: "pathCommandWrappers", array: parsedDAttr.segments};
             }
         },
         transform: () => handleResult(acceptTransform(value)),
-        validate: <T>(validator: (obj: Object) => obj is T) => {
+        validate: <T>(validator: (obj: unknown) => obj is T) => {
             if (validator(value)) {
                 delete attrs[name];
                 return value;
             } else {
-                warns.push({interval: element.positions.attrs[name].value, message: `${value} is unsupported value.`});
+                warns.push({type: "warning", interval: element.positions.attrs[name].value, message: `${value} is unsupported value.`});
                 return null;
             }
         },
