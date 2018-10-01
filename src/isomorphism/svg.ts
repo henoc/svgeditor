@@ -1,14 +1,12 @@
 import { iterate, assertNever, deepCopy, escapeHtml } from "./utils";
-import { Length, Paint, PathCommand, Transform, isLength, isPaint, isTransform, FontSize, isColor, Ratio, isFuncIRI, StrokeDasharray } from "./svgParser";
+import { Length, Paint, PathCommand, Transform, isLength, isPaint, isTransform, FontSize, isColor, Ratio, isFuncIRI, StrokeDasharray, isPathCommand, isPathCommands, Style, styleStr } from "./svgParser";
 import tinycolor from "tinycolor2";
 import { svgPathManager } from "./pathHelpers";
 import { elementOpenStart, elementOpenEnd, attr, text, elementClose } from "incremental-dom";
 import { Component } from "./component";
 import { toTransformStrWithoutCollect } from "./transformHelpers";
 import { XmlNodeNop, XmlNode } from "./xmlParser";
-
-export const svgns = "http://www.w3.org/2000/svg";
-export const xlinkns = "http://www.w3.org/1999/xlink";
+import { SVG_NS, XLINK_NS } from "./constants";
 
 interface SvgTagOptions {
     numOfDecimalPlaces?: number;
@@ -149,6 +147,13 @@ export class SvgTag implements XmlComponent {
         }
         return this;
     }
+    style(value: Style | null): SvgTag {
+        if (value !== null && this.data.important.indexOf("style") === -1) {
+            const fixed = <Style>iterate(value, (_k, v) => this.fixDecimalPlaces(v));
+            this.data.attrs["style"] = styleStr(fixed);
+        }
+        return this;
+    }
     attrs(assoc: {[key: string]: string | number | null}): SvgTag {
         iterate(assoc, (key, value) => {
             if (this.data.important.indexOf(key) === -1 && value !== null) this.data.attrs[key] = typeof value === "number" ? String(this.fixDecimalPlaces(value)) : value;       
@@ -171,8 +176,8 @@ export class SvgTag implements XmlComponent {
     toLinear(): string {
         if (this.data.tag) {
             if (this.data.tag === "svg" && this.data.isOuterMost) {
-                this.data.attrs.xmlns = svgns;
-                this.data.attrs["xmlns:xlink"] = xlinkns;
+                this.data.attrs.xmlns = SVG_NS;
+                this.data.attrs["xmlns:xlink"] = XLINK_NS;
             }
             const attrs: string[] = [];
             iterate(this.data.attrs, (key, value) => {
@@ -208,8 +213,8 @@ export class SvgTag implements XmlComponent {
     render = () => {
         if (this.data.tag) {
             if (this.data.tag === "svg") {
-                this.data.attrs.xmlns = svgns;
-                this.data.attrs["xmlns:xlink"] = xlinkns;
+                this.data.attrs.xmlns = SVG_NS;
+                this.data.attrs["xmlns:xlink"] = XLINK_NS;
             }
             elementOpenStart(this.data.tag);
             iterate(this.data.attrs, (key, value) => {
@@ -230,9 +235,9 @@ export class SvgTag implements XmlComponent {
 
     toDom(): Node {
         if (this.data.tag) {
-            const node = document.createElementNS(svgns, this.data.tag);
+            const node = document.createElementNS(SVG_NS, this.data.tag);
             iterate(this.data.attrs, (key, value) => {
-                if (key.startsWith("xlink:")) node.setAttributeNS(xlinkns, key, value);
+                if (key.startsWith("xlink:")) node.setAttributeNS(XLINK_NS, key, value);
                 else node.setAttribute(key, value);
             });
             iterate(this.data.listeners, (key, value) => {
@@ -248,7 +253,7 @@ export class SvgTag implements XmlComponent {
         }
     }
 
-    private fixDecimalPlaces<T = number | Length | Paint | PathCommand[] | Transform>(value: T): T {
+    private fixDecimalPlaces<T>(value: T): T {
         const fix = (v: number) => {
             return Number(v.toFixed(this.data.options.numOfDecimalPlaces));
         }
@@ -260,9 +265,7 @@ export class SvgTag implements XmlComponent {
             let copied = deepCopy(value);
             if (isLength(copied)) {
                 copied.value = fix(copied.value);
-            } else if (isPaint(copied)) {
-                // nothing to do
-            } else if (Array.isArray(copied)) {
+            } else if (isPathCommands(copied)) {
                 for (let i = 0; i < copied.length; i++) {
                     for (let j = 0; j < copied[i].length; j++) {
                         const copiedIJ = copied[i][j];

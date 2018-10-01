@@ -256,3 +256,6 @@ export function cursor(event: MouseEvent, target: Element): Vec2 {
     return v(event.clientX - rect.left, event.clientY - rect.top);
 }
 
+export function ifExist<T, U>(nullable: T | null, fn: (t: T) => U) {
+    if (nullable !== null) return fn(nullable);
+}

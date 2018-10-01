@@ -10,6 +10,7 @@ import { fetchPaintServer, cssString, StopReference, PaintServer } from "../isom
 import { Mode } from "./abstractMode";
 import { xfindExn } from "../isomorphism/xpath";
 import { findElemById } from "../isomorphism/traverse";
+import { PRESENTATION_ATTRS_NULLS, BASE_ATTRS_NULLS } from "../isomorphism/constants";
 
 
 const CANVAS_DEFAULT_COLOR = {r: 255, g: 255, b: 255, a: 1};
@@ -114,8 +115,8 @@ class GradientComponent implements ColorComponent {
                 attrs: {
                     offset: {unit: "%", value: 100},
                     "stop-color": {format: "rgb", ...CANVAS_DEFAULT_COLOR},
-                    ...Mode.baseAttrsDefaultImpl(),
-                    ...Mode.presentationAttrsAllNull()
+                    ...BASE_ATTRS_NULLS,
+                    ...PRESENTATION_ATTRS_NULLS
                 }
             });
             refleshContent();
@@ -398,8 +399,8 @@ class ColorPickerComponent implements WindowComponent {
                 parent: root.xpath,
                 tag: <"linearGradient">tag,
                 attrs: {
-                    ...Mode.baseAttrsDefaultImpl(),
-                    ...Mode.presentationAttrsAllNull(),
+                    ...BASE_ATTRS_NULLS,
+                    ...PRESENTATION_ATTRS_NULLS,
                     id: genedId
                 },
                 children: []

@@ -5,6 +5,7 @@ import { shaper } from "./shapes";
 import { Mode } from "./abstractMode";
 import { SvgTag } from "../isomorphism/svg";
 import { applyToPoint, inverse } from "transformation-matrix";
+import { BASE_ATTRS_NULLS } from "../isomorphism/constants";
 
 export class EllipseMode extends Mode {
 
@@ -31,7 +32,7 @@ export class EllipseMode extends Mode {
                         cy: {unit: configuration.defaultUnit, value: 0, attrName: "cy"},
                         rx: {unit: configuration.defaultUnit, value: 0, attrName: "rx"},
                         ry: {unit: configuration.defaultUnit, value: 0, attrName: "ry"},
-                        ...Mode.baseAttrsDefaultImpl(),
+                        ...BASE_ATTRS_NULLS,
                         ...Mode.presentationAttrsDefaultImpl()
                     }
                 };

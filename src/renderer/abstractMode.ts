@@ -9,6 +9,7 @@ import { shaper, multiShaper } from "./shapes";
 import { applyToPoint, inverse } from "transformation-matrix";
 import { traverse } from "../isomorphism/traverse";
 import { xfindExn } from "../isomorphism/xpath";
+import { PRESENTATION_ATTRS_NULLS, BASE_ATTRS_NULLS } from "../isomorphism/constants";
 
 export abstract class Mode implements Component {
     abstract onShapeMouseDownLeft(event: MouseEvent, pe: ParsedElement): void;
@@ -72,7 +73,7 @@ export abstract class Mode implements Component {
                         tag: "g",
                         parent: parent,
                         attrs: {
-                            ...Mode.baseAttrsDefaultImpl(),
+                            ...BASE_ATTRS_NULLS,
                             ...Mode.presentationAttrsDefaultImpl(),
                             fill: null,
                             stroke: null
@@ -182,47 +183,11 @@ export abstract class Mode implements Component {
     set selectedShapes(pes: OneOrMore<ParsedElement> | null) {
     }
 
-    static baseAttrsDefaultImpl: () => ParsedCoreAttr = () => {
-        return {
-            class: null,
-            id: null,
-            unknown: {}
-        }
-    }
-
     static presentationAttrsDefaultImpl: () => ParsedPresentationAttr = () => {
         return {
+            ...PRESENTATION_ATTRS_NULLS,
             fill: drawState.fill,
-            "fill-rule": null,
-            stroke: drawState.stroke,
-            "stroke-width": null,
-            "stroke-linecap": null,
-            "stroke-linejoin": null,
-            "stroke-dasharray": null,
-            "stroke-dashoffset": null,
-            transform: null,
-            "font-family": null,
-            "font-size": null,
-            "font-style": null,
-            "font-weight": null
-        }
-    }
-
-    static presentationAttrsAllNull: () => ParsedPresentationAttr = () => {
-        return {
-            fill: null,
-            "fill-rule": null,
-            stroke: null,
-            "stroke-width": null,
-            "stroke-linecap": null,
-            "stroke-linejoin": null,
-            "stroke-dasharray": null,
-            "stroke-dashoffset": null,
-            transform: null,
-            "font-family": null,
-            "font-size": null,
-            "font-style": null,
-            "font-weight": null
+            stroke: drawState.stroke
         }
     }
 

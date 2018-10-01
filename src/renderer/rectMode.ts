@@ -5,6 +5,7 @@ import { shaper } from "./shapes";
 import { Mode } from "./abstractMode";
 import { SvgTag } from "../isomorphism/svg";
 import { applyToPoint, inverse } from "transformation-matrix";
+import { BASE_ATTRS_NULLS } from "../isomorphism/constants";
 
 export class RectMode extends Mode {
 
@@ -33,7 +34,7 @@ export class RectMode extends Mode {
                         height: {unit: configuration.defaultUnit, value: 0, attrName: "height"},
                         rx: null,
                         ry: null,
-                        ...Mode.baseAttrsDefaultImpl(),
+                        ...BASE_ATTRS_NULLS,
                         ...Mode.presentationAttrsDefaultImpl()
                     }
                 };

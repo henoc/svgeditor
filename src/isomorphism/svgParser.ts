@@ -1,9 +1,11 @@
-import { iterate, Vec2, v, objectValues, Some, Option, None } from "./utils";
+import { iterate, Vec2, v, objectValues, Some, Option, None, assertNever, ifExist } from "./utils";
 import { Assoc } from "./svg";
 import tinycolor from "tinycolor2";
 import { svgPathManager } from "./pathHelpers";
-import { SetDifference, Omit } from "utility-types";
+import { SetDifference, Omit, $Values } from "utility-types";
 import { XmlNode, XmlElement, Interval, ElementPositionsOnText } from "./xmlParser";
+import { STYLE_NULLS, PATH_COMMAND_CHARS } from "./constants";
+import { toTransformStrWithoutCollect } from "./transformHelpers";
 const { fromTransformAttribute } = require("transformation-matrix/build-commonjs/fromTransformAttribute");
 
 interface Warning {
@@ -277,6 +279,62 @@ export interface Style extends ParsedPresentationAttr {
     unknown: Assoc;
 }
 
+export const styleStr = (s: Style) => {
+    const arr: string[][] = [];
+    function str(key: keyof Style) {
+        const arrpush = <T>(t: T | null, tostr: (t: T) => string) => {
+            if (t) arr.push([key, tostr(t)]);
+        }
+        switch (key) {
+            case "fill":
+            arrpush(s.fill, paintStr);
+            break;
+            case "fill-rule":
+            arrpush(s["fill-rule"], String);
+            break;
+            case "stroke":
+            arrpush(s.stroke, paintStr);
+            break;
+            case "stroke-width":
+            arrpush(s["stroke-width"], arg => isLength(arg) ? lengthStr(arg) : arg);
+            break;
+            case "stroke-linecap":
+            arrpush(s["stroke-linecap"], String);
+            break;
+            case "stroke-linejoin":
+            arrpush(s["stroke-linejoin"], String);
+            break;
+            case "stroke-dasharray":
+            arrpush(s["stroke-dasharray"], strokeDasharrayStr);
+            break;
+            case "stroke-dashoffset":
+            arrpush(s["stroke-dashoffset"], arg => isLength(arg) ? lengthStr(arg) : arg);
+            case "transform":
+            arrpush(s.transform, transformStr);
+            break;
+            case "font-family":
+            arrpush(s["font-family"], String);
+            break;
+            case "font-size":
+            arrpush(s["font-size"], arg => isLength(arg) ? lengthStr(arg) : arg);
+            break;
+            case "font-style":
+            arrpush(s["font-style"], String);
+            break;
+            case "font-weight":
+            arrpush(s["font-weight"], String);
+            break;
+            case "unknown":
+            arr.push(...Object.entries(s.unknown));
+            break;
+            default:
+            assertNever(key);
+        }
+    }
+    iterate(s, str);
+    return arr.map(kv => kv.join(": ")).join("; ");
+}
+
 export type LengthUnit = "em" | "ex" | "px" | "in" | "cm" | "mm" | "pt" | "pc" | "%" | null;
 
 export interface Length {
@@ -292,6 +350,8 @@ export function isLengthUnit(unit: string | null): unit is LengthUnit {
 export function isLength(obj: Object): obj is Length {
     return obj instanceof Object && "unit" in obj && "value" in obj && "attrName" in obj;
 }
+
+export const lengthStr = (len: Length) => `${len.value}${len.unit || ""}`;
 
 export type ColorFormat = "name" | "hex" | "hex6" | "hex3" | "hex4" | "hex8" | "rgb" | "prgb" | "hsl";
 
@@ -323,6 +383,8 @@ export function isPaint(obj: Object): obj is Paint {
     return (typeof obj === "string" && (obj === "none" || obj === "currentColor" || obj === "inherit")) || isColor(obj) || isFuncIRI(obj);
 }
 
+export const paintStr = (p: Paint) => isColor(p) ? tinycolor(p).toString(p.format) : isFuncIRI(p) ? `url(${p.url})` : p;
+
 export interface Point {
     x: number;
     y: number;
@@ -331,8 +393,14 @@ export interface Point {
 export type PathCommand = [string, ...number[]]
 
 export function isPathCommand(obj: Object): obj is PathCommand {
-    return Array.isArray(obj) && (obj.length === 0 || typeof obj[0] === "string");
+    return Array.isArray(obj) && PATH_COMMAND_CHARS.indexOf(obj[0]) !== -1;
 }
+
+export function isPathCommands(obj: Object): obj is PathCommand[] {
+    return Array.isArray(obj) && obj.every(isPathCommand);
+}
+
+export const pathCommandsStr = (pc: PathCommand[]) => svgPathManager(pc).toString();
 
 export type TransformDescriptor = {
     type: "matrix",
@@ -365,6 +433,8 @@ export function isTransform(obj: Object): obj is Transform {
     return obj instanceof Object && "descriptors" in obj && "matrices" in obj;
 }
 
+export const transformStr = (t: Transform) => toTransformStrWithoutCollect(t);
+
 export type FontSize = "xx-small" | "x-small" | "small" | "medium" | "large" | "x-large" | "xx-large" | "larger" | "smaller" | Length;
 
 export function isFontSize(obj: Object): obj is FontSize {
@@ -395,6 +465,8 @@ export function isRatio(obj: Object): obj is Ratio {
     return typeof obj === "number" || (obj instanceof Object && "unit" in obj && "value" in obj);
 }
 
+export const ratioStr = (r: Ratio) => typeof r === "number" ? String(r) : `${r.value}%`;
+
 export type FillRule = "nonzero" | "evenodd" | "inherit";
 
 export function isFillRule(obj: Object): obj is FillRule {
@@ -418,6 +490,9 @@ export type StrokeDasharray = "none" | Length[] | "inherit";
 export function isStrokeDasharray(obj: Object): obj is StrokeDasharray {
     return Array.isArray(obj) && (obj.length === 0 || isLength(obj[0])) || obj === "none" || obj === "inherit";
 }
+
+export const strokeDasharrayStr = (da: StrokeDasharray) =>
+    Array.isArray(da) ? da.map(d => lengthStr(d)).join(" ") : da;
 
 export function parse(node: XmlNode): ParsedResult | null {
     const xpath = "???";
@@ -729,7 +804,7 @@ function pop(attrs: Assoc, name: string) {
 
 function unknownAttrs(attrs: Assoc, element: XmlElement, onWarns: (ws: Warning[]) => void): Assoc {
     onWarns(objectValues(iterate(attrs, (name) => {
-        return {range: element.positions.attrs[name].name, message: `${name} is unsupported property.`};
+        return {interval: element.positions.attrs[name].name, message: `${name} is unsupported property.`};
     })));
     return attrs;
 }
@@ -786,6 +861,8 @@ function attrOf(element: XmlElement, warns: Warning[], attrs: Assoc, name: strin
         }
     }
 
+    const acceptLengthOrInherit = (v: string) => v === "inherit" ? v : acceptLength(v);
+
     function acceptPaint(v: string): Paint | Warning {
         let tcolor: tinycolor.Instance = tinycolor(v);
         let tmp: RegExpMatchArray | null;
@@ -803,6 +880,40 @@ function attrOf(element: XmlElement, warns: Warning[], attrs: Assoc, name: strin
         }
     }
 
+    function acceptStrokeDasharray(v: string): StrokeDasharray | Warning {
+        if (v === "none" || v === "inherit") {
+            return v;
+        } else {
+            const strs = v.split(/[,\s]+/);
+            const lengths: Length[] = [];
+            for (let str of strs) {
+                const maybeLength = acceptLength(str);
+                if (isLength(maybeLength)) {
+                    lengths.push(maybeLength);
+                } else {
+                    return {interval: element.positions.attrs[name].value, message: `${name}: ${v} is unsupported stroke-dasharray value.`};
+                }
+            }
+            return lengths;
+        }
+    }
+
+    function acceptTransform(v: string): Transform | Warning {
+        try {
+            return fromTransformAttribute(v);
+        } catch (error) {
+            return {interval: element.positions.attrs[name].value, message: `at transform attribute: ${error}`};
+        }
+    }
+
+    function acceptFontSize(v: string): FontSize | Warning {
+        if (isFontSize(v) /* Use only for judging font-size string representation */) {
+            return v;
+        } else {
+            return acceptLength(v);
+        }
+    }
+
     function handleResult<T>(res: T | Warning): T | null {
         if (isWarning(res)) {
             warns.push(res);
@@ -817,23 +928,56 @@ function attrOf(element: XmlElement, warns: Warning[], attrs: Assoc, name: strin
         style: () => {
             delete attrs[name];
             const arr = value.split(/;:/);
-            const ret: Style = {};
+            const styleAttrs: Assoc = {};
             for (let i = 0; i < arr.length; i += 2) {
                 const k = arr[i].trim();
                 const v = arr[i+1].trim();
-                if (k && v) {
-                    ret[k] = v;
+                if (k && v) styleAttrs[k] = v;
+            }
+
+            function tryApply<T>(name: keyof Style, acceptor: (value: string) => T | Warning): T | null {
+                const ret = styleAttrs[name] && acceptor(styleAttrs[name]) || null;
+                if (ret === null) {
+                    return null;
+                } else if (isWarning(ret)) {
+                    warns.push(ret);
+                    return null;
+                } else {
+                    delete styleAttrs[name];
+                    return ret;
                 }
             }
-            return ret;
+
+            function tryValidate<T>(name: keyof Style, validator: (obj: Object) => obj is T): T | null {
+                const value = styleAttrs[name];
+                if (validator(value)) {
+                    delete styleAttrs[name];
+                    return value;
+                } else {
+                    warns.push({interval: element.positions.attrs[name].value, message: `${value} is unsupported value.`});
+                    return null;
+                }
+            }
+
+            return <Style>{
+                fill: tryApply("fill", acceptPaint),
+                "fill-rule": tryValidate("fill-rule", isFillRule),
+                stroke: tryApply("stroke", acceptPaint),
+                "stroke-width": tryApply("stroke-width", acceptLengthOrInherit),
+                "stroke-linecap": tryValidate("stroke-linecap", isStrokeLinecap),
+                "stroke-linejoin": tryValidate("stroke-linejoin", isStrokeLinejoin),
+                "stroke-dasharray": tryApply("stroke-dasharray", acceptStrokeDasharray),
+                "stroke-dashoffset": tryApply("stroke-dashoffset", acceptLengthOrInherit),
+                transform: tryApply("transform", acceptTransform),
+                "font-family": pop(styleAttrs, "font-family"),
+                "font-size": tryApply("font-size", acceptFontSize),
+                "font-style": tryValidate("font-style", isFontStyle),
+                "font-weight": tryValidate("font-weight", isFontWeight),
+                unknown: styleAttrs
+            };
         },
         length: () => handleResult(acceptLength(value)),
-        lengthOrInherit: () => {
-            if (value === "inherit") {
-                delete attrs[name];
-                return "inherit";
-            } else return methods.length();
-        },
+        lengthOrInherit: () => handleResult(acceptLengthOrInherit(value)),
         ratio: () => {
             let tmp;
             if (tmp = /^[+-]?[0-9]+(\.[0-9]*)?([eE][+-]?[0-9]+)?(%)?$/.exec(value)) {
@@ -894,15 +1038,7 @@ function attrOf(element: XmlElement, warns: Warning[], attrs: Assoc, name: strin
                 return parsedDAttr.segments;
             }
         },
-        transform: () => {
-            try {
-                delete attrs[name];
-                return fromTransformAttribute(value);
-            } catch (error) {
-                warns.push({interval: element.positions.attrs[name].value, message: `at transform attribute: ${error}`});
-                return null;
-            }
-        },
+        transform: () => handleResult(acceptTransform(value)),
         validate: <T>(validator: (obj: Object) => obj is T) => {
             if (validator(value)) {
                 delete attrs[name];
@@ -912,34 +1048,8 @@ function attrOf(element: XmlElement, warns: Warning[], attrs: Assoc, name: strin
                 return null;
             }
         },
-        fontSize: () => {
-            if (isFontSize(value) /* Use only for judging font-size string representation */) {
-                delete attrs[name];
-                return value;
-            } else {
-                return methods.length();
-            }
-        },
-        strokeDasharray: () => {
-            if (value === "none" || value === "inherit") {
-                delete attrs[name];
-                return value;
-            } else {
-                const strs = value.split(/,|\s/);
-                const lengths: Length[] = [];
-                for (let str of strs) {
-                    const maybeLength = acceptLength(str);
-                    if (isLength(maybeLength)) {
-                        lengths.push(maybeLength);
-                    } else {
-                        warns.push({interval: element.positions.attrs[name].value, message: `${name}: ${value} is unsupported stroke-dasharray value.`});
-                        return null;
-                    }
-                }
-                delete attrs[name];
-                return lengths;
-            }
-        }
+        fontSize: () => handleResult(acceptFontSize(value)),
+        strokeDasharray: () => handleResult(acceptStrokeDasharray(value)),
     };
 
     return new Some<AttrOfMethods>(methods);

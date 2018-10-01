@@ -1,4 +1,4 @@
-import { ParsedElement, ParsedCoreAttr, ParsedPresentationAttr, Length, Transform } from "../isomorphism/svgParser";
+import { ParsedElement, ParsedCoreAttr, ParsedPresentationAttr, Length, Transform, ParsedStyleAttr } from "../isomorphism/svgParser";
 import { SvgTag, stringComponent, XmlComponent } from "../isomorphism/svg";
 import { onShapeMouseDown } from "./triggers";
 import { assertNever, deepCopy, v } from "../isomorphism/utils";
@@ -273,9 +273,10 @@ export function construct(pe: ParsedElement, options?: SvgConstructOptions, disp
     }
 }
 
-function setBaseAttrs(baseAttr: ParsedCoreAttr, tag: SvgTag) {
+function setBaseAttrs(baseAttr: ParsedCoreAttr & ParsedStyleAttr, tag: SvgTag) {
     tag.attr("id", baseAttr.id);
     if (baseAttr.class) tag.class(...baseAttr.class);
+    tag.style(baseAttr.style);
 }
 
 function setPresentationAttrs(presetationAttr: ParsedPresentationAttr, tag: SvgTag) {

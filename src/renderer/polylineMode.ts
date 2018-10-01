@@ -5,6 +5,7 @@ import { shaper } from "./shapes";
 import { Mode } from "./abstractMode";
 import { SvgTag } from "../isomorphism/svg";
 import { applyToPoint, inverse } from "transformation-matrix";
+import { BASE_ATTRS_NULLS } from "../isomorphism/constants";
 
 export class PolylineMode extends Mode {
 
@@ -31,7 +32,7 @@ export class PolylineMode extends Mode {
                         tag: "polyline",
                         attrs: {
                             points: [cursor, cursor],
-                            ...Mode.baseAttrsDefaultImpl(),
+                            ...BASE_ATTRS_NULLS,
                             ...Mode.presentationAttrsDefaultImpl()
                         }
                     }
