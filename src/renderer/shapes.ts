@@ -1,4 +1,4 @@
-import { ParsedElement, Length, Transform, isLength, TransformDescriptor, Paint, PathCommand, ParsedUseElement } from "../isomorphism/svgParser";
+import { ParsedElement, Length, Transform, TransformDescriptor, Paint, PathCommand, ParsedUseElement } from "../isomorphism/svgParser";
 import { Vec2, v, vfp, OneOrMore, Merger, deepCopy } from "../isomorphism/utils";
 import { svgPathManager } from "../isomorphism/pathHelpers";
 import { convertToPixel, convertFromPixel } from "./measureUnits";
@@ -42,8 +42,8 @@ export function shaper(pe: ParsedElement): ShaperFunctions {
     }
     const fromPx = (unitValue: Length | null, attrName: string, pxValue: number): Length => {
         return unitValue ?
-            convertFromPixel({ unit: "px", attrName, value: pxValue }, unitValue.unit, pe) :
-            { value: pxValue, unit: null, attrName };
+            convertFromPixel({ type: "length", unit: "px", attrName, value: pxValue }, unitValue.unit, pe) :
+            { type: "length", value: pxValue, unit: null, attrName };
     }
     const leftTop = {
         get leftTop() {
@@ -127,7 +127,7 @@ export function shaper(pe: ParsedElement): ShaperFunctions {
             return pe.tag !== "unknown" && "transform" in pe.attrs && pe.attrs.transform && pe.attrs.transform.matrices.length !== 0 && transform(...pe.attrs.transform.matrices) || identity();
         },
         set transform(matrix: Matrix) {
-            if (pe.tag !== "unknown" && "transform" in pe.attrs && !equal(matrix, identity())) pe.attrs.transform = { descriptors: [{ type: "matrix", ...matrix }], matrices: [matrix] };
+            if (pe.tag !== "unknown" && "transform" in pe.attrs && !equal(matrix, identity())) pe.attrs.transform = { type: "transform", descriptors: [{ type: "matrix", ...matrix }], matrices: [matrix] };
         }
     }
 
@@ -158,7 +158,7 @@ export function shaper(pe: ParsedElement): ShaperFunctions {
         return identity();
     }
     const appendTransformDescriptors = <T extends { transform: Transform | null }>(attrs: T) => (descriptors: TransformDescriptor[], from: "left" | "right") => {
-        if (attrs.transform === null) attrs.transform = {descriptors: [], matrices: []};
+        if (attrs.transform === null) attrs.transform = {type: "transform", descriptors: [], matrices: []};
         if (from === "left") {
             appendDescriptorsLeft(attrs.transform, ...descriptors);
         } else {
@@ -169,7 +169,7 @@ export function shaper(pe: ParsedElement): ShaperFunctions {
         if (pe.tag !== "unknown" && "transform" in pe.attrs) {
             const center = self().center;
             const rotateDescriptor = { type: <"rotate">"rotate", angle: deg, cx: center.x, cy: center.y };
-            if (pe.attrs.transform === null) pe.attrs.transform = { descriptors: [], matrices: [] };
+            if (pe.attrs.transform === null) pe.attrs.transform = { type: "transform", descriptors: [], matrices: [] };
             appendDescriptor(pe.attrs.transform, rotateDescriptor);
         }
     }
@@ -408,10 +408,10 @@ export function shaper(pe: ParsedElement): ShaperFunctions {
             const pattrs = pe.attrs;
             return new Merger({
                 get center() {
-                    const minX = pattrs.points && Math.min(...pattrs.points.map(pair => pair.x)) || 0;
-                    const maxX = pattrs.points && Math.max(...pattrs.points.map(pair => pair.x)) || 0;
-                    const minY = pattrs.points && Math.min(...pattrs.points.map(pair => pair.y)) || 0;
-                    const maxY = pattrs.points && Math.max(...pattrs.points.map(pair => pair.y)) || 0;
+                    const minX = pattrs.points && Math.min(...pattrs.points.array.map(pair => pair.x)) || 0;
+                    const maxX = pattrs.points && Math.max(...pattrs.points.array.map(pair => pair.x)) || 0;
+                    const minY = pattrs.points && Math.min(...pattrs.points.array.map(pair => pair.y)) || 0;
+                    const maxY = pattrs.points && Math.max(...pattrs.points.array.map(pair => pair.y)) || 0;
                     return v(maxX + minX, maxY + minY).div(v(2, 2));
                 },
                 set center(point: Vec2) {
@@ -419,15 +419,15 @@ export function shaper(pe: ParsedElement): ShaperFunctions {
                     self().move(point.sub(oldCenter));
                 },
                 move: (diff: Vec2) => {
-                    if (pattrs.points) for (let i = 0; i < pattrs.points.length; i++) {
-                        pattrs.points[i] = v(pattrs.points[i].x, pattrs.points[i].y).add(diff);
+                    if (pattrs.points) for (let i = 0; i < pattrs.points.array.length; i++) {
+                        pattrs.points.array[i] = v(pattrs.points.array[i].x, pattrs.points.array[i].y).add(diff);
                     }
                 },
                 get size() {
-                    const minX = pattrs.points && Math.min(...pattrs.points.map(pair => pair.x)) || 0;
-                    const maxX = pattrs.points && Math.max(...pattrs.points.map(pair => pair.x)) || 0;
-                    const minY = pattrs.points && Math.min(...pattrs.points.map(pair => pair.y)) || 0;
-                    const maxY = pattrs.points && Math.max(...pattrs.points.map(pair => pair.y)) || 0;
+                    const minX = pattrs.points && Math.min(...pattrs.points.array.map(pair => pair.x)) || 0;
+                    const maxX = pattrs.points && Math.max(...pattrs.points.array.map(pair => pair.x)) || 0;
+                    const minY = pattrs.points && Math.min(...pattrs.points.array.map(pair => pair.y)) || 0;
+                    const maxY = pattrs.points && Math.max(...pattrs.points.array.map(pair => pair.y)) || 0;
                     return v(maxX - minX, maxY - minY);
                 },
                 set size(wh: Vec2) {
@@ -436,17 +436,17 @@ export function shaper(pe: ParsedElement): ShaperFunctions {
                     const oldSize = self().size;
                     const ratio = wh.div(oldSize, () => 1);
                     const acc: Vec2[] = [];
-                    for (let point of pattrs.points || []) {
+                    for (let point of pattrs.points && pattrs.points.array || []) {
                         const newPoint = leftTop.add(v(point.x, point.y).sub(leftTop).mul(ratio));
                         acc.push(newPoint);
                     }
-                    pattrs.points = acc;
+                    pattrs.points = {type: "points", array: acc};
                     self().center = oldCenter;
                 },
                 toPath() {
                     const d: PathCommand[] = [];
-                    if (pattrs.points) for (let i = 0; i < pattrs.points.length; i++) {
-                        const p = pattrs.points[i];
+                    if (pattrs.points) for (let i = 0; i < pattrs.points.array.length; i++) {
+                        const p = pattrs.points.array[i];
                         if (i === 0) d.push(["M", p.x, p.y]);
                         else d.push(["L", p.x, p.y]);
                     }
@@ -466,7 +466,7 @@ export function shaper(pe: ParsedElement): ShaperFunctions {
             const pathAttrs = pe.attrs;
             return new Merger({
                 get center() {
-                    const parsedDAttr = svgPathManager(pathAttrs.d || []);
+                    const parsedDAttr = svgPathManager(pathAttrs.d && pathAttrs.d.array || []);
                     const vertexes = parsedDAttr.getVertexes();
                     const minX = Math.min(...vertexes.map(vec2 => vec2.x));
                     const maxX = Math.max(...vertexes.map(vec2 => vec2.x));
@@ -479,7 +479,7 @@ export function shaper(pe: ParsedElement): ShaperFunctions {
                     self().move(point.sub(oldCenter));
                 },
                 move: (diff: Vec2) => {
-                    const parsedDAttr = svgPathManager(pathAttrs.d || []);
+                    const parsedDAttr = svgPathManager(pathAttrs.d && pathAttrs.d.array || []);
                     parsedDAttr.proceed(p => p.unarc()).safeIterate(([s, ...t], i, p) => {
                         if (s === "V") {
                             t[0] += diff.y;
@@ -493,10 +493,10 @@ export function shaper(pe: ParsedElement): ShaperFunctions {
                         }
                         return [s, ...t];
                     });
-                    pathAttrs.d = parsedDAttr.segments;
+                    pathAttrs.d = {type: "pathCommands", array: parsedDAttr.segments};
                 },
                 get size() {
-                    const parsedDAttr = svgPathManager(pathAttrs.d || []);
+                    const parsedDAttr = svgPathManager(pathAttrs.d && pathAttrs.d.array || []);
                     const vertexes = parsedDAttr.getVertexes();
                     const minX = Math.min(...vertexes.map(vec2 => vec2.x));
                     const maxX = Math.max(...vertexes.map(vec2 => vec2.x));
@@ -506,7 +506,7 @@ export function shaper(pe: ParsedElement): ShaperFunctions {
                 },
                 set size(wh: Vec2) {
                     const oldCenter = self().center;
-                    const parsedDAttr = svgPathManager(pathAttrs.d || []).proceed(p => p.unarc());
+                    const parsedDAttr = svgPathManager(pathAttrs.d && pathAttrs.d.array || []).proceed(p => p.unarc());
                     const ratio = wh.div(self().size, () => 1);
                     const leftTop = self().leftTop;
                     parsedDAttr.safeIterate(([s, ...t], i, p) => {
@@ -523,7 +523,7 @@ export function shaper(pe: ParsedElement): ShaperFunctions {
                         }
                         return [s, ...t];
                     });
-                    pathAttrs.d = parsedDAttr.segments;
+                    pathAttrs.d = {type: "pathCommands", array: parsedDAttr.segments};
                     self().center = oldCenter;
                 },
                 toPath() {
@@ -572,7 +572,7 @@ export function shaper(pe: ParsedElement): ShaperFunctions {
                 set size(wh: Vec2) {
                     let center = self().center;
                     let fontSize = tattrs["font-size"];
-                    tattrs["font-size"] = fromPx(fontSize !== null && isLength(fontSize) && fontSize || null, "font-size",
+                    tattrs["font-size"] = fromPx(fontSize !== null && typeof fontSize !== "string" ? fontSize : null, "font-size",
                         fontInfo().heightToSize("lineHeight", wh.y) || 1
                     );
                     tattrs.textLength = fromPx(tattrs.textLength, "textLength", wh.x);
@@ -659,7 +659,7 @@ export function shaper(pe: ParsedElement): ShaperFunctions {
                         const ratioInC = v(lineLength(xLineInC) / lineLength(preXLineInC), lineLength(yLineInC) / lineLength(preYLineInC));
                         const center = shaper(c).center;
                         if (c.tag !== "unknown" && "transform" in c.attrs) {
-                            if (c.attrs.transform === null) c.attrs.transform = { descriptors: [], matrices: [] };
+                            if (c.attrs.transform === null) c.attrs.transform = { type: "transform", descriptors: [], matrices: [] };
                             appendDescriptorsLeft(c.attrs.transform,
                                 { type: "matrix", ...translate(center.x, center.y) }, //translateDescriptor(center.x, center.y),
                                 { type: "matrix", ...scale(ratioInC.x, ratioInC.y) },//scaleDescriptor(ratioInC.x, ratioInC.y),
@@ -964,7 +964,7 @@ export function multiShaper(pes: OneOrMore<ParsedElement>, useMultiEvenIfSingle:
                     const ratioInC = v(lineLength(xLineInC) / lineLength(preXLineInC), lineLength(yLineInC) / lineLength(preYLineInC));
                     const center = shaper(c).center;
                     if (c.tag !== "unknown" && "transform" in c.attrs) {
-                        if (c.attrs.transform === null) c.attrs.transform = { descriptors: [], matrices: [] };
+                        if (c.attrs.transform === null) c.attrs.transform = { type: "transform", descriptors: [], matrices: [] };
                         appendDescriptorsLeft(c.attrs.transform,
                             { type: "matrix", ...translate(center.x, center.y) }, //translateDescriptor(center.x, center.y),
                             { type: "matrix", ...scale(ratioInC.x, ratioInC.y) },//scaleDescriptor(ratioInC.x, ratioInC.y),
@@ -990,7 +990,7 @@ export function multiShaper(pes: OneOrMore<ParsedElement>, useMultiEvenIfSingle:
                 const center = self().center;
                 for (let c of pes) if(hasEntity(c)) {
                     if (c.tag !== "unknown" && "transform" in c.attrs) {
-                        if (c.attrs.transform === null) c.attrs.transform = { descriptors: [], matrices: [] };
+                        if (c.attrs.transform === null) c.attrs.transform = { type: "transform", descriptors: [], matrices: [] };
                         appendDescriptorLeft(c.attrs.transform, { type: "matrix", ...rotateDEG(deg, center.x, center.y) });
                     }
                 }
@@ -1039,8 +1039,8 @@ export function initialSizeOfUse(puse: ParsedUseElement) {
     }
     const fromPx = (unitValue: Length | null, attrName: string, pxValue: number): Length => {
         return unitValue ?
-            convertFromPixel({ unit: "px", attrName, value: pxValue }, unitValue.unit, puse) :
-            { value: pxValue, unit: null, attrName };
+            convertFromPixel({ type: "length", unit: "px", attrName, value: pxValue }, unitValue.unit, puse) :
+            { type: "length", value: pxValue, unit: null, attrName };
     }
     const attrs = puse.attrs;
     const refPe = getRefElemOfUse(puse);

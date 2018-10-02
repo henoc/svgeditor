@@ -72,6 +72,7 @@ export function convertFromPixel(length: Length, targetUnit: LengthUnit, pe: Par
     switch (targetUnit) {
         case null:
         return {
+            type: "length",
             unit: null,
             value: length.value,
             attrName: length.attrName
@@ -80,6 +81,7 @@ export function convertFromPixel(length: Length, targetUnit: LengthUnit, pe: Par
         case "%":
         let basePx = getSvgBasePx(pe, attrKind);
         return {
+            type: "length",
             unit: "%",
             attrName: length.attrName,
             value: basePx ? length.value / basePx * 100 : 100
@@ -90,6 +92,7 @@ export function convertFromPixel(length: Length, targetUnit: LengthUnit, pe: Par
         const relPath = xrelative(pe.xpath, displayRootXPath());
         const font = relPath && measureStyle(displayRoot(), relPath).font || "";
         return {
+            type: "length",
             unit: targetUnit,
             attrName: length.attrName,
             value: length.value / measure({unit: targetUnit, font})
@@ -97,6 +100,7 @@ export function convertFromPixel(length: Length, targetUnit: LengthUnit, pe: Par
         
         default:
         return {
+            type: "length",
             unit: targetUnit,
             attrName: length.attrName,
             value: length.value / measure({unit: targetUnit})
@@ -120,10 +124,10 @@ function getSvgBasePx(pe: ParsedElement, attrKind: AttrKind): number | null {
             let basePx: number = 1;
             switch (attrKind) {
                 case "horizontal":
-                basePx = convertToPixel(ownerSvgPe.attrs.width || {unit: "%", value: 100, attrName: "width"}, xfindExn([svgdata], pe.parent));
+                basePx = convertToPixel(ownerSvgPe.attrs.width || {type: "length",unit: "%", value: 100, attrName: "width"}, xfindExn([svgdata], pe.parent));
                 break;
                 case "vertical":
-                basePx = convertToPixel(ownerSvgPe.attrs.height || {unit: "%", value: 100, attrName: "height"}, xfindExn([svgdata], pe.parent));
+                basePx = convertToPixel(ownerSvgPe.attrs.height || {type: "length",unit: "%", value: 100, attrName: "height"}, xfindExn([svgdata], pe.parent));
                 break;
                 default: 
                 assertNever(attrKind);

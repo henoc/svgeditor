@@ -52,8 +52,8 @@ export abstract class Mode implements Component {
                 refleshContent();       // make real elements
                 let tmp: null | OneOrMore<ParsedElement> = null;
                 for (let copied of copiedElems) {
-                    const fourPercentX = convertToPixel({ unit: "%", value: 4, attrName: "x" }, copied);
-                    const fourPercentY = convertToPixel({ unit: "%", value: 4, attrName: "y" }, copied);
+                    const fourPercentX = convertToPixel({type: "length", unit: "%", value: 4, attrName: "x" }, copied);
+                    const fourPercentY = convertToPixel({type: "length", unit: "%", value: 4, attrName: "y" }, copied);
                     shaper(copied).move(v(fourPercentX, fourPercentY));
                     tmp ? tmp.push(copied) : tmp = [copied];
                 }
@@ -73,7 +73,7 @@ export abstract class Mode implements Component {
                         tag: "g",
                         parent: parent,
                         attrs: {
-                            ...BASE_ATTRS_NULLS,
+                            ...BASE_ATTRS_NULLS(),
                             ...Mode.presentationAttrsDefaultImpl(),
                             fill: null,
                             stroke: null

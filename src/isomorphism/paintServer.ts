@@ -3,7 +3,7 @@
  * @see https://www.w3.org/TR/SVG11/pservers.html
  */
 
-import { ParsedElement, Ratio, Paint, isColor, isFuncIRI, StopColor } from "./svgParser";
+import { ParsedElement, Ratio, Paint, StopColor } from "./svgParser";
 import tinycolor from "tinycolor2";
 import { traverse } from "./traverse";
 
@@ -43,9 +43,9 @@ export function fetchStopReference(pe: ParsedElement): StopReference | null {
     function offsetToNumber(offset: Ratio | null): Exclude<Ratio, number> {
         if (offset) {
             const offsetValue = typeof offset === "number" ? offset * 100 : offset.value;
-            return {unit: "%", value: offsetValue < 0 ? 0 : offsetValue > 100 ? 100 : offsetValue}; 
+            return {type: "percentageRatio", unit: "%", value: offsetValue < 0 ? 0 : offsetValue > 100 ? 100 : offsetValue}; 
         } else {
-            return {unit: "%", value: 0};
+            return {type: "percentageRatio", unit: "%", value: 0};
         }
     }
     switch (pe.tag) {
@@ -53,7 +53,7 @@ export function fetchStopReference(pe: ParsedElement): StopReference | null {
         return {
             xpath: pe.xpath,
             offset: offsetToNumber(pe.attrs.offset),
-            "stop-color": pe.attrs["stop-color"] || {format: "rgb", r: 0, g: 0, b: 0, a: 1}
+            "stop-color": pe.attrs["stop-color"] || {type: "color", format: "rgb", r: 0, g: 0, b: 0, a: 1}
         };
         default:
         return null;
@@ -66,7 +66,7 @@ export function cssString(paintServer: PaintServer): string {
         for (let stop of paintServer.stops) {
             const stopColor = stop["stop-color"];
             acc.push([
-                isColor(stopColor) ? tinycolor(stopColor).toString(stopColor.format) : stopColor,
+                typeof stopColor !== "string" ? tinycolor(stopColor).toString(stopColor.format) : stopColor,
                 `${stop.offset.value}%`
             ].join(" "));
         }

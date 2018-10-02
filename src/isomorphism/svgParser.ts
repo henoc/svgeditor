@@ -4,7 +4,6 @@ import tinycolor from "tinycolor2";
 import { svgPathManager } from "./pathHelpers";
 import { SetDifference, Omit, $Values } from "utility-types";
 import { XmlNode, XmlElement, Interval, ElementPositionsOnText } from "./xmlParser";
-import { STYLE_NULLS, PATH_COMMAND_CHARS } from "./constants";
 import { toTransformStrWithoutCollect } from "./transformHelpers";
 const { fromTransformAttribute } = require("transformation-matrix/build-commonjs/fromTransformAttribute");
 
@@ -171,7 +170,7 @@ export interface ParsedCoreAttr {
 }
 
 export interface ParsedStyleAttr {
-    class: string[] | null;
+    class: Classes | null;
     style: Style | null;
 }
 
@@ -229,7 +228,7 @@ interface ParsedPolylineAttr extends ParsedCoreAttr, ParsedStyleAttr, ParsedPres
 }
 
 interface ParsedPathAttr extends ParsedCoreAttr, ParsedStyleAttr, ParsedPresentationAttr {
-    d: PathCommandWrappers | null;
+    d: PathCommands | null;
 }
 
 interface ParsedTextAttr extends ParsedCoreAttr, ParsedStyleAttr, ParsedPresentationAttr {
@@ -276,7 +275,12 @@ interface ParsedUseAttr extends ParsedCoreAttr, ParsedStyleAttr, ParsedPresentat
     height: Length | null;
 }
 
-export interface Style extends ParsedPresentationAttr {
+export interface Classes {
+    type: "classes";
+    array: string[];
+}
+
+export interface Style extends Omit<ParsedPresentationAttr, "transform"> {
     type: "style";
     unknown: Assoc;
 }
@@ -311,8 +315,6 @@ const styleStr = (s: Style) => {
             break;
             case "stroke-dashoffset":
             arrpush(s["stroke-dashoffset"], arg => typeof arg === "string" ? arg : lengthStr(arg));
-            case "transform":
-            arrpush(s.transform, transformStr);
             break;
             case "font-family":
             arrpush(s["font-family"], String);
@@ -399,17 +401,12 @@ export interface Points {
 
 export type PathCommand = [string, ...number[]];
 
-export interface PathCommandWrapper {
-    type: "pathCommandWrapper";
-    array: PathCommand;
-}
-
-export interface PathCommandWrappers {
-    type: "pathCommandWrappers";
+export interface PathCommands {
+    type: "pathCommands";
     array: PathCommand[];
 }
 
-const pathCommandsStr = (pc: PathCommandWrappers) => svgPathManager(pc.array).toString();
+const pathCommandsStr = (pc: PathCommands) => svgPathManager(pc.array).toString();
 
 export type TransformDescriptor = {
     type: "matrix",
@@ -497,14 +494,16 @@ export type StrokeDasharray = "none" | Lengths | "inherit";
 
 const strokeDasharrayStr = (da: StrokeDasharray) => typeof da === "string" ? da : da.array.map(d => lengthStr(d)).join(" ");
 
-export type AttrValue = Style | Paint | Length |
-    Lengths | Transform | Points | ViewBox | PathCommandWrappers | PercentageRatio | number | string;
+export type AttrValue = Classes | Style | Paint | Length |
+    Lengths | Transform | Points | ViewBox | PathCommands | PercentageRatio | number | string;
 
 export function attrToStr(value: AttrValue): string {
     if (typeof value === "string" || typeof value === "number") {
         return String(value);
     }
     switch (value.type) {
+        case "classes":
+        return value.array.join(" ");
         case "color":
         case "funcIri":
         return paintStr(value);
@@ -512,7 +511,7 @@ export function attrToStr(value: AttrValue): string {
         return lengthStr(value);
         case "lengths":
         return strokeDasharrayStr(value);
-        case "pathCommandWrappers":
+        case "pathCommands":
         return pathCommandsStr(value);
         case "percentageRatio":
         return ratioStr(value);
@@ -610,7 +609,7 @@ function parseAttrs(element: XmlElement, onWarns: (ws: Warning[]) => void) {
         id: pop(attrs, "id"),
     };
     const styleValidAttrs: ParsedStyleAttr = {
-        class: (tmp = pop(attrs, "class")) && tmp && tmp.split(" ") || null,
+        class: (tmp = pop(attrs, "class")) && tmp && {type: "classes", array: tmp.split(" ")} || null,
         style: tryParse("style").map(a => a.style()).get
     }
 
@@ -836,7 +835,7 @@ type AttrOfMethods = {
     paint: () => Paint | null,
     stopColor: () => StopColor | null,
     points: () => Points,
-    pathDefinition: () => PathCommandWrappers | null,
+    pathDefinition: () => PathCommands | null,
     transform: () => Transform | null,
     validate: <T>(validator: (obj: unknown) => obj is T) => T & string | null,
     fontSize: () => FontSize | null,
@@ -918,7 +917,7 @@ function attrOf(element: XmlElement, warns: Warning[], attrs: Assoc, name: strin
 
     function acceptTransform(v: string): Transform | Warning {
         try {
-            return fromTransformAttribute(v);
+            return {type: "transform", ...fromTransformAttribute(v)};
         } catch (error) {
             return {type: "warning", interval: element.positions.attrs[name].value, message: `at transform attribute: ${error}`};
         }
@@ -986,7 +985,6 @@ function attrOf(element: XmlElement, warns: Warning[], attrs: Assoc, name: strin
                 "stroke-linejoin": tryValidate("stroke-linejoin", isStrokeLinejoin),
                 "stroke-dasharray": tryApply("stroke-dasharray", acceptStrokeDasharray),
                 "stroke-dashoffset": tryApply("stroke-dashoffset", acceptLengthOrInherit),
-                transform: tryApply("transform", acceptTransform),
                 "font-family": pop(styleAttrs, "font-family"),
                 "font-size": tryApply("font-size", acceptFontSize),
                 "font-style": tryValidate("font-style", isFontStyle),
@@ -1054,7 +1052,7 @@ function attrOf(element: XmlElement, warns: Warning[], attrs: Assoc, name: strin
                 return null;
             } else {
                 delete attrs[name];
-                return <PathCommandWrappers>{type: "pathCommandWrappers", array: parsedDAttr.segments};
+                return <PathCommands>{type: "pathCommands", array: parsedDAttr.segments};
             }
         },
         transform: () => handleResult(acceptTransform(value)),

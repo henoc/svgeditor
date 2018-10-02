@@ -1,5 +1,5 @@
 import { refleshContent, configuration, drawState } from "./main";
-import { ParsedElement } from "../isomorphism/svgParser";
+import { ParsedElement, ParsedPolylineElement } from "../isomorphism/svgParser";
 import { v, vfp } from "../isomorphism/utils";
 import { shaper } from "./shapes";
 import { Mode } from "./abstractMode";
@@ -23,16 +23,16 @@ export class PolylineMode extends Mode {
                 if (this.makeTarget) {
                     const pe = this.makeTarget;
                     if (pe.tag === "polyline" && pe.attrs.points) {
-                        pe.attrs.points.push(cursor);
+                        pe.attrs.points.array.push(cursor);
                     }
                 } else {
-                    const pe2: ParsedElement = {
+                    const pe2: ParsedPolylineElement = {
                         xpath: "???",
                         parent: pe.xpath,
                         tag: "polyline",
                         attrs: {
-                            points: [cursor, cursor],
-                            ...BASE_ATTRS_NULLS,
+                            points: {type: "points", array: [cursor, cursor]},
+                            ...BASE_ATTRS_NULLS(),
                             ...Mode.presentationAttrsDefaultImpl()
                         }
                     }
@@ -49,7 +49,7 @@ export class PolylineMode extends Mode {
         if (this.makeTarget) {
             const pe = this.makeTarget;
             if (pe.tag === "polyline" && pe.attrs.points) {
-                pe.attrs.points.pop();
+                pe.attrs.points.array.pop();
                 this.finished && this.finished(this.makeTarget);
             }
         }
@@ -59,8 +59,8 @@ export class PolylineMode extends Mode {
             const cursor = vfp(this.inTargetCoordinate(this.cursor(event), [this.makeTarget]));
             const pe = this.makeTarget;
             if (pe.tag === "polyline" && pe.attrs.points) {
-                const len = pe.attrs.points.length;
-                pe.attrs.points[len - 1] = cursor;
+                const len = pe.attrs.points.array.length;
+                pe.attrs.points.array[len - 1] = cursor;
                 refleshContent();
             }
         }

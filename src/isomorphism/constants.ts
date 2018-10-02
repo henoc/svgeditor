@@ -1,16 +1,17 @@
 import { ParsedPresentationAttr, ParsedCoreAttr, ParsedStyleAttr, Style } from "./svgParser";
+import { Assoc } from "./svg";
 
 export const SVG_NS = "http://www.w3.org/2000/svg";
 export const XLINK_NS = "http://www.w3.org/1999/xlink";
 
 export const PATH_COMMAND_CHARS = "mlhvcsqtazMLHVCSQTAZ";
 
-export const BASE_ATTRS_NULLS: ParsedCoreAttr & ParsedStyleAttr = Object.freeze({
+export const BASE_ATTRS_NULLS: () => ParsedCoreAttr & ParsedStyleAttr = () => {return{
     class: null,
     style: null,
     id: null,
-    unknown: {}
-});
+    unknown: <Assoc>{}
+}};
 
 export const PRESENTATION_ATTRS_NULLS: ParsedPresentationAttr = Object.freeze({
     fill: null,
@@ -28,8 +29,4 @@ export const PRESENTATION_ATTRS_NULLS: ParsedPresentationAttr = Object.freeze({
     "font-weight": null
 });
 
-export const STYLE_NULLS: Style = Object.freeze({
-    ...PRESENTATION_ATTRS_NULLS,
-    unknown: {}
-});
 
