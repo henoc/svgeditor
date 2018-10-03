@@ -1,5 +1,6 @@
 import { ParsedPresentationAttr, ParsedCoreAttr, ParsedStyleAttr, Style } from "./svgParser";
 import { Assoc } from "./svg";
+import { omit } from "./utils";
 
 export const SVG_NS = "http://www.w3.org/2000/svg";
 export const XLINK_NS = "http://www.w3.org/1999/xlink";
@@ -32,7 +33,7 @@ export const PRESENTATION_ATTRS_NULLS: ParsedPresentationAttr = Object.freeze({
 export const STYLE_NULLS: () => Style = () => {return{
     type: "style",
     unknown: {},
-    ...PRESENTATION_ATTRS_NULLS
+    ...omit(PRESENTATION_ATTRS_NULLS, "transform")
 }}
 
 

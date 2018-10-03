@@ -13,8 +13,8 @@ interface Warning {
     message: string
 }
 
-function isWarning(obj: unknown): obj is Warning {
-    return obj instanceof Object && "interval" in obj && "message" in obj;
+function isWarning(obj: any): obj is Warning {
+    return obj instanceof Object && "type" in obj && obj.type === "warning";
 }
 
 interface ParsedResult {
@@ -601,7 +601,7 @@ function parseAttrs(element: XmlElement, onWarns: (ws: Warning[]) => void) {
     const warns: Warning[] = [];
     const attrs: Assoc = element.attrs;
 
-    const tryParse = (name: string) => attrOf(element, warns, attrs, name);
+    const tryParse = (name: string) => attrOf(element, warns, name);
 
     // for global attributes
     let tmp: string | null;
@@ -842,7 +842,8 @@ type AttrOfMethods = {
     strokeDasharray: () => StrokeDasharray | null
 }
 
-function attrOf(element: XmlElement, warns: Warning[], attrs: Assoc, name: string): Option<AttrOfMethods> {
+export function attrOf(element: XmlElement, warns: Warning[], name: string): Option<AttrOfMethods> {
+    const attrs = element.attrs;
     let value: string;
     if (name in attrs) {
         value = attrs[name];
@@ -945,39 +946,40 @@ function attrOf(element: XmlElement, warns: Warning[], attrs: Assoc, name: strin
     const methods = {
         style: () => {
             delete attrs[name];
-            const arr = value.split(/;:/);
+            const arr = value.split(/[;:]/);
             const styleAttrs: Assoc = {};
             for (let i = 0; i < arr.length; i += 2) {
                 const k = arr[i].trim();
-                const v = arr[i+1].trim();
+                const v = (arr[i+1] || "").trim();
                 if (k && v) styleAttrs[k] = v;
             }
 
-            function tryApply<T>(name: keyof Style, acceptor: (value: string) => T | Warning): T | null {
-                const ret = styleAttrs[name] && acceptor(styleAttrs[name]) || null;
+            function tryApply<T>(styleKey: keyof Style, acceptor: (value: string) => T | Warning): T | null {
+                const ret = styleAttrs[styleKey] && acceptor(styleAttrs[styleKey]) || null;
                 if (ret === null) {
                     return null;
                 } else if (isWarning(ret)) {
                     warns.push(ret);
                     return null;
                 } else {
-                    delete styleAttrs[name];
+                    delete styleAttrs[styleKey];
                     return ret;
                 }
             }
 
-            function tryValidate<T>(name: keyof Style, validator: (obj: unknown) => obj is T): T | null {
-                const value = styleAttrs[name];
+            function tryValidate<T>(styleKey: keyof Style, validator: (obj: unknown) => obj is T): T | null {
+                const value = styleAttrs[styleKey];
                 if (validator(value)) {
-                    delete styleAttrs[name];
+                    delete styleAttrs[styleKey];
                     return value;
                 } else {
-                    warns.push({type: "warning", interval: element.positions.attrs[name].value, message: `${value} is unsupported value.`});
+                    warns.push({type: "warning", interval: element.positions.attrs[name].value, message: `${value} is unsupported value in style attribute.`});
                     return null;
                 }
             }
 
             return <Style>{
+                type: <"style">"style",
                 fill: tryApply("fill", acceptPaint),
                 "fill-rule": tryValidate("fill-rule", isFillRule),
                 stroke: tryApply("stroke", acceptPaint),
@@ -1021,7 +1023,7 @@ function attrOf(element: XmlElement, warns: Warning[], attrs: Assoc, name: strin
                 return null;
             } else {
                 delete attrs[name];
-                return <ViewBox>{type: "viewBox", 0: ret[0], 1: ret[1]};
+                return {type: <"viewBox">"viewBox", 0: ret[0], 1: ret[1]};
             }
         },
         paint: () => handleResult(acceptPaint(value)),
@@ -1029,8 +1031,8 @@ function attrOf(element: XmlElement, warns: Warning[], attrs: Assoc, name: strin
             let tcolor: tinycolor.Instance = tinycolor(value);
             if (tcolor.getFormat() && tcolor.getFormat() !== "hsv") {
                 delete attrs[name];
-                return <Color>{
-                    type: "color",
+                return {
+                    type: <"color">"color",
                     format: <any>tcolor.getFormat(),
                     ...tcolor.toRgb()
                 }
@@ -1044,7 +1046,7 @@ function attrOf(element: XmlElement, warns: Warning[], attrs: Assoc, name: strin
         },
         points: () => {
             delete attrs[name];
-            return <Points>{type: "points", array: convertToPoints()};
+            return {type: <"points">"points", array: convertToPoints()};
         },
         pathDefinition: () => {
             const parsedDAttr = svgPathManager(value);
@@ -1053,7 +1055,7 @@ function attrOf(element: XmlElement, warns: Warning[], attrs: Assoc, name: strin
                 return null;
             } else {
                 delete attrs[name];
-                return <PathCommands>{type: "pathCommands", array: parsedDAttr.segments};
+                return {type: <"pathCommands">"pathCommands", array: parsedDAttr.segments};
             }
         },
         transform: () => handleResult(acceptTransform(value)),
