@@ -29,4 +29,10 @@ export const PRESENTATION_ATTRS_NULLS: ParsedPresentationAttr = Object.freeze({
     "font-weight": null
 });
 
+export const STYLE_NULLS: () => Style = () => {return{
+    type: "style",
+    unknown: {},
+    ...PRESENTATION_ATTRS_NULLS
+}}
+
 

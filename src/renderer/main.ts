@@ -34,7 +34,8 @@ export const callbacks: { [uuid: string]: Function } = {};
 export const configuration = {
     defaultUnit: <LengthUnit>null,
     numOfDecimalPlaces: 1,
-    collectTransform: true
+    collectTransform: true,
+    useStyleAttribute: false
 }
 export const drawState = {
     fill: <Paint | null>{ format: "rgb", r: 255, g: 255, b: 255, a: 1 },
@@ -109,6 +110,7 @@ window.addEventListener("message", event => {
             if (!isLengthUnit(message.data.defaultUnit)) sendErrorMessage(`Configuration "svgeditor.defaultUnit: ${message.data.defaultUnit}" is unsupported unit.`);
             if (message.data.decimalPlaces !== undefined) configuration.numOfDecimalPlaces = message.data.decimalPlaces;
             if (message.data.collectTransform !== undefined) configuration.collectTransform = message.data.collectTransform;
+            if (message.data.useStyleAttribute !== undefined) configuration.useStyleAttribute = message.data.useStyleAttribute;
             break;
         case "input-response":
             textMode(message.data, (pe: ParsedElement | null) => contentChildrenComponent.menuListComponent.menuComponents.text.changeMode("select", pe || undefined));

@@ -867,7 +867,8 @@ function attrOf(element: XmlElement, warns: Warning[], attrs: Assoc, name: strin
     function acceptLength(v: string): Length | Warning {
         let tmp;
         if (tmp = /^[+-]?[0-9]+(\.[0-9]*)?([eE][+-]?[0-9]+)?(em|ex|px|in|cm|mm|pt|pc|%)?$/.exec(v)) {
-            return <Length>{
+            return {
+                type: "length",
                 unit: <any>tmp[3] || null,
                 value: parseFloat(v),
                 attrName: name
@@ -998,7 +999,7 @@ function attrOf(element: XmlElement, warns: Warning[], attrs: Assoc, name: strin
             let tmp;
             if (tmp = /^[+-]?[0-9]+(\.[0-9]*)?([eE][+-]?[0-9]+)?(%)?$/.exec(value)) {
                 delete attrs[name];
-                return tmp[3] ? <Ratio>{unit: "%", value: parseFloat(value)} : Number(value);
+                return tmp[3] ? {type: <"percentageRatio">"percentageRatio", unit: <"%">"%", value: parseFloat(value)} : Number(value);
             } else {
                 warns.push({type: "warning", interval: element.positions.attrs[name].value, message: `${name}: ${value} is not a number or percentage.`});
                 return null;

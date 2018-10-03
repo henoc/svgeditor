@@ -231,6 +231,12 @@
           "default": [],
           "description": "Additional resource directory paths SVG Editor can access",
           "scope": "resource"
+        },
+        "svgeditor.useStyleAttribute": {
+          "type": "boolean",
+          "default": false,
+          "description": "Use style attribute instead of presentation attriubte when there are no previous specifications.",
+          "scope": "resource"
         }
       }
     }

@@ -88,7 +88,8 @@ export function activate(context: vscode.ExtensionContext) {
                         data: {
                             defaultUnit: config.get<string | null>("defaultUnit"),
                             decimalPlaces: config.get<number>("decimalPlaces"),
-                            collectTransform: config.get<boolean>("collectTransformMatrix")
+                            collectTransform: config.get<boolean>("collectTransformMatrix"),
+                            useStyleAttribute: config.get<boolean>("useStyleAttribute")
                         }
                     });
                     return;

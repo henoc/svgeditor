@@ -1,4 +1,4 @@
-import { ParsedElement, Length, Transform, TransformDescriptor, Paint, PathCommand, ParsedUseElement } from "../isomorphism/svgParser";
+import { ParsedElement, Length, Transform, TransformDescriptor, Paint, PathCommand, ParsedUseElement, ParsedPresentationAttr, Style } from "../isomorphism/svgParser";
 import { Vec2, v, vfp, OneOrMore, Merger, deepCopy } from "../isomorphism/utils";
 import { svgPathManager } from "../isomorphism/pathHelpers";
 import { convertToPixel, convertFromPixel } from "./measureUnits";
@@ -11,6 +11,8 @@ import { xfindExn, xrelative } from "../isomorphism/xpath";
 import { acceptHashOnly } from "../isomorphism/url";
 import { findElemById } from "../isomorphism/traverse";
 import { measureStyle } from "./measureStyle";
+import { STYLE_NULLS } from "../isomorphism/constants";
+import { SetIntersection } from "utility-types";
 
 interface ShaperFunctions {
     center: Vec2;
@@ -89,28 +91,38 @@ export function shaper(pe: ParsedElement): ShaperFunctions {
         }
     }
     const corners = new Merger(leftTop).merge(leftBottom).merge(rightTop).merge(rightBottom).object;
+
+    function getPresentationOf(name: SetIntersection<keyof ParsedPresentationAttr, keyof Style>): any {
+        return pe.tag !== "unknown" && ("style" in pe.attrs && pe.attrs.style && pe.attrs.style[name] || "fill" in pe.attrs && pe.attrs[name]) || null;
+    }
+    function setPresentationOf(name: SetIntersection<keyof ParsedPresentationAttr, keyof Style>, value: any) {
+        if (pe.tag !== "unknown") {
+            if ("style" in pe.attrs && (pe.attrs.style && !pe.attrs.style[name] || configuration.useStyleAttribute)) (pe.attrs.style = pe.attrs.style || STYLE_NULLS())[name] = value;
+            else if ("fill" in pe.attrs) pe.attrs[name] = value;
+        }
+    }
     const fill = {
         get fill() {
-            return pe.tag !== "unknown" && "fill" in pe.attrs && pe.attrs.fill || null;
+            return getPresentationOf("fill");
         },
         set fill(paint: Paint | null) {
-            if (pe.tag !== "unknown" && "fill" in pe.attrs) pe.attrs.fill = paint;
+            setPresentationOf("fill", paint);
         }
     }
     const stroke = {
         get stroke() {
-            return pe.tag !== "unknown" && "stroke" in pe.attrs && pe.attrs.stroke || null;
+            return getPresentationOf("stroke");
         },
         set stroke(paint: Paint | null) {
-            if (pe.tag !== "unknown" && "stroke" in pe.attrs) pe.attrs.stroke = paint;
+            setPresentationOf("stroke", paint);
         }
     }
     const fontFamily = {
         get fontFamily() {
-            return pe.tag !== "unknown" && "font-family" in pe.attrs && pe.attrs["font-family"] || null;
+            return getPresentationOf("font-family");
         },
         set fontFamily(family: string | null) {
-            if (pe.tag !== "unknown" && "font-family" in pe.attrs) pe.attrs["font-family"] = family;
+            setPresentationOf("font-family", family);
         }
     }
     const presentationAttrs = new Merger(fill).merge(stroke).merge(fontFamily).object;
@@ -860,39 +872,39 @@ export function multiShaper(pes: OneOrMore<ParsedElement>, useMultiEvenIfSingle:
         const fill = {
             get fill() {
                 for (let pe of pes) {
-                    if (pe.tag !== "unknown" && "fill" in pe.attrs) return pe.attrs.fill;
+                    if (shaper(pe).fill) return shaper(pe).fill;
                 }
                 return null;
             },
             set fill(paint: Paint | null) {
                 for (let pe of pes) {
-                    if (pe.tag !== "unknown" && "fill" in pe.attrs) pe.attrs.fill = paint;
+                    shaper(pe).fill = paint;
                 }
             }
         }
         const stroke = {
             get stroke() {
                 for (let pe of pes) {
-                    if (pe.tag !== "unknown" && "stroke" in pe.attrs) return pe.attrs.stroke;
+                    if (shaper(pe).stroke) return shaper(pe).stroke;
                 }
                 return null;
             },
             set stroke(paint: Paint | null) {
                 for (let pe of pes) {
-                    if (pe.tag !== "unknown" && "stroke" in pe.attrs) pe.attrs.stroke = paint;
+                    shaper(pe).stroke = paint;
                 }
             }
         }
         const fontFamily = {
             get fontFamily() {
                 for (let pe of pes) {
-                    if (pe.tag !== "unknown" && "font-family" in pe.attrs) return pe.attrs["font-family"];
+                    if (shaper(pe).fontFamily) return shaper(pe).fontFamily;
                 }
                 return null;
             },
             set fontFamily(family: string | null) {
                 for (let pe of pes) {
-                    if (pe.tag !== "unknown" && "font-family" in pe.attrs) pe.attrs["font-family"] = family;
+                    shaper(pe).fontFamily = family;
                 }
             }
         }

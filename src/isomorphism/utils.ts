@@ -93,7 +93,7 @@ export function clearEventListeners(element: Element): Element {
  * Type support for pattern match. `x` should be never.
  */
 export function assertNever(x: never): never {
-    throw new Error("Unexpected object: " + x);
+    throw new Error(`Unexpected object: ${JSON.stringify(x)}`);
 }
 
 function join2(sep: (i: number) => string, strs: string[]) {
@@ -261,9 +261,9 @@ export function ifExist<T, U>(nullable: T | null, fn: (t: T) => U) {
 }
 
 export function omit<T extends object, R extends keyof T>(obj: T, key: R | R[]): Omit<T, R> {
-    const copied = {...<object>obj};
+    const copied = <any>{...<object>obj};
     if (Array.isArray(key)) {
-        for (let k of key) delete obj[k];
-    } else delete obj[key];
-    return <any>copied;
+        for (let k of key) delete copied[k];
+    } else delete copied[key];
+    return copied;
 }
