@@ -5,32 +5,51 @@ import { STYLE_NULLS } from "../../src/isomorphism/constants";
 
 describe("svgParser", () => {
     describe("attrOf", () => {
-        const positions: ElementPositionsOnText = {
-            interval: {start: 0, end: 10},
-            openElement: {start: 0, end: 10},
-            closeElement: null,
-            startTag: {start: 1, end: 5},
-            endTag: null,
-            attrs: {
-                style: {name: {start: 2, end: 6}, value: {start: 7, end: 10}}
+        function elemWithSingleAttr(name: string, value: string): XmlElement {
+            const positions: ElementPositionsOnText = {
+                interval: {start: 0, end: 10},
+                openElement: {start: 0, end: 10},
+                closeElement: null,
+                startTag: {start: 1, end: 5},
+                endTag: null,
+                attrs: {
+                    [name]: {name: {start: 2, end: 6}, value: {start: 7, end: 10}}
+                }
             }
+            return {
+                type: "element",
+                name: "test",
+                attrs: {
+                    [name]: value
+                },
+                children: [],
+                positions
+            };
         }
-        const xmlElem: XmlElement = {
-            type: "element",
-            name: "test",
-            attrs: {
-                style: "fill: white; stroke: gray;"
-            },
-            children: [],
-            positions
-        };
         it("style", () => {
             assert.deepStrictEqual(
-                attrOf(xmlElem, [], "style").map(a => a.style()).get,
+                attrOf(elemWithSingleAttr("style", "fill: red; stroke: lime"), [], "style").map(a => a.style()).get,
                 {
                     ...STYLE_NULLS(),
-                    fill: {type: "color", format: "name", r: 255, g: 255, b: 255, a: 1},
-                    stroke: {type: "color", format: "name", r: 128, g: 128, b: 128, a: 1}
+                    fill: {type: "color", format: "name", r: 255, g: 0, b: 0, a: 1},
+                    stroke: {type: "color", format: "name", r: 0, g: 255, b: 0, a: 1}
+                }
+            );
+            assert.deepStrictEqual(
+                attrOf(elemWithSingleAttr("style", "fill: rgb(255, 0, 0);; ;"), [], "style").map(a => a.style()).get,
+                {
+                    ...STYLE_NULLS(),
+                    fill: {type: "color", format: "rgb", r: 255, g: 0, b: 0, a: 1}
+                }
+            );
+        });
+        it("paint", () => {
+            assert.deepStrictEqual(
+                attrOf(elemWithSingleAttr("fill", "transparent"), [], "fill").map(a => a.paint()).get,
+                {
+                    type: "color",
+                    format: "name",
+                    r: 0, g: 0, b: 0, a: 0
                 }
             );
         });

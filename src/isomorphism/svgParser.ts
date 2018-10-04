@@ -946,12 +946,11 @@ export function attrOf(element: XmlElement, warns: Warning[], name: string): Opt
     const methods = {
         style: () => {
             delete attrs[name];
-            const arr = value.split(/[;:]/);
             const styleAttrs: Assoc = {};
-            for (let i = 0; i < arr.length; i += 2) {
-                const k = arr[i].trim();
-                const v = (arr[i+1] || "").trim();
-                if (k && v) styleAttrs[k] = v;
+            const declaration = /\s*(?:([^:;]+)\s*:\s*([^:;]+)\s*)?;?/g;
+            let tmp: RegExpExecArray | null;
+            while ((tmp = declaration.exec(value)) && tmp[0] /* Finish if it matches empty string */) {
+                if (tmp[1] && tmp[2]) styleAttrs[tmp[1]] = tmp[2];
             }
 
             function tryApply<T>(styleKey: keyof Style, acceptor: (value: string) => T | Warning): T | null {
