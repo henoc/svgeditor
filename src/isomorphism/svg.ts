@@ -219,6 +219,8 @@ export class SvgTag implements XmlComponent {
                 copied = <Style>iterate(copied, (key, value) => {
                     if (key !== "unknown" && key !== "type" && value !== null) {
                         return this.fixDecimalPlaces(<any>value);
+                    } else {
+                        return value;
                     }
                 });
                 return copied;

@@ -968,7 +968,9 @@ export function attrOf(element: XmlElement, warns: Warning[], name: string): Opt
 
             function tryValidate<T>(styleKey: keyof Style, validator: (obj: unknown) => obj is T): T | null {
                 const value = styleAttrs[styleKey];
-                if (validator(value)) {
+                if (!value) {
+                    return null;
+                } else if (validator(value)) {
                     delete styleAttrs[styleKey];
                     return value;
                 } else {

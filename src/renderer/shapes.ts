@@ -97,7 +97,7 @@ export function shaper(pe: ParsedElement): ShaperFunctions {
     }
     function setPresentationOf(name: SetIntersection<keyof ParsedPresentationAttr, keyof Style>, value: any) {
         if (pe.tag !== "unknown") {
-            if ("style" in pe.attrs && (pe.attrs.style && !pe.attrs.style[name] || configuration.useStyleAttribute)) (pe.attrs.style = pe.attrs.style || STYLE_NULLS())[name] = value;
+            if ("style" in pe.attrs && (pe.attrs.style && pe.attrs.style[name] || configuration.useStyleAttribute)) (pe.attrs.style = pe.attrs.style || STYLE_NULLS())[name] = value;
             else if ("fill" in pe.attrs) pe.attrs[name] = value;
         }
     }
