@@ -1,6 +1,6 @@
 import { elementOpen, elementClose, text, elementVoid } from "incremental-dom";
 import { drawState, refleshContent, openWindows, contentChildrenComponent, editMode, fontList, paintServers, svgdata, containerElements } from "./main";
-import { Paint, ColorFormat, isColor, isFuncIRI, ParsedElement } from "../isomorphism/svgParser";
+import { Paint, ColorFormat, ParsedElement } from "../isomorphism/svgParser";
 import tinycolor from "tinycolor2";
 import { Component, WindowComponent, ButtonComponent, iconComponent } from "../isomorphism/component";
 import { el, OneOrMore, iterate, assertNever, cursor } from "../isomorphism/utils";
@@ -10,6 +10,7 @@ import { fetchPaintServer, cssString, StopReference, PaintServer } from "../isom
 import { Mode } from "./abstractMode";
 import { xfindExn } from "../isomorphism/xpath";
 import { findElemById } from "../isomorphism/traverse";
+import { PRESENTATION_ATTRS_NULLS, BASE_ATTRS_NULLS } from "../isomorphism/constants";
 
 
 const CANVAS_DEFAULT_COLOR = {r: 255, g: 255, b: 255, a: 1};
@@ -38,7 +39,7 @@ class GradientComponent implements ColorComponent {
         let pe: ParsedElement;
         if (this.activeRangeRefXpath && (pe = xfindExn([svgdata], this.activeRangeRefXpath)) && "stop-color" in pe.attrs) {
             const initialStopColor = pe.attrs["stop-color"];
-            const initialColor = initialStopColor && isColor(initialStopColor) && initialStopColor || CANVAS_DEFAULT_COLOR;
+            const initialColor = initialStopColor && typeof initialStopColor !== "string" && initialStopColor || CANVAS_DEFAULT_COLOR;
             this.canvasComponent = new ColorPickerCanvasComponent(200, 100, tinycolor(initialColor), () => this.onCanvasChange());
         }
     }
@@ -49,7 +50,7 @@ class GradientComponent implements ColorComponent {
         for (let i = 0; i < paintServer.stops.length; i++) {
             const stop = paintServer.stops[i];
             const stopColor = stop["stop-color"];
-            const colorString = isColor(stopColor) ? tinycolor(stopColor).toRgbString() : stopColor;
+            const colorString = typeof stopColor !== "string" ? tinycolor(stopColor).toRgbString() : stopColor;
             el`style`;
                 text(`
                 .svgeditor-stop${i}::-webkit-slider-thumb {
@@ -84,7 +85,7 @@ class GradientComponent implements ColorComponent {
         const value = Number((<HTMLInputElement>event.target).value);
         let pe: ParsedElement;
         if ((pe = xfindExn([svgdata], xpath)) && "offset" in pe.attrs) {
-            pe.attrs.offset = typeof pe.attrs.offset === "number" ? value / 100 : {unit: "%", value};
+            pe.attrs.offset = typeof pe.attrs.offset === "number" ? value / 100 : {type: "percentageRatio", unit: "%", value};
             this.activeRangeRefXpath = xpath;
             this.setCanvas();
         }
@@ -97,8 +98,8 @@ class GradientComponent implements ColorComponent {
             let pe: ParsedElement;
             if (this.activeRangeRefXpath && (pe = xfindExn([svgdata], this.activeRangeRefXpath)) && "stop-color" in pe.attrs) {
                 const currentColor = pe.attrs["stop-color"];
-                if (currentColor && isColor(currentColor)) pe.attrs["stop-color"] = {format: currentColor.format, ...tcolor.toRgb()};
-                else pe.attrs["stop-color"] = {format: "rgb", ...tcolor.toRgb()};
+                if (currentColor && typeof currentColor !== "string") pe.attrs["stop-color"] = {type: "color", format: currentColor.format, ...tcolor.toRgb()};
+                else pe.attrs["stop-color"] = {type: "color", format: "rgb", ...tcolor.toRgb()};
             }
             refleshContent();
         }
@@ -112,10 +113,10 @@ class GradientComponent implements ColorComponent {
                 tag: "stop",
                 parent: "???",
                 attrs: {
-                    offset: {unit: "%", value: 100},
-                    "stop-color": {format: "rgb", ...CANVAS_DEFAULT_COLOR},
-                    ...Mode.baseAttrsDefaultImpl(),
-                    ...Mode.presentationAttrsAllNull()
+                    offset: {type: "percentageRatio", unit: "%", value: 100},
+                    "stop-color": {type: "color", format: "rgb", ...CANVAS_DEFAULT_COLOR},
+                    ...BASE_ATTRS_NULLS(),
+                    ...PRESENTATION_ATTRS_NULLS
                 }
             });
             refleshContent();
@@ -317,7 +318,7 @@ class ColorPickerComponent implements WindowComponent {
     colorComponent: ColorComponent | null = null;
 
     constructor(initialPaint: Paint | null, public relatedProperty: "fill" | "stroke", public onChange: (self: ColorPickerComponent) => void, public onClose: () => void) {
-        this.selectorValue = initialPaint ? (isFuncIRI(initialPaint) ? `url(${initialPaint.url})` : isColor(initialPaint) ? "color" : initialPaint) : "color";
+        this.selectorValue = initialPaint ? (typeof initialPaint === "string" ? initialPaint : initialPaint.type === "funcIri" ? `url(${initialPaint.url})` : "color") : "color";
         this.setColorComponent(initialPaint);
     }
 
@@ -332,19 +333,19 @@ class ColorPickerComponent implements WindowComponent {
     }
     getPaint(destFormat: ColorFormat | null): Paint | null {
         const paint = drawState[this.relatedProperty];
-        const color = this.colorComponent && (this.colorComponent.getColor()) || tinycolor(paint && isColor(paint) && paint || CANVAS_DEFAULT_COLOR);
+        const color = this.colorComponent && (this.colorComponent.getColor()) || tinycolor(paint && typeof paint !== "string" && paint.type === "color" && paint || CANVAS_DEFAULT_COLOR);
         let tmp: RegExpMatchArray | null;
         if (this.selectorValue === "no attribute") {
             return null;
         } else if (this.selectorValue === "none" || this.selectorValue === "currentColor" || this.selectorValue === "inherit") {
             return this.selectorValue;
         } else if (tmp = this.selectorValue.match(/^url\((#[^\(]+)\)$/)) {
-            return {url: tmp[1]};
+            return {type: "funcIri", url: tmp[1]};
         } else {
             if (destFormat !== null) {
-                return {format: destFormat, ...color.toRgb()};
+                return {type: "color", format: destFormat, ...color.toRgb()};
             } else {
-                return {format: "rgb", ...color.toRgb()};
+                return {type: "color", format: "rgb", ...color.toRgb()};
             }
         }
     }
@@ -372,7 +373,7 @@ class ColorPickerComponent implements WindowComponent {
     private setColorComponent(paint: Paint | null) {
         let tmp: RegExpMatchArray | null;
         if (this.selectorValue === "color") {
-            this.colorComponent = new ColorPickerCanvasComponent(200, 100, tinycolor(paint && isColor(paint) && paint || CANVAS_DEFAULT_COLOR), () => this.onChange(this));
+            this.colorComponent = new ColorPickerCanvasComponent(200, 100, tinycolor(paint && typeof paint !== "string" && paint.type === "color" && paint || CANVAS_DEFAULT_COLOR), () => this.onChange(this));
         } else if (tmp = this.selectorValue.match(/^url\(#([^\(]+)\)$/)) {
             const pe = findElemById(svgdata, tmp[1]);
             const paintServer = pe && fetchPaintServer(pe);
@@ -398,8 +399,8 @@ class ColorPickerComponent implements WindowComponent {
                 parent: root.xpath,
                 tag: <"linearGradient">tag,
                 attrs: {
-                    ...Mode.baseAttrsDefaultImpl(),
-                    ...Mode.presentationAttrsAllNull(),
+                    ...BASE_ATTRS_NULLS(),
+                    ...PRESENTATION_ATTRS_NULLS,
                     id: genedId
                 },
                 children: []
@@ -504,9 +505,9 @@ export class StyleConfigComponent implements Component {
         const style = {background: "transparent"};
         let textContent: null | string = null;
         if (paint) {
-            if (!isColor(paint) && !isFuncIRI(paint)) {
+            if (typeof paint === "string") {
                 textContent = paint;
-            } else if (isColor(paint)) {
+            } else if (paint.type === "color") {
                 style.background = tinycolor(paint).toString("rgb");
             } else {
                 const idValue = acceptHashOnly(paint.url);
@@ -534,12 +535,12 @@ export class StyleConfigComponent implements Component {
             switch (relatedProperty) {
                 case "fill":
                 paint = drawState.fill;
-                this.colorBoxFillBackground = drawState.fill = colorpicker.getPaint(paint && isColor(paint) && paint.format || null);
+                this.colorBoxFillBackground = drawState.fill = colorpicker.getPaint(paint && typeof paint !== "string" && paint.type === "color" && paint.format || null);
                 if (this.affectedShapes) multiShaper(this.affectedShapes).fill = drawState.fill;
                 break;
                 case "stroke":
                 paint = drawState.stroke;
-                this.colorBoxStrokeBackground = drawState.stroke = colorpicker.getPaint(paint && isColor(paint) && paint.format || null);
+                this.colorBoxStrokeBackground = drawState.stroke = colorpicker.getPaint(paint && typeof paint !== "string" && paint.type === "color" && paint.format || null);
                 if (this.affectedShapes) multiShaper(this.affectedShapes).stroke = drawState.stroke;
                 break;
             }

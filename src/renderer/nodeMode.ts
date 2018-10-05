@@ -47,10 +47,10 @@ export class NodeMode extends Mode {
             let cursor = vfp(this.inTargetCoordinate(this.cursor(event), [this._selectedShapes]));
             const selected = this._selectedShapes;
             if ((selected.tag === "polyline" || selected.tag === "polygon") && selected.attrs.points) {
-                selected.attrs.points[this.selectedHandlerIndex] = cursor;
+                selected.attrs.points.array[this.selectedHandlerIndex] = cursor;
             } else if (selected.tag === "path" && selected.attrs.d) {
                 let i = 0;
-                svgPathManager(selected.attrs.d).safeIterate(([s, ...t], _, start) => {
+                svgPathManager(selected.attrs.d.array).safeIterate(([s, ...t], _, start) => {
                     switch (s) {
                         case "M":
                         case "L":
@@ -177,14 +177,14 @@ export class NodeMode extends Mode {
             elems.push(e);
         }
         if ((selected.tag === "polyline" || selected.tag === "polygon") && selected.attrs.points) {
-            for (let i = 0; i < selected.attrs.points.length; i++) {
-                const point = selected.attrs.points[i];
+            for (let i = 0; i < selected.attrs.points.array.length; i++) {
+                const point = selected.attrs.points.array[i];
                 registEndPoint(v(point.x, point.y), i);
             }
         } else if (selected.tag === "path" && selected.attrs.d) {
             let i = 0;
             let preEndCtrlPoint: Vec2 | null = null;
-            svgPathManager(selected.attrs.d).safeIterate(([s, ...t], _, start) => {
+            svgPathManager(selected.attrs.d.array).safeIterate(([s, ...t], _, start) => {
                 const points = Vec2.of(...t);
                 const startCtrlPoint = preEndCtrlPoint && preEndCtrlPoint.symmetry(start) || start;
                 switch (s) {

@@ -1,14 +1,20 @@
-import { iterate, Vec2, v, objectValues, Some, Option, None } from "./utils";
+import { iterate, Vec2, v, objectValues, Some, Option, None, assertNever, ifExist } from "./utils";
 import { Assoc } from "./svg";
 import tinycolor from "tinycolor2";
 import { svgPathManager } from "./pathHelpers";
-import { SetDifference, Omit } from "utility-types";
+import { SetDifference, Omit, $Values } from "utility-types";
 import { XmlNode, XmlElement, Interval, ElementPositionsOnText } from "./xmlParser";
+import { toTransformStrWithoutCollect } from "./transformHelpers";
 const { fromTransformAttribute } = require("transformation-matrix/build-commonjs/fromTransformAttribute");
 
 interface Warning {
-    range: Interval,
+    type: "warning",
+    interval: Interval,
     message: string
+}
+
+function isWarning(obj: any): obj is Warning {
+    return obj instanceof Object && "type" in obj && obj.type === "warning";
 }
 
 interface ParsedResult {
@@ -158,10 +164,14 @@ export interface ParsedUnknownElement extends ElementBaseClass {
 }
 
 
-export interface ParsedBaseAttr {
-    class: string[] | null;
+export interface ParsedCoreAttr {
     id: string | null;
     unknown: Assoc;
+}
+
+export interface ParsedStyleAttr {
+    class: Classes | null;
+    style: Style | null;
 }
 
 export interface ParsedPresentationAttr {
@@ -180,7 +190,7 @@ export interface ParsedPresentationAttr {
     "font-weight": FontWeight | null;
 }
 
-interface ParsedSvgAttr extends ParsedBaseAttr {
+interface ParsedSvgAttr extends ParsedCoreAttr, ParsedStyleAttr {
     xmlns: string | null;
     "xmlns:xlink": string | null;
     version: number | null;
@@ -188,16 +198,16 @@ interface ParsedSvgAttr extends ParsedBaseAttr {
     y: Length | null;
     width: Length | null;
     height: Length | null;
-    viewBox: [Point, Point] | null;
+    viewBox: ViewBox | null;
 }
 
-interface ParsedCircleAttr extends ParsedBaseAttr, ParsedPresentationAttr {
+interface ParsedCircleAttr extends ParsedCoreAttr, ParsedStyleAttr, ParsedPresentationAttr {
     cx: Length | null;
     cy: Length | null;
     r: Length | null;
 }
 
-interface ParsedRectAttr extends ParsedBaseAttr, ParsedPresentationAttr {
+interface ParsedRectAttr extends ParsedCoreAttr, ParsedStyleAttr, ParsedPresentationAttr {
     x: Length | null;
     y: Length | null;
     width: Length | null;
@@ -206,22 +216,22 @@ interface ParsedRectAttr extends ParsedBaseAttr, ParsedPresentationAttr {
     ry: Length | null;
 }
 
-interface ParsedEllipseAttr extends ParsedBaseAttr, ParsedPresentationAttr {
+interface ParsedEllipseAttr extends ParsedCoreAttr, ParsedStyleAttr, ParsedPresentationAttr {
     cx: Length | null;
     cy: Length | null;
     rx: Length | null;
     ry: Length | null;
 }
 
-interface ParsedPolylineAttr extends ParsedBaseAttr, ParsedPresentationAttr {
-    points: Point[] | null;
+interface ParsedPolylineAttr extends ParsedCoreAttr, ParsedStyleAttr, ParsedPresentationAttr {
+    points: Points | null;
 }
 
-interface ParsedPathAttr extends ParsedBaseAttr, ParsedPresentationAttr {
-    d: PathCommand[] | null;
+interface ParsedPathAttr extends ParsedCoreAttr, ParsedStyleAttr, ParsedPresentationAttr {
+    d: PathCommands | null;
 }
 
-interface ParsedTextAttr extends ParsedBaseAttr, ParsedPresentationAttr {
+interface ParsedTextAttr extends ParsedCoreAttr, ParsedStyleAttr, ParsedPresentationAttr {
     x: Length | null;
     y: Length | null;
     dx: Length | null;
@@ -230,21 +240,21 @@ interface ParsedTextAttr extends ParsedBaseAttr, ParsedPresentationAttr {
     lengthAdjust: LengthAdjust | null;
 }
 
-interface ParsedGroupAttr extends ParsedBaseAttr, ParsedPresentationAttr {
+interface ParsedGroupAttr extends ParsedCoreAttr, ParsedStyleAttr, ParsedPresentationAttr {
 }
 
-interface ParsedLinearGradientAttr extends ParsedBaseAttr, ParsedPresentationAttr {
+interface ParsedLinearGradientAttr extends ParsedCoreAttr, ParsedStyleAttr, ParsedPresentationAttr {
 }
 
-interface ParsedRadialGradientAttr extends ParsedBaseAttr, ParsedPresentationAttr {
+interface ParsedRadialGradientAttr extends ParsedCoreAttr, ParsedStyleAttr, ParsedPresentationAttr {
 }
 
-interface ParsedStopAttr extends ParsedBaseAttr, ParsedPresentationAttr {
+interface ParsedStopAttr extends ParsedCoreAttr, ParsedStyleAttr, ParsedPresentationAttr {
     offset: Ratio | null;
     "stop-color": StopColor | null;
 }
 
-interface ParsedImageAttr extends ParsedBaseAttr, ParsedPresentationAttr {
+interface ParsedImageAttr extends ParsedCoreAttr, ParsedStyleAttr, ParsedPresentationAttr {
     "xlink:href": string | null;
     href: string | null;
     x: Length | null;
@@ -253,39 +263,110 @@ interface ParsedImageAttr extends ParsedBaseAttr, ParsedPresentationAttr {
     height: Length | null;
 }
 
-interface ParsedDefsAttr extends ParsedBaseAttr, ParsedPresentationAttr {
+interface ParsedDefsAttr extends ParsedCoreAttr, ParsedStyleAttr, ParsedPresentationAttr {
 }
 
-interface ParsedUseAttr extends ParsedBaseAttr, ParsedPresentationAttr {
+interface ParsedUseAttr extends ParsedCoreAttr, ParsedStyleAttr, ParsedPresentationAttr {
     "xlink:href": string | null;
     href: string | null;
     x: Length | null;
     y: Length | null;
     width: Length | null;
     height: Length | null;
+}
+
+export interface Classes {
+    type: "classes";
+    array: string[];
+}
+
+export interface Style extends Omit<ParsedPresentationAttr, "transform"> {
+    type: "style";
+    unknown: Assoc;
+}
+
+const styleStr = (s: Style) => {
+    const arr: string[][] = [];
+    function str(key: keyof Style) {
+        const arrpush = <T>(t: T | null, tostr: (t: T) => string) => {
+            if (t) arr.push([key, tostr(t)]);
+        }
+        switch (key) {
+            case "fill":
+            arrpush(s.fill, paintStr);
+            break;
+            case "fill-rule":
+            arrpush(s["fill-rule"], String);
+            break;
+            case "stroke":
+            arrpush(s.stroke, paintStr);
+            break;
+            case "stroke-width":
+            arrpush(s["stroke-width"], arg => typeof arg === "string" ? arg : lengthStr(arg));
+            break;
+            case "stroke-linecap":
+            arrpush(s["stroke-linecap"], String);
+            break;
+            case "stroke-linejoin":
+            arrpush(s["stroke-linejoin"], String);
+            break;
+            case "stroke-dasharray":
+            arrpush(s["stroke-dasharray"], strokeDasharrayStr);
+            break;
+            case "stroke-dashoffset":
+            arrpush(s["stroke-dashoffset"], arg => typeof arg === "string" ? arg : lengthStr(arg));
+            break;
+            case "font-family":
+            arrpush(s["font-family"], String);
+            break;
+            case "font-size":
+            arrpush(s["font-size"], arg => typeof arg === "string" ? arg : lengthStr(arg));
+            break;
+            case "font-style":
+            arrpush(s["font-style"], String);
+            break;
+            case "font-weight":
+            arrpush(s["font-weight"], String);
+            break;
+            case "unknown":
+            arr.push(...Object.entries(s.unknown));
+            break;
+            case "type":
+            break;
+            default:
+            assertNever(key);
+        }
+    }
+    iterate(s, str);
+    return arr.map(kv => kv.join(": ")).join("; ");
 }
 
 export type LengthUnit = "em" | "ex" | "px" | "in" | "cm" | "mm" | "pt" | "pc" | "%" | null;
 
 export interface Length {
+    type: "length";
     unit: LengthUnit;
     value: number;
     attrName: string;
+}
+
+export interface Lengths {
+    type: "lengths";
+    array: Length[];
 }
 
 export function isLengthUnit(unit: string | null): unit is LengthUnit {
     return unit === null || ["em" , "ex" , "px" , "in" , "cm" , "mm" , "pt" , "pc" , "%"].indexOf(unit) !== -1;
 }
 
-export function isLength(obj: Object): obj is Length {
-    return obj instanceof Object && "unit" in obj && "value" in obj && "attrName" in obj;
-}
+const lengthStr = (len: Length) => `${len.value}${len.unit || ""}`;
 
 export type ColorFormat = "name" | "hex" | "hex6" | "hex3" | "hex4" | "hex8" | "rgb" | "prgb" | "hsl";
 
 export type Paint = "none" | "currentColor" | "inherit" | FuncIRI | Color;
 
 type Color = {
+    type: "color";
     format: ColorFormat;
     r: number;
     g: number;
@@ -294,33 +375,38 @@ type Color = {
 }
 
 type FuncIRI = {
+    type: "funcIri";
     url: string;
 }
 
 export type StopColor = "currentColor" | "inherit" | Color;
 
-export function isColor(obj: Object): obj is Color {
-    return obj instanceof Object && "format" in obj && "r" in obj && "g" in obj && "b" in obj && "a" in obj;
-}
-
-export function isFuncIRI(obj: Object): obj is FuncIRI {
-    return obj instanceof Object && "url" in obj;
-}
-
-export function isPaint(obj: Object): obj is Paint {
-    return (typeof obj === "string" && (obj === "none" || obj === "currentColor" || obj === "inherit")) || isColor(obj) || isFuncIRI(obj);
-}
+const paintStr = (p: Paint) => typeof p === "string" ? p : p.type === "color" ? tinycolor(p).toString(p.format) : `url(${p.url})`;
 
 export interface Point {
     x: number;
     y: number;
 }
 
-export type PathCommand = [string, ...number[]]
-
-export function isPathCommand(obj: Object): obj is PathCommand {
-    return Array.isArray(obj) && (obj.length === 0 || typeof obj[0] === "string");
+export interface ViewBox {
+    type: "viewBox";
+    0: Point;
+    1: Point;
 }
+
+export interface Points {
+    type: "points";
+    array: Point[];
+}
+
+export type PathCommand = [string, ...number[]];
+
+export interface PathCommands {
+    type: "pathCommands";
+    array: PathCommand[];
+}
+
+const pathCommandsStr = (pc: PathCommands) => svgPathManager(pc.array).toString();
 
 export type TransformDescriptor = {
     type: "matrix",
@@ -345,66 +431,100 @@ export type TransformDescriptor = {
 }
 
 export interface Transform {
+    type: "transform";
     descriptors: TransformDescriptor[];
     matrices: Matrix[];
 }
 
-export function isTransform(obj: Object): obj is Transform {
-    return obj instanceof Object && "descriptors" in obj && "matrices" in obj;
-}
+export const transformStr = (t: Transform) => toTransformStrWithoutCollect(t);
 
 export type FontSize = "xx-small" | "x-small" | "small" | "medium" | "large" | "x-large" | "xx-large" | "larger" | "smaller" | Length;
 
-export function isFontSize(obj: Object): obj is FontSize {
-    return isLength(obj) || typeof obj === "string" && ["xx-small" , "x-small" , "small" , "medium" , "large" , "x-large" , "xx-large" , "larger" , "smaller"].indexOf(obj) !== -1;
+export function isFontSizeKeyword(obj: unknown): obj is FontSize {
+    return typeof obj === "string" && ["xx-small" , "x-small" , "small" , "medium" , "large" , "x-large" , "xx-large" , "larger" , "smaller"].indexOf(obj) !== -1;
 }
 
 export type FontStyle = "normal" | "italic" | "oblique";
 
-export function isFontStyle(obj: Object): obj is FontStyle {
+export function isFontStyle(obj: unknown): obj is FontStyle {
     return typeof obj === "string" && ["normal", "italic", "oblique"].indexOf(obj) !== -1;
 }
 
 export type FontWeight = "normal" | "bold" | "lighter" | "bolder" | 100 | 200 | 300 | 400 | 500 | 600 | 700 | 800 | 900;
 
-export function isFontWeight(obj: Object): obj is FontWeight {
+export function isFontWeight(obj: unknown): obj is FontWeight {
     return (typeof obj === "string" || typeof obj === "number") && ["normal", "bold", "lighter", "bolder", 100 , 200 , 300 , 400 , 500 , 600 , 700 , 800 , 900].indexOf(obj) !== -1;
 }
 
 export type LengthAdjust = "spacing" | "spacingAndGlyphs";
 
-export function isLengthAdjust(obj: Object): obj is LengthAdjust {
+export function isLengthAdjust(obj: unknown): obj is LengthAdjust {
     return obj === "spacing" || obj === "spacingAndGlyphs";
 }
 
-export type Ratio = number | {unit: "%", value: number}
+export type Ratio = number | PercentageRatio;
 
-export function isRatio(obj: Object): obj is Ratio {
-    return typeof obj === "number" || (obj instanceof Object && "unit" in obj && "value" in obj);
+interface PercentageRatio {
+    type: "percentageRatio";
+    unit: "%";
+    value: number;
 }
+
+const ratioStr = (r: Ratio) => typeof r === "number" ? String(r) : `${r.value}%`;
 
 export type FillRule = "nonzero" | "evenodd" | "inherit";
 
-export function isFillRule(obj: Object): obj is FillRule {
+export function isFillRule(obj: unknown): obj is FillRule {
     return obj === "nonzero" || obj === "evenodd" || obj === "inherit";
 }
 
 export type StrokeLinecap = "butt" | "round" | "square" | "inherit";
 
-export function isStrokeLinecap(obj: Object): obj is StrokeLinecap {
+export function isStrokeLinecap(obj: unknown): obj is StrokeLinecap {
     return obj === "butt" || obj === "round" || obj === "square" || obj === "inherit";
 }
 
 export type StrokeLinejoin = "miter" | "round" | "bevel" | "inherit";
 
-export function isStrokeLinejoin(obj: Object): obj is StrokeLinejoin {
+export function isStrokeLinejoin(obj: unknown): obj is StrokeLinejoin {
     return obj === "miter" || obj === "round" || obj === "bevel" || obj === "inherit";
 }
 
-export type StrokeDasharray = "none" | Length[] | "inherit";
+export type StrokeDasharray = "none" | Lengths | "inherit";
 
-export function isStrokeDasharray(obj: Object): obj is StrokeDasharray {
-    return Array.isArray(obj) && (obj.length === 0 || isLength(obj[0])) || obj === "none" || obj === "inherit";
+const strokeDasharrayStr = (da: StrokeDasharray) => typeof da === "string" ? da : da.array.map(d => lengthStr(d)).join(" ");
+
+export type AttrValue = Classes | Style | Paint | Length |
+    Lengths | Transform | Points | ViewBox | PathCommands | PercentageRatio | number | string;
+
+export function attrToStr(value: AttrValue): string {
+    if (typeof value === "string" || typeof value === "number") {
+        return String(value);
+    }
+    switch (value.type) {
+        case "classes":
+        return value.array.join(" ");
+        case "color":
+        case "funcIri":
+        return paintStr(value);
+        case "length":
+        return lengthStr(value);
+        case "lengths":
+        return strokeDasharrayStr(value);
+        case "pathCommands":
+        return pathCommandsStr(value);
+        case "percentageRatio":
+        return ratioStr(value);
+        case "points":
+        return value.array.map(p => p.x + "," + p.y).join(" ");
+        case "style":
+        return styleStr(value);
+        case "transform":
+        return transformStr(value);
+        case "viewBox":
+        return [value[0], value[1]].map(p => p.x + " " + p.y).join(" ");
+    }
+    return assertNever(value);
 }
 
 export function parse(node: XmlNode): ParsedResult | null {
@@ -415,68 +535,51 @@ export function parse(node: XmlNode): ParsedResult | null {
         if (Array.isArray(warn)) warns.push(...warn);
         else warns.push(warn);
     }
-    if (node.type === "element") {
-        const children = parseChildren(node, pushWarns, xpath);
-        if (node.name === "svg") {
-            const attrs = parseAttrs(node, pushWarns).svg();
-            return {result: {tag: "svg", attrs, children, xpath, parent}, warns};
-        } else if (node.name === "circle") {
-            const attrs = parseAttrs(node, pushWarns).circle();
-            return {result: {tag: "circle", attrs, xpath, parent}, warns};
-        } else if (node.name === "rect") {
-            const attrs = parseAttrs(node, pushWarns).rect();
-            return {result: {tag: "rect", attrs, xpath, parent}, warns};
-        } else if (node.name === "ellipse") {
-            const attrs = parseAttrs(node, pushWarns).ellipse();
-            return {result: {tag: "ellipse", attrs, xpath, parent}, warns};
-        } else if (node.name === "polyline") {
-            const attrs = parseAttrs(node, pushWarns).polyline();
-            return {result: {tag: "polyline", attrs, xpath, parent}, warns};
-        } else if (node.name === "polygon") {
-            const attrs = parseAttrs(node, pushWarns).polyline();
-            return {result: {tag: "polygon", attrs, xpath, parent}, warns};
-        } else if (node.name === "path") {
-            const attrs = parseAttrs(node, pushWarns).path();
-            return {result: {tag: "path", attrs, xpath, parent}, warns};
-        } else if (node.name === "text") {
-            const attrs = parseAttrs(node, pushWarns).text();
-            return {result: {tag: "text", attrs, xpath, parent, children}, warns};
-        } else if (node.name === "g") {
-            const attrs = parseAttrs(node, pushWarns).g();
-            return {result: {tag: "g", attrs, children, xpath, parent}, warns};
-        } else if (node.name === "linearGradient") {
-            const attrs = parseAttrs(node, pushWarns).linearGradient();
-            return {result: {tag: "linearGradient", attrs, children, xpath, parent}, warns};
-        } else if (node.name === "radialGradient") {
-            const attrs = parseAttrs(node, pushWarns).radialGradient();
-            return {result: {tag: "radialGradient", attrs, children, xpath, parent}, warns};
-        } else if (node.name === "stop") {
-            const attrs = parseAttrs(node, pushWarns).stop();
-            return {result: {tag: "stop", attrs, xpath, parent}, warns};
-        } else if (node.name === "image") {
-            const attrs = parseAttrs(node, pushWarns).image();
-            return {result: {tag: "image", attrs, xpath, parent}, warns};
-        } else if (node.name === "defs") {
-            const attrs = parseAttrs(node, pushWarns).defs();
-            return {result: {tag: "defs", attrs, children, xpath, parent}, warns};
-        } else if (node.name === "use") {
-            const attrs = parseAttrs(node, pushWarns).use();
-            return {result: {tag: "use", attrs, xpath, parent, virtual: null}, warns};
-        } else {
-            const attrs: Assoc = node.attrs;
-            return {result: {tag: "unknown", tag$real: node.name, attrs, children, xpath, parent}, warns: [{range: node.positions.startTag, message: `${node.name} is unsupported element.`}]};
-        }
-    } else if (node.type === "text") {
-        const text = node.text;
-        return {result: {tag: "text()", attrs: {}, text, xpath, parent}, warns};
-    } else if (node.type === "comment") {
-        const text = node.text;
-        return {result: {tag: "comment()", attrs: {}, text, xpath, parent}, warns};
-    } else if (node.type === "cdata") {
-        const text = node.text;
-        return {result: {tag: "cdata()", attrs: {}, text, xpath, parent}, warns};
-    } else {
-        return null;
+    switch (node.type) {
+        case "element":
+            const children = parseChildren(node, pushWarns, xpath);
+            switch (node.name) {
+                case "svg":
+                    return {result: {tag: "svg", attrs: parseAttrs(node, pushWarns).svg(), children, xpath, parent}, warns};
+                case "circle":
+                    return {result: {tag: "circle", attrs: parseAttrs(node, pushWarns).circle(), xpath, parent}, warns};
+                case "rect":
+                    return {result: {tag: "rect", attrs: parseAttrs(node, pushWarns).rect(), xpath, parent}, warns};
+                case "ellipse":
+                    return {result: {tag: "ellipse", attrs: parseAttrs(node, pushWarns).ellipse(), xpath, parent}, warns};
+                case "polyline":
+                    return {result: {tag: "polyline", attrs: parseAttrs(node, pushWarns).polyline(), xpath, parent}, warns};
+                case "polygon":
+                    return {result: {tag: "polygon", attrs: parseAttrs(node, pushWarns).polyline(), xpath, parent}, warns};
+                case "path":
+                    return {result: {tag: "path", attrs: parseAttrs(node, pushWarns).path(), xpath, parent}, warns};
+                case "text":
+                    return {result: {tag: "text", attrs: parseAttrs(node, pushWarns).text(), xpath, parent, children}, warns};
+                case "g":
+                    return {result: {tag: "g", attrs: parseAttrs(node, pushWarns).g(), children, xpath, parent}, warns};
+                case "linearGradient":
+                    return {result: {tag: "linearGradient", attrs: parseAttrs(node, pushWarns).linearGradient(), children, xpath, parent}, warns};
+                case "radialGradient":
+                    return {result: {tag: "radialGradient", attrs: parseAttrs(node, pushWarns).radialGradient(), children, xpath, parent}, warns};
+                case "stop":
+                    return {result: {tag: "stop", attrs: parseAttrs(node, pushWarns).stop(), xpath, parent}, warns};
+                case "image":
+                    return {result: {tag: "image", attrs: parseAttrs(node, pushWarns).image(), xpath, parent}, warns};
+                case "defs":
+                    return {result: {tag: "defs", attrs: parseAttrs(node, pushWarns).defs(), children, xpath, parent}, warns};
+                case "use":
+                    return {result: {tag: "use", attrs: parseAttrs(node, pushWarns).use(), xpath, parent, virtual: null}, warns};
+                default:
+                    return {result: {tag: "unknown", tag$real: node.name, attrs: node.attrs, children, xpath, parent}, warns: [{type: "warning", interval: node.positions.startTag, message: `${node.name} is unsupported element.`}]};
+            }
+        case "text":
+            return {result: {tag: "text()", attrs: {}, text: node.text, xpath, parent}, warns};
+        case "comment":
+            return {result: {tag: "comment()", attrs: {}, text: node.text, xpath, parent}, warns};
+        case "cdata":
+            return {result: {tag: "cdata()", attrs: {}, text: node.text, xpath, parent}, warns};
+        default:
+            return null;
     }
 }
 
@@ -498,14 +601,17 @@ function parseAttrs(element: XmlElement, onWarns: (ws: Warning[]) => void) {
     const warns: Warning[] = [];
     const attrs: Assoc = element.attrs;
 
-    const tryParse = (name: string) => attrOf(element, warns, attrs, name);
+    const tryParse = (name: string) => attrOf(element, warns, name);
 
     // for global attributes
     let tmp: string | null;
-    const globalValidAttrs: Omit<ParsedBaseAttr, "unknown"> = {
+    const coreValidAttrs: Omit<ParsedCoreAttr, "unknown"> = {
         id: pop(attrs, "id"),
-        class: (tmp = pop(attrs, "class")) && tmp && tmp.split(" ") || null
     };
+    const styleValidAttrs: ParsedStyleAttr = {
+        class: (tmp = pop(attrs, "class")) && tmp && {type: "classes", array: tmp.split(" ")} || null,
+        style: tryParse("style").map(a => a.style()).get
+    }
 
     const getPresentationAttrs: () => ParsedPresentationAttr = () => {
         return {
@@ -533,7 +639,7 @@ function parseAttrs(element: XmlElement, onWarns: (ws: Warning[]) => void) {
     return {
         svg: () => {
             const validSvgAttrs: ParsedSvgAttr = {
-                ...globalValidAttrs,
+                ...coreValidAttrs, ...styleValidAttrs,
                 xmlns: pop(attrs, "xmlns"),
                 x: tryParse("x").map(a => a.length()).get,
                 y: tryParse("y").map(a => a.length()).get,
@@ -549,7 +655,7 @@ function parseAttrs(element: XmlElement, onWarns: (ws: Warning[]) => void) {
         },
         circle: () => {
             const validCircleAttrs: ParsedCircleAttr = {
-                ...globalValidAttrs,
+                ...coreValidAttrs, ...styleValidAttrs,
                 ...getPresentationAttrs(),
                 cx: tryParse("cx").map(a => a.length()).get,
                 cy: tryParse("cy").map(a => a.length()).get,
@@ -561,7 +667,7 @@ function parseAttrs(element: XmlElement, onWarns: (ws: Warning[]) => void) {
         },
         rect: () => {
             const validRectAttrs: ParsedRectAttr = {
-                ...globalValidAttrs,
+                ...coreValidAttrs, ...styleValidAttrs,
                 ...getPresentationAttrs(),
                 x: tryParse("x").map(a => a.length()).get,
                 y: tryParse("y").map(a => a.length()).get,
@@ -576,7 +682,7 @@ function parseAttrs(element: XmlElement, onWarns: (ws: Warning[]) => void) {
         },
         ellipse: () => {
             const validEllipseAttrs: ParsedEllipseAttr = {
-                ...globalValidAttrs,
+                ...coreValidAttrs, ...styleValidAttrs,
                 ...getPresentationAttrs(),
                 cx: tryParse("cx").map(a => a.length()).get,
                 cy: tryParse("cy").map(a => a.length()).get,
@@ -589,7 +695,7 @@ function parseAttrs(element: XmlElement, onWarns: (ws: Warning[]) => void) {
         },
         polyline: () => {
             const validPolylineAttrs: ParsedPolylineAttr = {
-                ...globalValidAttrs,
+                ...coreValidAttrs, ...styleValidAttrs,
                 ...getPresentationAttrs(),
                 points: tryParse("points").map(a => a.points()).get,
                 unknown: unknownAttrs(attrs, element, pushWarns)
@@ -599,7 +705,7 @@ function parseAttrs(element: XmlElement, onWarns: (ws: Warning[]) => void) {
         },
         path: () => {
             const validPathAttrs: ParsedPathAttr = {
-                ...globalValidAttrs,
+                ...coreValidAttrs, ...styleValidAttrs,
                 ...getPresentationAttrs(),
                 d: tryParse("d").map(a => a.pathDefinition()).get,
                 unknown: unknownAttrs(attrs, element, pushWarns)
@@ -609,7 +715,7 @@ function parseAttrs(element: XmlElement, onWarns: (ws: Warning[]) => void) {
         },
         text: () => {
             const validTextAttrs: ParsedTextAttr = {
-                ...globalValidAttrs,
+                ...coreValidAttrs, ...styleValidAttrs,
                 ...getPresentationAttrs(),
                 x: tryParse("x").map(a => a.length()).get,
                 y: tryParse("y").map(a => a.length()).get,
@@ -624,7 +730,7 @@ function parseAttrs(element: XmlElement, onWarns: (ws: Warning[]) => void) {
         },
         g: () => {
             const validGroupAttrs: ParsedGroupAttr = {
-                ...globalValidAttrs,
+                ...coreValidAttrs, ...styleValidAttrs,
                 ...getPresentationAttrs(),
                 unknown: unknownAttrs(attrs, element, pushWarns)
             };
@@ -633,7 +739,7 @@ function parseAttrs(element: XmlElement, onWarns: (ws: Warning[]) => void) {
         },
         linearGradient: () => {
             const validLinearGradientAttrs: ParsedLinearGradientAttr = {
-                ...globalValidAttrs,
+                ...coreValidAttrs, ...styleValidAttrs,
                 ...getPresentationAttrs(),
                 unknown: unknownAttrs(attrs, element, pushWarns)
             };
@@ -642,7 +748,7 @@ function parseAttrs(element: XmlElement, onWarns: (ws: Warning[]) => void) {
         },
         radialGradient: () => {
             const validRadialGradientAttrs: ParsedRadialGradientAttr = {
-                ...globalValidAttrs,
+                ...coreValidAttrs, ...styleValidAttrs,
                 ...getPresentationAttrs(),
                 unknown: unknownAttrs(attrs, element, pushWarns)
             };
@@ -651,7 +757,7 @@ function parseAttrs(element: XmlElement, onWarns: (ws: Warning[]) => void) {
         },
         stop: () => {
             const validStopAttrs: ParsedStopAttr = {
-                ...globalValidAttrs,
+                ...coreValidAttrs, ...styleValidAttrs,
                 ...getPresentationAttrs(),
                 offset: tryParse("offset").map(a => a.ratio()).get,
                 "stop-color": tryParse("stop-color").map(a => a.stopColor()).get,
@@ -662,7 +768,7 @@ function parseAttrs(element: XmlElement, onWarns: (ws: Warning[]) => void) {
         },
         image: () => {
             const validImageAttrs: ParsedImageAttr = {
-                ...globalValidAttrs,
+                ...coreValidAttrs, ...styleValidAttrs,
                 ...getPresentationAttrs(),
                 "xlink:href": pop(attrs, "xlink:href"),
                 href: pop(attrs, "href"),
@@ -677,7 +783,7 @@ function parseAttrs(element: XmlElement, onWarns: (ws: Warning[]) => void) {
         },
         defs: () => {
             const validDefsAttrs: ParsedDefsAttr = {
-                ...globalValidAttrs,
+                ...coreValidAttrs, ...styleValidAttrs,
                 ...getPresentationAttrs(),
                 unknown: unknownAttrs(attrs, element, pushWarns)
             };
@@ -686,7 +792,7 @@ function parseAttrs(element: XmlElement, onWarns: (ws: Warning[]) => void) {
         },
         use: () => {
             const validUseAttrs: ParsedUseAttr = {
-                ...globalValidAttrs,
+                ...coreValidAttrs, ...styleValidAttrs,
                 ...getPresentationAttrs(),
                 "xlink:href": pop(attrs, "xlink:href"),
                 href: pop(attrs, "href"),
@@ -714,28 +820,30 @@ function pop(attrs: Assoc, name: string) {
 
 function unknownAttrs(attrs: Assoc, element: XmlElement, onWarns: (ws: Warning[]) => void): Assoc {
     onWarns(objectValues(iterate(attrs, (name) => {
-        return {range: element.positions.attrs[name].name, message: `${name} is unsupported property.`};
+        return {type: <"warning">"warning", interval: element.positions.attrs[name].name, message: `${name} is unsupported property.`};
     })));
     return attrs;
 }
 
 type AttrOfMethods = {
+    style: () => Style,
     length: () => Length | null,
     lengthOrInherit: () => Length | "inherit" | null,
     ratio: () => Ratio | null,
     number: () => number | null,
-    viewBox: () => [Point, Point] | null,
+    viewBox: () => ViewBox | null,
     paint: () => Paint | null,
     stopColor: () => StopColor | null,
-    points: () => Point[],
-    pathDefinition: () => PathCommand[] | null,
+    points: () => Points,
+    pathDefinition: () => PathCommands | null,
     transform: () => Transform | null,
-    validate: <T>(validator: (obj: Object) => obj is T) => T & string | null,
+    validate: <T>(validator: (obj: unknown) => obj is T) => T & string | null,
     fontSize: () => FontSize | null,
     strokeDasharray: () => StrokeDasharray | null
 }
 
-function attrOf(element: XmlElement, warns: Warning[], attrs: Assoc, name: string): Option<AttrOfMethods> {
+export function attrOf(element: XmlElement, warns: Warning[], name: string): Option<AttrOfMethods> {
+    const attrs = element.attrs;
     let value: string;
     if (name in attrs) {
         value = attrs[name];
@@ -760,40 +868,143 @@ function attrOf(element: XmlElement, warns: Warning[], attrs: Assoc, name: strin
     function acceptLength(v: string): Length | Warning {
         let tmp;
         if (tmp = /^[+-]?[0-9]+(\.[0-9]*)?([eE][+-]?[0-9]+)?(em|ex|px|in|cm|mm|pt|pc|%)?$/.exec(v)) {
-            return <Length>{
+            return {
+                type: "length",
                 unit: <any>tmp[3] || null,
                 value: parseFloat(v),
                 attrName: name
             };
         } else {
-            return {range: element.positions.attrs[name].value, message: `${name}: ${v} is a invalid number with unit.`};
+            return {type: "warning", interval: element.positions.attrs[name].value, message: `${name}: ${v} is a invalid number with unit.`};
+        }
+    }
+
+    const acceptLengthOrInherit = (v: string) => v === "inherit" ? v : acceptLength(v);
+
+    function acceptPaint(v: string): Paint | Warning {
+        let tcolor: tinycolor.Instance = tinycolor(v);
+        let tmp: RegExpMatchArray | null;
+        if (tcolor.getFormat() && tcolor.getFormat() !== "hsv") {
+            return {
+                type: "color",
+                format: <any>tcolor.getFormat(),
+                ...tcolor.toRgb()
+            }
+        } else if (/^(none|currentColor|inherit)$/.test(v)) {
+            return <Paint>v;
+        } else if ((tmp = v.match(/^url\(([^\)]+)\)$/)) && tmp) {
+            return {type: "funcIri", url: tmp[1]};
+        } else {
+            return {type: "warning", interval: element.positions.attrs[name].value, message: `${name}: ${v} is unsupported paint value.`};
+        }
+    }
+
+    function acceptStrokeDasharray(v: string): StrokeDasharray | Warning {
+        if (v === "none" || v === "inherit") {
+            return v;
+        } else {
+            const strs = v.split(/[,\s]+/);
+            const lengths: Length[] = [];
+            for (let str of strs) {
+                const maybeLength = acceptLength(str);
+                if (maybeLength.type === "length") {
+                    lengths.push(maybeLength);
+                } else {
+                    return {type: "warning", interval: element.positions.attrs[name].value, message: `${name}: ${v} is unsupported stroke-dasharray value.`};
+                }
+            }
+            return {type: "lengths", array: lengths};
+        }
+    }
+
+    function acceptTransform(v: string): Transform | Warning {
+        try {
+            return {type: "transform", ...fromTransformAttribute(v)};
+        } catch (error) {
+            return {type: "warning", interval: element.positions.attrs[name].value, message: `at transform attribute: ${error}`};
+        }
+    }
+
+    function acceptFontSize(v: string): FontSize | Warning {
+        if (isFontSizeKeyword(v)) {
+            return v;
+        } else {
+            return acceptLength(v);
+        }
+    }
+
+    function handleResult<T>(res: T | Warning): T | null {
+        if (isWarning(res)) {
+            warns.push(res);
+            return null;
+        } else {
+            delete attrs[name];
+            return res;
         }
     }
 
     const methods = {
-        length: () => {
-            const maybeLength = acceptLength(value);
-            if (isLength(maybeLength)) {
-                delete attrs[name];
-                return maybeLength;
-            } else {
-                warns.push(maybeLength);
-                return null;
+        style: () => {
+            delete attrs[name];
+            const styleAttrs: Assoc = {};
+            const declaration = /\s*(?:([^:;]+)\s*:\s*([^:;]+)\s*)?;?/g;
+            let tmp: RegExpExecArray | null;
+            while ((tmp = declaration.exec(value)) && tmp[0] /* Finish if it matches empty string */) {
+                if (tmp[1] && tmp[2]) styleAttrs[tmp[1]] = tmp[2];
             }
+
+            function tryApply<T>(styleKey: keyof Style, acceptor: (value: string) => T | Warning): T | null {
+                const ret = styleAttrs[styleKey] && acceptor(styleAttrs[styleKey]) || null;
+                if (ret === null) {
+                    return null;
+                } else if (isWarning(ret)) {
+                    warns.push(ret);
+                    return null;
+                } else {
+                    delete styleAttrs[styleKey];
+                    return ret;
+                }
+            }
+
+            function tryValidate<T>(styleKey: keyof Style, validator: (obj: unknown) => obj is T): T | null {
+                const value = styleAttrs[styleKey];
+                if (!value) {
+                    return null;
+                } else if (validator(value)) {
+                    delete styleAttrs[styleKey];
+                    return value;
+                } else {
+                    warns.push({type: "warning", interval: element.positions.attrs[name].value, message: `${value} is unsupported value in style attribute.`});
+                    return null;
+                }
+            }
+
+            return <Style>{
+                type: <"style">"style",
+                fill: tryApply("fill", acceptPaint),
+                "fill-rule": tryValidate("fill-rule", isFillRule),
+                stroke: tryApply("stroke", acceptPaint),
+                "stroke-width": tryApply("stroke-width", acceptLengthOrInherit),
+                "stroke-linecap": tryValidate("stroke-linecap", isStrokeLinecap),
+                "stroke-linejoin": tryValidate("stroke-linejoin", isStrokeLinejoin),
+                "stroke-dasharray": tryApply("stroke-dasharray", acceptStrokeDasharray),
+                "stroke-dashoffset": tryApply("stroke-dashoffset", acceptLengthOrInherit),
+                "font-family": pop(styleAttrs, "font-family"),
+                "font-size": tryApply("font-size", acceptFontSize),
+                "font-style": tryValidate("font-style", isFontStyle),
+                "font-weight": tryValidate("font-weight", isFontWeight),
+                unknown: styleAttrs
+            };
         },
-        lengthOrInherit: () => {
-            if (value === "inherit") {
-                delete attrs[name];
-                return "inherit";
-            } else return methods.length();
-        },
+        length: () => handleResult(acceptLength(value)),
+        lengthOrInherit: () => handleResult(acceptLengthOrInherit(value)),
         ratio: () => {
             let tmp;
             if (tmp = /^[+-]?[0-9]+(\.[0-9]*)?([eE][+-]?[0-9]+)?(%)?$/.exec(value)) {
                 delete attrs[name];
-                return tmp[3] ? <Ratio>{unit: "%", value: parseFloat(value)} : Number(value);
+                return tmp[3] ? {type: <"percentageRatio">"percentageRatio", unit: <"%">"%", value: parseFloat(value)} : Number(value);
             } else {
-                warns.push({range: element.positions.attrs[name].value, message: `${name}: ${value} is not a number or percentage.`});
+                warns.push({type: "warning", interval: element.positions.attrs[name].value, message: `${name}: ${value} is not a number or percentage.`});
                 return null;
             }
         },
@@ -802,45 +1013,27 @@ function attrOf(element: XmlElement, warns: Warning[], attrs: Assoc, name: strin
                 delete attrs[name];
                 return Number(value);
             } else {
-                warns.push({range: element.positions.attrs[name].value, message: `${name}: ${value} is not a number.`});
+                warns.push({type: "warning", interval: element.positions.attrs[name].value, message: `${name}: ${value} is not a number.`});
                 return null;
             }
         },
         viewBox: () => {
             const ret = convertToPoints();
             if (ret.length !== 2) {
-                warns.push({range: element.positions.attrs[name].value, message: `${value} is a invalid viewBox value.`});
+                warns.push({type: "warning", interval: element.positions.attrs[name].value, message: `${value} is a invalid viewBox value.`});
                 return null;
             } else {
                 delete attrs[name];
-                return <[Point, Point]>[ret[0], ret[1]];
+                return {type: <"viewBox">"viewBox", 0: ret[0], 1: ret[1]};
             }
         },
-        paint: () => {
-            let tcolor: tinycolor.Instance = tinycolor(value);
-            let tmp: RegExpMatchArray | null;
-            if (tcolor.getFormat() && tcolor.getFormat() !== "hsv") {
-                delete attrs[name];
-                return {
-                    format: <any>tcolor.getFormat(),
-                    ...tcolor.toRgb()
-                }
-            } else if (/^(none|currentColor|inherit)$/.test(value)) {
-                delete attrs[name];
-                return <Paint>value;
-            } else if ((tmp = value.match(/^url\(([^\)]+)\)$/)) && tmp) {
-                delete attrs[name];
-                return {url: tmp[1]};
-            } else {
-                warns.push({range: element.positions.attrs[name].value, message: `${name}: ${value} is unsupported paint value.`});
-                return null;        
-            }
-        },
+        paint: () => handleResult(acceptPaint(value)),
         stopColor: () => {
             let tcolor: tinycolor.Instance = tinycolor(value);
             if (tcolor.getFormat() && tcolor.getFormat() !== "hsv") {
                 delete attrs[name];
                 return {
+                    type: <"color">"color",
                     format: <any>tcolor.getFormat(),
                     ...tcolor.toRgb()
                 }
@@ -848,70 +1041,36 @@ function attrOf(element: XmlElement, warns: Warning[], attrs: Assoc, name: strin
                 delete attrs[name];
                 return <StopColor>value;
             } else {
-                warns.push({range: element.positions.attrs[name].value, message: `${name}: ${value} is unsupported stop-color value.`});
+                warns.push({type: "warning", interval: element.positions.attrs[name].value, message: `${name}: ${value} is unsupported stop-color value.`});
                 return null;        
             }
         },
         points: () => {
             delete attrs[name];
-            return convertToPoints();
+            return {type: <"points">"points", array: convertToPoints()};
         },
         pathDefinition: () => {
             const parsedDAttr = svgPathManager(value);
             if (parsedDAttr.err) {
-                warns.push({range: element.positions.attrs[name].value, message: parsedDAttr.err});
+                warns.push({type: "warning", interval: element.positions.attrs[name].value, message: parsedDAttr.err});
                 return null;
             } else {
                 delete attrs[name];
-                return parsedDAttr.segments;
+                return {type: <"pathCommands">"pathCommands", array: parsedDAttr.segments};
             }
         },
-        transform: () => {
-            try {
-                delete attrs[name];
-                return fromTransformAttribute(value);
-            } catch (error) {
-                warns.push({range: element.positions.attrs[name].value, message: `at transform attribute: ${error}`});
-                return null;
-            }
-        },
-        validate: <T>(validator: (obj: Object) => obj is T) => {
+        transform: () => handleResult(acceptTransform(value)),
+        validate: <T>(validator: (obj: unknown) => obj is T) => {
             if (validator(value)) {
                 delete attrs[name];
                 return value;
             } else {
-                warns.push({range: element.positions.attrs[name].value, message: `${value} is unsupported value.`});
+                warns.push({type: "warning", interval: element.positions.attrs[name].value, message: `${value} is unsupported value.`});
                 return null;
             }
         },
-        fontSize: () => {
-            if (isFontSize(value) /* Use only for judging font-size string representation */) {
-                delete attrs[name];
-                return value;
-            } else {
-                return methods.length();
-            }
-        },
-        strokeDasharray: () => {
-            if (value === "none" || value === "inherit") {
-                delete attrs[name];
-                return value;
-            } else {
-                const strs = value.split(/,|\s/);
-                const lengths: Length[] = [];
-                for (let str of strs) {
-                    const maybeLength = acceptLength(str);
-                    if (isLength(maybeLength)) {
-                        lengths.push(maybeLength);
-                    } else {
-                        warns.push({range: element.positions.attrs[name].value, message: `${name}: ${value} is unsupported stroke-dasharray value.`});
-                        return null;
-                    }
-                }
-                delete attrs[name];
-                return lengths;
-            }
-        }
+        fontSize: () => handleResult(acceptFontSize(value)),
+        strokeDasharray: () => handleResult(acceptStrokeDasharray(value)),
     };
 
     return new Some<AttrOfMethods>(methods);

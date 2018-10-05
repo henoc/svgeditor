@@ -1,10 +1,11 @@
 import { refleshContent, configuration, drawState } from "./main";
 import { Vec2, v, vfp } from "../isomorphism/utils";
-import { ParsedElement } from "../isomorphism/svgParser";
+import { ParsedElement, ParsedRectElement } from "../isomorphism/svgParser";
 import { shaper } from "./shapes";
 import { Mode } from "./abstractMode";
 import { SvgTag } from "../isomorphism/svg";
 import { applyToPoint, inverse } from "transformation-matrix";
+import { BASE_ATTRS_NULLS } from "../isomorphism/constants";
 
 export class RectMode extends Mode {
 
@@ -22,18 +23,18 @@ export class RectMode extends Mode {
             this.isDragging = true;
             this.startCursorPos = vfp(this.inTargetCoordinate(this.cursor(event), [pe]));
             if (root.tag === "svg") {
-                const pe2: ParsedElement = {
+                const pe2: ParsedRectElement = {
                     xpath: "???",
                     parent: pe.xpath,
                     tag: "rect",
                     attrs: {
-                        x: {unit: configuration.defaultUnit, value: 0, attrName: "x"},
-                        y: {unit: configuration.defaultUnit, value: 0, attrName: "y"},
-                        width: {unit: configuration.defaultUnit, value: 0, attrName: "width"},
-                        height: {unit: configuration.defaultUnit, value: 0, attrName: "height"},
+                        x: {type: "length", unit: configuration.defaultUnit, value: 0, attrName: "x"},
+                        y: {type: "length", unit: configuration.defaultUnit, value: 0, attrName: "y"},
+                        width: {type: "length", unit: configuration.defaultUnit, value: 0, attrName: "width"},
+                        height: {type: "length", unit: configuration.defaultUnit, value: 0, attrName: "height"},
                         rx: null,
                         ry: null,
-                        ...Mode.baseAttrsDefaultImpl(),
+                        ...BASE_ATTRS_NULLS(),
                         ...Mode.presentationAttrsDefaultImpl()
                     }
                 };

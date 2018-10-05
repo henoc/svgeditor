@@ -1,6 +1,6 @@
 import memoize from "fast-memoize";
 import { elementOpen, elementClose, elementVoid } from "incremental-dom";
-import { $Values } from "utility-types";
+import { $Values, Omit } from "utility-types";
 
 /**
  * Mapping in object. `{a: 1, b: 2, c: 3} ->(+1) {a: 2, b: 3, c: 4}`
@@ -93,7 +93,7 @@ export function clearEventListeners(element: Element): Element {
  * Type support for pattern match. `x` should be never.
  */
 export function assertNever(x: never): never {
-    throw new Error("Unexpected object: " + x);
+    throw new Error(`Unexpected object: ${JSON.stringify(x)}`);
 }
 
 function join2(sep: (i: number) => string, strs: string[]) {
@@ -256,3 +256,14 @@ export function cursor(event: MouseEvent, target: Element): Vec2 {
     return v(event.clientX - rect.left, event.clientY - rect.top);
 }
 
+export function ifExist<T, U>(nullable: T | null, fn: (t: T) => U) {
+    if (nullable !== null) return fn(nullable);
+}
+
+export function omit<T extends object, R extends keyof T>(obj: T, key: R | R[]): Omit<T, R> {
+    const copied = <any>{...<object>obj};
+    if (Array.isArray(key)) {
+        for (let k of key) delete copied[k];
+    } else delete copied[key];
+    return copied;
+}

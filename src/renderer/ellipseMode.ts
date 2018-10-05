@@ -1,10 +1,11 @@
 import { refleshContent, configuration, drawState } from "./main";
 import { Vec2, v, vfp } from "../isomorphism/utils";
-import { ParsedElement } from "../isomorphism/svgParser";
+import { ParsedElement, ParsedEllipseElement } from "../isomorphism/svgParser";
 import { shaper } from "./shapes";
 import { Mode } from "./abstractMode";
 import { SvgTag } from "../isomorphism/svg";
 import { applyToPoint, inverse } from "transformation-matrix";
+import { BASE_ATTRS_NULLS } from "../isomorphism/constants";
 
 export class EllipseMode extends Mode {
 
@@ -22,16 +23,16 @@ export class EllipseMode extends Mode {
             this.isDragging = true;
             this.startCursorPos = vfp(this.inTargetCoordinate(this.cursor(event), [pe]));
             if (root.tag === "svg") {
-                const pe2: ParsedElement = {
+                const pe2: ParsedEllipseElement = {
                     xpath: "???",
                     parent: pe.xpath,
                     tag: "ellipse",
                     attrs: {
-                        cx: {unit: configuration.defaultUnit, value: 0, attrName: "cx"},
-                        cy: {unit: configuration.defaultUnit, value: 0, attrName: "cy"},
-                        rx: {unit: configuration.defaultUnit, value: 0, attrName: "rx"},
-                        ry: {unit: configuration.defaultUnit, value: 0, attrName: "ry"},
-                        ...Mode.baseAttrsDefaultImpl(),
+                        cx: {type: "length", unit: configuration.defaultUnit, value: 0, attrName: "cx"},
+                        cy: {type: "length", unit: configuration.defaultUnit, value: 0, attrName: "cy"},
+                        rx: {type: "length", unit: configuration.defaultUnit, value: 0, attrName: "rx"},
+                        ry: {type: "length", unit: configuration.defaultUnit, value: 0, attrName: "ry"},
+                        ...BASE_ATTRS_NULLS(),
                         ...Mode.presentationAttrsDefaultImpl()
                     }
                 };

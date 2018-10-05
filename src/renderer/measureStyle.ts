@@ -2,14 +2,14 @@ import { ParsedElement, ParsedPresentationAttr } from "../isomorphism/svgParser"
 import { construct } from "./svgConstructor";
 import { embeddingForm } from "../isomorphism/xpath";
 import memoize from "fast-memoize";
-import { svgns } from "../isomorphism/svg";
+import { SVG_NS } from "../isomorphism/constants";
 
 /**
  * Get valid attributes by inserting invisible elements into body temporarily.
  */
 function measureStyleByInsertingTemporarily(root: ParsedElement, xpath: string) {
     const xmlComponent = construct(root);
-    const svg = document.createElementNS(svgns, "svg");
+    const svg = document.createElementNS(SVG_NS, "svg");
     svg.style.position = "absolute";
     svg.style.zIndex = "-2147483648";
     svg.style.left = "0";

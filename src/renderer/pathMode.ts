@@ -1,10 +1,11 @@
 import { drawState, refleshContent } from "./main";
-import { ParsedElement } from "../isomorphism/svgParser";
+import { ParsedElement, ParsedPathElement } from "../isomorphism/svgParser";
 import { v } from "../isomorphism/utils";
 import { Mode } from "./abstractMode";
 import { SvgTag } from "../isomorphism/svg";
 import { applyToPoint, inverse } from "transformation-matrix";
 import { shaper } from "./shapes";
+import { BASE_ATTRS_NULLS } from "../isomorphism/constants";
 
 export class PathMode extends Mode {
 
@@ -22,19 +23,19 @@ export class PathMode extends Mode {
             this.isDragging = true;
             if (root.tag === "svg") {
                 if (this.makeTarget === null) {
-                    const pe2: ParsedElement = {
+                    const pe2: ParsedPathElement = {
                         xpath: "???",
                         parent: pe.xpath,
                         tag: "path",
                         attrs: {
-                            d: [
+                            d: {type: "pathCommands", array: [
                                 ["M", cx, cy],
                                 ["S",
                                     /* end ctrl point */ cx, cy,
                                     /* end point */ cx, cy
                                 ]
-                            ],
-                            ...Mode.baseAttrsDefaultImpl(),
+                            ]},
+                            ...BASE_ATTRS_NULLS(),
                             ...Mode.presentationAttrsDefaultImpl()
                         }
                     };
@@ -45,7 +46,7 @@ export class PathMode extends Mode {
                     const pe = this.makeTarget;
                     if (pe.tag === "path" && pe.attrs.d) {
                         // insert new S command in second of the d
-                        pe.attrs.d.splice(1, 0, ["S", cx, cy, cx, cy]);
+                        pe.attrs.d.array.splice(1, 0, ["S", cx, cy, cx, cy]);
                         refleshContent();
                     }
                 }
@@ -59,16 +60,16 @@ export class PathMode extends Mode {
             if (target.tag === "path" && target.attrs.d) {
                 // delete second S command and modify new second S command to C command if exists
                 const secondS = 1;
-                const secondSEndCtrl = v(target.attrs.d[secondS][1], target.attrs.d[secondS][2]);
-                const secondSEnd = v(target.attrs.d[secondS][3], target.attrs.d[secondS][4]);
+                const secondSEndCtrl = v(target.attrs.d.array[secondS][1], target.attrs.d.array[secondS][2]);
+                const secondSEnd = v(target.attrs.d.array[secondS][3], target.attrs.d.array[secondS][4]);
                 const newCStartCtrl = secondSEndCtrl.symmetry(secondSEnd);
-                target.attrs.d.splice(1, 1);
-                if (target.attrs.d.length <= 1) {
+                target.attrs.d.array.splice(1, 1);
+                if (target.attrs.d.array.length <= 1) {
                     root.children.pop();
                 } else {
-                    const [preCmdName, ...preArgs] = target.attrs.d[1];
-                    target.attrs.d[1] = ["C", newCStartCtrl.x, newCStartCtrl.y, ...preArgs];
-                    target.attrs.d[0] = ["M", secondSEnd.x, secondSEnd.y];
+                    const [preCmdName, ...preArgs] = target.attrs.d.array[1];
+                    target.attrs.d.array[1] = ["C", newCStartCtrl.x, newCStartCtrl.y, ...preArgs];
+                    target.attrs.d.array[0] = ["M", secondSEnd.x, secondSEnd.y];
                 }
                 this.finished && this.finished(this.makeTarget);
             }
@@ -83,14 +84,14 @@ export class PathMode extends Mode {
                 const secondS = 1;
                 if (this.isDragging) {
                     // modify M and second S command args (end ctrl point) while dragging
-                    pe.attrs.d[topM][1] = cx;
-                    pe.attrs.d[topM][2] = cy;
-                    pe.attrs.d[secondS][1] = cx;
-                    pe.attrs.d[secondS][2] = cy;
+                    pe.attrs.d.array[topM][1] = cx;
+                    pe.attrs.d.array[topM][2] = cy;
+                    pe.attrs.d.array[secondS][1] = cx;
+                    pe.attrs.d.array[secondS][2] = cy;
                 } else {
                     // modify M while dragging
-                    pe.attrs.d[topM][1] = cx;
-                    pe.attrs.d[topM][2] = cy;
+                    pe.attrs.d.array[topM][1] = cx;
+                    pe.attrs.d.array[topM][2] = cy;
                 }
                 refleshContent();
             }
