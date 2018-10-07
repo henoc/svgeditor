@@ -527,7 +527,7 @@ export function attrToStr(value: AttrValue): string {
     return assertNever(value);
 }
 
-export function parse(node: XmlNode): ParsedResult | null {
+export function parse(node: XmlNode): ParsedResult {
     const xpath = "???";
     const parent = "???";
     const warns: Warning[] = [];
@@ -578,8 +578,6 @@ export function parse(node: XmlNode): ParsedResult | null {
             return {result: {tag: "comment()", attrs: {}, text: node.text, xpath, parent}, warns};
         case "cdata":
             return {result: {tag: "cdata()", attrs: {}, text: node.text, xpath, parent}, warns};
-        default:
-            return null;
     }
 }
 
@@ -588,10 +586,8 @@ function parseChildren(element: XmlElement, onWarns: (warns: Warning[]) => void,
     const warns = [];
     for (let item of element.children ) {
         const ret = parse(item);
-        if (ret) {
-            if (ret.result) children.push(ret.result);
-            warns.push(...ret.warns);
-        }
+        children.push(ret.result);
+        warns.push(...ret.warns);
     }
     onWarns(warns);
     return children;

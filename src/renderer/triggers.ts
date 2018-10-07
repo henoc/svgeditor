@@ -66,12 +66,10 @@ export function onDocumentPaste(event: Event) {
         const xml = textToXml(str);
         if (xml) {
             const parsed = parse(xml);
-            if (parsed) {
-                const pe = parsed.result;
-                if (svgdata && "children" in svgdata) {
-                    svgdata.children.push(pe);
-                    refleshContent();
-                }
+            const pe = parsed.result;
+            if (svgdata && "children" in svgdata) {
+                svgdata.children.push(pe);
+                refleshContent();
             }
         }
     }
