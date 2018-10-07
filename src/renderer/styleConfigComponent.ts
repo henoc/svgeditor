@@ -1,13 +1,12 @@
 import { elementOpen, elementClose, text, elementVoid } from "incremental-dom";
 import { drawState, refleshContent, openWindows, contentChildrenComponent, editMode, fontList, paintServers, svgdata, containerElements } from "./main";
-import { Paint, ColorFormat, ParsedElement } from "../isomorphism/svgParser";
+import { Paint, ColorFormat, ParsedElement, FontFamily } from "../isomorphism/svgParser";
 import tinycolor from "tinycolor2";
 import { Component, WindowComponent, ButtonComponent, iconComponent } from "../isomorphism/component";
-import { el, OneOrMore, iterate, assertNever, cursor } from "../isomorphism/utils";
+import { el, OneOrMore, iterate, assertNever, cursor, deepCopy } from "../isomorphism/utils";
 import { multiShaper, shaper } from "./shapes";
 import { acceptHashOnly } from "../isomorphism/url";
-import { fetchPaintServer, cssString, StopReference, PaintServer } from "../isomorphism/paintServer";
-import { Mode } from "./abstractMode";
+import { fetchPaintServer, cssString } from "../isomorphism/paintServer";
 import { xfindExn } from "../isomorphism/xpath";
 import { findElemById } from "../isomorphism/traverse";
 import { PRESENTATION_ATTRS_NULLS, BASE_ATTRS_NULLS } from "../isomorphism/constants";
@@ -411,8 +410,12 @@ class ColorPickerComponent implements WindowComponent {
     }
 }
 
+function isni<T>(v: null | "inherit" | T): v is null | "inherit" {
+    return v === null || v === "inherit";
+}
+
 class FontComponent implements WindowComponent {
-    constructor(public initialFontFamily: string | null, public onChange: (family: string) => void, public onClose: () => void) {
+    constructor(public initialFontFamily: FontFamily | "inherit" | null, public onChange: (family: FontFamily | "inherit" | null) => void, public onClose: () => void) {
     }
 
     render(): void {
@@ -424,24 +427,49 @@ class FontComponent implements WindowComponent {
 
     private fontFamilySelector() {
         if (fontList) {
-            el`select :key="font-family-selector" *onchange=${(event: Event) => this.onChangeFontFamily(event)}`;
-                el`option value="no attribute" selected=${this.initialFontFamily === null || undefined}`;
-                text("no attribute");
-                el`/option`;
-                iterate(fontList, (family) => {
-                    el`option value=${family} style=${`font-family: "${family}"`} selected=${this.initialFontFamily === family || undefined}`;
-                    text(family);
+            const c = isni(this.initialFontFamily) ? 1 : this.initialFontFamily.array.length;
+            for (let i = 0; i < c; i++) {
+                el`select :key=${`font-family-selector-${i}`} *onchange=${(event: Event) => this.onChangeFontFamily(event, i)}`;
+                    el`option value="no attribute" selected=${this.initialFontFamily === null || undefined}`;
+                    text("no attribute");
                     el`/option`;
-                });
-            el`/select`;
+                    el`option value="inherit" selected=${this.initialFontFamily === "inherit" || undefined}`;
+                    text("inherit");
+                    el`/option`;
+                    iterate(fontList, (family) => {
+                        el`option value=${family} style=${`font-family: "${family}"`} selected=${!isni(this.initialFontFamily) && this.initialFontFamily.array[i] === family || undefined}`;
+                        text(family);
+                        el`/option`;
+                    });
+                el`/select`;
+            }
         } else {
             text("sync...");
         }
     }
 
-    private onChangeFontFamily(event: Event) {
-        const family = (<HTMLSelectElement>event.target).value;
-        this.onChange(family);
+    private onChangeFontFamily(event: Event, index: number) {
+        const str = (<HTMLSelectElement>event.target).value;
+        const copied: FontFamily | "inherit" | null = (() => {
+            if (str === "no attribute") {
+                return null;
+            } else if (str === "inherit") {
+                return "inherit";
+            } else if (isni(this.initialFontFamily)) {
+                return {
+                    type: <"fontFamily">"fontFamily",
+                    array: [str]
+                }
+            } else {
+                const array = [...this.initialFontFamily.array];
+                array[index] = str;
+                return {
+                    type: <"fontFamily">"fontFamily",
+                    array
+                }
+            }
+        })();
+        this.onChange(copied);
     }
 }
 
@@ -450,7 +478,7 @@ export class StyleConfigComponent implements Component {
     colorBoxFillBackground: Paint | null = drawState.fill;
     colorBoxStrokeBackground: Paint | null = drawState.stroke;
     colorPicker: ColorPickerComponent | null = null;
-    fontFamily: string | null = drawState["font-family"];
+    fontFamily: FontFamily | "inherit" | null = drawState["font-family"];
     fontComponent: FontComponent | null = null;
     private _affectedShapes: OneOrMore<ParsedElement> | null = null;
 
@@ -470,9 +498,8 @@ export class StyleConfigComponent implements Component {
     openFontWindow() {
         if (this.fontComponent === null) {
             this.fontComponent = new FontComponent(this.fontFamily, (family) => {
-                const nullableFamily = family === "no attribute" ? null : family;
-                this.fontFamily = drawState["font-family"] = nullableFamily;
-                if (this.affectedShapes) multiShaper(this.affectedShapes).fontFamily = nullableFamily;
+                this.fontFamily = drawState["font-family"] = family;
+                if (this.affectedShapes) multiShaper(this.affectedShapes).fontFamily = family;
                 refleshContent();
             }, () => {
                 this.fontComponent = null;

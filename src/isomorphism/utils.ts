@@ -220,11 +220,10 @@ export function escapeHtml(str: string) {
         '>': '&gt;',
         '&': '&amp;',
         '"': '&quot;',
-        "'": '&#39;',
         '`': '&#x60;'
     };
-    return str.replace(/[<>&"'`]/g, (match) => {
-        return escape[<"<"|">"|"&"|"\""|"'"|"`">match];
+    return str.replace(/[<>&"`]/g, (match) => {
+        return escape[<"<"|">"|"&"|"\""|"`">match];
     });
 }
 

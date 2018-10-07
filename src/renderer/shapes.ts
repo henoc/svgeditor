@@ -1,4 +1,4 @@
-import { ParsedElement, Length, Transform, TransformDescriptor, Paint, PathCommand, ParsedUseElement, ParsedPresentationAttr, Style } from "../isomorphism/svgParser";
+import { ParsedElement, Length, Transform, TransformDescriptor, Paint, PathCommand, ParsedUseElement, ParsedPresentationAttr, Style, FontFamily } from "../isomorphism/svgParser";
 import { Vec2, v, vfp, OneOrMore, Merger, deepCopy } from "../isomorphism/utils";
 import { svgPathManager } from "../isomorphism/pathHelpers";
 import { convertToPixel, convertFromPixel } from "./measureUnits";
@@ -22,7 +22,7 @@ interface ShaperFunctions {
     rightBottom: Vec2;
     fill: Paint | null;
     stroke: Paint | null;
-    fontFamily: string | null;
+    fontFamily: FontFamily | "inherit" | null;
     move(diff: Vec2): void;
     size: Vec2;
     size2(newSize: Vec2, fixedPoint: Vec2): void;
@@ -121,7 +121,7 @@ export function shaper(pe: ParsedElement): ShaperFunctions {
         get fontFamily() {
             return getPresentationOf("font-family");
         },
-        set fontFamily(family: string | null) {
+        set fontFamily(family: FontFamily | "inherit" | null) {
             setPresentationOf("font-family", family);
         }
     }
@@ -903,7 +903,7 @@ export function multiShaper(pes: OneOrMore<ParsedElement>, useMultiEvenIfSingle:
                 }
                 return null;
             },
-            set fontFamily(family: string | null) {
+            set fontFamily(family: FontFamily | "inherit" | null) {
                 for (let pe of pes) {
                     shaper(pe).fontFamily = family;
                 }

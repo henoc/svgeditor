@@ -191,7 +191,7 @@ export interface ParsedPresentationAttr {
     "stroke-dasharray": StrokeDasharray | null;
     "stroke-dashoffset": Length | "inherit" | null;
     transform: Transform | null;
-    "font-family": string | null;
+    "font-family": FontFamily | "inherit" | null;
     "font-size": FontSize | null;
     "font-style": FontStyle | null;
     "font-weight": FontWeight | null;
@@ -446,7 +446,14 @@ export interface Transform {
     matrices: Matrix[];
 }
 
-export const transformStr = (t: Transform) => toTransformStrWithoutCollect(t);
+const transformStr = (t: Transform) => toTransformStrWithoutCollect(t);
+
+export interface FontFamily {
+    type: "fontFamily";
+    array: string[];
+}
+
+const fontFamilyStr = (ff: FontFamily) => ff.array.map(f => /\s/.test(f) ? `'${f}'` : f).join(", ");
 
 export type FontSize = "xx-small" | "x-small" | "small" | "medium" | "large" | "x-large" | "xx-large" | "larger" | "smaller" | Length;
 
@@ -505,7 +512,7 @@ export type StrokeDasharray = "none" | Lengths | "inherit";
 const strokeDasharrayStr = (da: StrokeDasharray) => typeof da === "string" ? da : da.array.map(d => lengthStr(d)).join(" ");
 
 export type AttrValue = Classes | Style | Paint | Length |
-    Lengths | Transform | Points | ViewBox | PathCommands | PercentageRatio | number | string;
+    Lengths | Transform | Points | ViewBox | PathCommands | PercentageRatio | FontFamily | number | string;
 
 export function attrToStr(value: AttrValue): string {
     if (typeof value === "string" || typeof value === "number") {
@@ -533,6 +540,8 @@ export function attrToStr(value: AttrValue): string {
         return transformStr(value);
         case "viewBox":
         return [value[0], value[1]].map(p => p.x + " " + p.y).join(" ");
+        case "fontFamily":
+        return fontFamilyStr(value);
     }
     return assertNever(value);
 }
@@ -632,7 +641,7 @@ function parseAttrs(element: XmlElement, onWarns: (ws: Warning[]) => void) {
             "stroke-dasharray": tryParse("stroke-dasharray").map(a => a.strokeDasharray()).get,
             "stroke-dashoffset": tryParse("stroke-dashoffset").map(a => a.lengthOrInherit()).get,
             transform: tryParse("transform").map(a => a.transform()).get,
-            "font-family": pop(attrs, "font-family"),
+            "font-family": tryParse("font-family").map(a => a.fontFamilyOrInherit()).get,
             "font-size": tryParse("font-size").map(a => a.fontSize()).get,
             "font-style": tryParse("font-style").map(a => a.validate(isFontStyle)).get,
             "font-weight": tryParse("font-weight").map(a => a.validate(isFontWeight)).get
@@ -855,7 +864,8 @@ type AttrOfMethods = {
     transform: () => Transform | null,
     validate: <T>(validator: (obj: unknown) => obj is T) => T & string | null,
     fontSize: () => FontSize | null,
-    strokeDasharray: () => StrokeDasharray | null
+    strokeDasharray: () => StrokeDasharray | null,
+    fontFamilyOrInherit: () => FontFamily | "inherit" | null
 }
 
 export function attrOf(element: XmlElement, warns: Warning[], name: string): Option<AttrOfMethods> {
@@ -949,6 +959,17 @@ export function attrOf(element: XmlElement, warns: Warning[], name: string): Opt
         }
     }
 
+    function acceptFontFamily(v: string): FontFamily {
+        return {
+            type: "fontFamily",
+            array: v.split(",")
+                .map(f => f.trim())
+                .map(f => /^'[^']*'$/.test(f) ? f.slice(1, f.length - 1) : f)
+        };
+    }
+
+    const acceptFontFamilyOrInherit = (v: string) => v === "inherit" ? v : acceptFontFamily(v);
+
     function handleResult<T>(res: T | Warning): T | null {
         if (isWarning(res)) {
             warns.push(res);
@@ -1005,7 +1026,7 @@ export function attrOf(element: XmlElement, warns: Warning[], name: string): Opt
                 "stroke-linejoin": tryValidate("stroke-linejoin", isStrokeLinejoin),
                 "stroke-dasharray": tryApply("stroke-dasharray", acceptStrokeDasharray),
                 "stroke-dashoffset": tryApply("stroke-dashoffset", acceptLengthOrInherit),
-                "font-family": pop(styleAttrs, "font-family"),
+                "font-family": tryApply("font-family", acceptFontFamilyOrInherit),
                 "font-size": tryApply("font-size", acceptFontSize),
                 "font-style": tryValidate("font-style", isFontStyle),
                 "font-weight": tryValidate("font-weight", isFontWeight),
@@ -1087,6 +1108,7 @@ export function attrOf(element: XmlElement, warns: Warning[], name: string): Opt
         },
         fontSize: () => handleResult(acceptFontSize(value)),
         strokeDasharray: () => handleResult(acceptStrokeDasharray(value)),
+        fontFamilyOrInherit: () => handleResult(acceptFontFamilyOrInherit(value))
     };
 
     return new Some<AttrOfMethods>(methods);
