@@ -38,6 +38,7 @@ export type ParsedElement =
     ParsedImageElement |
     ParsedDefsElement |
     ParsedUseElement |
+    ParsedStyleElement |
     ParsedTextContentNode |
     ParsedCommentNode |
     ParsedCDataNode |
@@ -136,6 +137,12 @@ export interface ParsedUseElement extends ElementBaseClass {
         width: Length,
         height: Length
     } | null
+}
+
+export interface ParsedStyleElement extends ElementBaseClass {
+    tag: "style",
+    attrs: ParsedStyleElemAttr,
+    children: ParsedElement[]
 }
 
 export interface ParsedTextContentNode extends ElementBaseClass {
@@ -273,6 +280,9 @@ interface ParsedUseAttr extends ParsedCoreAttr, ParsedStyleAttr, ParsedPresentat
     y: Length | null;
     width: Length | null;
     height: Length | null;
+}
+
+interface ParsedStyleElemAttr extends ParsedCoreAttr {
 }
 
 export interface Classes {
@@ -569,6 +579,8 @@ export function parse(node: XmlNode): ParsedResult {
                     return {result: {tag: "defs", attrs: parseAttrs(node, pushWarns).defs(), children, xpath, parent}, warns};
                 case "use":
                     return {result: {tag: "use", attrs: parseAttrs(node, pushWarns).use(), xpath, parent, virtual: null}, warns};
+                case "style":
+                    return {result: {tag: "style", attrs: parseAttrs(node, pushWarns).style(), children, xpath, parent}, warns};
                 default:
                     return {result: {tag: "unknown", tag$real: node.name, attrs: node.attrs, children, xpath, parent}, warns: [{type: "warning", interval: node.positions.startTag, message: `${node.name} is unsupported element.`}]};
             }
@@ -800,6 +812,14 @@ function parseAttrs(element: XmlElement, onWarns: (ws: Warning[]) => void) {
             };
             onWarns(warns);
             return validUseAttrs;
+        },
+        style: () => {
+            const validStyleElemAttrs: ParsedStyleElemAttr = {
+                ...coreValidAttrs,
+                unknown: unknownAttrs(attrs, element, pushWarns)
+            };
+            onWarns(warns);
+            return validStyleElemAttrs;
         }
     }
 }

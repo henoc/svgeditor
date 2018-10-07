@@ -805,6 +805,7 @@ export function shaper(pe: ParsedElement): ShaperFunctions {
         case "linearGradient":
         case "radialGradient":
         case "stop":
+        case "style":
             throw new Error("Definiton only shape cannot move.");
         case "text()":
         case "comment()":
