@@ -1,6 +1,6 @@
 import { elementOpen, elementClose, text, elementVoid } from "incremental-dom";
 import { drawState, refleshContent, openWindows, contentChildrenComponent, editMode, fontList, paintServers, svgdata, containerElements } from "./main";
-import { Paint, ColorFormat, ParsedElement, FontFamily } from "../isomorphism/svgParser";
+import { Paint, ColorFormat, ParsedElement, FontFamily, attrToStr } from "../isomorphism/svgParser";
 import tinycolor from "tinycolor2";
 import { Component, WindowComponent, ButtonComponent, iconComponent } from "../isomorphism/component";
 import { el, OneOrMore, iterate, assertNever, cursor, deepCopy } from "../isomorphism/utils";
@@ -490,12 +490,15 @@ export class StyleConfigComponent implements Component {
         this.colorBoxRender(this.colorBoxFillBackground, "fill");
         text(" stroke: ");
         this.colorBoxRender(this.colorBoxStrokeBackground, "stroke");
+        text(" font: ");
         el`/span`;
+        this.fontSampleRender();
         if (this.colorPicker) this.colorPicker.render();
         if (this.fontComponent) this.fontComponent.render();
     }
 
-    openFontWindow() {
+    openFontWindow(event?: Event) {
+        event && event.stopPropagation();
         if (this.fontComponent === null) {
             this.fontComponent = new FontComponent(this.fontFamily, (family) => {
                 this.fontFamily = drawState["font-family"] = family;
@@ -508,6 +511,15 @@ export class StyleConfigComponent implements Component {
             openWindows["fontComponent"] = this.fontComponent;
             refleshContent();
         }
+    }
+
+    private fontSampleRender() {
+        el`span
+            style=${`font-family: ${this.fontFamily && attrToStr(this.fontFamily) || ""};`}
+            onclick=${(event: MouseEvent) => this.openFontWindow(event)}
+            tabIndex="0"`;
+        text("A");
+        el`/span`;
     }
 
     set affectedShapes(pes: OneOrMore<ParsedElement> | null) {

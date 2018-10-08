@@ -84,7 +84,7 @@ export class MenuListComponent implements Component {
         el`/ul`;
         el`ul`;
         for (let name of operatorNames) {
-            if (name === "rotateClockwiseByTheAngleStep" || name === "rotateCounterclockwiseByTheAngleStep") continue;      // no icon operations
+            if (name === "rotateClockwiseByTheAngleStep" || name === "rotateCounterclockwiseByTheAngleStep" || name === "font") continue;      // no icon operations
             iconComponent(name, `#svgeditor-icon-${name}`, (event: Event) => {
                 event.stopPropagation();
                 editMode.mode.onOperatorClicked(name);
