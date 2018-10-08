@@ -1,5 +1,5 @@
 import { construct } from "./svgConstructor";
-import { ParsedElement, isLengthUnit, LengthUnit, Paint, FontFamily } from "../isomorphism/svgParser";
+import { ParsedElement, isLengthUnit, LengthUnit, Paint, FontFamily, FontSize, FontWeight, FontStyle } from "../isomorphism/svgParser";
 import { onDocumentMouseMove, onDocumentMouseUp, onDocumentClick, onDocumentMouseLeave, onDocumentCopy, onDocumentCut, onDocumentPaste } from "./triggers";
 import { Mode } from "./abstractMode";
 import { SelectMode } from "./selectMode";
@@ -40,7 +40,10 @@ export const configuration = {
 export const drawState = {
     fill: <Paint | null>{ type: "color", format: "rgb", r: 255, g: 255, b: 255, a: 1 },
     stroke: <Paint | null>null,
-    "font-family": <FontFamily | "inherit" | null>null
+    "font-family": <FontFamily | "inherit" | null>null,
+    "font-size": <FontSize | null>null,
+    "font-style": <FontStyle | null>null,
+    "font-weight": <FontWeight | null>null,
 }
 export const OUTERMOST_DEFAULT_WIDTH = 400;
 export const OUTERMOST_DEFAULT_HEIGHT = 400;

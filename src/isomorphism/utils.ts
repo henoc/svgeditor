@@ -114,6 +114,9 @@ function join2(sep: (i: number) => string, strs: string[]) {
    el`br/`;
    text("text");
  el`/li`;
+
+ // Call event.stopPropagation()
+ el`div onclick.stop=${fn} /`;
  ```
  * 
  * note: ``el`li foo="list-${variable}"` `` is incorrect. Use ``el`li foo=${`list-${variable}`}` ``

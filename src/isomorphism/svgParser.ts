@@ -1,10 +1,11 @@
-import { iterate, Vec2, v, objectValues, Some, Option, None, assertNever, ifExist } from "./utils";
+import { iterate, Vec2, v, objectValues, Some, Option, None, assertNever, ifExist, deepCopy } from "./utils";
 import { Assoc } from "./svg";
 import tinycolor from "tinycolor2";
 import { svgPathManager } from "./pathHelpers";
 import { SetDifference, Omit, $Values } from "utility-types";
 import { XmlNode, XmlElement, Interval, ElementPositionsOnText } from "./xmlParser";
 import { toTransformStrWithoutCollect } from "./transformHelpers";
+import { FONT_SIZE_KEYWORDS } from "./constants";
 const { fromTransformAttribute } = require("transformation-matrix/build-commonjs/fromTransformAttribute");
 
 interface Warning {
@@ -458,7 +459,7 @@ const fontFamilyStr = (ff: FontFamily) => ff.array.map(f => /\s/.test(f) ? `'${f
 export type FontSize = "xx-small" | "x-small" | "small" | "medium" | "large" | "x-large" | "xx-large" | "larger" | "smaller" | Length;
 
 export function isFontSizeKeyword(obj: unknown): obj is FontSize {
-    return typeof obj === "string" && ["xx-small" , "x-small" , "small" , "medium" , "large" , "x-large" , "xx-large" , "larger" , "smaller"].indexOf(obj) !== -1;
+    return typeof obj === "string" && FONT_SIZE_KEYWORDS.indexOf(obj) !== -1;
 }
 
 export type FontStyle = "normal" | "italic" | "oblique";
@@ -544,6 +545,60 @@ export function attrToStr(value: AttrValue): string {
         return fontFamilyStr(value);
     }
     return assertNever(value);
+}
+
+export function fixDecimalPlaces(value: AttrValue, numOfDecimalPlaces?: number): AttrValue {
+    const fix = (v: number) => {
+        return Number(v.toFixed(numOfDecimalPlaces));
+    }
+    if (numOfDecimalPlaces === undefined || typeof value === "string") {
+        return value;
+    } else if (typeof value === "number") {
+        return fix(value);
+    } else {
+        let copied = deepCopy(value);
+        switch (copied.type) {
+            case "length":
+            copied.value = fix(copied.value);
+            return copied;
+            case "lengths":
+            for (let len of copied.array) {
+                len.value = fix(len.value);
+            }
+            return copied;
+            case "pathCommands":
+            for (let i = 0; i < copied.array.length; i++) {
+                for (let j = 0; j < copied.array[i].length; j++) {
+                    const copiedIJ = copied.array[i][j];
+                    copied.array[i][j] = typeof copiedIJ === "number" ? fix(copiedIJ) : copiedIJ;
+                }
+            }
+            return copied;
+            case "transform":
+            for (let i = 0; i < copied.descriptors.length; i++) {
+                const descriptorI = copied.descriptors[i];
+                iterate(descriptorI, (k, v) => {
+                    if (typeof v === "number") (<any>descriptorI)[k] = fix(v);
+                });
+            }
+            return copied;
+            case "points":
+            for (let i = 0; i < copied.array.length; i++) {
+                copied.array[i] = {x: fix(copied.array[i].x), y: fix(copied.array[i].y)};
+            }
+            return copied;
+            case "style":
+            copied = <Style>iterate(copied, (key, value) => {
+                if (key !== "unknown" && key !== "type" && value !== null) {
+                    return fixDecimalPlaces(<any>value, numOfDecimalPlaces);
+                } else {
+                    return value;
+                }
+            });
+            return copied;
+        }
+        return copied;
+    }
 }
 
 export function parse(node: XmlNode): ParsedResult {

@@ -1,6 +1,6 @@
 import { elementOpen, elementClose, text, elementVoid } from "incremental-dom";
-import { drawState, refleshContent, openWindows, contentChildrenComponent, editMode, fontList, paintServers, svgdata, containerElements } from "./main";
-import { Paint, ColorFormat, ParsedElement, FontFamily, attrToStr } from "../isomorphism/svgParser";
+import { drawState, refleshContent, openWindows, contentChildrenComponent, editMode, fontList, paintServers, svgdata, containerElements, configuration } from "./main";
+import { Paint, ColorFormat, ParsedElement, FontFamily, attrToStr, FontSize, FontStyle, FontWeight, fixDecimalPlaces } from "../isomorphism/svgParser";
 import tinycolor from "tinycolor2";
 import { Component, WindowComponent, ButtonComponent, iconComponent } from "../isomorphism/component";
 import { el, OneOrMore, iterate, assertNever, cursor, deepCopy } from "../isomorphism/utils";
@@ -9,7 +9,8 @@ import { acceptHashOnly } from "../isomorphism/url";
 import { fetchPaintServer, cssString } from "../isomorphism/paintServer";
 import { xfindExn } from "../isomorphism/xpath";
 import { findElemById } from "../isomorphism/traverse";
-import { PRESENTATION_ATTRS_NULLS, BASE_ATTRS_NULLS } from "../isomorphism/constants";
+import { PRESENTATION_ATTRS_NULLS, BASE_ATTRS_NULLS, FONT_SIZE_KEYWORDS, FONT_STYLE_KEYWORDS, FONT_WEIGHT_KEYWORDS } from "../isomorphism/constants";
+import { polyAttr, multiPolyAttr } from "./polyAttr";
 
 
 const CANVAS_DEFAULT_COLOR = {r: 255, g: 255, b: 255, a: 1};
@@ -415,29 +416,57 @@ function isni<T>(v: null | "inherit" | T): v is null | "inherit" {
 }
 
 class FontComponent implements WindowComponent {
-    constructor(public initialFontFamily: FontFamily | "inherit" | null, public onChange: (family: FontFamily | "inherit" | null) => void, public onClose: () => void) {
+    constructor(
+        public initials: {
+            "font-family": FontFamily | "inherit" | null,
+            "font-size": FontSize | null,
+            "font-style": FontStyle | null,
+            "font-weight": FontWeight | null
+        },
+        public onChange: (changed: {
+            type: "font-family";
+            value: FontFamily | "inherit" | null
+        } | {
+            type: "font-size";
+            value: FontSize | null
+        } | {
+            type: "font-style";
+            value: FontStyle | null
+        } | {
+            type: "font-weight";
+            value: FontWeight | null
+        }) => void,
+        public onClose: () => void) {
     }
 
     render(): void {
         el`div :key="font-component" *class="svgeditor-colorpicker" *onclick.stop=${() => undefined}`;
-        text("font: ");
+        text("family: ");
         this.fontFamilySelector();
+        el`br/`;
+        text("size: ");
+        this.fontSizeSelector();
+        text(" style: ");
+        this.fontSelector("font-style");
+        text(" weight: ");
+        this.fontSelector("font-weight");
         el`/div`;
     }
 
     private fontFamilySelector() {
         if (fontList) {
-            const c = isni(this.initialFontFamily) ? 1 : this.initialFontFamily.array.length;
+            const ff = this.initials["font-family"];
+            const c = isni(ff) ? 1 : ff.array.length;
             for (let i = 0; i < c; i++) {
                 el`select :key=${`font-family-selector-${i}`} *onchange=${(event: Event) => this.onChangeFontFamily(event, i)}`;
-                    el`option value="no attribute" selected=${this.initialFontFamily === null || undefined}`;
+                    el`option value="no attribute" selected=${ff === null || undefined}`;
                     text("no attribute");
                     el`/option`;
-                    el`option value="inherit" selected=${this.initialFontFamily === "inherit" || undefined}`;
+                    el`option value="inherit" selected=${ff === "inherit" || undefined}`;
                     text("inherit");
                     el`/option`;
                     iterate(fontList, (family) => {
-                        el`option value=${family} style=${`font-family: "${family}"`} selected=${!isni(this.initialFontFamily) && this.initialFontFamily.array[i] === family || undefined}`;
+                        el`option value=${family} style=${`font-family: "${family}"`} selected=${!isni(ff) && ff.array[i] === family || undefined}`;
                         text(family);
                         el`/option`;
                     });
@@ -448,20 +477,54 @@ class FontComponent implements WindowComponent {
         }
     }
 
+    private fontSizeSelector() {
+        const fs = this.initials["font-size"];
+        el`select :key="font-size-selector" *onchange=${(event: Event) => this.onChangeFontSize(event)}`;
+            el`option value="no attribute" selected=${fs === null || undefined}`;
+            text("no attribute");
+            el`/option`;
+        if (fs !== null && typeof fs !== "string") {
+            const fixedFs = fixDecimalPlaces(fs, configuration.numOfDecimalPlaces);
+            el`option value=${attrToStr(fixedFs)} selected="true"`;
+            text(attrToStr(fixedFs));
+            el`/option`;
+        }
+        for (let keyword of FONT_SIZE_KEYWORDS) {
+            el`option value=${keyword} selected=${fs === keyword || undefined}`;
+            text(keyword);
+            el`/option`;
+        }
+        el`/select`;
+    }
+
+    private fontSelector<T extends "font-style" | "font-weight">(type: T) {
+        el`select :key=${`${type}-selector`} *onchange=${(event: Event) => this.onChangeFont(event, type)}`;
+            el`option value="no attribute" selected=${this.initials[type] === null || undefined}`;
+            text("no attribute");
+            el`/option`;
+            for (let keyword of {"font-style": FONT_STYLE_KEYWORDS, "font-weight": FONT_WEIGHT_KEYWORDS}[type]) {
+                el`option value=${keyword} selected=${this.initials[type] === keyword || undefined}`;
+                text(keyword);
+                el`/option`;
+            }
+        el`/select`;
+    }
+
     private onChangeFontFamily(event: Event, index: number) {
         const str = (<HTMLSelectElement>event.target).value;
+        const ff = this.initials["font-family"];
         const copied: FontFamily | "inherit" | null = (() => {
             if (str === "no attribute") {
                 return null;
             } else if (str === "inherit") {
                 return "inherit";
-            } else if (isni(this.initialFontFamily)) {
+            } else if (isni(ff)) {
                 return {
                     type: <"fontFamily">"fontFamily",
                     array: [str]
                 }
             } else {
-                const array = [...this.initialFontFamily.array];
+                const array = [...ff.array];
                 array[index] = str;
                 return {
                     type: <"fontFamily">"fontFamily",
@@ -469,16 +532,30 @@ class FontComponent implements WindowComponent {
                 }
             }
         })();
-        this.onChange(copied);
+        this.onChange({type: "font-family", value: copied});
+    }
+
+    private onChangeFontSize(event: Event) {
+        const str = (<HTMLSelectElement>event.target).value;
+        const ret = /^[0-9.]+/.test(str) ? this.initials["font-size"] : str === "no attribute" ? null : <FontSize>str;
+        this.onChange({type: "font-size", value: ret});
+    }
+
+    private onChangeFont<T extends "font-style" | "font-weight">(event: Event, type: T) {
+        const v = (<HTMLSelectElement>event.target).value;
+        this.onChange(<any>{type, value: v === "no attribute" ? null : /^[0-9]+$/.test(v) ? Number(v) : v});
     }
 }
 
 export class StyleConfigComponent implements Component {
 
-    colorBoxFillBackground: Paint | null = drawState.fill;
-    colorBoxStrokeBackground: Paint | null = drawState.stroke;
+    fill: Paint | null = drawState.fill;
+    stroke: Paint | null = drawState.stroke;
     colorPicker: ColorPickerComponent | null = null;
-    fontFamily: FontFamily | "inherit" | null = drawState["font-family"];
+    "font-family"= drawState["font-family"];
+    "font-size" = drawState["font-size"];
+    "font-style" = drawState["font-style"];
+    "font-weight" = drawState["font-weight"];
     fontComponent: FontComponent | null = null;
     private _affectedShapes: OneOrMore<ParsedElement> | null = null;
 
@@ -487,9 +564,9 @@ export class StyleConfigComponent implements Component {
         this.containerSelector();
         el`span *class="svgeditor-bold"`;
         text(" fill: ");
-        this.colorBoxRender(this.colorBoxFillBackground, "fill");
+        this.colorBoxRender(this.fill, "fill");
         text(" stroke: ");
-        this.colorBoxRender(this.colorBoxStrokeBackground, "stroke");
+        this.colorBoxRender(this.stroke, "stroke");
         text(" font: ");
         el`/span`;
         this.fontSampleRender();
@@ -499,39 +576,48 @@ export class StyleConfigComponent implements Component {
 
     openFontWindow() {
         if (this.fontComponent === null) {
-            this.fontComponent = new FontComponent(this.fontFamily, (family) => {
-                this.fontFamily = drawState["font-family"] = family;
-                if (this.affectedShapes) multiShaper(this.affectedShapes).fontFamily = family;
-                refleshContent();
-            }, () => {
-                this.fontComponent = null;
-                refleshContent();
-            });
+            this.fontComponent = new FontComponent(
+                {"font-family": this["font-family"], "font-size": this["font-size"], "font-style": this["font-style"], "font-weight": this["font-weight"]},
+                (changed) => {
+                    this[changed.type] = drawState[changed.type] = changed.value;
+                    if (this.affectedShapes) multiPolyAttr(this.affectedShapes).setPresentationOf(changed.type, changed.value);
+                    refleshContent();
+                }, () => {
+                    this.fontComponent = null;
+                    refleshContent();
+                }
+            );
             openWindows["fontComponent"] = this.fontComponent;
             refleshContent();
         }
     }
 
     private fontSampleRender() {
+        const style: {[key: string]: string} = {cursor: "pointer"};
+        for (let type of <(keyof typeof drawState)[]>["font-family", "font-style", "font-weight"]) {
+            if (this[type]) style[type] = attrToStr(this[type]!);
+        }
         el`span
-            style=${`cursor: pointer; font-family: ${this.fontFamily && attrToStr(this.fontFamily) || ""};`}
-            onclick.stop=${() => this.openFontWindow()}
+            :key="font-sample"
+            style=${Object.entries(style).map(([k, v]) => `${k}: ${v}`).join(";")}
+            *onclick.stop=${() => this.openFontWindow()}
             *title="open font settings"
-            tabIndex="0"`;
+            *tabIndex="0"`;
         text("A");
         el`/span`;
     }
 
     set affectedShapes(pes: OneOrMore<ParsedElement> | null) {
+        const stateKeys = <(keyof typeof drawState)[]>Object.keys(drawState);
         if (pes) {
-            this.colorBoxFillBackground = multiShaper(pes).fill;
-            this.colorBoxStrokeBackground = multiShaper(pes).stroke;
-            this.fontFamily = multiShaper(pes).fontFamily;
+            for (let key of stateKeys) {
+                this[key] = multiPolyAttr(pes).getPresentationOf(key);
+            }
             this._affectedShapes = pes;
         } else {
-            this.colorBoxFillBackground = drawState.fill;
-            this.colorBoxStrokeBackground = drawState.stroke;
-            this.fontFamily = drawState["font-family"];
+            for (let key of stateKeys) {
+                this[key] = drawState[key];
+            }
             this._affectedShapes = null;
         }
     }
@@ -569,18 +655,18 @@ export class StyleConfigComponent implements Component {
     }
 
     private openColorPicker(relatedProperty: "fill" | "stroke") {
-        this.colorPicker = new ColorPickerComponent(relatedProperty === "fill" ? this.colorBoxFillBackground : this.colorBoxStrokeBackground, relatedProperty, (colorpicker) => {
+        this.colorPicker = new ColorPickerComponent(relatedProperty === "fill" ? this.fill : this.stroke, relatedProperty, (colorpicker) => {
             let paint: Paint | null;
             switch (relatedProperty) {
                 case "fill":
                 paint = drawState.fill;
-                this.colorBoxFillBackground = drawState.fill = colorpicker.getPaint(paint && typeof paint !== "string" && paint.type === "color" && paint.format || null);
-                if (this.affectedShapes) multiShaper(this.affectedShapes).fill = drawState.fill;
+                this.fill = drawState.fill = colorpicker.getPaint(paint && typeof paint !== "string" && paint.type === "color" && paint.format || null);
+                if (this.affectedShapes) multiPolyAttr(this.affectedShapes).setPresentationOf("fill", drawState.fill);
                 break;
                 case "stroke":
                 paint = drawState.stroke;
-                this.colorBoxStrokeBackground = drawState.stroke = colorpicker.getPaint(paint && typeof paint !== "string" && paint.type === "color" && paint.format || null);
-                if (this.affectedShapes) multiShaper(this.affectedShapes).stroke = drawState.stroke;
+                this.stroke = drawState.stroke = colorpicker.getPaint(paint && typeof paint !== "string" && paint.type === "color" && paint.format || null);
+                if (this.affectedShapes) multiPolyAttr(this.affectedShapes).setPresentationOf("stroke", drawState.stroke);
                 break;
             }
             refleshContent();
