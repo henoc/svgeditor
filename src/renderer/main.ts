@@ -38,7 +38,7 @@ export const configuration = {
     useStyleAttribute: false
 }
 export const drawState = {
-    fill: <Paint | null>{ format: "rgb", r: 255, g: 255, b: 255, a: 1 },
+    fill: <Paint | null>{ type: "color", format: "rgb", r: 255, g: 255, b: 255, a: 1 },
     stroke: <Paint | null>null,
     "font-family": <FontFamily | "inherit" | null>null
 }
@@ -106,7 +106,7 @@ window.addEventListener("message", event => {
             refleshContent();
             break;
         case "configuration":
-            if (message.data.defaultUni !== undefined && isLengthUnit(message.data.defaultUnit)) configuration.defaultUnit = message.data.defaultUnit;
+            if (message.data.defaultUnit !== undefined && isLengthUnit(message.data.defaultUnit)) configuration.defaultUnit = message.data.defaultUnit;
             if (!isLengthUnit(message.data.defaultUnit)) sendErrorMessage(`Configuration "svgeditor.defaultUnit: ${message.data.defaultUnit}" is unsupported unit.`);
             if (message.data.decimalPlaces !== undefined) configuration.numOfDecimalPlaces = message.data.decimalPlaces;
             if (message.data.collectTransform !== undefined) configuration.collectTransform = message.data.collectTransform;

@@ -109,10 +109,11 @@ function join2(sep: (i: number) => string, strs: string[]) {
 /**
  * Syntax sugar for elementOpen, elementClose, elementVoid.
  ```
- el`li :key="list-element" class="non-static-class-a non-static-class-b" *id="static-ident" onclick=${variable} ...${["data-optional1", "foo", "data-optional2", "bar"]}`;
- text("some");
- el`br/`;
- text("text"); el`/li`
+ el`li :key="list-element" class="non-static-class-a non-static-class-b" *id="static-ident" onclick=${variable} ...${["key", "value", "key", "value"]}`;
+   text("some");
+   el`br/`;
+   text("text");
+ el`/li`;
  ```
  * 
  * note: ``el`li foo="list-${variable}"` `` is incorrect. Use ``el`li foo=${`list-${variable}`}` ``
@@ -121,12 +122,28 @@ export function el(template: TemplateStringsArray, ...args: any[]): Element {
     if (template[0].charAt(0) === "/") {
         return elementClose(template[0].slice(1).trim());
     } else {
+        const attrsToOpenArgArr = (elparseAttrs: ElParseAttr[]) => elparseAttrs.reduce((pre, crr) => {
+            if (crr.type === "single") {
+                if (crr.stop && typeof crr.value === "number") {
+                    const eventListener = args[crr.value];
+                    pre.push(crr.name, (event: Event, ...rest: any[]) => {
+                        event.stopPropagation();
+                        eventListener(event, ...rest);
+                    });
+                } else {
+                    pre.push(crr.name, typeof crr.value === "number" ? args[crr.value] : crr.value);
+                }
+            } else {
+                pre.push(...args[crr.ref]);
+            }
+            return pre;
+        }, <any[]>[]);
         const parseResult = memoizedElopenParser(template);
         const elementOpenArgs = <[string, string | undefined, any[], ...any[]]>[
             parseResult.tag,
             typeof parseResult.key === "number" ? args[parseResult.key] : parseResult.key,
-            parseResult.statics.map(st => typeof st === "number" ? args[st] : st).concat(...parseResult.arrayStatics.map(i => args[i])),
-            ...parseResult.nonStatics.map(nst => typeof nst === "number" ? args[nst] : nst).concat(...parseResult.arrayNonStatics.map(i => args[i]))
+            attrsToOpenArgArr(parseResult.attrs.filter(pa => pa.static)),
+            ...attrsToOpenArgArr(parseResult.attrs.filter(pa => !pa.static))
         ];
         if (parseResult.selfContained) {
             return elementVoid(...elementOpenArgs);
@@ -139,47 +156,83 @@ export function el(template: TemplateStringsArray, ...args: any[]): Element {
 interface ElopenParseResult {
     tag: string;
     key?: string | number;
-    statics: (string | number)[];
-    nonStatics: (string | number)[];
-    arrayStatics: number[];
-    arrayNonStatics: number[];
+    attrs: ElParseAttr[];
     selfContained: boolean;
 }
 
+type ElParseAttr = {
+    type: "multiple";
+    ref: number;
+    static?: boolean;
+} | {
+    type: "single";
+    name: string;
+    value: number | string;
+    static?: boolean;
+    stop?: boolean;
+}
+
 function elopenParser(template: TemplateStringsArray): ElopenParseResult {
+    let throwError = () => {
+        throw new Error(`wrong arg in elopenParser. template: ${JSON.stringify(template)}`);
+    }
     for (let t of template) {
         if (t.split(`"`).length - 1 % 2 === 1) {
-            throw new Error(`wrong arg in elopenParser. template: ${JSON.stringify(template)}`);
+            throwError();
         }
     }
     let concatTemplate = join2(i => `$${i}`, [...template]);
     let tag = concatTemplate.match(/^\s*[^\s//]+/)![0].trimLeft();
     let token = /(([^\s="]+)\s*=\s*("[^"]*"|\$[0-9]+))|(\.\.\.\*?\$[0-9]+)/g;
     let tmp: RegExpExecArray | null;
-    let ret: ElopenParseResult = {tag, statics: [], nonStatics: [], arrayStatics: [], arrayNonStatics: [], selfContained: concatTemplate.charAt(concatTemplate.length - 1) === "/"};
-    let valueof = (right: string) => {
-        let tmp2: RegExpExecArray | null;
-        if (/^"[^"]*"$/.test(right)) return right.slice(1, right.length - 1);
-        else if (tmp2 = /^\.\.\.\*?\$([0-9]+)$/.exec(right)) return Number(tmp2[1]);
-        else return Number(right.slice(1));
+    let ret: ElopenParseResult = {tag, attrs: [], selfContained: concatTemplate.charAt(concatTemplate.length - 1) === "/"};
+    let acceptValue = (right: string) => {
+        const ret = acceptStringValue(right) || acceptRefValue(right) || acceptValiadicRefValue(right) || throwError();
+        return ret.value;
+    }
+    let acceptStringValue = (right: string) => {
+        let tmp: RegExpExecArray | null;
+        if (/^"[^"]*"$/.test(right)) return {value: right.slice(1, right.length - 1)};
+        else return null;
+    }
+    /**
+     * `$n`
+     */
+    let acceptRefValue = (right: string) => {
+        let tmp: RegExpExecArray | null;
+        if (tmp = /^\$([0-9]+)$/.exec(right)) return {value: Number(tmp[1])};
+        else return null;
+    }
+    /**
+     * `...$n`
+     */
+    let acceptValiadicRefValue = (right: string) => {
+        let tmp: RegExpExecArray | null;
+        if (tmp = /^\.\.\.\*?\$([0-9]+)$/.exec(right)) return {value: Number(tmp[1])};
+        else return null;
     }
     while ((tmp = token.exec(concatTemplate)) !== null) {
         if (tmp[1]) {
             const left = tmp[2];
             const right = tmp[3];
             if (left === ":key") {
-                ret.key = valueof(right);
-            } else if (left.startsWith("*")) {      // statics
-                ret.statics.push(left.slice(1), valueof(right));
+                ret.key = acceptValue(right);
             } else {
-                ret.nonStatics.push(left, valueof(right));
+                const matched = left.match(/^(\*?)([^.]*)(\.stop)?$/) || throwError();
+                ret.attrs.push({
+                    type: "single",
+                    name: matched[2],
+                    value: acceptValue(right),
+                    static: Boolean(matched[1]),
+                    stop: Boolean(matched[3])
+                });
             }
         } else if (tmp[4]) {
-            if (tmp[4].startsWith("...*")) {
-                ret.arrayStatics.push(<number>valueof(tmp[4]));
-            } else {
-                ret.arrayNonStatics.push(<number>valueof(tmp[4]));
-            }
+            ret.attrs.push({
+                type: "multiple",
+                ref: (acceptValiadicRefValue(tmp[4]) || throwError()).value,
+                static: tmp[4].startsWith("...*")
+            });
         }
     }
     return ret;

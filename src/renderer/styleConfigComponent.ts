@@ -322,7 +322,7 @@ class ColorPickerComponent implements WindowComponent {
     }
 
     render() {
-        el`div :key="colorpicker" *class="svgeditor-colorpicker" *onclick=${(event: MouseEvent) => event.stopPropagation()}`;
+        el`div :key="colorpicker" *class="svgeditor-colorpicker" *onclick.stop=${() => undefined}`;
             this.selectorRender();
             iconComponent("add new linearGradient", "#svgeditor-icon-addLinearGradient", () => this.addGradient("linearGradient"));
             iconComponent("add new radialGradient", "#svgeditor-icon-addRadialGradient", () => this.addGradient("radialGradient"));
@@ -419,7 +419,7 @@ class FontComponent implements WindowComponent {
     }
 
     render(): void {
-        el`div :key="font-component" *class="svgeditor-colorpicker" *onclick=${(event: MouseEvent) => event.stopPropagation()}`;
+        el`div :key="font-component" *class="svgeditor-colorpicker" *onclick.stop=${() => undefined}`;
         text("font: ");
         this.fontFamilySelector();
         el`/div`;
@@ -497,8 +497,7 @@ export class StyleConfigComponent implements Component {
         if (this.fontComponent) this.fontComponent.render();
     }
 
-    openFontWindow(event?: Event) {
-        event && event.stopPropagation();
+    openFontWindow() {
         if (this.fontComponent === null) {
             this.fontComponent = new FontComponent(this.fontFamily, (family) => {
                 this.fontFamily = drawState["font-family"] = family;
@@ -515,8 +514,9 @@ export class StyleConfigComponent implements Component {
 
     private fontSampleRender() {
         el`span
-            style=${`font-family: ${this.fontFamily && attrToStr(this.fontFamily) || ""};`}
-            onclick=${(event: MouseEvent) => this.openFontWindow(event)}
+            style=${`cursor: pointer; font-family: ${this.fontFamily && attrToStr(this.fontFamily) || ""};`}
+            onclick.stop=${() => this.openFontWindow()}
+            *title="open font settings"
             tabIndex="0"`;
         text("A");
         el`/span`;
@@ -561,14 +561,14 @@ export class StyleConfigComponent implements Component {
             :key=${`colorbox-${relatedProperty}`}
             *class="svgeditor-colorbox"
             *tabindex="0"
-            *onclick=${(event: MouseEvent) => this.openColorPicker(event, relatedProperty)}
+            *onclick.stop=${() => this.openColorPicker(relatedProperty)}
+            *title=${`open ${relatedProperty} property settings`}
             style=${style}`;
         if (textContent) text(textContent);
         el`/div`;
     }
 
-    private openColorPicker(event: MouseEvent, relatedProperty: "fill" | "stroke") {
-        event.stopPropagation();
+    private openColorPicker(relatedProperty: "fill" | "stroke") {
         this.colorPicker = new ColorPickerComponent(relatedProperty === "fill" ? this.colorBoxFillBackground : this.colorBoxStrokeBackground, relatedProperty, (colorpicker) => {
             let paint: Paint | null;
             switch (relatedProperty) {

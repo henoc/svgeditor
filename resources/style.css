@@ -104,6 +104,7 @@ select option {
     display: inline-block;
     min-width: 1em;
     min-height: 1em;
+    cursor: pointer;
 }
 .svgeditor-group {
     fill: none;
