@@ -115,11 +115,19 @@ function join2(sep: (i: number) => string, strs: string[]) {
    text("text");
  el`/li`;
 
- // Call event.stopPropagation()
+ // Event modifiers
  el`div onclick.stop=${fn} /`;
  ```
+ * event modifiers:
  * 
- * note: ``el`li foo="list-${variable}"` `` is incorrect. Use ``el`li foo=${`list-${variable}`}` ``
+ * |name|description|
+ * |:---|:---|
+ * |stop|Call event.stopPropagation()|
+ * |value|Change the first argument from event to event.target.value|
+ * 
+ * note:
+ * 
+ * ``el`li foo="list-${variable}"` `` is incorrect. Use ``el`li foo=${`list-${variable}`}` ``
  */
 export function el(template: TemplateStringsArray, ...args: any[]): Element {
     if (template[0].charAt(0) === "/") {
@@ -127,15 +135,22 @@ export function el(template: TemplateStringsArray, ...args: any[]): Element {
     } else {
         const attrsToOpenArgArr = (elparseAttrs: ElParseAttr[]) => elparseAttrs.reduce((pre, crr) => {
             if (crr.type === "single") {
-                if (crr.stop && typeof crr.value === "number") {
-                    const eventListener = args[crr.value];
-                    pre.push(crr.name, (event: Event, ...rest: any[]) => {
+                const entityStack: any[] = [];
+                entityStack.push(typeof crr.val === "number" ? args[crr.val] : crr.val);
+                if (crr.stop) {
+                    const last = entityStack[entityStack.length - 1];
+                    entityStack.push((event: Event, ...rest: any[]) => {
                         event.stopPropagation();
-                        eventListener(event, ...rest);
+                        return last(event, ...rest);
                     });
-                } else {
-                    pre.push(crr.name, typeof crr.value === "number" ? args[crr.value] : crr.value);
                 }
+                if (crr.value) {
+                    const last = entityStack[entityStack.length - 1];
+                    entityStack.push((event: Event, ...rest: any[]) => {
+                        return last((<HTMLInputElement>event.target).value, ...rest);
+                    });
+                }
+                pre.push(crr.name, entityStack[entityStack.length - 1]);
             } else {
                 pre.push(...args[crr.ref]);
             }
@@ -170,9 +185,10 @@ type ElParseAttr = {
 } | {
     type: "single";
     name: string;
-    value: number | string;
+    val: number | string;
     static?: boolean;
     stop?: boolean;
+    value?: boolean;
 }
 
 function elopenParser(template: TemplateStringsArray): ElopenParseResult {
@@ -194,7 +210,6 @@ function elopenParser(template: TemplateStringsArray): ElopenParseResult {
         return ret.value;
     }
     let acceptStringValue = (right: string) => {
-        let tmp: RegExpExecArray | null;
         if (/^"[^"]*"$/.test(right)) return {value: right.slice(1, right.length - 1)};
         else return null;
     }
@@ -221,13 +236,14 @@ function elopenParser(template: TemplateStringsArray): ElopenParseResult {
             if (left === ":key") {
                 ret.key = acceptValue(right);
             } else {
-                const matched = left.match(/^(\*?)([^.]*)(\.stop)?$/) || throwError();
+                const matched = left.match(/^(\*?)([^.]*)((?:\.stop|\.value)*)$/) || throwError();
                 ret.attrs.push({
                     type: "single",
                     name: matched[2],
-                    value: acceptValue(right),
+                    val: acceptValue(right),
                     static: Boolean(matched[1]),
-                    stop: Boolean(matched[3])
+                    stop: /stop/.test(matched[3]),
+                    value: /value/.test(matched[3])
                 });
             }
         } else if (tmp[4]) {

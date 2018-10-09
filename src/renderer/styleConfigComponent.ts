@@ -58,7 +58,7 @@ class GradientComponent implements ColorComponent {
                 }
                 `);
             el`/style`;
-            el`input :key=${stop.xpath} *type="range" value=${stop.offset.value} *class=${`svgeditor-stop${i}`} *min="0" *max="100" *onclick=${(event: Event) => this.onRangeChange(event, stop.xpath)} *onchange=${(event: Event) => this.onRangeChange(event, stop.xpath)} /`;
+            el`input :key=${stop.xpath} *type="range" value=${stop.offset.value} *class=${`svgeditor-stop${i}`} *min="0" *max="100" *onclick.value=${(value: string) => this.onRangeChange(value, stop.xpath)} *onchange.value=${(value: string) => this.onRangeChange(value, stop.xpath)} /`;
         }
         this.addStopButton.render();
         el`/div`;
@@ -81,8 +81,8 @@ class GradientComponent implements ColorComponent {
         if (this.canvasComponent) this.canvasComponent.dragCancel();
     }
 
-    onRangeChange(event: Event, xpath: string) {
-        const value = Number((<HTMLInputElement>event.target).value);
+    onRangeChange(str: string, xpath: string) {
+        const value = Number(str);
         let pe: ParsedElement;
         if ((pe = xfindExn([svgdata], xpath)) && "offset" in pe.attrs) {
             pe.attrs.offset = typeof pe.attrs.offset === "number" ? value / 100 : {type: "percentageRatio", unit: "%", value};
@@ -351,7 +351,7 @@ class ColorPickerComponent implements WindowComponent {
     }
 
     private selectorRender() {
-        el`select :key="colorpicker-selector" *onchange=${(event: Event) => this.selectorOnChange(event)}`;
+        el`select :key="colorpicker-selector" *onchange.value=${(value: string) => this.selectorOnChange(value)}`;
 
         const urls = Object.keys(paintServers).map(id => `url(#${id})`);
         for (let value of ["color", "no attribute", "none", "currentColor", "inherit", ...urls]) {
@@ -364,8 +364,8 @@ class ColorPickerComponent implements WindowComponent {
         selectElem.value = this.selectorValue;
     }
 
-    private selectorOnChange(event: Event) {
-        this.selectorValue = (<HTMLSelectElement>event.target).value;
+    private selectorOnChange(value: string) {
+        this.selectorValue = value;
         this.setColorComponent(drawState[this.relatedProperty]);
         this.onChange(this);
     }
@@ -458,7 +458,7 @@ class FontComponent implements WindowComponent {
             const ff = this.initials["font-family"];
             const c = isni(ff) ? 1 : ff.array.length;
             for (let i = 0; i < c; i++) {
-                el`select :key=${`font-family-selector-${i}`} *onchange=${(event: Event) => this.onChangeFontFamily(event, i)}`;
+                el`select :key=${`font-family-selector-${i}`} *onchange.value=${(value: string) => this.onChangeFontFamily(value, i)}`;
                     el`option value="no attribute" selected=${ff === null || undefined}`;
                     text("no attribute");
                     el`/option`;
@@ -479,7 +479,7 @@ class FontComponent implements WindowComponent {
 
     private fontSizeSelector() {
         const fs = this.initials["font-size"];
-        el`select :key="font-size-selector" *onchange=${(event: Event) => this.onChangeFontSize(event)}`;
+        el`select :key="font-size-selector" *onchange.value=${(value: string) => this.onChangeFontSize(value)}`;
             el`option value="no attribute" selected=${fs === null || undefined}`;
             text("no attribute");
             el`/option`;
@@ -498,7 +498,7 @@ class FontComponent implements WindowComponent {
     }
 
     private fontSelector<T extends "font-style" | "font-weight">(type: T) {
-        el`select :key=${`${type}-selector`} *onchange=${(event: Event) => this.onChangeFont(event, type)}`;
+        el`select :key=${`${type}-selector`} *onchange.value=${(value: string) => this.onChangeFont(value, type)}`;
             el`option value="no attribute" selected=${this.initials[type] === null || undefined}`;
             text("no attribute");
             el`/option`;
@@ -510,8 +510,7 @@ class FontComponent implements WindowComponent {
         el`/select`;
     }
 
-    private onChangeFontFamily(event: Event, index: number) {
-        const str = (<HTMLSelectElement>event.target).value;
+    private onChangeFontFamily(str: string, index: number) {
         const ff = this.initials["font-family"];
         const copied: FontFamily | "inherit" | null = (() => {
             if (str === "no attribute") {
@@ -535,14 +534,12 @@ class FontComponent implements WindowComponent {
         this.onChange({type: "font-family", value: copied});
     }
 
-    private onChangeFontSize(event: Event) {
-        const str = (<HTMLSelectElement>event.target).value;
+    private onChangeFontSize(str: string) {
         const ret = /^[0-9.]+/.test(str) ? this.initials["font-size"] : str === "no attribute" ? null : <FontSize>str;
         this.onChange({type: "font-size", value: ret});
     }
 
-    private onChangeFont<T extends "font-style" | "font-weight">(event: Event, type: T) {
-        const v = (<HTMLSelectElement>event.target).value;
+    private onChangeFont<T extends "font-style" | "font-weight">(v: string, type: T) {
         this.onChange(<any>{type, value: v === "no attribute" ? null : /^[0-9]+$/.test(v) ? Number(v) : v});
     }
 }
@@ -680,7 +677,7 @@ export class StyleConfigComponent implements Component {
 
     private scaleSelector() {
         const percent = contentChildrenComponent.svgContainerComponent.scalePercent;
-        el`select :key="scale-selector" *onchange=${(event: Event) => this.onChangeScale(event)}`;
+        el`select :key="scale-selector" *onchange.value=${(value: string) => this.onChangeScale(value)}`;
         for (let pc of (new Array(11)).fill(0).map((_, i) => percent - 500 + i * 100).filter(v => v >= 20)) {
             el`option value=${pc}`;
             text(pc + "%");
@@ -690,15 +687,15 @@ export class StyleConfigComponent implements Component {
         selectElem.value = String(percent);
     }
 
-    private onChangeScale(event: Event) {
-        const percent = Number((<HTMLSelectElement>event.target).value);
+    private onChangeScale(value: string) {
+        const percent = Number(value);
         contentChildrenComponent.svgContainerComponent.scalePercent = percent;
         editMode.mode.updateHandlers();
         refleshContent();
     }
 
     private containerSelector() {
-        el`select :key="container-selector" *onchange=${(event: Event) => this.onChangeDisplayedContainer(event)}`;
+        el`select :key="container-selector" *onchange.value=${(value: string) => this.onChangeDisplayedContainer(value)}`;
         for (let xpath of containerElements) {
             el`option value=${xpath}`;
             text(xpath);
@@ -707,8 +704,7 @@ export class StyleConfigComponent implements Component {
         el`/select`;
     }
 
-    private onChangeDisplayedContainer(event: Event) {
-        const xpath = (<HTMLSelectElement>event.target).value;
+    private onChangeDisplayedContainer(xpath: string) {
         contentChildrenComponent.svgContainerComponent.displayedRootXpath = xpath;
         editMode.mode.selectedShapes = null;
         refleshContent();
