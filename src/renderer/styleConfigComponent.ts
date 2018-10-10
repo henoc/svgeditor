@@ -3,13 +3,13 @@ import { drawState, refleshContent, openWindows, contentChildrenComponent, editM
 import { Paint, ColorFormat, ParsedElement, FontFamily, attrToStr, FontSize, FontStyle, FontWeight, fixDecimalPlaces } from "../isomorphism/svgParser";
 import tinycolor from "tinycolor2";
 import { Component, WindowComponent, ButtonComponent, iconComponent } from "../isomorphism/component";
-import { el, OneOrMore, iterate, assertNever, cursor, deepCopy } from "../isomorphism/utils";
+import { el, OneOrMore, iterate, assertNever, cursor, deepCopy, subtract } from "../isomorphism/utils";
 import { multiShaper, shaper } from "./shapes";
 import { acceptHashOnly } from "../isomorphism/url";
 import { fetchPaintServer, cssString } from "../isomorphism/paintServer";
 import { xfindExn } from "../isomorphism/xpath";
 import { findElemById } from "../isomorphism/traverse";
-import { PRESENTATION_ATTRS_NULLS, BASE_ATTRS_NULLS, FONT_SIZE_KEYWORDS, FONT_STYLE_KEYWORDS, FONT_WEIGHT_KEYWORDS } from "../isomorphism/constants";
+import { PRESENTATION_ATTRS_NULLS, BASE_ATTRS_NULLS, FONT_SIZE_KEYWORDS, FONT_STYLE_KEYWORDS, FONT_WEIGHT_KEYWORDS, FONT_FAMILY_GENERIC_NAMES, FONT_FAMILY_MAC_SYSTEMS } from "../isomorphism/constants";
 import { polyAttr, multiPolyAttr } from "./polyAttr";
 
 
@@ -416,8 +416,12 @@ function isni<T>(v: null | "inherit" | T): v is null | "inherit" {
 }
 
 class FontComponent implements WindowComponent {
+
+    addFontFamilyButton: ButtonComponent = new ButtonComponent("+", "add-font-family", () => this.addFontFamily());
+    subFontFamilyButton: ButtonComponent = new ButtonComponent("-", "sub-font-family", () => this.subFontFamily());
+
     constructor(
-        public initials: {
+        public states: {
             "font-family": FontFamily | "inherit" | null,
             "font-size": FontSize | null,
             "font-style": FontStyle | null,
@@ -443,6 +447,8 @@ class FontComponent implements WindowComponent {
         el`div :key="font-component" *class="svgeditor-colorpicker" *onclick.stop=${() => undefined}`;
         text("family: ");
         this.fontFamilySelector();
+        this.addFontFamilyButton.render();
+        this.subFontFamilyButton.render();
         el`br/`;
         text("size: ");
         this.fontSizeSelector();
@@ -453,9 +459,12 @@ class FontComponent implements WindowComponent {
         el`/div`;
     }
 
+    /**
+     * Put `<selector/>` with every family name.
+     */
     private fontFamilySelector() {
         if (fontList) {
-            const ff = this.initials["font-family"];
+            const ff = this.states["font-family"];
             const c = isni(ff) ? 1 : ff.array.length;
             for (let i = 0; i < c; i++) {
                 el`select :key=${`font-family-selector-${i}`} *onchange.value=${(value: string) => this.onChangeFontFamily(value, i)}`;
@@ -465,11 +474,12 @@ class FontComponent implements WindowComponent {
                     el`option value="inherit" selected=${ff === "inherit" || undefined}`;
                     text("inherit");
                     el`/option`;
-                    iterate(fontList, (family) => {
+                    const families = (!isni(ff) && subtract(ff.array, Object.keys(fontList)) || []).concat(...Object.keys(fontList), ...FONT_FAMILY_GENERIC_NAMES, ...FONT_FAMILY_MAC_SYSTEMS);
+                    for(let family of families) {
                         el`option value=${family} style=${`font-family: "${family}"`} selected=${!isni(ff) && ff.array[i] === family || undefined}`;
                         text(family);
                         el`/option`;
-                    });
+                    };
                 el`/select`;
             }
         } else {
@@ -478,7 +488,7 @@ class FontComponent implements WindowComponent {
     }
 
     private fontSizeSelector() {
-        const fs = this.initials["font-size"];
+        const fs = this.states["font-size"];
         el`select :key="font-size-selector" *onchange.value=${(value: string) => this.onChangeFontSize(value)}`;
             el`option value="no attribute" selected=${fs === null || undefined}`;
             text("no attribute");
@@ -499,11 +509,11 @@ class FontComponent implements WindowComponent {
 
     private fontSelector<T extends "font-style" | "font-weight">(type: T) {
         el`select :key=${`${type}-selector`} *onchange.value=${(value: string) => this.onChangeFont(value, type)}`;
-            el`option value="no attribute" selected=${this.initials[type] === null || undefined}`;
+            el`option value="no attribute" selected=${this.states[type] === null || undefined}`;
             text("no attribute");
             el`/option`;
             for (let keyword of {"font-style": FONT_STYLE_KEYWORDS, "font-weight": FONT_WEIGHT_KEYWORDS}[type]) {
-                el`option value=${keyword} selected=${this.initials[type] === keyword || undefined}`;
+                el`option value=${keyword} selected=${this.states[type] === keyword || undefined}`;
                 text(keyword);
                 el`/option`;
             }
@@ -511,19 +521,19 @@ class FontComponent implements WindowComponent {
     }
 
     private onChangeFontFamily(str: string, index: number) {
-        const ff = this.initials["font-family"];
+        const family = this.states["font-family"];
         const copied: FontFamily | "inherit" | null = (() => {
             if (str === "no attribute") {
                 return null;
             } else if (str === "inherit") {
                 return "inherit";
-            } else if (isni(ff)) {
+            } else if (isni(family)) {
                 return {
                     type: <"fontFamily">"fontFamily",
                     array: [str]
                 }
             } else {
-                const array = [...ff.array];
+                const array = [...family.array];
                 array[index] = str;
                 return {
                     type: <"fontFamily">"fontFamily",
@@ -531,16 +541,43 @@ class FontComponent implements WindowComponent {
                 }
             }
         })();
+        this.states["font-family"] = copied;
         this.onChange({type: "font-family", value: copied});
     }
 
+    private addFontFamily() {
+        const family = this.states["font-family"];
+        const value: FontFamily = isni(family) ? {
+            type: "fontFamily",
+            array: ["serif", "serif"]
+        } : {
+            type: "fontFamily",
+            array: [...family.array, "serif"]
+        };
+        this.states["font-family"] = value;
+        this.onChange({type: "font-family", value});
+    }
+
+    private subFontFamily() {
+        const family = this.states["font-family"];
+        const value: FontFamily | "inherit" | null = isni(family) ? family : family.array.length === 1 ? null : {
+            type: "fontFamily",
+            array: [...family.array].slice(0, family.array.length - 1)
+        };
+        this.states["font-family"] = value;
+        this.onChange({type: "font-family", value});
+    }
+
     private onChangeFontSize(str: string) {
-        const ret = /^[0-9.]+/.test(str) ? this.initials["font-size"] : str === "no attribute" ? null : <FontSize>str;
+        const ret = /^[0-9.]+/.test(str) ? this.states["font-size"] : str === "no attribute" ? null : <FontSize>str;
+        this.states["font-size"] = ret;
         this.onChange({type: "font-size", value: ret});
     }
 
     private onChangeFont<T extends "font-style" | "font-weight">(v: string, type: T) {
-        this.onChange(<any>{type, value: v === "no attribute" ? null : /^[0-9]+$/.test(v) ? Number(v) : v});
+        const ret = v === "no attribute" ? null : /^[0-9]+$/.test(v) ? Number(v) : v;
+        this.states[type] = <any>ret;
+        this.onChange(<any>{type, value: ret});
     }
 }
 

@@ -42,7 +42,7 @@ ul {
 }
 .svgeditor-button {
     display: inline-block;
-    width: 5em;
+    padding: 0em 0.5em;
     text-align: center;
     color: var(--vscode-button-foreground);
     background-color: var(--vscode-button-background);

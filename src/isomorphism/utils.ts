@@ -338,3 +338,8 @@ export function omit<T extends object, R extends keyof T>(obj: T, key: R | R[]):
     } else delete copied[key];
     return copied;
 }
+
+export function subtract<T extends string | number>(left: T[], right: T[]): T[] {
+    const set = new Set(right);
+    return left.filter(item => !set.has(item));
+}

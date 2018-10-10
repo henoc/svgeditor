@@ -36,8 +36,11 @@ export const STYLE_NULLS: () => Style = () => {return{
     ...omit(PRESENTATION_ATTRS_NULLS, "transform")
 }};
 
-export const FONT_SIZE_KEYWORDS = ["xx-small" , "x-small" , "small" , "medium" , "large" , "x-large" , "xx-large" , "larger" , "smaller"];
+export const FONT_FAMILY_GENERIC_NAMES = ["serif", "sans-serif", "monospace", "cursive", "fantasy", "system-ui"];
 
+export const FONT_FAMILY_MAC_SYSTEMS = ["-apple-system", "BlinkMacSystemFont"];
+
+export const FONT_SIZE_KEYWORDS = ["xx-small" , "x-small" , "small" , "medium" , "large" , "x-large" , "xx-large" , "larger" , "smaller"];
 
 export const FONT_STYLE_KEYWORDS = ["normal", "italic", "oblique"];
 
