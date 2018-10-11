@@ -427,19 +427,7 @@ class FontComponent implements WindowComponent {
             "font-style": FontStyle | null,
             "font-weight": FontWeight | null
         },
-        public onChange: (changed: {
-            type: "font-family";
-            value: FontFamily | "inherit" | null
-        } | {
-            type: "font-size";
-            value: FontSize | null
-        } | {
-            type: "font-style";
-            value: FontStyle | null
-        } | {
-            type: "font-weight";
-            value: FontWeight | null
-        }) => void,
+        public onChange: (self: FontComponent) => void,
         public onClose: () => void) {
     }
 
@@ -542,7 +530,7 @@ class FontComponent implements WindowComponent {
             }
         })();
         this.states["font-family"] = copied;
-        this.onChange({type: "font-family", value: copied});
+        this.onChange(this);
     }
 
     private addFontFamily() {
@@ -555,7 +543,7 @@ class FontComponent implements WindowComponent {
             array: [...family.array, "serif"]
         };
         this.states["font-family"] = value;
-        this.onChange({type: "font-family", value});
+        this.onChange(this);
     }
 
     private subFontFamily() {
@@ -565,19 +553,19 @@ class FontComponent implements WindowComponent {
             array: [...family.array].slice(0, family.array.length - 1)
         };
         this.states["font-family"] = value;
-        this.onChange({type: "font-family", value});
+        this.onChange(this);
     }
 
     private onChangeFontSize(str: string) {
         const ret = /^[0-9.]+/.test(str) ? this.states["font-size"] : str === "no attribute" ? null : <FontSize>str;
         this.states["font-size"] = ret;
-        this.onChange({type: "font-size", value: ret});
+        this.onChange(this);
     }
 
     private onChangeFont<T extends "font-style" | "font-weight">(v: string, type: T) {
         const ret = v === "no attribute" ? null : /^[0-9]+$/.test(v) ? Number(v) : v;
         this.states[type] = <any>ret;
-        this.onChange(<any>{type, value: ret});
+        this.onChange(this);
     }
 }
 
@@ -612,9 +600,11 @@ export class StyleConfigComponent implements Component {
         if (this.fontComponent === null) {
             this.fontComponent = new FontComponent(
                 {"font-family": this["font-family"], "font-size": this["font-size"], "font-style": this["font-style"], "font-weight": this["font-weight"]},
-                (changed) => {
-                    this[changed.type] = drawState[changed.type] = changed.value;
-                    if (this.affectedShapes) multiPolyAttr(this.affectedShapes).setPresentationOf(changed.type, changed.value);
+                (self) => {
+                    iterate(self.states, (type, value) => {
+                        this[type] = drawState[type] = value;
+                        if (this.affectedShapes) multiPolyAttr(this.affectedShapes).setPresentationOf(type, value);
+                    });
                     refleshContent();
                 }, () => {
                     this.fontComponent = null;
