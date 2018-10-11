@@ -28,7 +28,7 @@ export function activate(context: vscode.ExtensionContext) {
 
     let icons = [
         "addLinearGradient.svg", "alignLeft.svg", "bringForward.svg", "duplicate.svg", "objectToPath.svg", "sendBackward.svg",
-        "addRadialGradient.svg", "alignRight.svg", "font.svg", "zoomOut.svg",
+        "addRadialGradient.svg", "alignRight.svg", "zoomOut.svg",
         "alignBottom.svg", "alignTop.svg", "delete.svg", "group.svg", "zoomIn.svg", "ungroup.svg",
         "rotateClockwise.svg", "rotateCounterclockwise.svg", "centerVertical.svg", "centerHorizontal.svg"
     ].map(readImage).join("");

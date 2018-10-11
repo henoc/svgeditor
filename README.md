@@ -1,6 +1,8 @@
 # SVG Editor
 
-[![marketplace](https://badgen.net/vs-marketplace/v/henoc.svgeditor)](https://marketplace.visualstudio.com/items?itemName=henoc.svgeditor) ![license](https://badgen.net/badge/license/MIT/green) [![donate/ofuse](https://badgen.net/badge/donate/ofuse/c95353)](https://ofuse.me/#users/7853)
+[![marketplace](https://badgen.net/vs-marketplace/v/henoc.svgeditor)](https://marketplace.visualstudio.com/items?itemName=henoc.svgeditor)
+![license](https://badgen.net/badge/license/MIT/green)
+[![donate/ofuse](https://badgen.net/badge/donate/ofuse/c95353)](https://ofuse.me/#users/7853)
 
 ![sample](images/capture.png)
 

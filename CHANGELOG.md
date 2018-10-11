@@ -1,5 +1,8 @@
 # CHANGELOG
 
+- 2.7.0
+  - Support style attribute and tag
+  - Improve font settings
 - 2.6.0
   - Suuport use
   - Remove extension option: `showAll`
