@@ -1,5 +1,7 @@
 # SVG Editor
 
+[![marketplace](https://badgen.net/vs-marketplace/v/henoc.svgeditor)](https://marketplace.visualstudio.com/items?itemName=henoc.svgeditor) ![license](https://badgen.net/badge/license/MIT/green) [![donate/ofuse](https://badgen.net/badge/donate/ofuse/c95353)](https://ofuse.me/#users/7853)
+
 ![sample](images/capture.png)
 
 **ver 2.6**: Support `use` tag
@@ -27,6 +29,7 @@ You can create shapes using the SVG's coder or directly creating shapes with the
 |svgeditor.decimalPlaces|The number of decimal places.|1|
 |svgeditor.collectTransformMatrix|Collect two or more transform functions into a matrix.|true|
 |svgeditor.additionalResourcePaths|Additional resource directory paths SVG Editor can access||
+|svgeditor.useStyleAttribute|Use style attribute instead of presentation attriubte when there are no previous specifications.|false|
 
 ## Keybindings
 
@@ -55,6 +58,7 @@ You can create shapes using the SVG's coder or directly creating shapes with the
 
 ## Current support tags and attributes
 
+- *: id, class, style
 - svg: xmlns, xmlns:xlink, version, viewBox, x, y, width, height
 - circle: cx, cy, r, 🎨
 - rect: x, y, width, height, rx, ry, 🎨
@@ -69,6 +73,7 @@ You can create shapes using the SVG's coder or directly creating shapes with the
 - stop: offset, stop-color, 🎨
 - image: x, y, width, height, xlink:href, href, 🎨
 - use: x, y, width, height, xlink:href, href, 🎨
+- style
 
 🎨(presentation attributes): fill, fill-rule, stroke, stroke-width, stroke-linecap, stroke-linejoin, stroke-dasharray, stroke-dashoffset, transform, font-family, font-size, font-style, font-weight
 
@@ -80,17 +85,12 @@ Localtion (xlink:)href refers to is restricted with your workspace, extension an
 
 ## Future plans
 
-- [ ] Embedded CSS  
-  I want to support it without parsing CSS 🤔
+- [x] Embedded CSS
 - [x] Gradient colors
-- [ ] Filters
 - [x] Images
+- [ ] Filters
 - [ ] Animations
 - [ ] Correct only the changed portions without auto formatting
-
-## Donate
-
-[![Send Osushi](https://platform.osushi.love/images/btn_s.png)](https://osushi.love/intent/post/c974d451acbf4e23b77df8417e0cc162)
 
 ## License
 
