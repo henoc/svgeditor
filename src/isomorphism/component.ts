@@ -22,7 +22,7 @@ export class ButtonComponent implements Component {
 
 export function iconComponent(title: string, href: string, onclick: (event: Event) => void) {
     el`div *title=${space(title)} style="display: inline-block; width: 32px; height: 32px;"`;
-        el`svg *class="svgeditor-icon" *x="25%" *y="25%" *width="50%" *height="50%" *viewBox="0 0 20 20" onclick=${onclick}`;
+        el`svg *class="svgeditor-icon" *x="25%" *y="25%" *width="50%" *height="50%" *viewBox="0 0 20 20" onclick.stop=${onclick}`;
             el`use xlink:href=${href} /`;
         el`/svg`;
     el`/div`;

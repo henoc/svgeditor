@@ -1,10 +1,11 @@
-import { iterate, Vec2, v, objectValues, Some, Option, None, assertNever, ifExist } from "./utils";
+import { iterate, Vec2, v, objectValues, Some, Option, None, assertNever, ifExist, deepCopy } from "./utils";
 import { Assoc } from "./svg";
 import tinycolor from "tinycolor2";
 import { svgPathManager } from "./pathHelpers";
 import { SetDifference, Omit, $Values } from "utility-types";
 import { XmlNode, XmlElement, Interval, ElementPositionsOnText } from "./xmlParser";
 import { toTransformStrWithoutCollect } from "./transformHelpers";
+import { FONT_SIZE_KEYWORDS } from "./constants";
 const { fromTransformAttribute } = require("transformation-matrix/build-commonjs/fromTransformAttribute");
 
 interface Warning {
@@ -38,6 +39,7 @@ export type ParsedElement =
     ParsedImageElement |
     ParsedDefsElement |
     ParsedUseElement |
+    ParsedStyleElement |
     ParsedTextContentNode |
     ParsedCommentNode |
     ParsedCDataNode |
@@ -138,6 +140,12 @@ export interface ParsedUseElement extends ElementBaseClass {
     } | null
 }
 
+export interface ParsedStyleElement extends ElementBaseClass {
+    tag: "style",
+    attrs: ParsedStyleElemAttr,
+    children: ParsedElement[]
+}
+
 export interface ParsedTextContentNode extends ElementBaseClass {
     tag: "text()",
     text: string,
@@ -184,7 +192,7 @@ export interface ParsedPresentationAttr {
     "stroke-dasharray": StrokeDasharray | null;
     "stroke-dashoffset": Length | "inherit" | null;
     transform: Transform | null;
-    "font-family": string | null;
+    "font-family": FontFamily | "inherit" | null;
     "font-size": FontSize | null;
     "font-style": FontStyle | null;
     "font-weight": FontWeight | null;
@@ -273,6 +281,9 @@ interface ParsedUseAttr extends ParsedCoreAttr, ParsedStyleAttr, ParsedPresentat
     y: Length | null;
     width: Length | null;
     height: Length | null;
+}
+
+interface ParsedStyleElemAttr extends ParsedCoreAttr {
 }
 
 export interface Classes {
@@ -436,12 +447,19 @@ export interface Transform {
     matrices: Matrix[];
 }
 
-export const transformStr = (t: Transform) => toTransformStrWithoutCollect(t);
+const transformStr = (t: Transform) => toTransformStrWithoutCollect(t);
+
+export interface FontFamily {
+    type: "fontFamily";
+    array: string[];
+}
+
+const fontFamilyStr = (ff: FontFamily) => ff.array.map(f => /\s/.test(f) ? `'${f}'` : f).join(", ");
 
 export type FontSize = "xx-small" | "x-small" | "small" | "medium" | "large" | "x-large" | "xx-large" | "larger" | "smaller" | Length;
 
 export function isFontSizeKeyword(obj: unknown): obj is FontSize {
-    return typeof obj === "string" && ["xx-small" , "x-small" , "small" , "medium" , "large" , "x-large" , "xx-large" , "larger" , "smaller"].indexOf(obj) !== -1;
+    return typeof obj === "string" && FONT_SIZE_KEYWORDS.indexOf(obj) !== -1;
 }
 
 export type FontStyle = "normal" | "italic" | "oblique";
@@ -495,7 +513,7 @@ export type StrokeDasharray = "none" | Lengths | "inherit";
 const strokeDasharrayStr = (da: StrokeDasharray) => typeof da === "string" ? da : da.array.map(d => lengthStr(d)).join(" ");
 
 export type AttrValue = Classes | Style | Paint | Length |
-    Lengths | Transform | Points | ViewBox | PathCommands | PercentageRatio | number | string;
+    Lengths | Transform | Points | ViewBox | PathCommands | PercentageRatio | FontFamily | number | string;
 
 export function attrToStr(value: AttrValue): string {
     if (typeof value === "string" || typeof value === "number") {
@@ -523,11 +541,67 @@ export function attrToStr(value: AttrValue): string {
         return transformStr(value);
         case "viewBox":
         return [value[0], value[1]].map(p => p.x + " " + p.y).join(" ");
+        case "fontFamily":
+        return fontFamilyStr(value);
     }
     return assertNever(value);
 }
 
-export function parse(node: XmlNode): ParsedResult | null {
+export function fixDecimalPlaces(value: AttrValue, numOfDecimalPlaces?: number): AttrValue {
+    const fix = (v: number) => {
+        return Number(v.toFixed(numOfDecimalPlaces));
+    }
+    if (numOfDecimalPlaces === undefined || typeof value === "string") {
+        return value;
+    } else if (typeof value === "number") {
+        return fix(value);
+    } else {
+        let copied = deepCopy(value);
+        switch (copied.type) {
+            case "length":
+            copied.value = fix(copied.value);
+            return copied;
+            case "lengths":
+            for (let len of copied.array) {
+                len.value = fix(len.value);
+            }
+            return copied;
+            case "pathCommands":
+            for (let i = 0; i < copied.array.length; i++) {
+                for (let j = 0; j < copied.array[i].length; j++) {
+                    const copiedIJ = copied.array[i][j];
+                    copied.array[i][j] = typeof copiedIJ === "number" ? fix(copiedIJ) : copiedIJ;
+                }
+            }
+            return copied;
+            case "transform":
+            for (let i = 0; i < copied.descriptors.length; i++) {
+                const descriptorI = copied.descriptors[i];
+                iterate(descriptorI, (k, v) => {
+                    if (typeof v === "number") (<any>descriptorI)[k] = fix(v);
+                });
+            }
+            return copied;
+            case "points":
+            for (let i = 0; i < copied.array.length; i++) {
+                copied.array[i] = {x: fix(copied.array[i].x), y: fix(copied.array[i].y)};
+            }
+            return copied;
+            case "style":
+            copied = <Style>iterate(copied, (key, value) => {
+                if (key !== "unknown" && key !== "type" && value !== null) {
+                    return fixDecimalPlaces(<any>value, numOfDecimalPlaces);
+                } else {
+                    return value;
+                }
+            });
+            return copied;
+        }
+        return copied;
+    }
+}
+
+export function parse(node: XmlNode): ParsedResult {
     const xpath = "???";
     const parent = "???";
     const warns: Warning[] = [];
@@ -569,6 +643,8 @@ export function parse(node: XmlNode): ParsedResult | null {
                     return {result: {tag: "defs", attrs: parseAttrs(node, pushWarns).defs(), children, xpath, parent}, warns};
                 case "use":
                     return {result: {tag: "use", attrs: parseAttrs(node, pushWarns).use(), xpath, parent, virtual: null}, warns};
+                case "style":
+                    return {result: {tag: "style", attrs: parseAttrs(node, pushWarns).style(), children, xpath, parent}, warns};
                 default:
                     return {result: {tag: "unknown", tag$real: node.name, attrs: node.attrs, children, xpath, parent}, warns: [{type: "warning", interval: node.positions.startTag, message: `${node.name} is unsupported element.`}]};
             }
@@ -578,8 +654,6 @@ export function parse(node: XmlNode): ParsedResult | null {
             return {result: {tag: "comment()", attrs: {}, text: node.text, xpath, parent}, warns};
         case "cdata":
             return {result: {tag: "cdata()", attrs: {}, text: node.text, xpath, parent}, warns};
-        default:
-            return null;
     }
 }
 
@@ -588,10 +662,8 @@ function parseChildren(element: XmlElement, onWarns: (warns: Warning[]) => void,
     const warns = [];
     for (let item of element.children ) {
         const ret = parse(item);
-        if (ret) {
-            if (ret.result) children.push(ret.result);
-            warns.push(...ret.warns);
-        }
+        children.push(ret.result);
+        warns.push(...ret.warns);
     }
     onWarns(warns);
     return children;
@@ -624,7 +696,7 @@ function parseAttrs(element: XmlElement, onWarns: (ws: Warning[]) => void) {
             "stroke-dasharray": tryParse("stroke-dasharray").map(a => a.strokeDasharray()).get,
             "stroke-dashoffset": tryParse("stroke-dashoffset").map(a => a.lengthOrInherit()).get,
             transform: tryParse("transform").map(a => a.transform()).get,
-            "font-family": pop(attrs, "font-family"),
+            "font-family": tryParse("font-family").map(a => a.fontFamilyOrInherit()).get,
             "font-size": tryParse("font-size").map(a => a.fontSize()).get,
             "font-style": tryParse("font-style").map(a => a.validate(isFontStyle)).get,
             "font-weight": tryParse("font-weight").map(a => a.validate(isFontWeight)).get
@@ -804,6 +876,14 @@ function parseAttrs(element: XmlElement, onWarns: (ws: Warning[]) => void) {
             };
             onWarns(warns);
             return validUseAttrs;
+        },
+        style: () => {
+            const validStyleElemAttrs: ParsedStyleElemAttr = {
+                ...coreValidAttrs,
+                unknown: unknownAttrs(attrs, element, pushWarns)
+            };
+            onWarns(warns);
+            return validStyleElemAttrs;
         }
     }
 }
@@ -839,7 +919,8 @@ type AttrOfMethods = {
     transform: () => Transform | null,
     validate: <T>(validator: (obj: unknown) => obj is T) => T & string | null,
     fontSize: () => FontSize | null,
-    strokeDasharray: () => StrokeDasharray | null
+    strokeDasharray: () => StrokeDasharray | null,
+    fontFamilyOrInherit: () => FontFamily | "inherit" | null
 }
 
 export function attrOf(element: XmlElement, warns: Warning[], name: string): Option<AttrOfMethods> {
@@ -933,6 +1014,17 @@ export function attrOf(element: XmlElement, warns: Warning[], name: string): Opt
         }
     }
 
+    function acceptFontFamily(v: string): FontFamily {
+        return {
+            type: "fontFamily",
+            array: v.split(",")
+                .map(f => f.trim())
+                .map(f => /^'[^']*'$/.test(f) ? f.slice(1, f.length - 1) : f)
+        };
+    }
+
+    const acceptFontFamilyOrInherit = (v: string) => v === "inherit" ? v : acceptFontFamily(v);
+
     function handleResult<T>(res: T | Warning): T | null {
         if (isWarning(res)) {
             warns.push(res);
@@ -989,7 +1081,7 @@ export function attrOf(element: XmlElement, warns: Warning[], name: string): Opt
                 "stroke-linejoin": tryValidate("stroke-linejoin", isStrokeLinejoin),
                 "stroke-dasharray": tryApply("stroke-dasharray", acceptStrokeDasharray),
                 "stroke-dashoffset": tryApply("stroke-dashoffset", acceptLengthOrInherit),
-                "font-family": pop(styleAttrs, "font-family"),
+                "font-family": tryApply("font-family", acceptFontFamilyOrInherit),
                 "font-size": tryApply("font-size", acceptFontSize),
                 "font-style": tryValidate("font-style", isFontStyle),
                 "font-weight": tryValidate("font-weight", isFontWeight),
@@ -1071,6 +1163,7 @@ export function attrOf(element: XmlElement, warns: Warning[], name: string): Opt
         },
         fontSize: () => handleResult(acceptFontSize(value)),
         strokeDasharray: () => handleResult(acceptStrokeDasharray(value)),
+        fontFamilyOrInherit: () => handleResult(acceptFontFamilyOrInherit(value))
     };
 
     return new Some<AttrOfMethods>(methods);

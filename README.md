@@ -88,6 +88,10 @@ Localtion (xlink:)href refers to is restricted with your workspace, extension an
 - [ ] Animations
 - [ ] Correct only the changed portions without auto formatting
 
+## Donate
+
+[![Send Osushi](https://platform.osushi.love/images/btn_s.png)](https://osushi.love/intent/post/c974d451acbf4e23b77df8417e0cc162)
+
 ## License
 
 MIT

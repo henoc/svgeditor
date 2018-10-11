@@ -21,7 +21,10 @@ export function textMode(inputText: string | undefined, isfinished: (pe: ParsedE
                     lengthAdjust: null,
                     ...BASE_ATTRS_NULLS(),
                     ...Mode.presentationAttrsDefaultImpl(),
-                    "font-family": drawState["font-family"]
+                    "font-family": drawState["font-family"],
+                    "font-size": drawState["font-size"],
+                    "font-style": drawState["font-style"],
+                    "font-weight": drawState["font-weight"]
                 },
                 children: [{
                     xpath: "???",

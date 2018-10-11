@@ -47,9 +47,13 @@ describe("svgParser", () => {
             assert.deepStrictEqual(
                 attrOf(elemWithSingleAttr("fill", "transparent"), [], "fill").map(a => a.paint()).get,
                 {
-                    type: "color",
-                    format: "name",
-                    r: 0, g: 0, b: 0, a: 0
+                    type: "color", format: "name", r: 0, g: 0, b: 0, a: 0
+                }
+            );
+            assert.deepStrictEqual(
+                attrOf(elemWithSingleAttr("fill", "tRaNsPaReNt"), [], "fill").map(a => a.paint()).get,
+                {
+                    type: "color", format: "name", r: 0, g: 0, b: 0, a: 0
                 }
             );
         });

@@ -249,7 +249,6 @@ function parseSvg(svgText: string, editor: vscode.TextEditor, diagnostics: vscod
     const xml = textToXml(svgText);
     if (!xml) return null;
     const parsed = parse(trimXml(xml));
-    if (!parsed) return null;
     diagnostics.set(editor.document.uri, parsed.warns.map(warn => {
         return {
             source: "svgeditor",

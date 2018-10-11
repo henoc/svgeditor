@@ -89,6 +89,7 @@ export function construct(pe: ParsedElement, options?: SvgConstructOptions, disp
             case "linearGradient":
             case "radialGradient":
             case "defs":
+            case "style":
                 makeChildren(pe.children, tag, displayedDepth, options);
                 return tag.attrs(omit(pe.attrs, "unknown"));
             case "g":

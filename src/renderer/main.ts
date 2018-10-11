@@ -1,5 +1,5 @@
 import { construct } from "./svgConstructor";
-import { ParsedElement, isLengthUnit, LengthUnit, Paint } from "../isomorphism/svgParser";
+import { ParsedElement, isLengthUnit, LengthUnit, Paint, FontFamily, FontSize, FontWeight, FontStyle } from "../isomorphism/svgParser";
 import { onDocumentMouseMove, onDocumentMouseUp, onDocumentClick, onDocumentMouseLeave, onDocumentCopy, onDocumentCut, onDocumentPaste } from "./triggers";
 import { Mode } from "./abstractMode";
 import { SelectMode } from "./selectMode";
@@ -38,9 +38,12 @@ export const configuration = {
     useStyleAttribute: false
 }
 export const drawState = {
-    fill: <Paint | null>{ format: "rgb", r: 255, g: 255, b: 255, a: 1 },
+    fill: <Paint | null>{ type: "color", format: "rgb", r: 255, g: 255, b: 255, a: 1 },
     stroke: <Paint | null>null,
-    "font-family": <string | null>null
+    "font-family": <FontFamily | "inherit" | null>null,
+    "font-size": <FontSize | null>null,
+    "font-style": <FontStyle | null>null,
+    "font-weight": <FontWeight | null>null,
 }
 export const OUTERMOST_DEFAULT_WIDTH = 400;
 export const OUTERMOST_DEFAULT_HEIGHT = 400;
@@ -106,7 +109,7 @@ window.addEventListener("message", event => {
             refleshContent();
             break;
         case "configuration":
-            if (message.data.defaultUni !== undefined && isLengthUnit(message.data.defaultUnit)) configuration.defaultUnit = message.data.defaultUnit;
+            if (message.data.defaultUnit !== undefined && isLengthUnit(message.data.defaultUnit)) configuration.defaultUnit = message.data.defaultUnit;
             if (!isLengthUnit(message.data.defaultUnit)) sendErrorMessage(`Configuration "svgeditor.defaultUnit: ${message.data.defaultUnit}" is unsupported unit.`);
             if (message.data.decimalPlaces !== undefined) configuration.numOfDecimalPlaces = message.data.decimalPlaces;
             if (message.data.collectTransform !== undefined) configuration.collectTransform = message.data.collectTransform;

@@ -7,7 +7,7 @@ const assert = chai.assert;
 
 function parseSvg(svgText: string) {
     const xml = trimXml(textToXml(svgText)!);
-    const ret = parse(xml)!.result;
+    const ret = parse(xml).result;
     updateXPaths(ret);
     return ret;
 }

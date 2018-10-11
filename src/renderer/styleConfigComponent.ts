@@ -1,16 +1,16 @@
 import { elementOpen, elementClose, text, elementVoid } from "incremental-dom";
-import { drawState, refleshContent, openWindows, contentChildrenComponent, editMode, fontList, paintServers, svgdata, containerElements } from "./main";
-import { Paint, ColorFormat, ParsedElement } from "../isomorphism/svgParser";
+import { drawState, refleshContent, openWindows, contentChildrenComponent, editMode, fontList, paintServers, svgdata, containerElements, configuration } from "./main";
+import { Paint, ColorFormat, ParsedElement, FontFamily, attrToStr, FontSize, FontStyle, FontWeight, fixDecimalPlaces } from "../isomorphism/svgParser";
 import tinycolor from "tinycolor2";
 import { Component, WindowComponent, ButtonComponent, iconComponent } from "../isomorphism/component";
-import { el, OneOrMore, iterate, assertNever, cursor } from "../isomorphism/utils";
+import { el, OneOrMore, iterate, assertNever, cursor, deepCopy, subtract } from "../isomorphism/utils";
 import { multiShaper, shaper } from "./shapes";
 import { acceptHashOnly } from "../isomorphism/url";
-import { fetchPaintServer, cssString, StopReference, PaintServer } from "../isomorphism/paintServer";
-import { Mode } from "./abstractMode";
+import { fetchPaintServer, cssString } from "../isomorphism/paintServer";
 import { xfindExn } from "../isomorphism/xpath";
 import { findElemById } from "../isomorphism/traverse";
-import { PRESENTATION_ATTRS_NULLS, BASE_ATTRS_NULLS } from "../isomorphism/constants";
+import { PRESENTATION_ATTRS_NULLS, BASE_ATTRS_NULLS, FONT_SIZE_KEYWORDS, FONT_STYLE_KEYWORDS, FONT_WEIGHT_KEYWORDS, FONT_FAMILY_GENERIC_NAMES, FONT_FAMILY_MAC_SYSTEMS } from "../isomorphism/constants";
+import { polyAttr, multiPolyAttr } from "./polyAttr";
 
 
 const CANVAS_DEFAULT_COLOR = {r: 255, g: 255, b: 255, a: 1};
@@ -58,7 +58,7 @@ class GradientComponent implements ColorComponent {
                 }
                 `);
             el`/style`;
-            el`input :key=${stop.xpath} *type="range" value=${stop.offset.value} *class=${`svgeditor-stop${i}`} *min="0" *max="100" *onclick=${(event: Event) => this.onRangeChange(event, stop.xpath)} *onchange=${(event: Event) => this.onRangeChange(event, stop.xpath)} /`;
+            el`input :key=${stop.xpath} *type="range" value=${stop.offset.value} *class=${`svgeditor-stop${i}`} *min="0" *max="100" *onclick.value=${(value: string) => this.onRangeChange(value, stop.xpath)} *onchange.value=${(value: string) => this.onRangeChange(value, stop.xpath)} /`;
         }
         this.addStopButton.render();
         el`/div`;
@@ -81,8 +81,8 @@ class GradientComponent implements ColorComponent {
         if (this.canvasComponent) this.canvasComponent.dragCancel();
     }
 
-    onRangeChange(event: Event, xpath: string) {
-        const value = Number((<HTMLInputElement>event.target).value);
+    onRangeChange(str: string, xpath: string) {
+        const value = Number(str);
         let pe: ParsedElement;
         if ((pe = xfindExn([svgdata], xpath)) && "offset" in pe.attrs) {
             pe.attrs.offset = typeof pe.attrs.offset === "number" ? value / 100 : {type: "percentageRatio", unit: "%", value};
@@ -323,7 +323,7 @@ class ColorPickerComponent implements WindowComponent {
     }
 
     render() {
-        el`div :key="colorpicker" *class="svgeditor-colorpicker" *onclick=${(event: MouseEvent) => event.stopPropagation()}`;
+        el`div :key="colorpicker" *class="svgeditor-colorpicker" *onclick.stop=${() => undefined}`;
             this.selectorRender();
             iconComponent("add new linearGradient", "#svgeditor-icon-addLinearGradient", () => this.addGradient("linearGradient"));
             iconComponent("add new radialGradient", "#svgeditor-icon-addRadialGradient", () => this.addGradient("radialGradient"));
@@ -351,7 +351,7 @@ class ColorPickerComponent implements WindowComponent {
     }
 
     private selectorRender() {
-        el`select :key="colorpicker-selector" *onchange=${(event: Event) => this.selectorOnChange(event)}`;
+        el`select :key="colorpicker-selector" *onchange.value=${(value: string) => this.selectorOnChange(value)}`;
 
         const urls = Object.keys(paintServers).map(id => `url(#${id})`);
         for (let value of ["color", "no attribute", "none", "currentColor", "inherit", ...urls]) {
@@ -364,8 +364,8 @@ class ColorPickerComponent implements WindowComponent {
         selectElem.value = this.selectorValue;
     }
 
-    private selectorOnChange(event: Event) {
-        this.selectorValue = (<HTMLSelectElement>event.target).value;
+    private selectorOnChange(value: string) {
+        this.selectorValue = value;
         this.setColorComponent(drawState[this.relatedProperty]);
         this.onChange(this);
     }
@@ -411,46 +411,173 @@ class ColorPickerComponent implements WindowComponent {
     }
 }
 
+function isni<T>(v: null | "inherit" | T): v is null | "inherit" {
+    return v === null || v === "inherit";
+}
+
 class FontComponent implements WindowComponent {
-    constructor(public initialFontFamily: string | null, public onChange: (family: string) => void, public onClose: () => void) {
+
+    addFontFamilyButton: ButtonComponent = new ButtonComponent("+", "add-font-family", () => this.addFontFamily());
+    subFontFamilyButton: ButtonComponent = new ButtonComponent("-", "sub-font-family", () => this.subFontFamily());
+
+    constructor(
+        public states: {
+            "font-family": FontFamily | "inherit" | null,
+            "font-size": FontSize | null,
+            "font-style": FontStyle | null,
+            "font-weight": FontWeight | null
+        },
+        public onChange: (self: FontComponent) => void,
+        public onClose: () => void) {
     }
 
     render(): void {
-        el`div :key="font-component" *class="svgeditor-colorpicker" *onclick=${(event: MouseEvent) => event.stopPropagation()}`;
-        text("font: ");
+        el`div :key="font-component" *class="svgeditor-colorpicker" *onclick.stop=${() => undefined}`;
+        text("family: ");
         this.fontFamilySelector();
+        this.addFontFamilyButton.render();
+        this.subFontFamilyButton.render();
+        el`br/`;
+        text("size: ");
+        this.fontSizeSelector();
+        text(" style: ");
+        this.fontSelector("font-style");
+        text(" weight: ");
+        this.fontSelector("font-weight");
         el`/div`;
     }
 
+    /**
+     * Put `<selector/>` with every family name.
+     */
     private fontFamilySelector() {
         if (fontList) {
-            el`select :key="font-family-selector" *onchange=${(event: Event) => this.onChangeFontFamily(event)}`;
-                el`option value="no attribute" selected=${this.initialFontFamily === null || undefined}`;
-                text("no attribute");
-                el`/option`;
-                iterate(fontList, (family) => {
-                    el`option value=${family} style=${`font-family: "${family}"`} selected=${this.initialFontFamily === family || undefined}`;
-                    text(family);
+            const ff = this.states["font-family"];
+            const c = isni(ff) ? 1 : ff.array.length;
+            for (let i = 0; i < c; i++) {
+                el`select :key=${`font-family-selector-${i}`} *onchange.value=${(value: string) => this.onChangeFontFamily(value, i)}`;
+                    el`option value="no attribute" selected=${ff === null || undefined}`;
+                    text("no attribute");
                     el`/option`;
-                });
-            el`/select`;
+                    el`option value="inherit" selected=${ff === "inherit" || undefined}`;
+                    text("inherit");
+                    el`/option`;
+                    const families = (!isni(ff) && subtract(ff.array, Object.keys(fontList)) || []).concat(...Object.keys(fontList), ...FONT_FAMILY_GENERIC_NAMES, ...FONT_FAMILY_MAC_SYSTEMS);
+                    for(let family of families) {
+                        el`option value=${family} style=${`font-family: "${family}"`} selected=${!isni(ff) && ff.array[i] === family || undefined}`;
+                        text(family);
+                        el`/option`;
+                    };
+                el`/select`;
+            }
         } else {
             text("sync...");
         }
     }
 
-    private onChangeFontFamily(event: Event) {
-        const family = (<HTMLSelectElement>event.target).value;
-        this.onChange(family);
+    private fontSizeSelector() {
+        const fs = this.states["font-size"];
+        el`select :key="font-size-selector" *onchange.value=${(value: string) => this.onChangeFontSize(value)}`;
+            el`option value="no attribute" selected=${fs === null || undefined}`;
+            text("no attribute");
+            el`/option`;
+        if (fs !== null && typeof fs !== "string") {
+            const fixedFs = fixDecimalPlaces(fs, configuration.numOfDecimalPlaces);
+            el`option value=${attrToStr(fixedFs)} selected="true"`;
+            text(attrToStr(fixedFs));
+            el`/option`;
+        }
+        for (let keyword of FONT_SIZE_KEYWORDS) {
+            el`option value=${keyword} selected=${fs === keyword || undefined}`;
+            text(keyword);
+            el`/option`;
+        }
+        el`/select`;
+    }
+
+    private fontSelector<T extends "font-style" | "font-weight">(type: T) {
+        el`select :key=${`${type}-selector`} *onchange.value=${(value: string) => this.onChangeFont(value, type)}`;
+            el`option value="no attribute" selected=${this.states[type] === null || undefined}`;
+            text("no attribute");
+            el`/option`;
+            for (let keyword of {"font-style": FONT_STYLE_KEYWORDS, "font-weight": FONT_WEIGHT_KEYWORDS}[type]) {
+                el`option value=${keyword} selected=${this.states[type] === keyword || undefined}`;
+                text(keyword);
+                el`/option`;
+            }
+        el`/select`;
+    }
+
+    private onChangeFontFamily(str: string, index: number) {
+        const family = this.states["font-family"];
+        const copied: FontFamily | "inherit" | null = (() => {
+            if (str === "no attribute") {
+                return null;
+            } else if (str === "inherit") {
+                return "inherit";
+            } else if (isni(family)) {
+                return {
+                    type: <"fontFamily">"fontFamily",
+                    array: [str]
+                }
+            } else {
+                const array = [...family.array];
+                array[index] = str;
+                return {
+                    type: <"fontFamily">"fontFamily",
+                    array
+                }
+            }
+        })();
+        this.states["font-family"] = copied;
+        this.onChange(this);
+    }
+
+    private addFontFamily() {
+        const family = this.states["font-family"];
+        const value: FontFamily = isni(family) ? {
+            type: "fontFamily",
+            array: ["serif", "serif"]
+        } : {
+            type: "fontFamily",
+            array: [...family.array, "serif"]
+        };
+        this.states["font-family"] = value;
+        this.onChange(this);
+    }
+
+    private subFontFamily() {
+        const family = this.states["font-family"];
+        const value: FontFamily | "inherit" | null = isni(family) ? family : family.array.length === 1 ? null : {
+            type: "fontFamily",
+            array: [...family.array].slice(0, family.array.length - 1)
+        };
+        this.states["font-family"] = value;
+        this.onChange(this);
+    }
+
+    private onChangeFontSize(str: string) {
+        const ret = /^[0-9.]+/.test(str) ? this.states["font-size"] : str === "no attribute" ? null : <FontSize>str;
+        this.states["font-size"] = ret;
+        this.onChange(this);
+    }
+
+    private onChangeFont<T extends "font-style" | "font-weight">(v: string, type: T) {
+        const ret = v === "no attribute" ? null : /^[0-9]+$/.test(v) ? Number(v) : v;
+        this.states[type] = <any>ret;
+        this.onChange(this);
     }
 }
 
 export class StyleConfigComponent implements Component {
 
-    colorBoxFillBackground: Paint | null = drawState.fill;
-    colorBoxStrokeBackground: Paint | null = drawState.stroke;
+    fill: Paint | null = drawState.fill;
+    stroke: Paint | null = drawState.stroke;
     colorPicker: ColorPickerComponent | null = null;
-    fontFamily: string | null = drawState["font-family"];
+    "font-family"= drawState["font-family"];
+    "font-size" = drawState["font-size"];
+    "font-style" = drawState["font-style"];
+    "font-weight" = drawState["font-weight"];
     fontComponent: FontComponent | null = null;
     private _affectedShapes: OneOrMore<ParsedElement> | null = null;
 
@@ -459,40 +586,62 @@ export class StyleConfigComponent implements Component {
         this.containerSelector();
         el`span *class="svgeditor-bold"`;
         text(" fill: ");
-        this.colorBoxRender(this.colorBoxFillBackground, "fill");
+        this.colorBoxRender(this.fill, "fill");
         text(" stroke: ");
-        this.colorBoxRender(this.colorBoxStrokeBackground, "stroke");
+        this.colorBoxRender(this.stroke, "stroke");
+        text(" font: ");
         el`/span`;
+        this.fontSampleRender();
         if (this.colorPicker) this.colorPicker.render();
         if (this.fontComponent) this.fontComponent.render();
     }
 
     openFontWindow() {
         if (this.fontComponent === null) {
-            this.fontComponent = new FontComponent(this.fontFamily, (family) => {
-                const nullableFamily = family === "no attribute" ? null : family;
-                this.fontFamily = drawState["font-family"] = nullableFamily;
-                if (this.affectedShapes) multiShaper(this.affectedShapes).fontFamily = nullableFamily;
-                refleshContent();
-            }, () => {
-                this.fontComponent = null;
-                refleshContent();
-            });
+            this.fontComponent = new FontComponent(
+                {"font-family": this["font-family"], "font-size": this["font-size"], "font-style": this["font-style"], "font-weight": this["font-weight"]},
+                (self) => {
+                    iterate(self.states, (type, value) => {
+                        this[type] = drawState[type] = value;
+                        if (this.affectedShapes) multiPolyAttr(this.affectedShapes).setPresentationOf(type, value);
+                    });
+                    refleshContent();
+                }, () => {
+                    this.fontComponent = null;
+                    refleshContent();
+                }
+            );
             openWindows["fontComponent"] = this.fontComponent;
             refleshContent();
         }
     }
 
+    private fontSampleRender() {
+        const style: {[key: string]: string} = {cursor: "pointer"};
+        for (let type of <(keyof typeof drawState)[]>["font-family", "font-style", "font-weight"]) {
+            if (this[type]) style[type] = attrToStr(this[type]!);
+        }
+        el`span
+            :key="font-sample"
+            style=${Object.entries(style).map(([k, v]) => `${k}: ${v}`).join(";")}
+            *onclick.stop=${() => this.openFontWindow()}
+            *title="open font settings"
+            *tabIndex="0"`;
+        text("A");
+        el`/span`;
+    }
+
     set affectedShapes(pes: OneOrMore<ParsedElement> | null) {
+        const stateKeys = <(keyof typeof drawState)[]>Object.keys(drawState);
         if (pes) {
-            this.colorBoxFillBackground = multiShaper(pes).fill;
-            this.colorBoxStrokeBackground = multiShaper(pes).stroke;
-            this.fontFamily = multiShaper(pes).fontFamily;
+            for (let key of stateKeys) {
+                this[key] = multiPolyAttr(pes).getPresentationOf(key);
+            }
             this._affectedShapes = pes;
         } else {
-            this.colorBoxFillBackground = drawState.fill;
-            this.colorBoxStrokeBackground = drawState.stroke;
-            this.fontFamily = drawState["font-family"];
+            for (let key of stateKeys) {
+                this[key] = drawState[key];
+            }
             this._affectedShapes = null;
         }
     }
@@ -522,26 +671,26 @@ export class StyleConfigComponent implements Component {
             :key=${`colorbox-${relatedProperty}`}
             *class="svgeditor-colorbox"
             *tabindex="0"
-            *onclick=${(event: MouseEvent) => this.openColorPicker(event, relatedProperty)}
+            *onclick.stop=${() => this.openColorPicker(relatedProperty)}
+            *title=${`open ${relatedProperty} property settings`}
             style=${style}`;
         if (textContent) text(textContent);
         el`/div`;
     }
 
-    private openColorPicker(event: MouseEvent, relatedProperty: "fill" | "stroke") {
-        event.stopPropagation();
-        this.colorPicker = new ColorPickerComponent(relatedProperty === "fill" ? this.colorBoxFillBackground : this.colorBoxStrokeBackground, relatedProperty, (colorpicker) => {
+    private openColorPicker(relatedProperty: "fill" | "stroke") {
+        this.colorPicker = new ColorPickerComponent(relatedProperty === "fill" ? this.fill : this.stroke, relatedProperty, (colorpicker) => {
             let paint: Paint | null;
             switch (relatedProperty) {
                 case "fill":
                 paint = drawState.fill;
-                this.colorBoxFillBackground = drawState.fill = colorpicker.getPaint(paint && typeof paint !== "string" && paint.type === "color" && paint.format || null);
-                if (this.affectedShapes) multiShaper(this.affectedShapes).fill = drawState.fill;
+                this.fill = drawState.fill = colorpicker.getPaint(paint && typeof paint !== "string" && paint.type === "color" && paint.format || null);
+                if (this.affectedShapes) multiPolyAttr(this.affectedShapes).setPresentationOf("fill", drawState.fill);
                 break;
                 case "stroke":
                 paint = drawState.stroke;
-                this.colorBoxStrokeBackground = drawState.stroke = colorpicker.getPaint(paint && typeof paint !== "string" && paint.type === "color" && paint.format || null);
-                if (this.affectedShapes) multiShaper(this.affectedShapes).stroke = drawState.stroke;
+                this.stroke = drawState.stroke = colorpicker.getPaint(paint && typeof paint !== "string" && paint.type === "color" && paint.format || null);
+                if (this.affectedShapes) multiPolyAttr(this.affectedShapes).setPresentationOf("stroke", drawState.stroke);
                 break;
             }
             refleshContent();
@@ -555,7 +704,7 @@ export class StyleConfigComponent implements Component {
 
     private scaleSelector() {
         const percent = contentChildrenComponent.svgContainerComponent.scalePercent;
-        el`select :key="scale-selector" *onchange=${(event: Event) => this.onChangeScale(event)}`;
+        el`select :key="scale-selector" *onchange.value=${(value: string) => this.onChangeScale(value)}`;
         for (let pc of (new Array(11)).fill(0).map((_, i) => percent - 500 + i * 100).filter(v => v >= 20)) {
             el`option value=${pc}`;
             text(pc + "%");
@@ -565,15 +714,15 @@ export class StyleConfigComponent implements Component {
         selectElem.value = String(percent);
     }
 
-    private onChangeScale(event: Event) {
-        const percent = Number((<HTMLSelectElement>event.target).value);
+    private onChangeScale(value: string) {
+        const percent = Number(value);
         contentChildrenComponent.svgContainerComponent.scalePercent = percent;
         editMode.mode.updateHandlers();
         refleshContent();
     }
 
     private containerSelector() {
-        el`select :key="container-selector" *onchange=${(event: Event) => this.onChangeDisplayedContainer(event)}`;
+        el`select :key="container-selector" *onchange.value=${(value: string) => this.onChangeDisplayedContainer(value)}`;
         for (let xpath of containerElements) {
             el`option value=${xpath}`;
             text(xpath);
@@ -582,8 +731,7 @@ export class StyleConfigComponent implements Component {
         el`/select`;
     }
 
-    private onChangeDisplayedContainer(event: Event) {
-        const xpath = (<HTMLSelectElement>event.target).value;
+    private onChangeDisplayedContainer(xpath: string) {
         contentChildrenComponent.svgContainerComponent.displayedRootXpath = xpath;
         editMode.mode.selectedShapes = null;
         refleshContent();
