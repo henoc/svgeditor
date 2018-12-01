@@ -35,7 +35,9 @@ export const configuration = {
     defaultUnit: <LengthUnit>null,
     numOfDecimalPlaces: 1,
     collectTransform: true,
-    useStyleAttribute: false
+    useStyleAttribute: false,
+    indentStyle: <"space" | "tab">"space",
+    indentSize: 4
 }
 export const drawState = {
     fill: <Paint | null>{ type: "color", format: "rgb", r: 255, g: 255, b: 255, a: 1 },
@@ -114,6 +116,8 @@ window.addEventListener("message", event => {
             if (message.data.decimalPlaces !== undefined) configuration.numOfDecimalPlaces = message.data.decimalPlaces;
             if (message.data.collectTransform !== undefined) configuration.collectTransform = message.data.collectTransform;
             if (message.data.useStyleAttribute !== undefined) configuration.useStyleAttribute = message.data.useStyleAttribute;
+            if (message.data.indentStyle !== undefined) configuration.indentStyle = message.data.indentStyle;
+            if (message.data.indentSize !== undefined) configuration.indentSize = message.data.indentSize;
             break;
         case "input-response":
             textMode(message.data, (pe: ParsedElement | null) => contentChildrenComponent.menuListComponent.menuComponents.text.changeMode("select", pe || undefined));
@@ -170,9 +174,10 @@ export function refleshContent() {
 
 export function sendBackToEditor() {
     const svgtag = construct(svgdata, { numOfDecimalPlaces: configuration.numOfDecimalPlaces });
+    const indentUnit = configuration.indentStyle === "tab" ? "\t" : " ".repeat(configuration.indentSize);
     vscode.postMessage({
         command: "modified",
-        data: svgtag.toLinear()
+        data: svgtag.toLinear({indent: {unit: indentUnit, level: 0, eol: "\n"}})
     });
 }
 
