@@ -1,5 +1,7 @@
 # CHANGELOG
 
+- 2.8.0
+  - Support script
 - 2.7.0
   - Support style attribute and tag
   - Improve font settings
