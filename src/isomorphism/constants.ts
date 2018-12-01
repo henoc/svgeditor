@@ -1,6 +1,7 @@
-import { ParsedPresentationAttr, ParsedCoreAttr, ParsedStyleAttr, Style } from "./svgParser";
+import { ParsedPresentationAttr, ParsedCoreAttr, ParsedStyleAttr, Style, ParsedElement } from "./svgParser";
 import { Assoc } from "./svg";
 import { omit } from "./utils";
+import { $PropertyType } from "utility-types";
 
 export const SVG_NS = "http://www.w3.org/2000/svg";
 export const XLINK_NS = "http://www.w3.org/1999/xlink";
@@ -46,4 +47,4 @@ export const FONT_STYLE_KEYWORDS: ReadonlyArray<string> = ["normal", "italic", "
 
 export const FONT_WEIGHT_KEYWORDS: ReadonlyArray<string | number> = ["normal" , "bold" , "lighter" , "bolder" , 100 , 200 , 300 , 400 , 500 , 600 , 700 , 800 , 900];
 
-export const SKIP_TAGS_ON_RENDER: ReadonlyArray<string> = ["script"];
+export const SKIP_TAGS_ON_RENDER: ReadonlyArray<$PropertyType<ParsedElement, "tag">> = ["script", "animate", "animateColor", "animateMotion", "animateTransform"];

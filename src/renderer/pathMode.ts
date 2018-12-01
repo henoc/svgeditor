@@ -37,7 +37,8 @@ export class PathMode extends Mode {
                             ]},
                             ...BASE_ATTRS_NULLS(),
                             ...Mode.presentationAttrsDefaultImpl()
-                        }
+                        },
+                        children: []
                     };
                     this.makeTarget = pe2;
                     root.children.push(pe2);

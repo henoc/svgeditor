@@ -779,6 +779,12 @@ export function shaper(pe: ParsedElement): ShaperFunctions {
         case "stop":
         case "style":
         case "script":
+        case "animate":
+        case "animateColor":
+        case "animateMotion":
+        case "animateTransform":
+        case "set":
+        case "mpath":
             throw new Error("Impalpable shape cannot move.");
         case "text()":
         case "comment()":

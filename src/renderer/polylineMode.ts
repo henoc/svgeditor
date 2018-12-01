@@ -34,7 +34,8 @@ export class PolylineMode extends Mode {
                             points: {type: "points", array: [cursor, cursor]},
                             ...BASE_ATTRS_NULLS(),
                             ...Mode.presentationAttrsDefaultImpl()
-                        }
+                        },
+                        children: []
                     }
                     this.makeTarget = pe2;
                     root.children.push(pe2);

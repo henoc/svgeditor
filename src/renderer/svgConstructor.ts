@@ -84,13 +84,18 @@ export function construct(pe: ParsedElement, options?: SvgConstructOptions, disp
             case "polygon":
             case "path":
             case "stop":
-                return tag.attrs(omit(pe.attrs, "unknown"));
+            case "animate":
+            case "animateColor":
+            case "animateTransform":
+            case "set":
+            case "mpath":
             case "text":
             case "linearGradient":
             case "radialGradient":
             case "defs":
             case "style":
             case "script":
+            case "animateMotion":
                 makeChildren(pe.children, tag, displayedDepth, options);
                 return tag.attrs(omit(pe.attrs, "unknown"));
             case "g":

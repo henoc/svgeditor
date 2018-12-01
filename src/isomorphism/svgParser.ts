@@ -41,23 +41,39 @@ export type ParsedElement =
     ParsedUseElement |
     ParsedStyleElement |
     ParsedScriptElement |
+    ParsedAnimateElement |
+    ParsedAnimateColorElement |
+    ParsedAnimateMotionElement |
+    ParsedAnimateTransformElement |
+    ParsedSetElement |
+    ParsedMPathElement |
     ParsedTextContentNode |
     ParsedCommentNode |
     ParsedCDataNode |
     ParsedUnknownElement
 
-interface ElementBaseClass {
+interface NodeBase {
     xpath: string;
     parent: string | null;
 }
 
-interface ContainerElementClass {
-    children: ParsedElement[]
+export interface HasChildren {
+    children: ParsedElement[];
 }
 
-type StructureElementClass = ContainerElementClass
+interface ElementBaseClass extends NodeBase, HasChildren {};
 
-type GradientElementClass = ContainerElementClass
+interface ContainerElementClass extends HasChildren {
+    containerElementClass: true
+}
+
+interface StructureElementClass extends HasChildren {
+    structureElementClass: true
+}
+
+interface GradientElementClass extends HasChildren {
+    gradientElementClass: true
+}
 
 export interface ParsedSvgElement extends ContainerElementClass, ElementBaseClass {
     tag: "svg",
@@ -153,19 +169,50 @@ export interface ParsedScriptElement extends ElementBaseClass {
     children: ParsedElement[]
 }
 
-export interface ParsedTextContentNode extends ElementBaseClass {
+export interface ParsedAnimateElement extends ElementBaseClass {
+    tag: "animate",
+    attrs: ParsedAnimateAttr
+}
+
+export interface ParsedAnimateMotionElement extends ElementBaseClass {
+    tag: "animateMotion",
+    attrs: ParsedAnimateMotionAttr,
+    children: ParsedElement[]
+}
+
+export interface ParsedAnimateColorElement extends ElementBaseClass {
+    tag: "animateColor",
+    attrs: ParsedAnimateColorAttr
+}
+
+export interface ParsedAnimateTransformElement extends ElementBaseClass {
+    tag: "animateTransform",
+    attrs: ParsedAnimateTransformAttr
+}
+
+export interface ParsedSetElement extends ElementBaseClass {
+    tag: "set",
+    attrs: ParsedSetAttr
+}
+
+export interface ParsedMPathElement extends ElementBaseClass {
+    tag: "mpath",
+    attrs: ParsedMPathAttr
+}
+
+export interface ParsedTextContentNode extends NodeBase {
     tag: "text()",
     text: string,
     attrs: {}
 }
 
-export interface ParsedCommentNode extends ElementBaseClass {
+export interface ParsedCommentNode extends NodeBase {
     tag: "comment()",
     text: string,
     attrs: {}
 }
 
-export interface ParsedCDataNode extends ElementBaseClass {
+export interface ParsedCDataNode extends NodeBase {
     tag: "cdata()",
     text: string,
     attrs: {}
@@ -177,7 +224,6 @@ export interface ParsedUnknownElement extends ElementBaseClass {
     attrs: Assoc,
     children: ParsedElement[]
 }
-
 
 export interface ParsedCoreAttr {
     id: string | null;
@@ -296,6 +342,13 @@ interface ParsedStyleElemAttr extends ParsedCoreAttr {
 interface ParsedScriptAttr extends ParsedCoreAttr {
     type: string | null;
 }
+
+interface ParsedAnimateAttr extends ParsedCoreAttr, ParsedPresentationAttr {}
+interface ParsedAnimateColorAttr extends ParsedCoreAttr, ParsedPresentationAttr {}
+interface ParsedAnimateMotionAttr extends ParsedCoreAttr, ParsedPresentationAttr {}
+interface ParsedAnimateTransformAttr extends ParsedCoreAttr, ParsedPresentationAttr {}
+interface ParsedSetAttr extends ParsedCoreAttr {}
+interface ParsedMPathAttr extends ParsedCoreAttr {}
 
 export interface Classes {
     type: "classes";
@@ -620,46 +673,64 @@ export function parse(node: XmlNode): ParsedResult {
         if (Array.isArray(warn)) warns.push(...warn);
         else warns.push(warn);
     }
+    const containerElementClass = true;
+    const gradientElementClass = true;
     switch (node.type) {
         case "element":
-            const children = parseChildren(node, pushWarns, xpath);
+            const elementBase = {
+                children: parseChildren(node, pushWarns, xpath),
+                xpath,
+                parent
+            }
             switch (node.name) {
                 case "svg":
-                    return {result: {tag: "svg", attrs: parseAttrs(node, pushWarns).svg(), children, xpath, parent}, warns};
+                    return {result: {tag: "svg", attrs: parseAttrs(node, pushWarns).svg(), ...elementBase, containerElementClass}, warns};
                 case "circle":
-                    return {result: {tag: "circle", attrs: parseAttrs(node, pushWarns).circle(), xpath, parent}, warns};
+                    return {result: {tag: "circle", attrs: parseAttrs(node, pushWarns).circle(), ...elementBase}, warns};
                 case "rect":
-                    return {result: {tag: "rect", attrs: parseAttrs(node, pushWarns).rect(), xpath, parent}, warns};
+                    return {result: {tag: "rect", attrs: parseAttrs(node, pushWarns).rect(), ...elementBase}, warns};
                 case "ellipse":
-                    return {result: {tag: "ellipse", attrs: parseAttrs(node, pushWarns).ellipse(), xpath, parent}, warns};
+                    return {result: {tag: "ellipse", attrs: parseAttrs(node, pushWarns).ellipse(), ...elementBase}, warns};
                 case "polyline":
-                    return {result: {tag: "polyline", attrs: parseAttrs(node, pushWarns).polyline(), xpath, parent}, warns};
+                    return {result: {tag: "polyline", attrs: parseAttrs(node, pushWarns).polyline(), ...elementBase}, warns};
                 case "polygon":
-                    return {result: {tag: "polygon", attrs: parseAttrs(node, pushWarns).polyline(), xpath, parent}, warns};
+                    return {result: {tag: "polygon", attrs: parseAttrs(node, pushWarns).polyline(), ...elementBase}, warns};
                 case "path":
-                    return {result: {tag: "path", attrs: parseAttrs(node, pushWarns).path(), xpath, parent}, warns};
+                    return {result: {tag: "path", attrs: parseAttrs(node, pushWarns).path(), ...elementBase}, warns};
                 case "text":
-                    return {result: {tag: "text", attrs: parseAttrs(node, pushWarns).text(), xpath, parent, children}, warns};
+                    return {result: {tag: "text", attrs: parseAttrs(node, pushWarns).text(), ...elementBase}, warns};
                 case "g":
-                    return {result: {tag: "g", attrs: parseAttrs(node, pushWarns).g(), children, xpath, parent}, warns};
+                    return {result: {tag: "g", attrs: parseAttrs(node, pushWarns).g(), ...elementBase, containerElementClass}, warns};
                 case "linearGradient":
-                    return {result: {tag: "linearGradient", attrs: parseAttrs(node, pushWarns).linearGradient(), children, xpath, parent}, warns};
+                    return {result: {tag: "linearGradient", attrs: parseAttrs(node, pushWarns).linearGradient(), ...elementBase, gradientElementClass}, warns};
                 case "radialGradient":
-                    return {result: {tag: "radialGradient", attrs: parseAttrs(node, pushWarns).radialGradient(), children, xpath, parent}, warns};
+                    return {result: {tag: "radialGradient", attrs: parseAttrs(node, pushWarns).radialGradient(), ...elementBase, gradientElementClass}, warns};
                 case "stop":
-                    return {result: {tag: "stop", attrs: parseAttrs(node, pushWarns).stop(), xpath, parent}, warns};
+                    return {result: {tag: "stop", attrs: parseAttrs(node, pushWarns).stop(), ...elementBase}, warns};
                 case "image":
-                    return {result: {tag: "image", attrs: parseAttrs(node, pushWarns).image(), xpath, parent}, warns};
+                    return {result: {tag: "image", attrs: parseAttrs(node, pushWarns).image(), ...elementBase}, warns};
                 case "defs":
-                    return {result: {tag: "defs", attrs: parseAttrs(node, pushWarns).defs(), children, xpath, parent}, warns};
+                    return {result: {tag: "defs", attrs: parseAttrs(node, pushWarns).defs(), ...elementBase, containerElementClass}, warns};
                 case "use":
-                    return {result: {tag: "use", attrs: parseAttrs(node, pushWarns).use(), xpath, parent, virtual: null}, warns};
+                    return {result: {tag: "use", attrs: parseAttrs(node, pushWarns).use(), ...elementBase, virtual: null}, warns};
                 case "style":
-                    return {result: {tag: "style", attrs: parseAttrs(node, pushWarns).style(), children, xpath, parent}, warns};
+                    return {result: {tag: "style", attrs: parseAttrs(node, pushWarns).style(), ...elementBase}, warns};
                 case "script":
-                    return {result: {tag: "script", attrs: parseAttrs(node, pushWarns).script(), children, xpath, parent}, warns};
+                    return {result: {tag: "script", attrs: parseAttrs(node, pushWarns).script(), ...elementBase}, warns};
+                case "animate":
+                    return {result: {tag: "animate", attrs: parseAttrs(node, pushWarns).animate(), ...elementBase}, warns};
+                case "animateColor":
+                    return {result: {tag: "animateColor", attrs: parseAttrs(node, pushWarns).animateColor(), ...elementBase}, warns};
+                case "animateMotion":
+                    return {result: {tag: "animateMotion", attrs: parseAttrs(node, pushWarns).animateMotion(), ...elementBase}, warns};
+                case "animateTransform":
+                    return {result: {tag: "animateTransform", attrs: parseAttrs(node, pushWarns).animateTransform(), ...elementBase}, warns};
+                case "set":
+                    return {result: {tag: "set", attrs: parseAttrs(node, pushWarns).set(), ...elementBase}, warns};
+                case "mpath":
+                    return {result: {tag: "mpath", attrs: parseAttrs(node, pushWarns).mpath(), ...elementBase}, warns};
                 default:
-                    return {result: {tag: "unknown", tag$real: node.name, attrs: node.attrs, children, xpath, parent}, warns: [{type: "warning", interval: node.positions.startTag, message: `${node.name} is unsupported element.`}]};
+                    return {result: {tag: "unknown", tag$real: node.name, attrs: node.attrs, ...elementBase}, warns: [{type: "warning", interval: node.positions.startTag, message: `${node.name} is unsupported element.`}]};
             }
         case "text":
             return {result: {tag: "text()", attrs: {}, text: node.text, xpath, parent}, warns};
@@ -906,6 +977,60 @@ function parseAttrs(element: XmlElement, onWarns: (ws: Warning[]) => void) {
             };
             onWarns(warns);
             return validScriptAttrs;
+        },
+        animate: () => {
+            const validAnimateAttrs: ParsedAnimateAttr = {
+                ...coreValidAttrs,
+                ...getPresentationAttrs(),
+                unknown: unknownAttrs(attrs, element, pushWarns)
+            };
+            onWarns(warns);
+            return validAnimateAttrs;
+        },
+        animateColor: () => {
+            const validAnimateColorAttrs: ParsedAnimateColorAttr = {
+                ...coreValidAttrs,
+                ...getPresentationAttrs(),
+                unknown: unknownAttrs(attrs, element, pushWarns)
+            };
+            onWarns(warns);
+            return validAnimateColorAttrs;
+        },
+        animateMotion: () => {
+            const validAnimateMotionAttrs: ParsedAnimateMotionAttr = {
+                ...coreValidAttrs,
+                ...getPresentationAttrs(),
+                unknown: unknownAttrs(attrs, element, pushWarns)
+            };
+            onWarns(warns);
+            return validAnimateMotionAttrs;
+        },
+        animateTransform: () => {
+            const validTransformAttrs: ParsedAnimateTransformAttr = {
+                ...coreValidAttrs,
+                ...getPresentationAttrs(),
+                unknown: unknownAttrs(attrs, element, pushWarns)
+            };
+            onWarns(warns);
+            return validTransformAttrs;
+        },
+        set: () => {
+            const validSetAttrs: ParsedSetAttr = {
+                ...coreValidAttrs,
+                ...getPresentationAttrs(),
+                unknown: unknownAttrs(attrs, element, pushWarns)
+            };
+            onWarns(warns);
+            return validSetAttrs;
+        },
+        mpath: () => {
+            const validMPathAttrs: ParsedMPathAttr = {
+                ...coreValidAttrs,
+                ...getPresentationAttrs(),
+                unknown: unknownAttrs(attrs, element, pushWarns)
+            };
+            onWarns(warns);
+            return validMPathAttrs;
         }
     }
 }

@@ -117,7 +117,8 @@ class GradientComponent implements ColorComponent {
                     "stop-color": {type: "color", format: "rgb", ...CANVAS_DEFAULT_COLOR},
                     ...BASE_ATTRS_NULLS(),
                     ...PRESENTATION_ATTRS_NULLS
-                }
+                },
+                children: []
             });
             refleshContent();
         }
@@ -403,7 +404,8 @@ class ColorPickerComponent implements WindowComponent {
                     ...PRESENTATION_ATTRS_NULLS,
                     id: genedId
                 },
-                children: []
+                children: [],
+                gradientElementClass: true
             });
             this.selectorValue = `url(#${genedId})`;
             refleshContent();

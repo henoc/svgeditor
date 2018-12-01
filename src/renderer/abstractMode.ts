@@ -78,7 +78,8 @@ export abstract class Mode implements Component {
                             fill: null,
                             stroke: null
                         },
-                        children: pes
+                        children: pes,
+                        containerElementClass: true
                     });
                     parentPe.children = parentPe.children.filter(c => pes.indexOf(c) === -1);
                     refleshContent();       // make real elements
