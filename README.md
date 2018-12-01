@@ -6,7 +6,7 @@
 
 ![sample](images/capture.png)
 
-**ver 2.6**: Support `use` tag
+**ver 2.7**: Support `style` attribute and tag
 
 Now your VSCode can mutate to an interactive visual & literal SVG editor 😎
 
