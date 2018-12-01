@@ -21,6 +21,7 @@ export interface XmlComponent extends Component {
     toLinear(options: LinearOptions): string;
     toXml(): XmlNodeNop;
     toDom(): Node;
+    renderFull(): void;
 }
 
 /**
@@ -141,12 +142,16 @@ export class SvgTag implements XmlComponent {
         }
     }
 
+    render = () => this.renderWithOptions(SKIP_TAGS_ON_RENDER);
+
     /**
-     * For incremental-dom
+     * Render all tags such as `<script>`.
      */
-    render = () => {
+    renderFull = () => this.renderWithOptions();
+
+    private renderWithOptions(skipTags?: ReadonlyArray<string>) {
         if (this.data.tag) {
-            if (SKIP_TAGS_ON_RENDER.includes(this.data.tag)) return;
+            if (skipTags && skipTags.includes(this.data.tag)) return;
             if (this.data.tag === "svg") {
                 this.data.attrs.xmlns = SVG_NS;
                 this.data.attrs["xmlns:xlink"] = XLINK_NS;
@@ -159,7 +164,7 @@ export class SvgTag implements XmlComponent {
                 attr(`on${key}`, value);
             });
             elementOpenEnd();
-            this.data.children.forEach(c => c.render());
+            this.data.children.forEach(c => skipTags ? c.render() : c.renderFull());
             elementClose(this.data.tag);
         }
         else {
@@ -210,6 +215,9 @@ export function stringComponent(str: string, type: "text" | "comment" | "cdata" 
     return {
         render() {
             text(wrappedStr());
+        },
+        renderFull() {
+            this.render();
         },
         toLinear(options: LinearOptions) {
             return wrappedStr(options);

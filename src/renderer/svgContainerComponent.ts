@@ -35,7 +35,7 @@ export class SvgContainerComponent implements Component {
         const scaledWidth = width * this.scalePercent / 100;
         const scaledHeight = height * this.scalePercent / 100;
         el`svg :key="svgcontainer" *class="svgeditor-svgcontainer" *xmlns="http://www.w3.org/2000/svg" *xmlns:xlink="http://www.w3.org/1999/xlink" width=${scaledWidth} height=${scaledHeight} viewBox=${viewBox}`;
-            substances.render();
+            editMode.mode.isPreviewMode ? substances.renderFull() : substances.render();
             el`svg :key="shapeHandler" width=${width} height=${height}`;
                 editMode.mode.render();
             el`/svg`;

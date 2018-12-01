@@ -174,6 +174,8 @@ export abstract class Mode implements Component {
 
     render(): void { }
 
+    readonly isPreviewMode: boolean = false;
+
     updateHandlers(): void { }
 
     get selectedShapes(): OneOrMore<ParsedElement> | null {
