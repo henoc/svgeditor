@@ -3,7 +3,7 @@ import { attrToStr, AttrValue, fixDecimalPlaces } from "./svgParser";
 import { elementOpenStart, elementOpenEnd, attr, text, elementClose } from "incremental-dom";
 import { Component } from "./component";
 import { XmlNodeNop } from "./xmlParser";
-import { SVG_NS, XLINK_NS } from "./constants";
+import { SVG_NS, XLINK_NS, SKIP_TAGS_ON_RENDER } from "./constants";
 
 interface SvgTagOptions {
     numOfDecimalPlaces?: number;
@@ -146,6 +146,7 @@ export class SvgTag implements XmlComponent {
      */
     render = () => {
         if (this.data.tag) {
+            if (SKIP_TAGS_ON_RENDER.includes(this.data.tag)) return;
             if (this.data.tag === "svg") {
                 this.data.attrs.xmlns = SVG_NS;
                 this.data.attrs["xmlns:xlink"] = XLINK_NS;

@@ -40,6 +40,7 @@ export type ParsedElement =
     ParsedDefsElement |
     ParsedUseElement |
     ParsedStyleElement |
+    ParsedScriptElement |
     ParsedTextContentNode |
     ParsedCommentNode |
     ParsedCDataNode |
@@ -143,6 +144,12 @@ export interface ParsedUseElement extends ElementBaseClass {
 export interface ParsedStyleElement extends ElementBaseClass {
     tag: "style",
     attrs: ParsedStyleElemAttr,
+    children: ParsedElement[]
+}
+
+export interface ParsedScriptElement extends ElementBaseClass {
+    tag: "script",
+    attrs: ParsedScriptAttr,
     children: ParsedElement[]
 }
 
@@ -284,6 +291,10 @@ interface ParsedUseAttr extends ParsedCoreAttr, ParsedStyleAttr, ParsedPresentat
 }
 
 interface ParsedStyleElemAttr extends ParsedCoreAttr {
+}
+
+interface ParsedScriptAttr extends ParsedCoreAttr {
+    type: string | null;
 }
 
 export interface Classes {
@@ -645,6 +656,8 @@ export function parse(node: XmlNode): ParsedResult {
                     return {result: {tag: "use", attrs: parseAttrs(node, pushWarns).use(), xpath, parent, virtual: null}, warns};
                 case "style":
                     return {result: {tag: "style", attrs: parseAttrs(node, pushWarns).style(), children, xpath, parent}, warns};
+                case "script":
+                    return {result: {tag: "script", attrs: parseAttrs(node, pushWarns).script(), children, xpath, parent}, warns};
                 default:
                     return {result: {tag: "unknown", tag$real: node.name, attrs: node.attrs, children, xpath, parent}, warns: [{type: "warning", interval: node.positions.startTag, message: `${node.name} is unsupported element.`}]};
             }
@@ -884,6 +897,15 @@ function parseAttrs(element: XmlElement, onWarns: (ws: Warning[]) => void) {
             };
             onWarns(warns);
             return validStyleElemAttrs;
+        },
+        script: () => {
+            const validScriptAttrs: ParsedScriptAttr = {
+                ...coreValidAttrs,
+                type: pop(attrs, "type"),
+                unknown: unknownAttrs(attrs, element, pushWarns)
+            };
+            onWarns(warns);
+            return validScriptAttrs;
         }
     }
 }

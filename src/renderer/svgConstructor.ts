@@ -90,6 +90,7 @@ export function construct(pe: ParsedElement, options?: SvgConstructOptions, disp
             case "radialGradient":
             case "defs":
             case "style":
+            case "script":
                 makeChildren(pe.children, tag, displayedDepth, options);
                 return tag.attrs(omit(pe.attrs, "unknown"));
             case "g":
