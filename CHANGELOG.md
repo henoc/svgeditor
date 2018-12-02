@@ -3,6 +3,7 @@
 - 2.8.0
   - Support script
   - Add preview mode
+    - Other modes now certainly stop the animations and scripts
 - 2.7.0
   - Support style attribute and tag
   - Improve font settings
