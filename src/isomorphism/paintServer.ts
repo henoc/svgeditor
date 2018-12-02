@@ -3,7 +3,7 @@
  * @see https://www.w3.org/TR/SVG11/pservers.html
  */
 
-import { ParsedElement, Ratio, Paint, StopColor } from "./svgParser";
+import { ParsedElement, Ratio, Paint, StopColor, HasChildren} from "./svgParser";
 import tinycolor from "tinycolor2";
 import { traverse } from "./traverse";
 
@@ -13,21 +13,21 @@ export type PaintServer = {
 }
 
 export function fetchPaintServer(pe: ParsedElement): PaintServer | null {
-    function gradient(pe: ParsedElement & {children: ParsedElement[]} & {tag: "linearGradient" | "radialGradient"}) {
+    function gradient(pe: ParsedElement & HasChildren, tag: "linearGradient" | "radialGradient") {
         const stops: StopReference[] = [];
         for (let c of pe.children) {
             let tmp = fetchStopReference(c);
             if (tmp) stops.push(tmp);
         }
         return {
-            kind: pe.tag,
+            kind: tag,
             stops
         };
     }
     switch (pe.tag) {
         case "linearGradient":
         case "radialGradient":
-        return gradient(pe);
+        return gradient(pe, pe.tag);
         default:
         return null;
     }

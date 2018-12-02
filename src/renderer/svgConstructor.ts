@@ -1,5 +1,5 @@
 import { ParsedElement, ParsedCoreAttr, ParsedPresentationAttr, Length, Transform, ParsedStyleAttr, AttrValue } from "../isomorphism/svgParser";
-import { SvgTag, stringComponent, XmlComponent } from "../isomorphism/svg";
+import { SvgTag, stringComponent, XmlComponent, emptyComponent } from "../isomorphism/svg";
 import { onShapeMouseDown } from "./triggers";
 import { assertNever, deepCopy, v, omit } from "../isomorphism/utils";
 import { shaper, initialSizeOfUse, isAbleToOverrideWightHeight } from "./shapes";
@@ -9,6 +9,7 @@ import { acceptHashOnly } from "../isomorphism/url";
 import { convertToPixel, convertFromPixel } from "./measureUnits";
 import { appendDescriptors, translateDescriptor } from "../isomorphism/transformHelpers";
 import { translate, scale } from "transformation-matrix";
+import { $PropertyType } from "utility-types";
 
 interface SvgConstructOptions {
     putRootAttribute?: boolean;
@@ -20,10 +21,11 @@ interface SvgConstructOptions {
     setRootSvgXYtoOrigin?: boolean;
     numOfDecimalPlaces?: number;
     replaceHrefToObjectUrl?: boolean;
+    skipTags?: ReadonlyArray<$PropertyType<ParsedElement, "tag">>;
 }
 
 /**
-  Make elements only use recognized attributes and tags.
+  Make elements.
 */
 export function construct(pe: ParsedElement, options?: SvgConstructOptions, displayedDepth: number = 0): XmlComponent {
     const putRootAttribute = options && options.putRootAttribute || false;
@@ -35,6 +37,9 @@ export function construct(pe: ParsedElement, options?: SvgConstructOptions, disp
     const setDisplayedRootSvgXYtoOrigin = options && options.setRootSvgXYtoOrigin || false;
     const numOfDecimalPlaces = options && options.numOfDecimalPlaces;
     const replaceHrefToObjectUrl = options && options.replaceHrefToObjectUrl || false;
+    const skipTags = options && options.skipTags || [];
+
+    if (skipTags.includes(pe.tag)) return emptyComponent();
 
     const tag = new SvgTag(pe.tag).options({ numOfDecimalPlaces }).isOuterMost(pe.parent === null);
     if (putRootAttribute) {
@@ -84,12 +89,18 @@ export function construct(pe: ParsedElement, options?: SvgConstructOptions, disp
             case "polygon":
             case "path":
             case "stop":
-                return tag.attrs(omit(pe.attrs, "unknown"));
+            case "animate":
+            case "animateColor":
+            case "animateTransform":
+            case "set":
+            case "mpath":
             case "text":
             case "linearGradient":
             case "radialGradient":
             case "defs":
             case "style":
+            case "script":
+            case "animateMotion":
                 makeChildren(pe.children, tag, displayedDepth, options);
                 return tag.attrs(omit(pe.attrs, "unknown"));
             case "g":

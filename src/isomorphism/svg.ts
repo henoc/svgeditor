@@ -1,19 +1,24 @@
-import { iterate, assertNever, deepCopy, escapeHtml } from "./utils";
-import { Length, Paint, PathCommand, Transform, FontSize, Ratio, StrokeDasharray,Style, attrToStr, AttrValue, fixDecimalPlaces } from "./svgParser";
-import tinycolor from "tinycolor2";
-import { svgPathManager } from "./pathHelpers";
+import { iterate, escapeHtml } from "./utils";
+import { attrToStr, AttrValue, fixDecimalPlaces } from "./svgParser";
 import { elementOpenStart, elementOpenEnd, attr, text, elementClose } from "incremental-dom";
 import { Component } from "./component";
-import { toTransformStrWithoutCollect } from "./transformHelpers";
-import { XmlNodeNop, XmlNode } from "./xmlParser";
-import { SVG_NS, XLINK_NS } from "./constants";
+import { XmlNodeNop } from "./xmlParser";
+import { SVG_NS, XLINK_NS, SKIP_TAGS_ON_RENDER } from "./constants";
 
 interface SvgTagOptions {
     numOfDecimalPlaces?: number;
 }
 
+interface LinearOptions {
+    indent?: {
+        unit: string;
+        level: number;
+        eol: "\n" | "\r\n";
+    }
+}
+
 export interface XmlComponent extends Component {
-    toLinear(): string;
+    toLinear(options: LinearOptions): string;
     toXml(): XmlNodeNop;
     toDom(): Node;
 }
@@ -42,45 +47,45 @@ export class SvgTag implements XmlComponent {
     constructor(name?: string) {
         if (name) this.data.tag = name;
     }
-    tag(name: string): SvgTag {
+    tag(name: string): this {
         this.data.tag = name;
         return this;
     }
-    options(svgTagOptions: SvgTagOptions): SvgTag {
+    options(svgTagOptions: SvgTagOptions): this {
         iterate(svgTagOptions, (key, value) => {
             (<any>this.data.options)[key] = value;
         });
         return this;
     }
-    removeAttr(key: string): SvgTag {
+    removeAttr(key: string): this {
         delete this.data.attrs[key];
         return this;
     }
-    isOuterMost(flag: boolean): SvgTag {
+    isOuterMost(flag: boolean): this {
         this.data.isOuterMost = flag;
         return this;
     }
     /**
      * Key must start with "xlink:" when the attribute belongs to xlink.
      */
-    attr(key: string, value: AttrValue | null): SvgTag {
+    attr(key: string, value: AttrValue | null): this {
         if (value !== null && this.data.important.indexOf(key) === -1) {
             this.data.attrs[key] = attrToStr(this.numFix(value));
         }
         return this;
     }
-    class(...value: string[]): SvgTag {
+    class(...value: string[]): this {
         if (value !== null && this.data.important.indexOf("class") === -1) {
             this.data.attrs["class"] = (this.data.attrs["class"] || "").split(" ").concat(...value).join(" ");
         }
         return this;
     }
-    importantAttr(key: string, value: string | number): SvgTag {
+    importantAttr(key: string, value: string | number): this {
         this.attr(key, value);
         this.data.important.push(key);
         return this;
     }
-    attrs(assoc: {[key: string]: AttrValue | null}): SvgTag {
+    attrs(assoc: {[key: string]: AttrValue | null}): this {
         iterate(assoc, (key, value) => {
             if (this.data.important.indexOf(key) === -1 && value !== null) {
                 const fixed = this.numFix(value);
@@ -89,16 +94,16 @@ export class SvgTag implements XmlComponent {
         });
         return this;
     }
-    children(...children: XmlComponent[]) {
+    children(...children: XmlComponent[]): this {
         this.data.children.push(...children);
         return this;
     }
-    listener(name: string, action: (event: Event) => void): SvgTag {
+    listener(name: string, action: (event: Event) => void): this {
         this.data.listeners[name] = action;
         return this;
     }
 
-    toLinear(): string {
+    toLinear(options: LinearOptions): string {
         if (this.data.tag) {
             if (this.data.tag === "svg" && this.data.isOuterMost) {
                 this.data.attrs.xmlns = SVG_NS;
@@ -110,9 +115,14 @@ export class SvgTag implements XmlComponent {
             });
             const head = [this.data.tag];
             if (attrs.length > 0) head.push(attrs.join(" "));
-            return (this.data.children.length !== 0) ?
-                `<${head.join(" ")}>${this.data.children.map(c => c.toLinear()).join("")}</${this.data.tag}>` :
-                `<${head.join(" ")}/>`;
+
+            // for formatting
+            const eol = options.indent && options.indent.eol || "";
+            const spaces = options.indent && options.indent.unit.repeat(options.indent.level) || "";
+
+            return spaces + ((this.data.children.length !== 0) ?
+                `<${head.join(" ")}>${eol}${this.data.children.map(c => c.toLinear(indentLevelUp(options))).join(eol)}${eol}${spaces}</${this.data.tag}>` :
+                `<${head.join(" ")}/>`);
         } else {
             throw new Error("No tag name found when build.");
         }
@@ -131,9 +141,6 @@ export class SvgTag implements XmlComponent {
         }
     }
 
-    /**
-     * For incremental-dom
-     */
     render = () => {
         if (this.data.tag) {
             if (this.data.tag === "svg") {
@@ -183,23 +190,25 @@ export class SvgTag implements XmlComponent {
 export type Assoc = {[key: string]: string};
 
 export function stringComponent(str: string, type: "text" | "comment" | "cdata" = "text"): XmlComponent {
-    const wrappedStr = (() => {
+    const wrappedStr = (options: LinearOptions = {indent: undefined}) => {
+        const spaces = (additionalLevel: number) => options.indent && options.indent.unit.repeat(options.indent.level + additionalLevel) || "";
+        const eol = options.indent && options.indent.eol || "";
         switch (type) {
             case "text":
-            return str;
+            return `${spaces(0)}${str}`;
             case "comment":
-            return `<!--${str}-->`;
+            return `${spaces(0)}<!--${str}-->`;
             case "cdata":
-            return `<![CDATA[${str}]]>`;
+            return `${spaces(0)}<![CDATA[${eol}${spaces(1)}${str}${eol}${spaces(0)}]]>`;
         }
-    })();
+    };
     
     return {
         render() {
-            text(wrappedStr);
+            text(wrappedStr());
         },
-        toLinear() {
-            return wrappedStr;
+        toLinear(options: LinearOptions) {
+            return wrappedStr(options);
         },
         toXml() {
             return <XmlNodeNop>{type, text: str};
@@ -217,3 +226,25 @@ export function stringComponent(str: string, type: "text" | "comment" | "cdata" 
     }
 }
 
+function indentLevelUp(linearOptions: LinearOptions): LinearOptions {
+    const indent = linearOptions.indent && {
+        ...linearOptions.indent,
+        level: linearOptions.indent.level + 1
+    }
+    return {...linearOptions, indent}
+}
+
+export function emptyComponent(): XmlComponent {
+    return {
+        toLinear(_options: LinearOptions): string {
+            return "";
+        },
+        toXml(): XmlNodeNop {
+            return {type: "text", text: ""};
+        },
+        toDom(): Node {
+            return document.createTextNode("");
+        },
+        render(): void {}
+    };
+};

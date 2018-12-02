@@ -36,7 +36,8 @@ export class RectMode extends Mode {
                         ry: null,
                         ...BASE_ATTRS_NULLS(),
                         ...Mode.presentationAttrsDefaultImpl()
-                    }
+                    },
+                    children: []
                 };
                 this.dragTarget = pe2;
                 root.children.push(pe2);

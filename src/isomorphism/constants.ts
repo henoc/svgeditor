@@ -1,6 +1,7 @@
-import { ParsedPresentationAttr, ParsedCoreAttr, ParsedStyleAttr, Style } from "./svgParser";
+import { ParsedPresentationAttr, ParsedCoreAttr, ParsedStyleAttr, Style, ParsedElement } from "./svgParser";
 import { Assoc } from "./svg";
 import { omit } from "./utils";
+import { $PropertyType } from "utility-types";
 
 export const SVG_NS = "http://www.w3.org/2000/svg";
 export const XLINK_NS = "http://www.w3.org/1999/xlink";
@@ -36,12 +37,14 @@ export const STYLE_NULLS: () => Style = () => {return{
     ...omit(PRESENTATION_ATTRS_NULLS, "transform")
 }};
 
-export const FONT_FAMILY_GENERIC_NAMES = ["serif", "sans-serif", "monospace", "cursive", "fantasy", "system-ui"];
+export const FONT_FAMILY_GENERIC_NAMES: ReadonlyArray<string> = ["serif", "sans-serif", "monospace", "cursive", "fantasy", "system-ui"];
 
-export const FONT_FAMILY_MAC_SYSTEMS = ["-apple-system", "BlinkMacSystemFont"];
+export const FONT_FAMILY_MAC_SYSTEMS: ReadonlyArray<string> = ["-apple-system", "BlinkMacSystemFont"];
 
-export const FONT_SIZE_KEYWORDS = ["xx-small" , "x-small" , "small" , "medium" , "large" , "x-large" , "xx-large" , "larger" , "smaller"];
+export const FONT_SIZE_KEYWORDS: ReadonlyArray<string> = ["xx-small" , "x-small" , "small" , "medium" , "large" , "x-large" , "xx-large" , "larger" , "smaller"];
 
-export const FONT_STYLE_KEYWORDS = ["normal", "italic", "oblique"];
+export const FONT_STYLE_KEYWORDS: ReadonlyArray<string> = ["normal", "italic", "oblique"];
 
-export const FONT_WEIGHT_KEYWORDS = ["normal" , "bold" , "lighter" , "bolder" , 100 , 200 , 300 , 400 , 500 , 600 , 700 , 800 , 900];
+export const FONT_WEIGHT_KEYWORDS: ReadonlyArray<string | number> = ["normal" , "bold" , "lighter" , "bolder" , 100 , 200 , 300 , 400 , 500 , 600 , 700 , 800 , 900];
+
+export const SKIP_TAGS_ON_RENDER: ReadonlyArray<$PropertyType<ParsedElement, "tag">> = ["script", "animate", "animateColor", "animateMotion", "animateTransform"];

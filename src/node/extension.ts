@@ -7,9 +7,7 @@ import { iterate } from "../isomorphism/utils";
 import { diffChars } from "diff";
 import isAbsoluteUrl from "is-absolute-url";
 import { OperatorName } from "../renderer/menuComponent";
-import { updateXPaths } from "../isomorphism/traverse";
 import { textToXml, Interval, trimXml } from "../isomorphism/xmlParser";
-const format = require('xml-formatter');
 
 type PanelSet = { panel: vscode.WebviewPanel, editor: vscode.TextEditor, text: string, blockOnChangeText: boolean};
 
@@ -72,7 +70,7 @@ export function activate(context: vscode.ExtensionContext) {
                 case "modified":
                     pset.blockOnChangeText = true;      // Block to call onDidChangeTextDocument during updating
                     const oldText = pset.text;
-                    pset.text = format(message.data);
+                    pset.text = message.data;
                     await pset.editor.edit(editBuilder => {
                         diffProcedure(diffChars(oldText, pset.text), editBuilder)
                     });
@@ -89,7 +87,9 @@ export function activate(context: vscode.ExtensionContext) {
                             defaultUnit: config.get<string | null>("defaultUnit"),
                             decimalPlaces: config.get<number>("decimalPlaces"),
                             collectTransform: config.get<boolean>("collectTransformMatrix"),
-                            useStyleAttribute: config.get<boolean>("useStyleAttribute")
+                            useStyleAttribute: config.get<boolean>("useStyleAttribute"),
+                            indentStyle: config.get<string>("indentStyle"),
+                            indentSize: config.get<string>("indentSize")
                         }
                     });
                     return;

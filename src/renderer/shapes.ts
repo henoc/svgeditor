@@ -778,7 +778,14 @@ export function shaper(pe: ParsedElement): ShaperFunctions {
         case "radialGradient":
         case "stop":
         case "style":
-            throw new Error("Definiton only shape cannot move.");
+        case "script":
+        case "animate":
+        case "animateColor":
+        case "animateMotion":
+        case "animateTransform":
+        case "set":
+        case "mpath":
+            throw new Error("Impalpable shape cannot move.");
         case "text()":
         case "comment()":
         case "cdata()":

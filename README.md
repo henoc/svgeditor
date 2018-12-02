@@ -6,7 +6,7 @@
 
 ![sample](images/capture.png)
 
-**ver 2.6**: Support `use` tag
+**ver 2.7**: Support `style` attribute and tag
 
 Now your VSCode can mutate to an interactive visual & literal SVG editor 😎
 
@@ -30,8 +30,10 @@ You can create shapes using the SVG's coder or directly creating shapes with the
 |svgeditor.defaultUnit|Specifies the unit when creating some shapes.|null|
 |svgeditor.decimalPlaces|The number of decimal places.|1|
 |svgeditor.collectTransformMatrix|Collect two or more transform functions into a matrix.|true|
-|svgeditor.additionalResourcePaths|Additional resource directory paths SVG Editor can access||
+|svgeditor.additionalResourcePaths|Additional resource directory paths SVG Editor can access.||
 |svgeditor.useStyleAttribute|Use style attribute instead of presentation attriubte when there are no previous specifications.|false|
+|svgeditor.indentStyle|Indent style for auto-formatting.|space|
+|svgeditor.indentSize|Indent size of spaces for auto-formatting.|4|
 
 ## Keybindings
 
@@ -76,6 +78,7 @@ You can create shapes using the SVG's coder or directly creating shapes with the
 - image: x, y, width, height, xlink:href, href, 🎨
 - use: x, y, width, height, xlink:href, href, 🎨
 - style
+- script
 
 🎨(presentation attributes): fill, fill-rule, stroke, stroke-width, stroke-linecap, stroke-linejoin, stroke-dasharray, stroke-dashoffset, transform, font-family, font-size, font-style, font-weight
 

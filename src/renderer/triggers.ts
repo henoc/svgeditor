@@ -1,11 +1,9 @@
-import { editMode, openWindows, contentChildrenComponent, refleshContent, svgdata } from "./main";
+import { editMode, openWindows, contentChildrenComponent, refleshContent, svgdata, configuration } from "./main";
 import { iterate } from "../isomorphism/utils";
 import { construct } from "./svgConstructor";
 import { ParsedElement, parse } from "../isomorphism/svgParser";
-import { updateXPaths } from "../isomorphism/traverse";
 import { xfindExn } from "../isomorphism/xpath";
 import { textToXml } from "../isomorphism/xmlParser";
-const format = require('xml-formatter');
 
 export function onShapeMouseDown(event: MouseEvent, pe: ParsedElement) {
     if (event.button === 0) editMode.mode.onShapeMouseDownLeft(event, pe);
@@ -84,11 +82,11 @@ function copy(clipboardData: DataTransfer, isCut: boolean = false) {
         if (parentPe && "children" in parentPe) {
             const orderedPes = parentPe.children.filter(c => pes.indexOf(c) !== -1);
             if (isCut) parentPe.children = parentPe.children.filter(c => pes.indexOf(c) === -1);
-            const str = orderedPes.map(pe => construct(pe).toLinear()).join("");
-            const formattedStr = format(str);
-            clipboardData.setData("image/svg+xml", formattedStr);
-            clipboardData.setData("application/xml", formattedStr);
-            clipboardData.setData("text/plain", formattedStr);
+            const indentUnit = configuration.indentStyle === "tab" ? "\t" : " ".repeat(configuration.indentSize);
+            const str = orderedPes.map(pe => construct(pe).toLinear({indent: {unit: indentUnit, level: 0, eol: "\n"}})).join("");
+            clipboardData.setData("image/svg+xml", str);
+            clipboardData.setData("application/xml", str);
+            clipboardData.setData("text/plain", str);
             editMode.mode.selectedShapes = null;
             refleshContent();
         }

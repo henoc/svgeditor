@@ -4,6 +4,7 @@ import { svgdata, configuration, editMode, OUTERMOST_DEFAULT_WIDTH, OUTERMOST_DE
 import { el } from "../isomorphism/utils";
 import { convertToPixelForOutermostFrame } from "./measureUnits";
 import { xfind } from "../isomorphism/xpath";
+import { SKIP_TAGS_ON_RENDER } from "../isomorphism/constants";
 
 /**
 ```xml
@@ -17,6 +18,7 @@ export class SvgContainerComponent implements Component {
 
     scalePercent: number = 100;
     displayedRootXpath: string = "/svg";
+    forceRefleshSubstances: boolean = false;
 
     render() {
         const displayedRoot = xfind([svgdata], this.displayedRootXpath) || svgdata;
@@ -27,18 +29,29 @@ export class SvgContainerComponent implements Component {
             setListenersDepth: 1,
             insertSvgSizeRect: true,
             insertRectForGroup: true,
-            replaceHrefToObjectUrl: true
+            replaceHrefToObjectUrl: true,
+            skipTags: editMode.mode.isPreviewMode ? [] : SKIP_TAGS_ON_RENDER
         });
         const width = displayedRoot.tag === "svg" && displayedRoot.attrs.width && convertToPixelForOutermostFrame(displayedRoot.attrs.width) || OUTERMOST_DEFAULT_WIDTH;
         const height = displayedRoot.tag === "svg" && displayedRoot.attrs.height && convertToPixelForOutermostFrame(displayedRoot.attrs.height) || OUTERMOST_DEFAULT_HEIGHT;
         const viewBox = `0 0 ${width} ${height}`;
         const scaledWidth = width * this.scalePercent / 100;
         const scaledHeight = height * this.scalePercent / 100;
-        el`svg :key="svgcontainer" *class="svgeditor-svgcontainer" *xmlns="http://www.w3.org/2000/svg" *xmlns:xlink="http://www.w3.org/1999/xlink" width=${scaledWidth} height=${scaledHeight} viewBox=${viewBox}`;
+        const svgcontainer = el`svg :key="svgcontainer" *class="svgeditor-svgcontainer" *xmlns="http://www.w3.org/2000/svg" *xmlns:xlink="http://www.w3.org/1999/xlink" width=${scaledWidth} height=${scaledHeight} viewBox=${viewBox}`;
+            if (this.forceRefleshSubstances) {
+                removeChildren(svgcontainer);
+                this.forceRefleshSubstances = false;
+            }
             substances.render();
             el`svg :key="shapeHandler" width=${width} height=${height}`;
                 editMode.mode.render();
             el`/svg`;
         el`/svg`;
+    }
+}
+
+function removeChildren(node: Node): void {
+    while(node.firstChild) {
+        node.removeChild(node.firstChild);
     }
 }

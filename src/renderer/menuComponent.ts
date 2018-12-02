@@ -1,6 +1,6 @@
 import {Component, iconComponent} from "../isomorphism/component";
 import { elementOpen, text, elementClose } from "incremental-dom";
-import { editMode, refleshContent, inputRequest, sendBackToEditor } from "./main";
+import { editMode, refleshContent, inputRequest, sendBackToEditor, contentChildrenComponent } from "./main";
 import { SelectMode } from "./selectMode";
 import { NodeMode } from "./nodeMode";
 import { RectMode } from "./rectMode";
@@ -9,8 +9,9 @@ import { PolylineMode } from "./polylineMode";
 import { PathMode } from "./pathMode";
 import { assertNever, el, iterate } from "../isomorphism/utils";
 import { ParsedElement } from "../isomorphism/svgParser";
+import { PreviewMode } from "./previewMode";
 
-export type ModeName = "select" | "node" | "rect" | "ellipse" | "polyline" | "path" | "text";
+export type ModeName = "select" | "node" | "rect" | "ellipse" | "polyline" | "path" | "text" | "preview";
 export type OperatorName = "duplicate" | "delete" | "zoomIn" | "zoomOut" | "group" | "ungroup" | "font" | "bringForward" | "sendBackward" |
     "alignLeft" | "alignRight" | "alignBottom" | "alignTop" | "objectToPath" | "rotateClockwise" | "rotateCounterclockwise" | "rotateClockwiseByTheAngleStep" | "rotateCounterclockwiseByTheAngleStep" |
     "centerHorizontal" | "centerVertical";
@@ -34,6 +35,7 @@ class MenuComponent implements Component {
     changeMode(name: ModeName, initial?: ParsedElement) {
         switch (name) {
             case "select":
+            if (editMode.mode.isPreviewMode) contentChildrenComponent.svgContainerComponent.forceRefleshSubstances = true;
             editMode.mode = new SelectMode(initial);
             break;
             case "node":
@@ -54,6 +56,10 @@ class MenuComponent implements Component {
             case "text":
             inputRequest("text");
             break;
+            case "preview":
+            contentChildrenComponent.svgContainerComponent.forceRefleshSubstances = true;
+            editMode.mode = new PreviewMode();
+            break;
             default:
             assertNever(name);
         }
@@ -72,7 +78,8 @@ export class MenuListComponent implements Component {
         ellipse: new MenuComponent("ellipse", (name) => this.changeSelectedMode(name)),
         polyline: new MenuComponent("polyline", (name) => this.changeSelectedMode(name)),
         path: new MenuComponent("path", (name) => this.changeSelectedMode(name)),
-        text: new MenuComponent("text", name => this.changeSelectedMode(name))
+        text: new MenuComponent("text", name => this.changeSelectedMode(name)),
+        preview: new MenuComponent("preview", name => this.changeSelectedMode(name))
     }
     
 
