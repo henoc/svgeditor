@@ -2,6 +2,7 @@
 
 - 2.8.0
   - Support script
+  - Add preview mode
 - 2.7.0
   - Support style attribute and tag
   - Improve font settings
