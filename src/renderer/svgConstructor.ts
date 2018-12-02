@@ -1,4 +1,4 @@
-import { ParsedElement, ParsedCoreAttr, ParsedPresentationAttr, Length, Transform, ParsedStyleAttr, AttrValue } from "../isomorphism/svgParser";
+import { ParsedElement, ParsedCoreAttr, ParsedPresentationAttr, Length, Transform, ParsedStyleAttr, AttrValue, attrToStr, ParsedUnknownElement } from "../isomorphism/svgParser";
 import { SvgTag, stringComponent, XmlComponent, emptyComponent } from "../isomorphism/svg";
 import { onShapeMouseDown } from "./triggers";
 import { assertNever, deepCopy, v, omit } from "../isomorphism/utils";
@@ -9,7 +9,8 @@ import { acceptHashOnly } from "../isomorphism/url";
 import { convertToPixel, convertFromPixel } from "./measureUnits";
 import { appendDescriptors, translateDescriptor } from "../isomorphism/transformHelpers";
 import { translate, scale } from "transformation-matrix";
-import { $PropertyType } from "utility-types";
+import { $PropertyType, SetDifference } from "utility-types";
+import { STYLE_NULLS } from "../isomorphism/constants";
 
 interface SvgConstructOptions {
     putRootAttribute?: boolean;
@@ -22,6 +23,7 @@ interface SvgConstructOptions {
     numOfDecimalPlaces?: number;
     replaceHrefToObjectUrl?: boolean;
     skipTags?: ReadonlyArray<$PropertyType<ParsedElement, "tag">>;
+    pauseCssAnimation?: boolean;
 }
 
 /**
@@ -38,6 +40,7 @@ export function construct(pe: ParsedElement, options?: SvgConstructOptions, disp
     const numOfDecimalPlaces = options && options.numOfDecimalPlaces;
     const replaceHrefToObjectUrl = options && options.replaceHrefToObjectUrl || false;
     const skipTags = options && options.skipTags || [];
+    const pauseCssAnimation = options && options.pauseCssAnimation || false;
 
     if (skipTags.includes(pe.tag)) return emptyComponent();
 
@@ -64,10 +67,10 @@ export function construct(pe: ParsedElement, options?: SvgConstructOptions, disp
             .attrs(pe.attrs)
             .children(...pe.children.map(e => construct(e, options, displayedDepth + 1)));
     } else {
-        if ("unknown" in pe.attrs) tag.attrs(pe.attrs.unknown);
+        const preAssignedKeys = preAssign(pe, tag, pauseCssAnimation);
         switch (pe.tag) {
             case "svg":
-                tag.attrs(omit(pe.attrs, "unknown"));
+                tag.attrs(omit(pe.attrs, preAssignedKeys));
                 // Mostly to deal with mouse event of nested svg tag. Nested svg shape size of collision detection strangely is the same size of inner shapes of that.
                 if (insertRectForSvg) {
                     const dummyRect = new SvgTag("rect")
@@ -102,7 +105,7 @@ export function construct(pe: ParsedElement, options?: SvgConstructOptions, disp
             case "script":
             case "animateMotion":
                 makeChildren(pe.children, tag, displayedDepth, options);
-                return tag.attrs(omit(pe.attrs, "unknown"));
+                return tag.attrs(omit(pe.attrs, preAssignedKeys));
             case "g":
                 makeChildren(pe.children, tag, displayedDepth, options);
                 // Click detection for groups.
@@ -118,9 +121,9 @@ export function construct(pe: ParsedElement, options?: SvgConstructOptions, disp
                     if (setListenersDepth) tag.listener("mousedown", event => onShapeMouseDown(<MouseEvent>event, pe));
                     tag.children(dummyRect);
                 }
-                return tag.attrs(omit(pe.attrs, "unknown"));
+                return tag.attrs(omit(pe.attrs, preAssignedKeys));
             case "image":
-                tag.attrs(omit(pe.attrs, ["unknown", "href", "xlink:href"]));
+                tag.attrs(omit(pe.attrs, [...preAssignedKeys, "href", "xlink:href"]));
                 if (replaceHrefToObjectUrl) {
                     if (pe.attrs.href && imageList[pe.attrs.href]) tag.attr("href", imageList[pe.attrs.href].url);
                     const xlinkHref = pe.attrs["xlink:href"];
@@ -173,7 +176,8 @@ export function construct(pe: ParsedElement, options?: SvgConstructOptions, disp
                  */
                 if (insertRectForGroup) {
                     const group = new SvgTag("g");
-                    group.attrs(omit(pe.attrs, ["unknown", "href", "xlink:href", "x", "y", "width", "height"]))
+                    const pres = preAssign(pe, group, pauseCssAnimation);
+                    group.attrs(omit(pe.attrs, [...pres, "href", "xlink:href", "x", "y", "width", "height"]))
                     return group.children(
                         new SvgTag("use")
                         .attr("href", pe.attrs.href)
@@ -221,4 +225,16 @@ function makeChildren(pc: ParsedElement[], tag: SvgTag, displayedDepth: number, 
         c.push(elem);
     }
     tag.children(...c);
+}
+
+function preAssign(pe: SetDifference<ParsedElement, ParsedUnknownElement>, tag: SvgTag, pause: boolean): [
+    "unknown", "style"
+] {
+    if ("unknown" in pe.attrs) tag.attrs(pe.attrs.unknown);
+    if ("style" in pe.attrs && (pe.attrs.style || pause)) {
+        const copied = pe.attrs.style && deepCopy(pe.attrs.style) || STYLE_NULLS();
+        if (pause) copied.unknown["animation-play-state"] = "paused";
+        tag.attr("style", copied);
+    }
+    return ["unknown", "style"];
 }

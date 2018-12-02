@@ -30,7 +30,8 @@ export class SvgContainerComponent implements Component {
             insertSvgSizeRect: true,
             insertRectForGroup: true,
             replaceHrefToObjectUrl: true,
-            skipTags: editMode.mode.isPreviewMode ? [] : SKIP_TAGS_ON_RENDER
+            skipTags: editMode.mode.isPreviewMode ? [] : SKIP_TAGS_ON_RENDER,
+            pauseCssAnimation: !editMode.mode.isPreviewMode
         });
         const width = displayedRoot.tag === "svg" && displayedRoot.attrs.width && convertToPixelForOutermostFrame(displayedRoot.attrs.width) || OUTERMOST_DEFAULT_WIDTH;
         const height = displayedRoot.tag === "svg" && displayedRoot.attrs.height && convertToPixelForOutermostFrame(displayedRoot.attrs.height) || OUTERMOST_DEFAULT_HEIGHT;

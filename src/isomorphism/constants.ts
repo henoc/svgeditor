@@ -34,7 +34,7 @@ export const PRESENTATION_ATTRS_NULLS: ParsedPresentationAttr = Object.freeze({
 export const STYLE_NULLS: () => Style = () => {return{
     type: "style",
     unknown: {},
-    ...omit(PRESENTATION_ATTRS_NULLS, "transform")
+    ...omit(PRESENTATION_ATTRS_NULLS, <"transform">"transform")
 }};
 
 export const FONT_FAMILY_GENERIC_NAMES: ReadonlyArray<string> = ["serif", "sans-serif", "monospace", "cursive", "fantasy", "system-ui"];

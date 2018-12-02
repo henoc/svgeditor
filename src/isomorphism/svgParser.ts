@@ -1,8 +1,8 @@
-import { iterate, Vec2, v, objectValues, Some, Option, None, assertNever, ifExist, deepCopy } from "./utils";
+import { iterate, Vec2, v, objectValues, Some, Option, None, assertNever, ifExist, deepCopy, Intersectionize} from "./utils";
 import { Assoc } from "./svg";
 import tinycolor from "tinycolor2";
 import { svgPathManager } from "./pathHelpers";
-import { SetDifference, Omit, $Values } from "utility-types";
+import { SetDifference, Omit, $Values, $PropertyType, SetIntersection } from "utility-types";
 import { XmlNode, XmlElement, Interval, ElementPositionsOnText } from "./xmlParser";
 import { toTransformStrWithoutCollect } from "./transformHelpers";
 import { FONT_SIZE_KEYWORDS } from "./constants";
@@ -51,6 +51,9 @@ export type ParsedElement =
     ParsedCommentNode |
     ParsedCDataNode |
     ParsedUnknownElement
+
+export type ParsedAttrs = $PropertyType<ParsedElement, "attrs">;
+export type ParsedKnownAttrs = $PropertyType<SetDifference<ParsedElement, ParsedUnknownElement>, "attrs">;
 
 interface NodeBase {
     xpath: string;
@@ -576,8 +579,7 @@ export type StrokeDasharray = "none" | Lengths | "inherit";
 
 const strokeDasharrayStr = (da: StrokeDasharray) => typeof da === "string" ? da : da.array.map(d => lengthStr(d)).join(" ");
 
-export type AttrValue = Classes | Style | Paint | Length |
-    Lengths | Transform | Points | ViewBox | PathCommands | PercentageRatio | FontFamily | number | string;
+export type AttrValue = NonNullable<$Values<Omit<Intersectionize<ParsedKnownAttrs>, "unknown">>>;
 
 export function attrToStr(value: AttrValue): string {
     if (typeof value === "string" || typeof value === "number") {

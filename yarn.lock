@@ -2682,10 +2682,10 @@ util@~0.10.1:
   dependencies:
     inherits "2.0.3"
 
-utility-types@^2.0.0:
-  version "2.0.0"
-  resolved "https://registry.yarnpkg.com/utility-types/-/utility-types-2.0.0.tgz#3c9fe26914a1c7b8aff690e8f941e76b091d3149"
-  integrity sha512-/ilZGby7cs2OmvJuhRiqczKtjEY5lcdt2oaI/Q+VFepOAgQNgGRwTbRa0mtN1CIb7Kkw5dSsCKXMU29+jLP8jw==
+utility-types@^2.1.0:
+  version "2.1.0"
+  resolved "https://registry.yarnpkg.com/utility-types/-/utility-types-2.1.0.tgz#0c78fc9f7eb424d14302222b4ddd13fdb17f44ab"
+  integrity sha512-/nP2gqavggo6l38rtQI/CdeV+2fmBGXVvHgj9kV2MAnms3TIi77Mz9BtapPFI0+GZQCqqom0vACQ+VlTTaCovw==
 
 uuid@^3.3.2:
   version "3.3.2"

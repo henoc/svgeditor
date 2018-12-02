@@ -331,7 +331,7 @@ export function ifExist<T, U>(nullable: T | null, fn: (t: T) => U) {
     if (nullable !== null) return fn(nullable);
 }
 
-export function omit<T extends object, R extends keyof T>(obj: T, key: R | R[]): Omit<T, R> {
+export function omit<T extends object, R>(obj: T, key: R | R[]): LooseOmit<T, R> {
     const copied = <any>{...<object>obj};
     if (Array.isArray(key)) {
         for (let k of key) delete copied[k];
@@ -343,3 +343,18 @@ export function subtract<T extends string | number>(left: T[], right: T[]): T[] 
     const set = new Set(right);
     return left.filter(item => !set.has(item));
 }
+
+export function firstKey<T extends object, R extends keyof T>(keyValuePair: T): R {
+    return Object.keys(keyValuePair)[0] as R;
+}
+
+/**
+ * `A | B | C` -> `A & B & C`
+ * @see https://stackoverflow.com/questions/50374908/transform-union-type-to-intersection-type/50375286#50375286
+ */
+export type Intersectionize<U> = (U extends any ? (k: U) => void : never) extends ((k: infer I) => void) ? I : never;
+
+/**
+ * Same as `Omit<T, K>`, but `K` has no restriction of `extends keyof T`
+ */
+export type LooseOmit<T, K> = Pick<T, Exclude<keyof T, K>>;
