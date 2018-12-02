@@ -1,6 +1,6 @@
 import {Component, iconComponent} from "../isomorphism/component";
 import { elementOpen, text, elementClose } from "incremental-dom";
-import { editMode, refleshContent, inputRequest, sendBackToEditor } from "./main";
+import { editMode, refleshContent, inputRequest, sendBackToEditor, contentChildrenComponent } from "./main";
 import { SelectMode } from "./selectMode";
 import { NodeMode } from "./nodeMode";
 import { RectMode } from "./rectMode";
@@ -35,6 +35,7 @@ class MenuComponent implements Component {
     changeMode(name: ModeName, initial?: ParsedElement) {
         switch (name) {
             case "select":
+            if (editMode.mode.isPreviewMode) contentChildrenComponent.svgContainerComponent.forceRefleshSubstances = true;
             editMode.mode = new SelectMode(initial);
             break;
             case "node":
@@ -56,6 +57,7 @@ class MenuComponent implements Component {
             inputRequest("text");
             break;
             case "preview":
+            contentChildrenComponent.svgContainerComponent.forceRefleshSubstances = true;
             editMode.mode = new PreviewMode();
             break;
             default:

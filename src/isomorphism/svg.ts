@@ -21,7 +21,6 @@ export interface XmlComponent extends Component {
     toLinear(options: LinearOptions): string;
     toXml(): XmlNodeNop;
     toDom(): Node;
-    renderFull(): void;
 }
 
 /**
@@ -142,16 +141,8 @@ export class SvgTag implements XmlComponent {
         }
     }
 
-    render = () => this.renderWithOptions(SKIP_TAGS_ON_RENDER);
-
-    /**
-     * Render all tags such as `<script>`.
-     */
-    renderFull = () => this.renderWithOptions();
-
-    private renderWithOptions(skipTags?: ReadonlyArray<string>) {
+    render = () => {
         if (this.data.tag) {
-            if (skipTags && skipTags.includes(this.data.tag)) return;
             if (this.data.tag === "svg") {
                 this.data.attrs.xmlns = SVG_NS;
                 this.data.attrs["xmlns:xlink"] = XLINK_NS;
@@ -164,7 +155,7 @@ export class SvgTag implements XmlComponent {
                 attr(`on${key}`, value);
             });
             elementOpenEnd();
-            this.data.children.forEach(c => skipTags ? c.render() : c.renderFull());
+            this.data.children.forEach(c => c.render());
             elementClose(this.data.tag);
         }
         else {
@@ -216,9 +207,6 @@ export function stringComponent(str: string, type: "text" | "comment" | "cdata" 
         render() {
             text(wrappedStr());
         },
-        renderFull() {
-            this.render();
-        },
         toLinear(options: LinearOptions) {
             return wrappedStr(options);
         },
@@ -245,3 +233,18 @@ function indentLevelUp(linearOptions: LinearOptions): LinearOptions {
     }
     return {...linearOptions, indent}
 }
+
+export function emptyComponent(): XmlComponent {
+    return {
+        toLinear(_options: LinearOptions): string {
+            return "";
+        },
+        toXml(): XmlNodeNop {
+            return {type: "text", text: ""};
+        },
+        toDom(): Node {
+            return document.createTextNode("");
+        },
+        render(): void {}
+    };
+};
