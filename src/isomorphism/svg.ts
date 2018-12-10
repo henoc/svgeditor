@@ -132,7 +132,7 @@ export class SvgTag implements XmlComponent {
         if (this.data.tag) {
             return {
                 type: "element",
-                name: this.data.tag,
+                tag: this.data.tag,
                 attrs: this.data.attrs,
                 children: this.data.children.map(c => c.toXml())
             }
@@ -240,7 +240,7 @@ export function emptyComponent(): XmlComponent {
             return "";
         },
         toXml(): XmlNodeNop {
-            return {type: "text", text: ""};
+            return {type: "text", tag: "text()", text: ""};
         },
         toDom(): Node {
             return document.createTextNode("");
