@@ -50,3 +50,17 @@ export function updateXPaths(pe: ParsedElement, parentPe: ParsedElement & {child
         }
     }
 }
+
+export function find<T extends object>(node: T | T & {children: T[]}, address: number[]): T | null {
+    if (address.length === 0) return node;
+    else if ("children" in node) {
+        const next: T | undefined = node.children[address[0]];
+        return next && find(next, address.slice(1)) || null;
+    } else return null;
+}
+
+export function findExn<T extends object>(node: T | T & {children: T[]}, address: number[]): T {
+    const ret = find(node, address);
+    if (ret) return ret;
+    else throw `Node not found. index sequence: ${address}`
+}

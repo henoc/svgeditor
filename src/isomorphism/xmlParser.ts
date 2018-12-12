@@ -159,7 +159,7 @@ export function textToXml(xmltext: string): XmlElement | null {
                 value: {
                     start: pos() - 1 - rawValue.length,
                     end: pos() - 1
-                }
+                }       // exclude quotations
             }
         };
     };

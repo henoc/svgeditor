@@ -4,17 +4,10 @@ import { elementOpenStart, elementOpenEnd, attr, text, elementClose } from "incr
 import { Component } from "./component";
 import { XmlNodeNop } from "./xmlParser";
 import { SVG_NS, XLINK_NS, SKIP_TAGS_ON_RENDER } from "./constants";
+import { LinearOptions } from "./xmlSerializer";
 
 interface SvgTagOptions {
     numOfDecimalPlaces?: number;
-}
-
-interface LinearOptions {
-    indent?: {
-        unit: string;
-        level: number;
-        eol: "\n" | "\r\n";
-    }
 }
 
 export interface XmlComponent extends Component {
