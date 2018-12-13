@@ -64,3 +64,26 @@ export function findExn<T extends object>(node: T | T & {children: T[]}, address
     if (ret) return ret;
     else throw `Node not found. index sequence: ${address}`
 }
+
+/**
+ * @param indexInSameTag 1-indexed
+ */
+export function addressXpath<T extends {tag: string}>(node: T | T & {children: T[]}, address: number[], indexInSameTag?: number): string | null {
+    const pathFragment = "/" + (indexInSameTag !== undefined ? `${node.tag}[${indexInSameTag}]` : node.tag);
+    if (address.length === 0) return pathFragment;
+    else if ("children" in node) {
+        const next: T | undefined = node.children[address[0]];
+        if (!next) return null;
+        else {
+            const isUnique = node.children.filter(c => c.tag === next.tag).length === 1;
+            const indexInSameTagOfNext = node.children.slice(0, address[0]).filter(c => c.tag === next.tag).length + 1;
+            return pathFragment + addressXpath(next, address.slice(1), isUnique ? undefined : indexInSameTagOfNext);
+        }
+    } else return null;
+}
+
+export function addressXpathExn<T extends {tag: string}>(node: T | T & {children: T[]}, address: number[]): string {
+    const ret = addressXpath(node, address);
+    if (ret) return ret;
+    else throw `Node not found. index sequence: ${address}`;
+}

@@ -8,7 +8,7 @@ export interface LinearOptions {
     }
 }
 
-export function serializeXml(xml: XmlNode, options: LinearOptions): string {
+export function serializeXml(xml: XmlNode, options: LinearOptions = {}): string {
     const spaces = (additionalLevel: number) => options.indent && options.indent.unit.repeat(options.indent.level + additionalLevel) || "";
     const eol = options.indent && options.indent.eol || "";
     switch (xml.type) {

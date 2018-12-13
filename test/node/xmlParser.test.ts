@@ -67,7 +67,7 @@ describe("xmlParser", () => {
                 type: "cdata",
                 tag: "cdata()",
                 text: "<world>",
-                interval: {start: 16, end: 23}
+                interval: {start: 7, end: 26}
             }],
             positions: {
                 interval: {start: 0, end: 34},

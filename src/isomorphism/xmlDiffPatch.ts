@@ -1,12 +1,13 @@
-import { XmlNode, Interval } from "./xmlParser";
+import { XmlNode, Interval, XmlNodeNop } from "./xmlParser";
 import { xfind } from "./xpath";
 import { assertNever, iterate } from "./utils";
-import { findExn } from "./traverse";
+import { findExn, addressXpath } from "./traverse";
+import { serializeXml } from "./xmlSerializer";
 
 type XmlIntervalKind = "inner" | "outer" | "startTag" | "endTag";
 
-export function getNodeInterval(xml: XmlNode, address: number[], kind: XmlIntervalKind = "outer"): Interval {
-    const subNode = findExn(xml, address);
+export function getNodeInterval(rootNode: XmlNode, address: number[], kind: XmlIntervalKind = "outer"): Interval {
+    const subNode = findExn(rootNode, address);
     switch (subNode.type) {
         case "text":
         case "comment":
@@ -20,13 +21,13 @@ export function getNodeInterval(xml: XmlNode, address: number[], kind: XmlInterv
             case "inner":
             if (positions.closeElement) {
                 return {start: positions.openElement.end, end: positions.closeElement.start};
-            } else throw `Cannot get the inner interval of self-closing element. address: ${addressXpath(address)}`;
+            } else throw `Cannot get the inner interval of self-closing element. address: ${addressXpath(rootNode, address)}`;
             case "startTag":
             return positions.startTag;
             case "endTag":
             if (positions.endTag) {
                 return positions.endTag;
-            } else throw `Cannot get the endTag interval of self-closing element. address: ${addressXpath(address)}`;
+            } else throw `Cannot get the endTag interval of self-closing element. address: ${addressXpath(rootNode, address)}`;
             default:
             return assertNever(kind);
         }
@@ -35,11 +36,11 @@ export function getNodeInterval(xml: XmlNode, address: number[], kind: XmlInterv
     }
 }
 
-export function getAttrInterval(xml: XmlNode, address: number[], attrName: string, kind: "whole" | "name" | "value"): Interval {
-    const subNode = findExn(xml, address);
-    if (subNode.type !== "element") throw `Node ${addressXpath(address)} is not an element`;
+export function getAttrInterval(rootNode: XmlNode, address: number[], attrName: string, kind: "whole" | "name" | "value"): Interval {
+    const subNode = findExn(rootNode, address);
+    if (subNode.type !== "element") throw `Node ${addressXpath(rootNode, address)} is not an element`;
     const attr = subNode.positions.attrs[attrName];
-    if (attr === undefined) throw `No attribute ${attrName} for the element ${addressXpath(address)}`;
+    if (attr === undefined) throw `No attribute ${attrName} for the element ${addressXpath(rootNode, address)}`;
     return kind !== "whole" && attr[kind] || {start: attr.name.start, end: attr.value.end + `"`.length};
 }
 
@@ -92,13 +93,22 @@ export function xmlJsonDiffdddd(rootNode: XmlNode, address: number[], diff: {typ
     if ("children" in diff) {
         const children = diff.children;
         if (isArrayDiff(children)) {
+            const {deleted, added} = indicesForArrayDiff(children);
             iterate(children, (key, diffForKey) => {
+                if (key === "_t") return;
                 const [index, isOriginal] = toNumForArrayDiffKey(key);
-                if (isNaN(index)) return;
-
-                if (isAdded(diffForKey)) {
-
-                }
+                if (isAdded(diffForKey) && !isOriginal) {
+                    const originIndex = destToOriginIndex(deleted, added, index);
+                    const pos = originIndex === 0 ? getNodeInterval(rootNode, address, "startTag").end : getNodeInterval(rootNode, [...address, originIndex - 1], "outer").end;
+                    acc.push({type: "add", pos, value: serializeXml(diffForKey[0] as XmlNode)});
+                } else if (isDeleted(diffForKey) && isOriginal) {
+                    acc.push({type: "delete", interval: getNodeInterval(rootNode, [...address, index], "outer")});
+                } else if (isModified(diffForKey) && isOriginal) {
+                    let newNode = diffForKey[1] as XmlNode;
+                    acc.push({type: "modify", interval: getNodeInterval(rootNode, [...address, index], "outer"), value: serializeXml(newNode)});
+                } else if (isObjectDiff(diffForKey) && !isOriginal) {
+                    xmlJsonDiffdddd(rootNode, [...address, index], diffForKey);
+                } else throw unexpected(`children[${key}]`);
             });
         } else throw unexpected("children");
     }
@@ -148,4 +158,33 @@ function toNumForArrayDiffKey(key: string): [number, boolean] {
     const isOriginal = key.startsWith("_");
     const num = parseInt(isOriginal ? key.slice(1) : key);
     return [num, isOriginal];
+}
+
+function indicesForArrayDiff(arrayDiff: {[key: string]: unknown}): {deleted: number[], added: number[]} {
+    const deleted: number[] = [];
+    const added: number[] = [];
+    iterate(arrayDiff, (key, diffForKey) => {
+        if (key === "_t") return;
+        const [index] = toNumForArrayDiffKey(key);
+        if (isDeleted(diffForKey)) deleted.push(index);
+        if (isAdded(diffForKey)) added.push(index);
+    });
+    return {deleted, added};
+}
+
+function destToOriginIndex(deleted: number[], added: number[], destIndex: number): number {
+    const deletedIndices = [...deleted];
+    const addedIndices = [...added];
+    deletedIndices.sort((a, b) => a - b);
+    addedIndices.sort((a, b) => a - b);
+    const arr: boolean[] = new Array(destIndex + 1).fill(false);
+    arr[destIndex] = true;
+    for (let i = addedIndices.length - 1; i >= 0; i--) {
+        const addedIndex = addedIndices[i];
+        if (addedIndex < destIndex) arr.splice(addedIndex, 1);
+    }
+    for (let deletedIndex of deletedIndices) {
+        if (deletedIndex < arr.length) arr.splice(deletedIndex, 0, false);
+    }
+    return arr.indexOf(true);
 }
