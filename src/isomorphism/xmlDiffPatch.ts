@@ -1,8 +1,9 @@
 import { XmlNode, Interval, XmlNodeNop } from "./xmlParser";
 import { xfind } from "./xpath";
-import { assertNever, iterate } from "./utils";
+import { assertNever, iterate, deepCopy } from "./utils";
 import { findExn, addressXpath } from "./traverse";
-import { serializeXml } from "./xmlSerializer";
+import { serializeXml, serializeXmls } from "./xmlSerializer";
+import { DiffPatcher, Config } from "jsondiffpatch";
 
 type XmlIntervalKind = "inner" | "outer" | "startTag" | "endTag";
 
@@ -63,15 +64,27 @@ interface XmlDiffDelete {
     interval: Interval
 }
 
-export function xmlJsonDiffdddd(rootNode: XmlNode, address: number[], diff: {type?: unknown, tag?: unknown, attrs?: unknown, children?: unknown}) {
+interface JsonDiffForXml {
+    type?: unknown
+    tag?: unknown
+    attrs?: unknown
+    children?: unknown
+    text?: unknown
+}
+
+export function xmlJsonDiffToStringDiff(originalRootNode: XmlNode, diff: JsonDiffForXml, address: number[] = []): XmlDiff[] {
+    const current = findExn(originalRootNode, address);
+    let validTag = current.tag;
     const acc: XmlDiff[] = [];
     const unexpected = (propName: string) => `Unexpected diff found at property '${propName}'. diff: ${JSON.stringify(diff)}`;
     if ("type" in diff) throw unexpected("type");
     if ("tag" in diff) {
         const tag = diff.tag;
-        if (isStringModified(tag)) {
-            for (let kind of [<"startTag">"startTag", <"endTag">"endTag"]) {
-                const interval = getNodeInterval(rootNode, address, kind);
+        if (isStringModified(tag) && current.type === "element") {
+            validTag = tag[1];
+            const kinds = [<"startTag">"startTag", ...(current.positions.closeElement === null ? [] : [<"endTag">"endTag"])];
+            for (let kind of kinds) {
+                const interval = getNodeInterval(originalRootNode, address, kind);
                 acc.push({type: "modify", interval, value: tag[1]});
             }
         } else throw unexpected("tag");
@@ -81,37 +94,66 @@ export function xmlJsonDiffdddd(rootNode: XmlNode, address: number[], diff: {typ
         if (isObjectDiff(attrs)) {
             iterate(attrs, (key, diffForKey) => {
                 if (isStringAdded(diffForKey)) {
-                    acc.push({type: "add", pos: getNodeInterval(rootNode, address, "startTag").end, value: ` ${key}="${diffForKey[0]}"`});
+                    acc.push({type: "add", pos: getNodeInterval(originalRootNode, address, "startTag").end, value: ` ${key}="${diffForKey[0]}"`});
                 } else if (isStringModified(diffForKey)) {
-                    acc.push({type: "modify", interval: getAttrInterval(rootNode, address, key, "value"), value: diffForKey[1]});
+                    acc.push({type: "modify", interval: getAttrInterval(originalRootNode, address, key, "value"), value: diffForKey[1]});
                 } else if (isStringDeleted(diffForKey)) {
-                    acc.push({type: "delete", interval: getAttrInterval(rootNode, address, key, "whole")});
+                    acc.push({type: "delete", interval: getAttrInterval(originalRootNode, address, key, "whole")});
                 } else throw unexpected("attrs");
             });
         } else throw unexpected("attrs");
     }
-    if ("children" in diff) {
+    if ("children" in diff && current.type === "element") {
         const children = diff.children;
         if (isArrayDiff(children)) {
-            const {deleted, added} = indicesForArrayDiff(children);
-            iterate(children, (key, diffForKey) => {
-                if (key === "_t") return;
-                const [index, isOriginal] = toNumForArrayDiffKey(key);
-                if (isAdded(diffForKey) && !isOriginal) {
-                    const originIndex = destToOriginIndex(deleted, added, index);
-                    const pos = originIndex === 0 ? getNodeInterval(rootNode, address, "startTag").end : getNodeInterval(rootNode, [...address, originIndex - 1], "outer").end;
-                    acc.push({type: "add", pos, value: serializeXml(diffForKey[0] as XmlNode)});
-                } else if (isDeleted(diffForKey) && isOriginal) {
-                    acc.push({type: "delete", interval: getNodeInterval(rootNode, [...address, index], "outer")});
-                } else if (isModified(diffForKey) && isOriginal) {
-                    let newNode = diffForKey[1] as XmlNode;
-                    acc.push({type: "modify", interval: getNodeInterval(rootNode, [...address, index], "outer"), value: serializeXml(newNode)});
-                } else if (isObjectDiff(diffForKey) && !isOriginal) {
-                    xmlJsonDiffdddd(rootNode, [...address, index], diffForKey);
-                } else throw unexpected(`children[${key}]`);
-            });
+            if (current.children.length === 0 && current.positions.closeElement === null) {
+                const newNodes: XmlNode[] = [];
+                orderedArrayDiffIterate(children, (index, isOriginal, diffForKey, key) => {
+                    if (isAdded(diffForKey)) {
+                        newNodes.push(diffForKey[0] as XmlNode);
+                    } else throw unexpected(`children[${key}]`);
+                });
+                const start = Math.max(current.positions.startTag.end, ...Object.values(current.positions.attrs).map(interval => interval.value.end + `"`.length));
+                acc.push(
+                    {type: "modify", interval: {start, end: current.positions.interval.end},
+                    value: `>${serializeXmls(newNodes)}</${validTag}>`}
+                );
+            } else {
+                const {deleted, added} = indicesForArrayDiff(children);
+                orderedArrayDiffIterate(children, (index, isOriginal, diffForKey, key) => {
+                    if (isAdded(diffForKey) && !isOriginal) {
+                        const originIndex = destToOriginIndex(deleted, added, index);
+                        const pos = originIndex === 0 ? getNodeInterval(originalRootNode, address, "startTag").end : getNodeInterval(originalRootNode, [...address, originIndex - 1], "outer").end;
+                        acc.push({type: "add", pos, value: serializeXml(diffForKey[0] as XmlNode)});
+                    } else if (isDeleted(diffForKey) && isOriginal) {
+                        acc.push({type: "delete", interval: getNodeInterval(originalRootNode, [...address, index], "outer")});
+                    } else if (isModified(diffForKey) && !isOriginal) {
+                        let newNode = diffForKey[1] as XmlNode;
+                        acc.push({type: "modify", interval: getNodeInterval(originalRootNode, [...address, index], "outer"), value: serializeXml(newNode)});
+                    } else if (isObjectDiff(diffForKey) && !isOriginal) {
+                        acc.push(...xmlJsonDiffToStringDiff(originalRootNode, diffForKey, [...address, index]));
+                    } else throw unexpected(`children[${key}]`);
+                });
+            }
         } else throw unexpected("children");
     }
+    if ("text" in diff && current.type !== "element") {
+        const text = diff.text;
+        const innerInterval = (interval: Interval) => {
+            switch(current.type) {
+                case "comment":
+                return {start: interval.start + "<!--".length, end: interval.end - "-->".length};
+                case "cdata":
+                return {start: interval.start + "<![CDATA[".length, end: interval.end - "]]>".length};
+                case "text":
+                return interval;
+            }
+        };
+        if (isStringModified(text)) {
+            acc.push({type: "modify", interval: innerInterval(current.interval), value: text[1]});
+        } else throw unexpected(`text`);
+    }
+    return acc;
 }
 
 function isStringModified(diff: unknown): diff is [string, string] {
@@ -187,4 +229,40 @@ function destToOriginIndex(deleted: number[], added: number[], destIndex: number
         if (deletedIndex < arr.length) arr.splice(deletedIndex, 0, false);
     }
     return arr.indexOf(true);
+}
+
+function orderedArrayDiffIterate(obj: {[key: string]: unknown}, fn: (index: number, isOriginal: boolean, diff: unknown, key: string) => void): void {
+    const entries = Object.entries(obj).filter(([key, value]) => key !== "_t").map(([key, diff]) => {
+        const [index, isOriginal] = toNumForArrayDiffKey(key);
+        return {index, isOriginal, diff, key};
+    });
+    const LEFT_IS_LARGER = 1;
+    const RIGHT_IS_LARGER = -1;
+    entries.sort((left, right) => {
+        if (left.isOriginal === right.isOriginal) {
+            return left.index - right.index;
+        } else return left.isOriginal ? RIGHT_IS_LARGER : LEFT_IS_LARGER;
+    });
+    entries.forEach(entry => fn(entry.index, entry.isOriginal, entry.diff, entry.key));
+}
+
+export function jsondiffForXml(left: XmlNodeNop, right: XmlNodeNop) {
+    const diff = new DiffPatcher(<Config>{arrays: {detectMove: false}, textDiff: {minLength: Number.MAX_VALUE}}).diff(left, right);
+    return diff && regardTypeDiffAsWholeDiff(left, right, diff);
+}
+
+export function regardTypeDiffAsWholeDiff(left: XmlNodeNop, right: XmlNodeNop, diff: JsonDiffForXml) {
+    let children: unknown;
+    if ("type" in diff && isStringModified(diff.type)) {
+        return [left, right];
+    } else if ("children" in diff && "children" in left && "children" in right && (children = diff.children) && isArrayDiff(children)) {
+        const newChildren: any = iterate(children, (key, diffForKey) => {
+            if (key === "_t") return diffForKey;
+            const [index] = toNumForArrayDiffKey(key);
+            if (isObjectDiff(diffForKey)) {
+                return regardTypeDiffAsWholeDiff(left.children[index], right.children[index], diffForKey);
+            } else return diffForKey;
+        });
+        return {...diff, children: newChildren};
+    } else return diff;
 }

@@ -7,24 +7,18 @@ import { $Values, Omit } from "utility-types";
  */
 export function iterate<T extends object, R>(obj: T, fn: (key: Extract<keyof T, string>, value: T[Extract<keyof T, string>]) => R): Record<keyof T, R> {
     const acc: Record<keyof T, R> = <any>{};
-    for (const key in obj) {
-        if (obj.hasOwnProperty(key)) {
-            const value = obj[key];
-            acc[key] = fn(key, value);
-        }
-    }
+    objectEntries(obj).forEach(([key, value]) => {
+        acc[key] = fn(key, value);
+    });
     return acc;
 }
 
 export function objectValues<T extends object>(obj: T): $Values<T>[] {
-    const acc: $Values<T>[] = [];
-    for (const key in obj) {
-        if (obj.hasOwnProperty(key)) {
-            const value = obj[key];
-            acc.push(value);
-        }
-    }
-    return acc;
+    return Object.values(obj);
+}
+
+export function objectEntries<T extends object>(obj: T): [[Extract<keyof T, string>, T[Extract<keyof T, string>]]] {
+    return Object.entries(obj) as any;
 }
 
 

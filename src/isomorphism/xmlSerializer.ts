@@ -21,12 +21,17 @@ export function serializeXml(xml: XmlNode, options: LinearOptions = {}): string 
         case "element":
         const head = [xml.tag, ...Object.entries(xml.attrs).map(([key, value]) => `${key}="${value}"`)];
         return spaces(0) + ((xml.children.length !== 0) ?
-                `<${head.join(" ")}>${eol}${xml.children.map(c => serializeXml(c, indentLevelUp(options))).join(eol)}${eol}${spaces}</${xml.tag}>` :
+                `<${head.join(" ")}>${eol}${serializeXmls(xml.children, indentLevelUp(options))}${eol}${spaces}</${xml.tag}>` :
                 `<${head.join(" ")}/>`);
     }
 }
 
-function indentLevelUp(linearOptions: LinearOptions): LinearOptions {
+export function serializeXmls(xmls: XmlNode[], options: LinearOptions = {}): string {
+    const eol = options.indent && options.indent.eol || "";
+    return xmls.map(xml => serializeXml(xml)).join(eol)
+}
+
+export function indentLevelUp(linearOptions: LinearOptions): LinearOptions {
     const indent = linearOptions.indent && {
         ...linearOptions.indent,
         level: linearOptions.indent.level + 1

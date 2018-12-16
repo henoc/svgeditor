@@ -3,7 +3,8 @@
  */
 
 import sax from "sax";
-import { iterate } from "./utils";
+import { iterate, deepCopy } from "./utils";
+import { traverse, reproduce } from "./traverse";
 
 export type XmlNode = XmlElement | XmlText | XmlComment | XmlCData;
 
@@ -248,4 +249,18 @@ export function trimXml(elem: XmlElement): XmlElement {
             }
         });
     return elem;
+}
+
+export function trimPositions(elem: XmlElement): XmlElementNop {
+    const copied = deepCopy(elem);
+    traverse(copied, node => {
+        switch (node.type) {
+            case "element":
+            delete node.positions;
+            break;
+            default:
+            delete node.interval;
+        }
+    });
+    return copied;
 }
