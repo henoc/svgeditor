@@ -45,7 +45,7 @@ export function getAttrInterval(rootNode: XmlNode, address: number[], attrName: 
     return kind !== "whole" && attr[kind] || {start: attr.name.start, end: attr.value.end + `"`.length};
 }
 
-type XmlDiff = XmlDiffModify | XmlDiffAdd | XmlDiffDelete;
+export type XmlDiff = XmlDiffModify | XmlDiffAdd | XmlDiffDelete;
 
 interface XmlDiffModify {
     type: "modify"

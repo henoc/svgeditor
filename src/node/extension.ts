@@ -3,11 +3,12 @@ import * as fs from "fs";
 import * as path from "path";
 import { parse, ParsedElement } from "../isomorphism/svgParser";
 import { collectSystemFonts } from "./fontFileProcedures";
-import { iterate } from "../isomorphism/utils";
+import { iterate, assertNever } from "../isomorphism/utils";
 import { diffChars } from "diff";
 import isAbsoluteUrl from "is-absolute-url";
 import { OperatorName } from "../renderer/menuComponent";
 import { textToXml, Interval, trimXml } from "../isomorphism/xmlParser";
+import { XmlDiff } from "../isomorphism/xmlDiffPatch";
 
 type PanelSet = { panel: vscode.WebviewPanel, editor: vscode.TextEditor, text: string, blockOnChangeText: boolean};
 
@@ -270,6 +271,13 @@ export function intervalToRange(text: string, interval: Interval): vscode.Range 
     return new vscode.Range(startLine, startColumn, endLine, endColumn);
 }
 
+export function charposToPosition(text: string, pos: number): vscode.Position {
+    const lines = text.slice(0, pos).split(/\r?\n/);
+    const line = lines.length - 1;
+    const column = lines[line].length;
+    return new vscode.Position(line, column);
+}
+
 function setWebviewActiveContext(value: boolean) {
     vscode.commands.executeCommand('setContext', "svgeditorWebviewFocus", value);
 }
@@ -297,6 +305,24 @@ export function diffProcedure(diffResults: JsDiff.IDiffResult[], editBuilder: vs
         if (!diffResult.added) {
             startLine = endLine;
             startCharacter = endCharacter;
+        }
+    }
+}
+
+export function patchByXmlDiff(originalText: string, diffArray: XmlDiff[], editBuilder: vscode.TextEditorEdit) {
+    for (let diff of diffArray) {
+        switch (diff.type) {
+            case "add":
+            editBuilder.insert(charposToPosition(originalText, diff.pos), diff.value);
+            break;
+            case "delete":
+            editBuilder.delete(intervalToRange(originalText, diff.interval));
+            break;
+            case "modify":
+            editBuilder.replace(intervalToRange(originalText, diff.interval), diff.value);
+            break;
+            default:
+            assertNever(diff);
         }
     }
 }

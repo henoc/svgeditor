@@ -1,8 +1,9 @@
-import { diffProcedure, newUntitled, normalizeUrl, intervalToRange } from "../../src/node/extension";
+import { diffProcedure, newUntitled, normalizeUrl, intervalToRange, patchByXmlDiff } from "../../src/node/extension";
 import { diffChars } from "diff";
 import { TextEditorEdit, Position, Range, Selection, EndOfLine, ViewColumn, Uri } from "vscode";
 import * as assert from 'assert';
 import { join, isAbsolute } from "path";
+import { XmlDiff } from "../../src/isomorphism/xmlDiffPatch";
 
 type Operation = {operation: "replace"|"insert"|"delete", location: Position | Range | Selection, value?: string};
 
@@ -157,5 +158,24 @@ describe("extension", () => {
     <circle stroke-width="3" fill="red" stroke="black" r="40" cx="50" cy="50"/>
 </svg>`;
         assert.deepStrictEqual(intervalToRange(text, {start: 17, end: 148}), new Range(0, 17, 1, 39));
+    });
+
+    it("patchByXmlDiff", () => {
+        const text =
+`<svg width="100" height="100" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink">
+    <circle stroke-width="3" fill="red" stroke="black" cx="50" cy="50"/>
+</svg>`;
+        const diffArray: XmlDiff[] = [
+            {type: "modify", interval: {start: 135, end: 136}, value: "5"},
+            {type: "add", pos: 120, value: ` r="40"`},
+            {type: "delete", interval: {start: 171, end: 179}}
+        ];
+        const mock = new TextEditorEditMock();
+        patchByXmlDiff(text, diffArray, mock);
+        assert.deepStrictEqual(mock.log, <Operation[]>[
+            {operation: "replace", location: new Range(1, 26, 1, 27), value: "5"},
+            {operation: "insert", location: new Position(1, 11), value: ` r="40"`},
+            {operation: "delete", location: new Range(1, 62, 1, 70)}
+        ]);
     });
 });
