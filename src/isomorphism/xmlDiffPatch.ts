@@ -1,4 +1,4 @@
-import { XmlNode, Interval, XmlNodeNop } from "./xmlParser";
+import { XmlNode, Interval, XmlNodeNop, XmlElementNop } from "./xmlParser";
 import { xfind } from "./xpath";
 import { assertNever, iterate, deepCopy } from "./utils";
 import { findExn, addressXpath } from "./traverse";
@@ -246,9 +246,9 @@ function orderedArrayDiffIterate(obj: {[key: string]: unknown}, fn: (index: numb
     entries.forEach(entry => fn(entry.index, entry.isOriginal, entry.diff, entry.key));
 }
 
-export function jsondiffForXml(left: XmlNodeNop, right: XmlNodeNop) {
+export function jsondiffForXml(left: XmlElementNop, right: XmlElementNop) {
     const diff = new DiffPatcher(<Config>{arrays: {detectMove: false}, textDiff: {minLength: Number.MAX_VALUE}}).diff(left, right);
-    return diff && regardTypeDiffAsWholeDiff(left, right, diff);
+    return diff && <JsonDiffForXml>regardTypeDiffAsWholeDiff(left, right, diff);
 }
 
 export function regardTypeDiffAsWholeDiff(left: XmlNodeNop, right: XmlNodeNop, diff: JsonDiffForXml) {
