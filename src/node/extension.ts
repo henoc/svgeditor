@@ -3,12 +3,12 @@ import * as fs from "fs";
 import * as path from "path";
 import { parse, ParsedElement } from "../isomorphism/svgParser";
 import { collectSystemFonts } from "./fontFileProcedures";
-import { iterate, assertNever } from "../isomorphism/utils";
-import { diffChars } from "diff";
+import { iterate, assertNever, optionOf } from "../isomorphism/utils";
 import isAbsoluteUrl from "is-absolute-url";
 import { OperatorName } from "../renderer/menuComponent";
-import { textToXml, Interval, trimXml, XmlNode, XmlNodeNop, trimPositions, XmlElement, XmlElementNop } from "../isomorphism/xmlParser";
+import { textToXml, Interval, trimXml, trimPositions, XmlElement, XmlElementNop } from "../isomorphism/xmlParser";
 import { XmlDiff, jsondiffForXml, xmlJsonDiffToStringDiff } from "../isomorphism/xmlDiffPatch";
+import { LinearOptions } from "../isomorphism/xmlSerializer";
 
 type PanelSet = { panel: vscode.WebviewPanel, editor: vscode.TextEditor, text: string, blockOnChangeText: boolean};
 
@@ -72,7 +72,9 @@ export function activate(context: vscode.ExtensionContext) {
                     pset.blockOnChangeText = true;      // Block to call onDidChangeTextDocument during updating
                     const originalXml = parseXml(pset.text);
                     const fixedXml =  message.data as XmlElementNop;
-                    const xmldiff = xmlSerialDiff(originalXml, fixedXml);
+                    const unit = config.get<string>("indentStyle") === "tab" ? "\t" : " ".repeat(optionOf(config.get<number>("indentSize")).getOrElse(4));
+                    const eol = pset.editor.document.eol === vscode.EndOfLine.LF ? "\n" : "\r\n";
+                    const xmldiff = xmlSerialDiff(originalXml, fixedXml, {indent: {unit, level: 0, eol}});
                     await pset.editor.edit(editBuilder => {
                         patchByXmlDiff(pset.text, xmldiff, editBuilder);
                     });
@@ -92,7 +94,7 @@ export function activate(context: vscode.ExtensionContext) {
                             collectTransform: config.get<boolean>("collectTransformMatrix"),
                             useStyleAttribute: config.get<boolean>("useStyleAttribute"),
                             indentStyle: config.get<string>("indentStyle"),
-                            indentSize: config.get<string>("indentSize")
+                            indentSize: config.get<number>("indentSize")
                         }
                     });
                     return;
@@ -268,12 +270,12 @@ function parseXml(xmlText: string): XmlElement | null {
     return xml && trimXml(xml);
 }
 
-function xmlSerialDiff(left: XmlElement | null, right: XmlElementNop): XmlDiff[] {
+function xmlSerialDiff(left: XmlElement | null, right: XmlElementNop, options: LinearOptions): XmlDiff[] {
     if (left === null) return [];
     const leftNop = trimPositions(left);
     const diff = jsondiffForXml(leftNop, right);
     if (diff === undefined) return [];
-    return xmlJsonDiffToStringDiff(left, diff);
+    return xmlJsonDiffToStringDiff(left, diff, options);
 }
 
 export function intervalToRange(text: string, interval: Interval): vscode.Range {

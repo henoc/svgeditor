@@ -8,27 +8,27 @@ export interface LinearOptions {
     }
 }
 
-export function serializeXml(xml: XmlNode, options: LinearOptions = {}): string {
-    const spaces = (additionalLevel: number) => options.indent && options.indent.unit.repeat(options.indent.level + additionalLevel) || "";
-    const eol = options.indent && options.indent.eol || "";
+export function serializeXml(xml: XmlNode, options: LinearOptions): string {
+    const indent = (additionalLevel: number) => indentLiteral(options, additionalLevel);
+    const eol = eolLiteral(options);
     switch (xml.type) {
         case "text":
-        return `${spaces(0)}${xml.text}`;
+        return `${indent(0)}${xml.text}`;
         case "comment":
-        return `${spaces(0)}<!--${xml.text}-->`;
+        return `${indent(0)}<!--${xml.text}-->`;
         case "cdata":
-        return `${spaces(0)}<![CDATA[${eol}${spaces(1)}${xml.text}${eol}${spaces(0)}]]>`;
+        return `${indent(0)}<![CDATA[${eol}${indent(1)}${xml.text}${eol}${indent(0)}]]>`;
         case "element":
         const head = [xml.tag, ...Object.entries(xml.attrs).map(([key, value]) => `${key}="${value}"`)];
-        return spaces(0) + ((xml.children.length !== 0) ?
-                `<${head.join(" ")}>${eol}${serializeXmls(xml.children, indentLevelUp(options))}${eol}${spaces}</${xml.tag}>` :
+        return indent(0) + ((xml.children.length !== 0) ?
+                `<${head.join(" ")}>${eol}${serializeXmls(xml.children, indentLevelUp(options))}${eol}${indent}</${xml.tag}>` :
                 `<${head.join(" ")}/>`);
     }
 }
 
-export function serializeXmls(xmls: XmlNode[], options: LinearOptions = {}): string {
+export function serializeXmls(xmls: XmlNode[], options: LinearOptions): string {
     const eol = options.indent && options.indent.eol || "";
-    return xmls.map(xml => serializeXml(xml)).join(eol)
+    return xmls.map(xml => serializeXml(xml, options)).join(eol)
 }
 
 export function indentLevelUp(linearOptions: LinearOptions): LinearOptions {
@@ -37,4 +37,12 @@ export function indentLevelUp(linearOptions: LinearOptions): LinearOptions {
         level: linearOptions.indent.level + 1
     }
     return {...linearOptions, indent}
+}
+
+export function indentLiteral(options: LinearOptions, additionalLevel: number) {
+    return options.indent && options.indent.unit.repeat(options.indent.level + additionalLevel) || "";
+}
+
+export function eolLiteral(options: LinearOptions) {
+    return options.indent && options.indent.eol || "";
 }

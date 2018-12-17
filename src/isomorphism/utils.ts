@@ -1,6 +1,7 @@
 import memoize from "fast-memoize";
 import { elementOpen, elementClose, elementVoid } from "incremental-dom";
 import { $Values, Omit } from "utility-types";
+import { get } from "http";
 
 /**
  * Mapping in object. `{a: 1, b: 2, c: 3} ->(+1) {a: 2, b: 3, c: 4}`
@@ -293,24 +294,35 @@ export function escapeHtml(str: string) {
     });
 }
 
-export interface Option<T> {
-    map: <U>(fn: (t: T) => U) => Option<U>
-    get: T | null;
+export abstract class Option<T> {
+    abstract map<U>(fn: (t: T) => U): Option<U>;
+    abstract get: T | null;
+    getOrElse(dflt: T): T {
+        const value = this.get;
+        return value === null ? dflt : value;
+    }
 }
 
-export class Some<T> implements Option<T> {
-    constructor(public elem: T) {}
+export class Some<T> extends Option<T> {
+    constructor(public elem: T) {
+        super();
+    }
     map<U>(fn: (t: T) => U): Option<U> {
         return new Some(fn(this.elem));
     }
     get = this.elem;
 }
 
-export class None<T> implements Option<T> {
+export class None<T> extends Option<T> {
     map<U>(fn: (t: T) => U): Option<U> {
         return new None<U>();
     }
     get = null;
+}
+
+export function optionOf<T>(t: T): Option<NonNullable<T>> {
+    if (t === null || t === undefined) return new None<NonNullable<T>>();
+    else return new Some(t as NonNullable<T>);
 }
 
 /**

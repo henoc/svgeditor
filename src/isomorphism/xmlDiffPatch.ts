@@ -2,7 +2,7 @@ import { XmlNode, Interval, XmlNodeNop, XmlElementNop } from "./xmlParser";
 import { xfind } from "./xpath";
 import { assertNever, iterate, deepCopy } from "./utils";
 import { findExn, addressXpath } from "./traverse";
-import { serializeXml, serializeXmls } from "./xmlSerializer";
+import { serializeXml, serializeXmls, LinearOptions, indentLevelUp, indentLiteral, eolLiteral } from "./xmlSerializer";
 import { DiffPatcher, Config } from "jsondiffpatch";
 
 type XmlIntervalKind = "inner" | "outer" | "startTag" | "endTag";
@@ -72,7 +72,9 @@ interface JsonDiffForXml {
     text?: unknown
 }
 
-export function xmlJsonDiffToStringDiff(originalRootNode: XmlNode, diff: JsonDiffForXml, address: number[] = []): XmlDiff[] {
+export function xmlJsonDiffToStringDiff(originalRootNode: XmlNode, diff: JsonDiffForXml, options: LinearOptions = {}, address: number[] = []): XmlDiff[] {
+    const indent = (additionalLevel: number) => indentLiteral(options, additionalLevel);
+    const eol = eolLiteral(options);
     const current = findExn(originalRootNode, address);
     let validTag = current.tag;
     const acc: XmlDiff[] = [];
@@ -98,7 +100,8 @@ export function xmlJsonDiffToStringDiff(originalRootNode: XmlNode, diff: JsonDif
                 } else if (isStringModified(diffForKey)) {
                     acc.push({type: "modify", interval: getAttrInterval(originalRootNode, address, key, "value"), value: diffForKey[1]});
                 } else if (isStringDeleted(diffForKey)) {
-                    acc.push({type: "delete", interval: getAttrInterval(originalRootNode, address, key, "whole")});
+                    const whole = getAttrInterval(originalRootNode, address, key, "whole");
+                    acc.push({type: "delete", interval: {start: whole.start - " ".length, end: whole.end}});
                 } else throw unexpected("attrs");
             });
         } else throw unexpected("attrs");
@@ -116,7 +119,7 @@ export function xmlJsonDiffToStringDiff(originalRootNode: XmlNode, diff: JsonDif
                 const start = Math.max(current.positions.startTag.end, ...Object.values(current.positions.attrs).map(interval => interval.value.end + `"`.length));
                 acc.push(
                     {type: "modify", interval: {start, end: current.positions.interval.end},
-                    value: `>${serializeXmls(newNodes)}</${validTag}>`}
+                    value: `>${eol}${indent(1)}${serializeXmls(newNodes, indentLevelUp(options))}${eol}${indent(0)}</${validTag}>`}
                 );
             } else {
                 const {deleted, added} = indicesForArrayDiff(children);
@@ -124,14 +127,14 @@ export function xmlJsonDiffToStringDiff(originalRootNode: XmlNode, diff: JsonDif
                     if (isAdded(diffForKey) && !isOriginal) {
                         const originIndex = destToOriginIndex(deleted, added, index);
                         const pos = originIndex === 0 ? getNodeInterval(originalRootNode, address, "startTag").end : getNodeInterval(originalRootNode, [...address, originIndex - 1], "outer").end;
-                        acc.push({type: "add", pos, value: serializeXml(diffForKey[0] as XmlNode)});
+                        acc.push({type: "add", pos, value: `${eol}${indent(1)}${serializeXml(diffForKey[0] as XmlNode, options)}`});
                     } else if (isDeleted(diffForKey) && isOriginal) {
                         acc.push({type: "delete", interval: getNodeInterval(originalRootNode, [...address, index], "outer")});
                     } else if (isModified(diffForKey) && !isOriginal) {
                         let newNode = diffForKey[1] as XmlNode;
-                        acc.push({type: "modify", interval: getNodeInterval(originalRootNode, [...address, index], "outer"), value: serializeXml(newNode)});
+                        acc.push({type: "modify", interval: getNodeInterval(originalRootNode, [...address, index], "outer"), value: serializeXml(newNode, options)});
                     } else if (isObjectDiff(diffForKey) && !isOriginal) {
-                        acc.push(...xmlJsonDiffToStringDiff(originalRootNode, diffForKey, [...address, index]));
+                        acc.push(...xmlJsonDiffToStringDiff(originalRootNode, diffForKey, indentLevelUp(options), [...address, index]));
                     } else throw unexpected(`children[${key}]`);
                 });
             }
