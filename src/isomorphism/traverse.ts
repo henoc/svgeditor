@@ -65,6 +65,11 @@ export function findExn<T extends object>(node: T | T & {children: T[]}, address
     else throw `Node not found. index sequence: ${address}`
 }
 
+export function siblings<T extends object>(node: T | T & {children: T[]}, address: number[]): T[] {
+    const ret = <T | T & {children: T[]}>find(node, address.slice(0, address.length - 1));
+    return ret && "children" in ret && ret.children || [];
+}
+
 /**
  * @param indexInSameTag 1-indexed
  */

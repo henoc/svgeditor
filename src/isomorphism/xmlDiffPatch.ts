@@ -1,46 +1,65 @@
 import { XmlNode, Interval, XmlNodeNop, XmlElementNop } from "./xmlParser";
 import { xfind } from "./xpath";
 import { assertNever, iterate, deepCopy } from "./utils";
-import { findExn, addressXpath } from "./traverse";
+import { findExn, addressXpath, siblings, find } from "./traverse";
 import { serializeXml, serializeXmls, LinearOptions, indentLevelUp, indentLiteral, eolLiteral } from "./xmlSerializer";
 import { DiffPatcher, Config } from "jsondiffpatch";
 
-type XmlIntervalKind = "inner" | "outer" | "startTag" | "endTag";
+type XmlIntervalKind = "inner" | "outer" | "endToEnd" | "startTag" | "closeElement" | "endTag";
 
 export function getNodeInterval(rootNode: XmlNode, address: number[], kind: XmlIntervalKind = "outer"): Interval {
-    const subNode = findExn(rootNode, address);
-    switch (subNode.type) {
-        case "text":
-        case "comment":
-        case "cdata":
-        return subNode.interval;
-        case "element":
-        const positions = subNode.positions;
-        switch (kind) {
-            case "outer":
-            return positions.interval;
-            case "inner":
-            if (positions.closeElement) {
-                return {start: positions.openElement.end, end: positions.closeElement.start};
-            } else throw `Cannot get the inner interval of self-closing element. address: ${addressXpath(rootNode, address)}`;
-            case "startTag":
-            return positions.startTag;
-            case "endTag":
-            if (positions.endTag) {
-                return positions.endTag;
-            } else throw `Cannot get the endTag interval of self-closing element. address: ${addressXpath(rootNode, address)}`;
-            default:
-            return assertNever(kind);
+    const currentNode = findExn(rootNode, address);
+    const getInterval = (node: XmlNode) => node.type === "element" ? node.positions.interval : node.interval;
+    switch (kind) {
+        case "endToEnd":
+        if (address.length === 0) {
+            return getInterval(currentNode);
+        } else {
+            const index = address[address.length - 1];
+            const parAddress = address.slice(0, address.length - 1);
+            const currentSiblings = siblings(rootNode, address);
+            const start = index === 0 ? getNodeInterval(rootNode, address, "startTag").end : getNodeInterval(rootNode, [...address, index - 1], "outer").end;
+            const end = index === currentSiblings.length - 1 ? getNodeInterval(rootNode, parAddress, "closeElement").start : getInterval(currentSiblings[index + 1]).start;
+            return {start, end};
         }
         default:
-        return assertNever(subNode);
+        switch (currentNode.type) {
+            case "text":
+            case "comment":
+            case "cdata":
+            return currentNode.interval;
+            case "element":
+            const positions = currentNode.positions;
+            switch (kind) {
+                case "outer":
+                return positions.interval;
+                case "inner":
+                if (positions.closeElement) {
+                    return {start: positions.openElement.end, end: positions.closeElement.start};
+                } else throw `Cannot get the inner interval of self-closing element. address: ${addressXpath(rootNode, address)}`;
+                case "startTag":
+                return positions.startTag;
+                case "endTag":
+                if (positions.endTag) {
+                    return positions.endTag;
+                } else throw `Cannot get the endTag interval of self-closing element. address: ${addressXpath(rootNode, address)}`;
+                case "closeElement":
+                if (positions.closeElement) {
+                    return positions.closeElement;
+                } else throw `Cannot get the closeElement interval of self-closing element. address: ${addressXpath(rootNode, address)}`;
+                default:
+                return assertNever(kind);
+            }
+            default:
+            return assertNever(currentNode);
+        }
     }
 }
 
 export function getAttrInterval(rootNode: XmlNode, address: number[], attrName: string, kind: "whole" | "name" | "value"): Interval {
-    const subNode = findExn(rootNode, address);
-    if (subNode.type !== "element") throw `Node ${addressXpath(rootNode, address)} is not an element`;
-    const attr = subNode.positions.attrs[attrName];
+    const currentNode = findExn(rootNode, address);
+    if (currentNode.type !== "element") throw `Node ${addressXpath(rootNode, address)} is not an element`;
+    const attr = currentNode.positions.attrs[attrName];
     if (attr === undefined) throw `No attribute ${attrName} for the element ${addressXpath(rootNode, address)}`;
     return kind !== "whole" && attr[kind] || {start: attr.name.start, end: attr.value.end + `"`.length};
 }
@@ -122,6 +141,7 @@ export function xmlJsonDiffToStringDiff(originalRootNode: XmlNode, diff: JsonDif
                     value: `>${eol}${indent(1)}${serializeXmls(newNodes, indentLevelUp(options))}${eol}${indent(0)}</${validTag}>`}
                 );
             } else {
+                const currentSiblings = siblings(originalRootNode, address);
                 const {deleted, added} = indicesForArrayDiff(children);
                 orderedArrayDiffIterate(children, (index, isOriginal, diffForKey, key) => {
                     if (isAdded(diffForKey) && !isOriginal) {
@@ -129,7 +149,8 @@ export function xmlJsonDiffToStringDiff(originalRootNode: XmlNode, diff: JsonDif
                         const pos = originIndex === 0 ? getNodeInterval(originalRootNode, address, "startTag").end : getNodeInterval(originalRootNode, [...address, originIndex - 1], "outer").end;
                         acc.push({type: "add", pos, value: `${eol}${indent(1)}${serializeXml(diffForKey[0] as XmlNode, options)}`});
                     } else if (isDeleted(diffForKey) && isOriginal) {
-                        acc.push({type: "delete", interval: getNodeInterval(originalRootNode, [...address, index], "outer")});
+                        const levelDiff = index === currentSiblings.length - 1 ? -1 : 0;
+                        acc.push({type: "modify", interval: getNodeInterval(originalRootNode, [...address, index], "endToEnd"), value: `${eol}${indent(levelDiff)}`});
                     } else if (isModified(diffForKey) && !isOriginal) {
                         let newNode = diffForKey[1] as XmlNode;
                         acc.push({type: "modify", interval: getNodeInterval(originalRootNode, [...address, index], "outer"), value: serializeXml(newNode, options)});
