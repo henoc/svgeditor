@@ -204,7 +204,7 @@ export function stringComponent(str: string, type: "text" | "comment" | "cdata" 
             return wrappedStr(options);
         },
         toXml() {
-            return <XmlNodeNop>{type, text: str};
+            return <XmlNodeNop>{type, tag: `${type}()`, text: str};
         },
         toDom() {
             switch (type) {

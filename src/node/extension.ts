@@ -67,76 +67,80 @@ export function activate(context: vscode.ExtensionContext) {
     let setListener = (pset : PanelSet) => {
         const config = vscode.workspace.getConfiguration("svgeditor", pset.editor.document.uri);
         pset.panel.webview.onDidReceiveMessage(async message => {
-            switch (message.command) {
-                case "modified":
-                    pset.blockOnChangeText = true;      // Block to call onDidChangeTextDocument during updating
-                    const originalXml = parseXml(pset.text);
-                    const fixedXml =  message.data as XmlElementNop;
-                    const unit = config.get<string>("indentStyle") === "tab" ? "\t" : " ".repeat(optionOf(config.get<number>("indentSize")).getOrElse(4));
-                    const eol = pset.editor.document.eol === vscode.EndOfLine.LF ? "\n" : "\r\n";
-                    const xmldiff = xmlSerialDiff(originalXml, fixedXml, {indent: {unit, level: 0, eol}});
-                    await pset.editor.edit(editBuilder => {
-                        patchByXmlDiff(pset.text, xmldiff, editBuilder);
-                    });
-                    pset.text = pset.editor.document.getText();
-                    pset.blockOnChangeText = false;
-                    return;
-                case "svg-request":
-                    pset.panel.webview.postMessage({
-                        command: "modified",
-                        data: parseSvg(pset.text, pset.editor, diagnostics)
-                    });
-                    pset.panel.webview.postMessage({
-                        command: "configuration",
-                        data: {
-                            defaultUnit: config.get<string | null>("defaultUnit"),
-                            decimalPlaces: config.get<number>("decimalPlaces"),
-                            collectTransform: config.get<boolean>("collectTransformMatrix"),
-                            useStyleAttribute: config.get<boolean>("useStyleAttribute"),
-                            indentStyle: config.get<string>("indentStyle"),
-                            indentSize: config.get<number>("indentSize")
-                        }
-                    });
-                    return;
-                case "input-request":
-                    const result = await vscode.window.showInputBox({placeHolder: message.data})
-                    pset.panel.webview.postMessage({
-                        command: "input-response",
-                        data: result
-                    });
-                    return;
-                case "fontList-request":
-                    const fonts = await collectSystemFonts();
-                    pset.panel.webview.postMessage({
-                        command: "fontList-response",
-                        data: iterate(fonts, (_, value) => Object.keys(value))
-                    });
-                    return;
-                case "information-request":
-                    const ret = await vscode.window.showInformationMessage(message.data.message, ...message.data.items);
-                    pset.panel.webview.postMessage({
-                        command: "information-response",
-                        data: {
-                            result: ret,
-                            kind: message.data.kind,
-                            args: message.data.args
-                        }
-                    });
-                    return;
-                case "url-normalize-request":
-                    const urlFragment = message.data.urlFragment;
-                    const callbackUuid = message.data.uuid;
-                    pset.panel.webview.postMessage({
-                        command: "callback-response",
-                        data: {
-                            uuid: callbackUuid,
-                            args: [normalizeUrl(urlFragment, pset.editor.document.uri.toString())]
-                        }
-                    });
-                    return;
-                case "error":
-                    showError(message.data);
-                    return;
+            try {
+                switch (message.command) {
+                    case "modified":
+                        pset.blockOnChangeText = true;      // Block to call onDidChangeTextDocument during updating
+                        const originalXml = parseXml(pset.text);
+                        const fixedXml =  message.data as XmlElementNop;
+                        const unit = config.get<string>("indentStyle") === "tab" ? "\t" : " ".repeat(optionOf(config.get<number>("indentSize")).getOrElse(4));
+                        const eol = pset.editor.document.eol === vscode.EndOfLine.LF ? "\n" : "\r\n";
+                        const xmldiff = xmlSerialDiff(originalXml, fixedXml, {indent: {unit, level: 0, eol}});
+                        await pset.editor.edit(editBuilder => {
+                            patchByXmlDiff(pset.text, xmldiff, editBuilder);
+                        });
+                        pset.text = pset.editor.document.getText();
+                        pset.blockOnChangeText = false;
+                        return;
+                    case "svg-request":
+                        pset.panel.webview.postMessage({
+                            command: "modified",
+                            data: parseSvg(pset.text, pset.editor, diagnostics)
+                        });
+                        pset.panel.webview.postMessage({
+                            command: "configuration",
+                            data: {
+                                defaultUnit: config.get<string | null>("defaultUnit"),
+                                decimalPlaces: config.get<number>("decimalPlaces"),
+                                collectTransform: config.get<boolean>("collectTransformMatrix"),
+                                useStyleAttribute: config.get<boolean>("useStyleAttribute"),
+                                indentStyle: config.get<string>("indentStyle"),
+                                indentSize: config.get<number>("indentSize")
+                            }
+                        });
+                        return;
+                    case "input-request":
+                        const result = await vscode.window.showInputBox({placeHolder: message.data})
+                        pset.panel.webview.postMessage({
+                            command: "input-response",
+                            data: result
+                        });
+                        return;
+                    case "fontList-request":
+                        const fonts = await collectSystemFonts();
+                        pset.panel.webview.postMessage({
+                            command: "fontList-response",
+                            data: iterate(fonts, (_, value) => Object.keys(value))
+                        });
+                        return;
+                    case "information-request":
+                        const ret = await vscode.window.showInformationMessage(message.data.message, ...message.data.items);
+                        pset.panel.webview.postMessage({
+                            command: "information-response",
+                            data: {
+                                result: ret,
+                                kind: message.data.kind,
+                                args: message.data.args
+                            }
+                        });
+                        return;
+                    case "url-normalize-request":
+                        const urlFragment = message.data.urlFragment;
+                        const callbackUuid = message.data.uuid;
+                        pset.panel.webview.postMessage({
+                            command: "callback-response",
+                            data: {
+                                uuid: callbackUuid,
+                                args: [normalizeUrl(urlFragment, pset.editor.document.uri.toString())]
+                            }
+                        });
+                        return;
+                    case "error":
+                        showError(message.data);
+                        return;
+                }
+            } catch (e) {
+                showError(e);
             }
         }, undefined, context.subscriptions);
 
