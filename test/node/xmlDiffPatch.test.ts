@@ -1,5 +1,5 @@
 import * as assert from "assert";
-import {textToXml, trimPositions, XmlNodeNop, XmlNode, XmlElement, XmlElementNop} from "../../src/isomorphism/xmlParser";
+import {textToXml, trimPositions, XmlNodeNop, XmlNode, XmlElement, XmlElementNop, trimXml} from "../../src/isomorphism/xmlParser";
 import { getNodeInterval, getAttrInterval, jsondiffForXml, regardTypeDiffAsWholeDiff, xmlJsonDiffToStringDiff } from "../../src/isomorphism/xmlDiffPatch";
 
 describe("xmlDiffPatch", () => {
@@ -30,6 +30,20 @@ describe("xmlDiffPatch", () => {
             () => getNodeInterval(hello, [], "inner"),
             /self-closing element/
         );
+
+        const rootfoobarbaz = trimXml(textToXml("<root>      <foo/>       <bar/>        <baz/>      </root>")!);
+        assert.deepStrictEqual(
+            getNodeInterval(rootfoobarbaz, [0], "endToEnd"),
+            {start: 6, end: 25}
+        );
+        assert.deepStrictEqual(
+            getNodeInterval(rootfoobarbaz, [1], "endToEnd"),
+            {start: 18, end: 39}
+        );
+        assert.deepStrictEqual(
+            getNodeInterval(rootfoobarbaz, [2], "endToEnd"),
+            {start: 31, end: 51}
+        )
     });
 
     it("getAttrInterval", () => {
@@ -96,7 +110,7 @@ describe("xmlDiffPatch", () => {
     describe("xmlJsonDiffToStringDiff", () => {
 
         const getXmlDiffs = (original: string, fixed: string) => {
-            const leftWithPos = textToXml(original)!;
+            const leftWithPos = trimXml(textToXml(original)!);
             const right = textToXmlNop(fixed);
             return xmlJsonDiffToStringDiff(leftWithPos, jsondiffForXml(trimPositions(leftWithPos), right) as any);
         };
@@ -133,7 +147,7 @@ describe("xmlDiffPatch", () => {
             );
             assert.deepStrictEqual(diff,
                 [
-                    {type: "delete", interval: {start: 9, end: 21}},
+                    {type: "delete", interval: {start: 8, end: 21}},
                     {type: "add", pos: 8, value: ` download="hello"`}
                 ]
             );
@@ -195,6 +209,25 @@ describe("xmlDiffPatch", () => {
             assert.deepStrictEqual(diff2,
                 [
                     {type: "modify", interval: {start: 15, end: 20}, value: `world`}
+                ]
+            );
+        });
+
+        const getXmlDiffsWithFormat = (original: string, fixed: string) => {
+            const leftWithPos = trimXml(textToXml(original)!);
+            const right = textToXmlNop(fixed);
+            return xmlJsonDiffToStringDiff(leftWithPos, jsondiffForXml(trimPositions(leftWithPos), right) as any, {indent: {level: 0, unit: "  ", eol: "\n"}});
+        };
+
+        it("With linear options", () => {
+            const diff = getXmlDiffsWithFormat(
+                `<root><a/><b/></root>`,
+                `<root><b/></root>`
+            );
+            assert.deepStrictEqual(diff,
+                [
+                    {type: "modify", interval: {start: 10, end: 14}, value: `\n`},
+                    {type: "modify", interval: {start: 7, end: 8}, value: "b"}
                 ]
             );
         });

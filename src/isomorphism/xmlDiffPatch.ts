@@ -5,7 +5,7 @@ import { findExn, addressXpath, siblings, find } from "./traverse";
 import { serializeXml, serializeXmls, LinearOptions, indentLevelUp, indentLiteral, eolLiteral } from "./xmlSerializer";
 import { DiffPatcher, Config } from "jsondiffpatch";
 
-type XmlIntervalKind = "inner" | "outer" | "endToEnd" | "startTag" | "closeElement" | "endTag";
+type XmlIntervalKind = "inner" | "outer" | "endToEnd" | "openElement" | "startTag" | "closeElement" | "endTag";
 
 export function getNodeInterval(rootNode: XmlNode, address: number[], kind: XmlIntervalKind = "outer"): Interval {
     const currentNode = findExn(rootNode, address);
@@ -18,7 +18,7 @@ export function getNodeInterval(rootNode: XmlNode, address: number[], kind: XmlI
             const index = address[address.length - 1];
             const parAddress = address.slice(0, address.length - 1);
             const currentSiblings = siblings(rootNode, address);
-            const start = index === 0 ? getNodeInterval(rootNode, address, "startTag").end : getNodeInterval(rootNode, [...address, index - 1], "outer").end;
+            const start = index === 0 ? getNodeInterval(rootNode, parAddress, "openElement").end : getInterval(currentSiblings[index - 1]).end;
             const end = index === currentSiblings.length - 1 ? getNodeInterval(rootNode, parAddress, "closeElement").start : getInterval(currentSiblings[index + 1]).start;
             return {start, end};
         }
@@ -43,6 +43,8 @@ export function getNodeInterval(rootNode: XmlNode, address: number[], kind: XmlI
                 if (positions.endTag) {
                     return positions.endTag;
                 } else throw `Cannot get the endTag interval of self-closing element. address: ${addressXpath(rootNode, address)}`;
+                case "openElement":
+                return positions.openElement;
                 case "closeElement":
                 if (positions.closeElement) {
                     return positions.closeElement;
@@ -149,7 +151,7 @@ export function xmlJsonDiffToStringDiff(originalRootNode: XmlNode, diff: JsonDif
                         const pos = originIndex === 0 ? getNodeInterval(originalRootNode, address, "startTag").end : getNodeInterval(originalRootNode, [...address, originIndex - 1], "outer").end;
                         acc.push({type: "add", pos, value: `${eol}${indent(1)}${serializeXml(diffForKey[0] as XmlNode, options)}`});
                     } else if (isDeleted(diffForKey) && isOriginal) {
-                        const levelDiff = index === currentSiblings.length - 1 ? -1 : 0;
+                        const levelDiff = index === currentSiblings.length - 1 ? 0 : 1;
                         acc.push({type: "modify", interval: getNodeInterval(originalRootNode, [...address, index], "endToEnd"), value: `${eol}${indent(levelDiff)}`});
                     } else if (isModified(diffForKey) && !isOriginal) {
                         let newNode = diffForKey[1] as XmlNode;

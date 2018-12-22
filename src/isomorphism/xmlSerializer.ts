@@ -21,7 +21,7 @@ export function serializeXml(xml: XmlNode, options: LinearOptions): string {
         case "element":
         const head = [xml.tag, ...Object.entries(xml.attrs).map(([key, value]) => `${key}="${value}"`)];
         return indent(0) + ((xml.children.length !== 0) ?
-                `<${head.join(" ")}>${eol}${serializeXmls(xml.children, indentLevelUp(options))}${eol}${indent}</${xml.tag}>` :
+                `<${head.join(" ")}>${eol}${serializeXmls(xml.children, indentLevelUp(options))}${eol}${indent(0)}</${xml.tag}>` :
                 `<${head.join(" ")}/>`);
     }
 }
