@@ -203,8 +203,15 @@ export function stringComponent(str: string, type: "text" | "comment" | "cdata" 
         toLinear(options: LinearOptions) {
             return wrappedStr(options);
         },
-        toXml() {
-            return <XmlNodeNop>{type, tag: `${type}()`, text: str};
+        toXml(): XmlNodeNop {
+            switch (type) {
+                case "text":
+                return {type, tag: "text()", text: str};
+                case "comment":
+                return {type, tag: "comment()", text: str};
+                case "cdata":
+                return {type, tag: "cdata()", text: str};
+            }
         },
         toDom() {
             switch (type) {
