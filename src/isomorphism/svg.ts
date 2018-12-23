@@ -11,7 +11,6 @@ interface SvgTagOptions {
 }
 
 export interface XmlComponent extends Component {
-    toLinear(options: LinearOptions): string;
     toXml(): XmlNodeNop;
     toDom(): Node;
 }
@@ -96,31 +95,6 @@ export class SvgTag implements XmlComponent {
         return this;
     }
 
-    toLinear(options: LinearOptions): string {
-        if (this.data.tag) {
-            if (this.data.tag === "svg" && this.data.isOuterMost) {
-                this.data.attrs.xmlns = SVG_NS;
-                this.data.attrs["xmlns:xlink"] = XLINK_NS;
-            }
-            const attrs: string[] = [];
-            iterate(this.data.attrs, (key, value) => {
-                attrs.push(`${key}="${escapeHtml(String(value))}"`);
-            });
-            const head = [this.data.tag];
-            if (attrs.length > 0) head.push(attrs.join(" "));
-
-            // for formatting
-            const eol = options.indent && options.indent.eol || "";
-            const spaces = options.indent && options.indent.unit.repeat(options.indent.level) || "";
-
-            return spaces + ((this.data.children.length !== 0) ?
-                `<${head.join(" ")}>${eol}${this.data.children.map(c => c.toLinear(indentLevelUp(options))).join(eol)}${eol}${spaces}</${this.data.tag}>` :
-                `<${head.join(" ")}/>`);
-        } else {
-            throw new Error("No tag name found when build.");
-        }
-    }
-
     toXml(): XmlNodeNop {
         if (this.data.tag) {
             return {
@@ -200,9 +174,6 @@ export function stringComponent(str: string, type: "text" | "comment" | "cdata" 
         render() {
             text(wrappedStr());
         },
-        toLinear(options: LinearOptions) {
-            return wrappedStr(options);
-        },
         toXml(): XmlNodeNop {
             switch (type) {
                 case "text":
@@ -236,9 +207,6 @@ function indentLevelUp(linearOptions: LinearOptions): LinearOptions {
 
 export function emptyComponent(): XmlComponent {
     return {
-        toLinear(_options: LinearOptions): string {
-            return "";
-        },
         toXml(): XmlNodeNop {
             return {type: "text", tag: "text()", text: ""};
         },

@@ -1,4 +1,4 @@
-import { XmlNode } from "./xmlParser";
+import { XmlNode, XmlNodeNop } from "./xmlParser";
 
 export interface LinearOptions {
     indent?: {
@@ -8,7 +8,7 @@ export interface LinearOptions {
     }
 }
 
-export function serializeXml(xml: XmlNode, options: LinearOptions): string {
+export function serializeXml(xml: XmlNodeNop, options: LinearOptions): string {
     const indent = (additionalLevel: number) => indentLiteral(options, additionalLevel);
     const eol = eolLiteral(options);
     switch (xml.type) {
@@ -26,7 +26,7 @@ export function serializeXml(xml: XmlNode, options: LinearOptions): string {
     }
 }
 
-export function serializeXmls(xmls: XmlNode[], options: LinearOptions): string {
+export function serializeXmls(xmls: XmlNodeNop[], options: LinearOptions): string {
     const eol = options.indent && options.indent.eol || "";
     return xmls.map(xml => serializeXml(xml, options)).join(eol)
 }
