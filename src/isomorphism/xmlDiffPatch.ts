@@ -140,7 +140,7 @@ export function xmlJsonDiffToStringDiff(originalRootNode: XmlNode, diff: JsonDif
                 const start = Math.max(current.positions.startTag.end, ...Object.values(current.positions.attrs).map(interval => interval.value.end + `"`.length));
                 acc.push(
                     {type: "modify", interval: {start, end: current.positions.interval.end},
-                    value: `>${eol}${indent(1)}${serializeXmls(newNodes, indentLevelUp(options))}${eol}${indent(0)}</${validTag}>`}
+                    value: `>${eol}${serializeXmls(newNodes, indentLevelUp(options))}${eol}${indent(0)}</${validTag}>`}
                 );
             } else {
                 const currentSiblings = siblings(originalRootNode, address);
@@ -149,7 +149,7 @@ export function xmlJsonDiffToStringDiff(originalRootNode: XmlNode, diff: JsonDif
                     if (isAdded(diffForKey) && !isOriginal) {
                         const originIndex = destToOriginIndex(deleted, added, index);
                         const pos = originIndex === 0 ? getNodeInterval(originalRootNode, address, "startTag").end : getNodeInterval(originalRootNode, [...address, originIndex - 1], "outer").end;
-                        acc.push({type: "add", pos, value: `${eol}${indent(1)}${serializeXml(diffForKey[0] as XmlNode, options)}`});
+                        acc.push({type: "add", pos, value: `${eol}${serializeXml(diffForKey[0] as XmlNode, indentLevelUp(options))}`});
                     } else if (isDeleted(diffForKey) && isOriginal) {
                         const levelDiff = index === currentSiblings.length - 1 ? 0 : 1;
                         acc.push({type: "modify", interval: getNodeInterval(originalRootNode, [...address, index], "endToEnd"), value: `${eol}${indent(levelDiff)}`});
