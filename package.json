@@ -292,6 +292,7 @@
     "hammerjs": "^2.0.8",
     "incremental-dom": "^0.5.1",
     "is-absolute-url": "^2.1.0",
+    "jsondiffpatch": "^0.3.11",
     "sax": "1.2.4",
     "svgpath": "2.2.1",
     "text-width": "^1.2.0",

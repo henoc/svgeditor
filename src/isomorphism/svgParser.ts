@@ -684,7 +684,7 @@ export function parse(node: XmlNode): ParsedResult {
                 xpath,
                 parent
             }
-            switch (node.name) {
+            switch (node.tag) {
                 case "svg":
                     return {result: {tag: "svg", attrs: parseAttrs(node, pushWarns).svg(), ...elementBase, containerElementClass}, warns};
                 case "circle":
@@ -732,7 +732,7 @@ export function parse(node: XmlNode): ParsedResult {
                 case "mpath":
                     return {result: {tag: "mpath", attrs: parseAttrs(node, pushWarns).mpath(), ...elementBase}, warns};
                 default:
-                    return {result: {tag: "unknown", tag$real: node.name, attrs: node.attrs, ...elementBase}, warns: [{type: "warning", interval: node.positions.startTag, message: `${node.name} is unsupported element.`}]};
+                    return {result: {tag: "unknown", tag$real: node.tag, attrs: node.attrs, ...elementBase}, warns: [{type: "warning", interval: node.positions.startTag, message: `${node.tag} is unsupported element.`}]};
             }
         case "text":
             return {result: {tag: "text()", attrs: {}, text: node.text, xpath, parent}, warns};

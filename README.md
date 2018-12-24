@@ -93,9 +93,9 @@ Localtion (xlink:)href refers to is restricted with your workspace, extension an
 - [x] Embedded CSS
 - [x] Gradient colors
 - [x] Images
+- [x] Correct only the changed portions without auto formatting
 - [ ] Filters
 - [ ] Animations
-- [ ] Correct only the changed portions without auto formatting
 
 ## License
 

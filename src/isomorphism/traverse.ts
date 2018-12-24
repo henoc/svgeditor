@@ -50,3 +50,45 @@ export function updateXPaths(pe: ParsedElement, parentPe: ParsedElement & {child
         }
     }
 }
+
+export function find<T extends object>(node: T | T & {children: T[]}, address: number[]): T | null {
+    if (address.length === 0) return node;
+    else if ("children" in node) {
+        const next: T | undefined = node.children[address[0]];
+        return next && find(next, address.slice(1)) || null;
+    } else return null;
+}
+
+export function findExn<T extends object>(node: T | T & {children: T[]}, address: number[]): T {
+    const ret = find(node, address);
+    if (ret) return ret;
+    else throw `Node not found. index sequence: ${address}`
+}
+
+export function siblings<T extends object>(node: T | T & {children: T[]}, address: number[]): T[] {
+    const ret = <T | T & {children: T[]}>find(node, address.slice(0, address.length - 1));
+    return ret && "children" in ret && ret.children || [];
+}
+
+/**
+ * @param indexInSameTag 1-indexed
+ */
+export function addressXpath<T extends {tag: string}>(node: T | T & {children: T[]}, address: number[], indexInSameTag?: number): string | null {
+    const pathFragment = "/" + (indexInSameTag !== undefined ? `${node.tag}[${indexInSameTag}]` : node.tag);
+    if (address.length === 0) return pathFragment;
+    else if ("children" in node) {
+        const next: T | undefined = node.children[address[0]];
+        if (!next) return null;
+        else {
+            const isUnique = node.children.filter(c => c.tag === next.tag).length === 1;
+            const indexInSameTagOfNext = node.children.slice(0, address[0]).filter(c => c.tag === next.tag).length + 1;
+            return pathFragment + addressXpath(next, address.slice(1), isUnique ? undefined : indexInSameTagOfNext);
+        }
+    } else return null;
+}
+
+export function addressXpathExn<T extends {tag: string}>(node: T | T & {children: T[]}, address: number[]): string {
+    const ret = addressXpath(node, address);
+    if (ret) return ret;
+    else throw `Node not found. index sequence: ${address}`;
+}

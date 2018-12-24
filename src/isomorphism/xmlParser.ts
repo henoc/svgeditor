@@ -3,7 +3,8 @@
  */
 
 import sax from "sax";
-import { iterate } from "./utils";
+import { iterate, deepCopy } from "./utils";
+import { traverse, reproduce } from "./traverse";
 
 export type XmlNode = XmlElement | XmlText | XmlComment | XmlCData;
 
@@ -18,7 +19,7 @@ export type XmlNodeNop = XmlElementNop | XmlTextNop | XmlCommentNop | XmlCDataNo
 
 export interface XmlElementNop {
     type: "element";
-    name: string;
+    tag: string;
     attrs: {[name: string]: string};
     children: XmlNodeNop[];
 }
@@ -33,16 +34,19 @@ interface IntervalProperty {
 
 export interface XmlTextNop {
     type: "text";
+    tag: "text()";
     text: string;
 }
 
 export interface XmlCommentNop {
     type: "comment";
+    tag: "comment()";
     text: string;
 }
 
 export interface XmlCDataNop {
     type: "cdata";
+    tag: "cdata()";
     text: string;
 }
 
@@ -103,7 +107,7 @@ export function textToXml(xmltext: string): XmlElement | null {
         const current = currentContext();
         const xmlElement: XmlElement = {
             type: "element",
-            name: current.tagName,
+            tag: current.tagName,
             attrs: iterate(current.attrs, (_key, value) => {
                 return value.value
             }),
@@ -156,7 +160,7 @@ export function textToXml(xmltext: string): XmlElement | null {
                 value: {
                     start: pos() - 1 - rawValue.length,
                     end: pos() - 1
-                }
+                }       // exclude quotations
             }
         };
     };
@@ -172,6 +176,7 @@ export function textToXml(xmltext: string): XmlElement | null {
             const rawText = xmltext.slice(lastGT).match(/^[^<]*/)![0];       // before unescaping
             currentContext().children.push({
                 type: "text",
+                tag: "text()",
                 text: rawText,
                 interval: {
                     start: lastGT,
@@ -185,10 +190,11 @@ export function textToXml(xmltext: string): XmlElement | null {
         if (currentContext()) {
             currentContext().children.push({
                 type: "cdata",
+                tag: "cdata()",
                 text: cdata,
                 interval: {
-                    start: pos() - "]]>".length - cdata.length,
-                    end: pos() - "]]>".length
+                    start: pos() - "]]>".length - cdata.length - "<![CDATA[".length,
+                    end: pos()
                 }
             });
             lastGT = pos();
@@ -199,10 +205,11 @@ export function textToXml(xmltext: string): XmlElement | null {
         if (currentContext()) {
             currentContext().children.push({
                 type: "comment",
+                tag: "comment()",
                 text: comment,
                 interval: {
-                    start: pos() - 2 - comment.length - 4,
-                    end: pos() + 1
+                    start: pos() - "--".length - comment.length - "<!--".length,
+                    end: pos() + ">".length
                 }
             });
             lastGT = pos() + 1;         // in sax, call oncomment when "--" is found.
@@ -242,4 +249,18 @@ export function trimXml(elem: XmlElement): XmlElement {
             }
         });
     return elem;
+}
+
+export function trimPositions(elem: XmlElement): XmlElementNop {
+    const copied = deepCopy(elem);
+    traverse(copied, node => {
+        switch (node.type) {
+            case "element":
+            delete node.positions;
+            break;
+            default:
+            delete node.interval;
+        }
+    });
+    return copied;
 }

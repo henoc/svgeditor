@@ -18,7 +18,7 @@ describe("svgParser", () => {
             }
             return {
                 type: "element",
-                name: "test",
+                tag: "test",
                 attrs: {
                     [name]: value
                 },

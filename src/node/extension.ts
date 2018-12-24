@@ -3,11 +3,12 @@ import * as fs from "fs";
 import * as path from "path";
 import { parse, ParsedElement } from "../isomorphism/svgParser";
 import { collectSystemFonts } from "./fontFileProcedures";
-import { iterate } from "../isomorphism/utils";
-import { diffChars } from "diff";
+import { iterate, assertNever, optionOf } from "../isomorphism/utils";
 import isAbsoluteUrl from "is-absolute-url";
 import { OperatorName } from "../renderer/menuComponent";
-import { textToXml, Interval, trimXml } from "../isomorphism/xmlParser";
+import { textToXml, Interval, trimXml, trimPositions, XmlElement, XmlElementNop } from "../isomorphism/xmlParser";
+import { XmlDiff, jsondiffForXml, xmlJsonDiffToStringDiff } from "../isomorphism/xmlDiffPatch";
+import { LinearOptions } from "../isomorphism/xmlSerializer";
 
 type PanelSet = { panel: vscode.WebviewPanel, editor: vscode.TextEditor, text: string, blockOnChangeText: boolean};
 
@@ -66,72 +67,80 @@ export function activate(context: vscode.ExtensionContext) {
     let setListener = (pset : PanelSet) => {
         const config = vscode.workspace.getConfiguration("svgeditor", pset.editor.document.uri);
         pset.panel.webview.onDidReceiveMessage(async message => {
-            switch (message.command) {
-                case "modified":
-                    pset.blockOnChangeText = true;      // Block to call onDidChangeTextDocument during updating
-                    const oldText = pset.text;
-                    pset.text = message.data;
-                    await pset.editor.edit(editBuilder => {
-                        diffProcedure(diffChars(oldText, pset.text), editBuilder)
-                    });
-                    pset.blockOnChangeText = false;
-                    return;
-                case "svg-request":
-                    pset.panel.webview.postMessage({
-                        command: "modified",
-                        data: parseSvg(pset.text, pset.editor, diagnostics)
-                    });
-                    pset.panel.webview.postMessage({
-                        command: "configuration",
-                        data: {
-                            defaultUnit: config.get<string | null>("defaultUnit"),
-                            decimalPlaces: config.get<number>("decimalPlaces"),
-                            collectTransform: config.get<boolean>("collectTransformMatrix"),
-                            useStyleAttribute: config.get<boolean>("useStyleAttribute"),
-                            indentStyle: config.get<string>("indentStyle"),
-                            indentSize: config.get<string>("indentSize")
-                        }
-                    });
-                    return;
-                case "input-request":
-                    const result = await vscode.window.showInputBox({placeHolder: message.data})
-                    pset.panel.webview.postMessage({
-                        command: "input-response",
-                        data: result
-                    });
-                    return;
-                case "fontList-request":
-                    const fonts = await collectSystemFonts();
-                    pset.panel.webview.postMessage({
-                        command: "fontList-response",
-                        data: iterate(fonts, (_, value) => Object.keys(value))
-                    });
-                    return;
-                case "information-request":
-                    const ret = await vscode.window.showInformationMessage(message.data.message, ...message.data.items);
-                    pset.panel.webview.postMessage({
-                        command: "information-response",
-                        data: {
-                            result: ret,
-                            kind: message.data.kind,
-                            args: message.data.args
-                        }
-                    });
-                    return;
-                case "url-normalize-request":
-                    const urlFragment = message.data.urlFragment;
-                    const callbackUuid = message.data.uuid;
-                    pset.panel.webview.postMessage({
-                        command: "callback-response",
-                        data: {
-                            uuid: callbackUuid,
-                            args: [normalizeUrl(urlFragment, pset.editor.document.uri.toString())]
-                        }
-                    });
-                    return;
-                case "error":
-                    showError(message.data);
-                    return;
+            try {
+                switch (message.command) {
+                    case "modified":
+                        pset.blockOnChangeText = true;      // Block to call onDidChangeTextDocument during updating
+                        const originalXml = parseXml(pset.text);
+                        const fixedXml =  message.data as XmlElementNop;
+                        const unit = config.get<string>("indentStyle") === "tab" ? "\t" : " ".repeat(optionOf(config.get<number>("indentSize")).getOrElse(4));
+                        const eol = pset.editor.document.eol === vscode.EndOfLine.LF ? "\n" : "\r\n";
+                        const xmldiff = xmlSerialDiff(originalXml, fixedXml, {indent: {unit, level: 0, eol}});
+                        await pset.editor.edit(editBuilder => {
+                            patchByXmlDiff(pset.text, xmldiff, editBuilder);
+                        });
+                        pset.text = pset.editor.document.getText();
+                        pset.blockOnChangeText = false;
+                        return;
+                    case "svg-request":
+                        pset.panel.webview.postMessage({
+                            command: "modified",
+                            data: parseSvg(pset.text, pset.editor, diagnostics)
+                        });
+                        pset.panel.webview.postMessage({
+                            command: "configuration",
+                            data: {
+                                defaultUnit: config.get<string | null>("defaultUnit"),
+                                decimalPlaces: config.get<number>("decimalPlaces"),
+                                collectTransform: config.get<boolean>("collectTransformMatrix"),
+                                useStyleAttribute: config.get<boolean>("useStyleAttribute"),
+                                indentStyle: config.get<string>("indentStyle"),
+                                indentSize: config.get<number>("indentSize")
+                            }
+                        });
+                        return;
+                    case "input-request":
+                        const result = await vscode.window.showInputBox({placeHolder: message.data})
+                        pset.panel.webview.postMessage({
+                            command: "input-response",
+                            data: result
+                        });
+                        return;
+                    case "fontList-request":
+                        const fonts = await collectSystemFonts();
+                        pset.panel.webview.postMessage({
+                            command: "fontList-response",
+                            data: iterate(fonts, (_, value) => Object.keys(value))
+                        });
+                        return;
+                    case "information-request":
+                        const ret = await vscode.window.showInformationMessage(message.data.message, ...message.data.items);
+                        pset.panel.webview.postMessage({
+                            command: "information-response",
+                            data: {
+                                result: ret,
+                                kind: message.data.kind,
+                                args: message.data.args
+                            }
+                        });
+                        return;
+                    case "url-normalize-request":
+                        const urlFragment = message.data.urlFragment;
+                        const callbackUuid = message.data.uuid;
+                        pset.panel.webview.postMessage({
+                            command: "callback-response",
+                            data: {
+                                uuid: callbackUuid,
+                                args: [normalizeUrl(urlFragment, pset.editor.document.uri.toString())]
+                            }
+                        });
+                        return;
+                    case "error":
+                        showError(message.data);
+                        return;
+                }
+            } catch (e) {
+                showError(e);
             }
         }, undefined, context.subscriptions);
 
@@ -246,9 +255,9 @@ function showError(reason: any) {
 }
 
 function parseSvg(svgText: string, editor: vscode.TextEditor, diagnostics: vscode.DiagnosticCollection): ParsedElement | null {
-    const xml = textToXml(svgText);
-    if (!xml) return null;
-    const parsed = parse(trimXml(xml));
+    const xml = parseXml(svgText);
+    if (xml === null) return null;
+    const parsed = parse(xml);
     diagnostics.set(editor.document.uri, parsed.warns.map(warn => {
         return {
             source: "svgeditor",
@@ -258,6 +267,19 @@ function parseSvg(svgText: string, editor: vscode.TextEditor, diagnostics: vscod
         };
     }));
     return parsed.result;
+}
+
+function parseXml(xmlText: string): XmlElement | null {
+    const xml = textToXml(xmlText);
+    return xml && trimXml(xml);
+}
+
+function xmlSerialDiff(left: XmlElement | null, right: XmlElementNop, options: LinearOptions): XmlDiff[] {
+    if (left === null) return [];
+    const leftNop = trimPositions(left);
+    const diff = jsondiffForXml(leftNop, right);
+    if (diff === undefined) return [];
+    return xmlJsonDiffToStringDiff(left, diff, options);
 }
 
 export function intervalToRange(text: string, interval: Interval): vscode.Range {
@@ -270,6 +292,13 @@ export function intervalToRange(text: string, interval: Interval): vscode.Range 
     return new vscode.Range(startLine, startColumn, endLine, endColumn);
 }
 
+export function charposToPosition(text: string, pos: number): vscode.Position {
+    const lines = text.slice(0, pos).split(/\r?\n/);
+    const line = lines.length - 1;
+    const column = lines[line].length;
+    return new vscode.Position(line, column);
+}
+
 function setWebviewActiveContext(value: boolean) {
     vscode.commands.executeCommand('setContext', "svgeditorWebviewFocus", value);
 }
@@ -280,23 +309,20 @@ export async function newUntitled(viewColumn: vscode.ViewColumn, content: string
     return vscode.window.showTextDocument(document, viewColumn);
 }
 
-export function diffProcedure(diffResults: JsDiff.IDiffResult[], editBuilder: vscode.TextEditorEdit) {
-    let startLine = 0, startCharacter = 0;
-    for (let diffResult of diffResults) {
-        let lines = diffResult.value.split(/\r?\n/);
-        let newlineCodes = lines.length - 1;
-        let endLine = startLine + newlineCodes;
-        let endCharacter = newlineCodes === 0 ? startCharacter + diffResult.value.length : lines[newlineCodes].length;
-
-        if (diffResult.added) {
-            editBuilder.insert(new vscode.Position(startLine, startCharacter), diffResult.value);
-        } else if (diffResult.removed) {
-            editBuilder.delete(new vscode.Range(startLine, startCharacter, endLine, endCharacter));
-        }
-
-        if (!diffResult.added) {
-            startLine = endLine;
-            startCharacter = endCharacter;
+export function patchByXmlDiff(originalText: string, diffArray: XmlDiff[], editBuilder: vscode.TextEditorEdit) {
+    for (let diff of diffArray) {
+        switch (diff.type) {
+            case "add":
+            editBuilder.insert(charposToPosition(originalText, diff.pos), diff.value);
+            break;
+            case "delete":
+            editBuilder.delete(intervalToRange(originalText, diff.interval));
+            break;
+            case "modify":
+            editBuilder.replace(intervalToRange(originalText, diff.interval), diff.value);
+            break;
+            default:
+            assertNever(diff);
         }
     }
 }

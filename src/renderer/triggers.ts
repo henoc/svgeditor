@@ -4,6 +4,7 @@ import { construct } from "./svgConstructor";
 import { ParsedElement, parse } from "../isomorphism/svgParser";
 import { xfindExn } from "../isomorphism/xpath";
 import { textToXml } from "../isomorphism/xmlParser";
+import { serializeXml, serializeXmls } from "../isomorphism/xmlSerializer";
 
 export function onShapeMouseDown(event: MouseEvent, pe: ParsedElement) {
     if (event.button === 0) editMode.mode.onShapeMouseDownLeft(event, pe);
@@ -83,7 +84,7 @@ function copy(clipboardData: DataTransfer, isCut: boolean = false) {
             const orderedPes = parentPe.children.filter(c => pes.indexOf(c) !== -1);
             if (isCut) parentPe.children = parentPe.children.filter(c => pes.indexOf(c) === -1);
             const indentUnit = configuration.indentStyle === "tab" ? "\t" : " ".repeat(configuration.indentSize);
-            const str = orderedPes.map(pe => construct(pe).toLinear({indent: {unit: indentUnit, level: 0, eol: "\n"}})).join("");
+            const str = serializeXmls(orderedPes.map(pe => construct(pe).toXml()), {indent: {unit: indentUnit, level: 0, eol: "\n"}});
             clipboardData.setData("image/svg+xml", str);
             clipboardData.setData("application/xml", str);
             clipboardData.setData("text/plain", str);

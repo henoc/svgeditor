@@ -1,30 +1,25 @@
 import memoize from "fast-memoize";
 import { elementOpen, elementClose, elementVoid } from "incremental-dom";
 import { $Values, Omit } from "utility-types";
+import { get } from "http";
 
 /**
  * Mapping in object. `{a: 1, b: 2, c: 3} ->(+1) {a: 2, b: 3, c: 4}`
  */
 export function iterate<T extends object, R>(obj: T, fn: (key: Extract<keyof T, string>, value: T[Extract<keyof T, string>]) => R): Record<keyof T, R> {
     const acc: Record<keyof T, R> = <any>{};
-    for (const key in obj) {
-        if (obj.hasOwnProperty(key)) {
-            const value = obj[key];
-            acc[key] = fn(key, value);
-        }
-    }
+    objectEntries(obj).forEach(([key, value]) => {
+        acc[key] = fn(key, value);
+    });
     return acc;
 }
 
 export function objectValues<T extends object>(obj: T): $Values<T>[] {
-    const acc: $Values<T>[] = [];
-    for (const key in obj) {
-        if (obj.hasOwnProperty(key)) {
-            const value = obj[key];
-            acc.push(value);
-        }
-    }
-    return acc;
+    return Object.values(obj);
+}
+
+export function objectEntries<T extends object>(obj: T): [[Extract<keyof T, string>, T[Extract<keyof T, string>]]] {
+    return Object.entries(obj) as any;
 }
 
 
@@ -299,24 +294,35 @@ export function escapeHtml(str: string) {
     });
 }
 
-export interface Option<T> {
-    map: <U>(fn: (t: T) => U) => Option<U>
-    get: T | null;
+export abstract class Option<T> {
+    abstract map<U>(fn: (t: T) => U): Option<U>;
+    abstract get: T | null;
+    getOrElse(dflt: T): T {
+        const value = this.get;
+        return value === null ? dflt : value;
+    }
 }
 
-export class Some<T> implements Option<T> {
-    constructor(public elem: T) {}
+export class Some<T> extends Option<T> {
+    constructor(public elem: T) {
+        super();
+    }
     map<U>(fn: (t: T) => U): Option<U> {
         return new Some(fn(this.elem));
     }
     get = this.elem;
 }
 
-export class None<T> implements Option<T> {
+export class None<T> extends Option<T> {
     map<U>(fn: (t: T) => U): Option<U> {
         return new None<U>();
     }
     get = null;
+}
+
+export function optionOf<T>(t: T): Option<NonNullable<T>> {
+    if (t === null || t === undefined) return new None<NonNullable<T>>();
+    else return new Some(t as NonNullable<T>);
 }
 
 /**

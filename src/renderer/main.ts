@@ -174,10 +174,9 @@ export function refleshContent() {
 
 export function sendBackToEditor() {
     const svgtag = construct(svgdata, { numOfDecimalPlaces: configuration.numOfDecimalPlaces });
-    const indentUnit = configuration.indentStyle === "tab" ? "\t" : " ".repeat(configuration.indentSize);
     vscode.postMessage({
         command: "modified",
-        data: svgtag.toLinear({indent: {unit: indentUnit, level: 0, eol: "\n"}})
+        data: svgtag.toXml()
     });
 }
 
