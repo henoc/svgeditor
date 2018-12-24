@@ -1,5 +1,7 @@
 # CHANGELOG
 
+- 2.9.0
+  - Correct only the changed portions without auto formatting
 - 2.8.0
   - Support script
   - Add preview mode

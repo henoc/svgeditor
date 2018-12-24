@@ -6,7 +6,7 @@
 
 ![sample](images/capture.png)
 
-**ver 2.8**: Add preview mode: show svg as it is (other modes stop the animations)
+**ver 2.9**: Correct only the changed portions without auto formatting
 
 Now your VSCode can mutate to an interactive visual & literal SVG editor 😎
 
