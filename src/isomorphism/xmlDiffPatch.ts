@@ -148,7 +148,7 @@ export function xmlJsonDiffToStringDiff(originalRootNode: XmlNode, diff: JsonDif
                 orderedArrayDiffIterate(children, (index, isOriginal, diffForKey, key) => {
                     if (isAdded(diffForKey) && !isOriginal) {
                         const originIndex = destToOriginIndex(deleted, added, index);
-                        const pos = originIndex === 0 ? getNodeInterval(originalRootNode, address, "startTag").end : getNodeInterval(originalRootNode, [...address, originIndex - 1], "outer").end;
+                        const pos = originIndex === 0 ? getNodeInterval(originalRootNode, address, "openElement").end : getNodeInterval(originalRootNode, [...address, originIndex - 1], "outer").end;
                         acc.push({type: "add", pos, value: `${eol}${serializeXml(diffForKey[0] as XmlNode, indentLevelUp(options))}`});
                     } else if (isDeleted(diffForKey) && isOriginal) {
                         const levelDiff = index === currentSiblings.length - 1 ? 0 : 1;

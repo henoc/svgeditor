@@ -170,7 +170,7 @@ describe("xmlDiffPatch", () => {
             );
             assert.deepStrictEqual(diff2,
                 [
-                    {type: "add", pos: 5, value: `<a/>`}
+                    {type: "add", pos: 6, value: `<a/>`}
                 ]
             );
         });
@@ -219,7 +219,7 @@ describe("xmlDiffPatch", () => {
             return xmlJsonDiffToStringDiff(leftWithPos, jsondiffForXml(trimPositions(leftWithPos), right) as any, {indent: {level: 0, unit: "  ", eol: "\n"}});
         };
 
-        it("With linear options", () => {
+        it("Deleted elements with linear options", () => {
             const diff = getXmlDiffsWithFormat(
                 `<root><a/><b/></root>`,
                 `<root><b/></root>`
@@ -228,6 +228,18 @@ describe("xmlDiffPatch", () => {
                 [
                     {type: "modify", interval: {start: 10, end: 14}, value: `\n`},
                     {type: "modify", interval: {start: 7, end: 8}, value: "b"}
+                ]
+            );
+        });
+
+        it("Added elements with linear options", () => {
+            const diff = getXmlDiffsWithFormat(
+                `<svg width="400" height="400" xmlns="http://www.w3.org/2000/svg" version="1.1" xmlns:xlink="http://www.w3.org/1999/xlink">\n</svg>`,
+                `<svg width="400" height="400" xmlns="http://www.w3.org/2000/svg" version="1.1" xmlns:xlink="http://www.w3.org/1999/xlink"><rect/></svg>`
+            );
+            assert.deepStrictEqual(diff,
+                [
+                    {type: "add", pos: 122, value: `\n  <rect/>`}
                 ]
             );
         });
