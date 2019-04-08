@@ -26,6 +26,7 @@ interface ParsedResult {
 export type ParsedElement =
     ParsedSvgElement |
     ParsedCircleElement |
+    ParsedLineElement |
     ParsedRectElement |
     ParsedEllipseElement |
     ParsedPolylineElement |
@@ -86,6 +87,11 @@ export interface ParsedSvgElement extends ContainerElementClass, ElementBaseClas
 export interface ParsedCircleElement extends ElementBaseClass {
     tag: "circle",
     attrs: ParsedCircleAttr
+}
+
+export interface ParsedLineElement extends ElementBaseClass {
+    tag: "line",
+    attrs: ParsedLineAttr
 }
 
 export interface ParsedRectElement extends ElementBaseClass {
@@ -269,6 +275,14 @@ interface ParsedCircleAttr extends ParsedCoreAttr, ParsedStyleAttr, ParsedPresen
     cx: Length | null;
     cy: Length | null;
     r: Length | null;
+}
+
+interface ParsedLineAttr extends ParsedCoreAttr, ParsedPresentationAttr {
+    x1: Length | null;
+    x2: Length | null;
+    y1: Length | null;
+    y2: Length | null;
+    pathLength: number | null;
 }
 
 interface ParsedRectAttr extends ParsedCoreAttr, ParsedStyleAttr, ParsedPresentationAttr {
